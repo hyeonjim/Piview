@@ -24,6 +24,8 @@ public class AppProperties {
 
         private long refreshTokenExpirationDays; // Refresh Token 만료 시간
         private int oauth2CookieExpireSeconds;  // 프론트 전달용 임시 쿠키 수명
+
+        private boolean cookieSecure;
     }
 
     @Getter

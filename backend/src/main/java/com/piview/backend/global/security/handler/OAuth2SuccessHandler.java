@@ -49,15 +49,15 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         long expireDays = appProperties.getAuth().getRefreshTokenExpirationDays();
         redisService.setValues(email, refreshToken, Duration.ofDays(expireDays));
 
-        // Refresh Token: 해커가 절대 못 훔쳐가게 자물쇠(HttpOnly=true) 채우기
-        // 일 단위 -> 초 단위로 변환해서 세팅
+        // Refresh Token: 해커가 절대 못 훔쳐가게 HttpOnly=true 채우기
         int refreshCookieExpireSeconds = (int) (expireDays * 24 * 60 * 60);
-        CookieUtil.addCookie(response, "refreshToken", refreshToken, refreshCookieExpireSeconds);
+        CookieUtil.addCookie(response, "refreshToken", refreshToken, refreshCookieExpireSeconds,
+            appProperties.getAuth().isCookieSecure());
 
-        // Access Token: 프론트엔드가 자바스크립트로 쏙 빼갈 수 있게 자물쇠를 풀고(HttpOnly=false) 딱 60초만 굽기
-        // Access Token 임시 쿠키 (60초 -> properties에서 가져오기)
+        // Access Token 임시 쿠키 : 프론트엔드가 자바스크립트로 쏙 빼갈 수 있게 HttpOnly=false로 하고 딱 60초만 굽기
         int tempCookieExpireSeconds = appProperties.getAuth().getOauth2CookieExpireSeconds();
-        CookieUtil.addTempCookieForFront(response, "accessToken", accessToken, tempCookieExpireSeconds);
+        CookieUtil.addTempCookieForFront(response, "accessToken", accessToken, tempCookieExpireSeconds,
+            appProperties.getAuth().isCookieSecure());
 
         // properties에서 리다이렉트할 URL 가져오기
         String targetUrl = appProperties.getOauth2().getSuccessRedirectUri();

@@ -2,6 +2,7 @@ package com.piview.backend.auth.controller;
 
 import com.piview.backend.auth.dto.response.TokenResponseDto;
 import com.piview.backend.auth.service.AuthService;
+import com.piview.backend.global.config.AppProperties;
 import com.piview.backend.global.security.TokenProvider;
 import com.piview.backend.global.security.UserPrincipal;
 import com.piview.backend.global.util.CookieUtil;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
   private final AuthService authService;
+  private final AppProperties appProperties;
 
   // 토큰 재발급 API
   @PostMapping("/refresh")
@@ -38,7 +40,9 @@ public class AuthController {
 
     TokenResponseDto newTokens = authService.reissue(refreshToken);
 
-    CookieUtil.addCookie(response, "refreshToken", newTokens.getRefreshToken(), 14 * 24 * 60 * 60); // 14일
+    CookieUtil.addCookie(response, "refreshToken", newTokens.getRefreshToken(),
+        (int)(appProperties.getAuth().getRefreshTokenExpirationDays() * 24 * 60 * 60),
+        appProperties.getAuth().isCookieSecure());
 
     return ResponseEntity.ok(newTokens);
   }
