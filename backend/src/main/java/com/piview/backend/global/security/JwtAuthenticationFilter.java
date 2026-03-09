@@ -28,7 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
 
-    // 쿠키에서 accessToken만 쏙 빼오기
+    // 헤더에서 accessToken만 쏙 빼오기
     String accessToken = resolveTokenFromCookie(request);
 
     // 유효성 검사
@@ -55,13 +55,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   // 요청(Request)의 쿠키 목록에서 accessToken 값만 찾아내는 역할
   private String resolveTokenFromCookie(HttpServletRequest request) {
-    Cookie[] cookies = request.getCookies();
-    if (cookies != null) {
-      for (Cookie cookie : cookies) {
-        if ("accessToken".equals(cookie.getName())) {
-          return cookie.getValue();
-        }
-      }
+    String bearerToken = request.getHeader("Authorization");
+
+    // Bearer로 시작하는지 확인하고, 앞의 7글자("Bearer ")를 잘라내서 진짜 토큰만 반환
+    if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+      return bearerToken.substring(7);
     }
     return null;
   }
