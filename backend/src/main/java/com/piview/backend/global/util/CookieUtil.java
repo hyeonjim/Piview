@@ -128,4 +128,20 @@ public class CookieUtil {
             throw new IllegalArgumentException("쿠키 역직렬화에 실패했습니다.", e);
         }
     }
+
+    public static void addTempCookieForFront(HttpServletResponse response, String name, String value, int maxAge) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setPath("/");
+
+        // 자바스크립트(document.cookie)로 읽을 수 있도록 HttpOnly를 꺼주기
+        cookie.setHttpOnly(false);
+
+        // 딱 60초 등 지정한 짧은 시간만 브라우저에 머물다 사라짐
+        cookie.setMaxAge(maxAge);
+
+        // HTTPS 환경(배포 시)이라면 주석 풀기
+        // cookie.setSecure(true);
+
+        response.addCookie(cookie);
+    }
 }
