@@ -1,6 +1,7 @@
 package com.piview.backend.auth.service;
 
 import com.piview.backend.auth.dto.response.TokenResponseDto;
+import com.piview.backend.global.config.AppProperties;
 import com.piview.backend.global.redis.RedisService;
 import com.piview.backend.global.security.CustomUserDetailsService;
 import com.piview.backend.global.security.TokenProvider;
@@ -21,6 +22,7 @@ public class AuthService {
   private final TokenProvider tokenProvider;
   private final RedisService redisService;
   private final CustomUserDetailsService customUserDetailsService;
+  private final AppProperties appProperties;
 
   // 토큰 재발급 로직
   public TokenResponseDto reissue(String refreshToken) {
@@ -50,7 +52,8 @@ public class AuthService {
     String newRefreshToken = tokenProvider.createRefreshToken(authentication);
 
     // Redis에 새로운 리프레시 토큰으로 덮어쓰기
-    redisService.setValues(email, newRefreshToken, Duration.ofDays(14));
+    long expireDays = appProperties.getAuth().getRefreshTokenExpirationDays();
+    redisService.setValues(email, newRefreshToken, Duration.ofDays(expireDays));
 
     return TokenResponseDto.builder()
         .accessToken(newAccessToken)
