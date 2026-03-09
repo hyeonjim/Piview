@@ -6,6 +6,7 @@ COPY gradle gradle
 COPY build.gradle settings.gradle ./
 RUN chmod +x ./gradlew
 
+COPY checkstyle checkstyle
 COPY src src
 RUN ./gradlew clean build -x test
 
