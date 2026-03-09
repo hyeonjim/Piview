@@ -8,7 +8,7 @@
 
 /* ── 디자인 토큰 (피그마 ThemeContext 원본값) ── */
 @theme {
-  --max-width-app: 430px;
+  --max-width-app: 500px;
 
   /* Primary — 피그마: #A2AA7B */
   --color-brand: #a2aa7b;
@@ -20,25 +20,25 @@
   --color-warm: #c28c7e;
   --color-warm-bg: #fffaf5;
 
-  /* 배경 — 피그마 body: #ECEADE */
-  --color-bg-base: #eceade;
+  /* 배경 — 피그마 MobileFrame: #F0EDE8 */
+  --color-bg-base: #f0ede8;
   --color-bg-surface: #f8f6f0;
   --color-bg-card: #ffffff;
   --color-bg-beige: #f8f5ef;
 
-  /* 텍스트 — 피그마: #181717 / #AFAFAF */
-  --color-text-primary: #181717;
-  --color-text-secondary: #5f6750;
-  --color-text-muted: #afafaf;
+  /* 텍스트 — 피그마: #1A1A1A / #AFAFAF */
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #616161;
+  --color-text-muted: #9e9e9e;
 
   /* 보더 — 피그마: #F0F0F0 / #E8E0D0 */
   --color-border: #f0f0f0;
   --color-border-warm: #e8e0d0;
 
   /* EWG */
-  --color-ewg-safe: #6b9e6b;
-  --color-ewg-caution: #d4a84b;
-  --color-ewg-danger: #d94f3d;
+  --color-ewg-safe: #2e7d32;
+  --color-ewg-caution: #f57f17;
+  --color-ewg-danger: #c62828;
 
   /* 반경 — 피그마 원본 */
   --radius-card: 16px;
@@ -68,20 +68,20 @@
 :root {
   --radius: 0.625rem;
   --background: #ffffff;
-  --foreground: #181717;
+  --foreground: #1a1a1a;
   --card: #ffffff;
-  --card-foreground: #181717;
+  --card-foreground: #1a1a1a;
   --popover: #ffffff;
-  --popover-foreground: #181717;
+  --popover-foreground: #1a1a1a;
   --primary: #a2aa7b;
   --primary-foreground: #ffffff;
   --secondary: #f0f2e8;
-  --secondary-foreground: #181717;
+  --secondary-foreground: #1a1a1a;
   --muted: #f8f6f0;
-  --muted-foreground: #afafaf;
+  --muted-foreground: #9e9e9e;
   --accent: #f0f2e8;
-  --accent-foreground: #181717;
-  --destructive: #d94f3d;
+  --accent-foreground: #1a1a1a;
+  --destructive: #c62828;
   --border: #f0f0f0;
   --input: #f0f0f0;
   --ring: #a2aa7b;
@@ -93,7 +93,6 @@
   }
 
   html {
-    /* 피그마 fonts.css: Pretendard */
     font-family:
       "Pretendard Variable",
       Pretendard,
@@ -105,9 +104,9 @@
   }
 
   body {
-    /* 피그마 theme.css: body background-color #ECEADE */
-    background-color: #eceade;
-    color: #181717;
+    /* 피그마 MobileFrame: #F0EDE8 */
+    background-color: #f0ede8;
+    color: #1a1a1a;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -147,5 +146,22 @@
   }
   input {
     font-family: inherit;
+  }
+
+  /* ── 피그마 MobileFrame: 12px 이하 폰트 13px 강제 ── */
+  [style*="font-size: 8px"],
+  [style*="font-size: 9px"],
+  [style*="font-size: 10px"],
+  [style*="font-size: 11px"],
+  [style*="font-size: 12px"] {
+    font-size: 13px !important;
+  }
+  .text-xs {
+    font-size: 13px !important;
+  }
+  .text-\[10px\],
+  .text-\[9px\],
+  .text-\[8px\] {
+    font-size: 13px !important;
   }
 }
