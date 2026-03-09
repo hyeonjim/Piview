@@ -53,7 +53,7 @@ public class SecurityConfig {
                         .requestMatchers("/health", "/error").permitAll()
                         .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/favicon.ico").permitAll()
                         .requestMatchers("/api/auth/**", "/oauth2/**").permitAll()
-
+                        .requestMatchers("/auth/**").permitAll()
                         // 이 외의 모든 API 요청은 인증(로그인)이 필요함
                         .anyRequest().authenticated()
                 )
