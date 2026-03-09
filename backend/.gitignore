@@ -26,7 +26,7 @@ backend/build/
 backend/out/
 backend/target/
 *.jar
-!backend/gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.jar
 *.war
 *.ear
 # 민감한 설정 파일 (DB 비밀번호, S3 키 등이 들어갈 경우)
