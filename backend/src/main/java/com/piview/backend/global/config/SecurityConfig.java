@@ -97,8 +97,8 @@ public class SecurityConfig {
         // 쿠키 및 인증 헤더를 주고받을 수 있도록 허용
         configuration.setAllowCredentials(true);
 
-        // 프론트엔드에서 응답 헤더의(Authorization) 토큰을 읽을 수 있도록 노출
-        configuration.setExposedHeaders(List.of("Authorization", "Set-Cookie"));
+        // 프론트엔드가 쿠키만 읽을 수 있게 Set-Cookie만 남기기
+        configuration.setExposedHeaders(List.of("Set-Cookie"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
