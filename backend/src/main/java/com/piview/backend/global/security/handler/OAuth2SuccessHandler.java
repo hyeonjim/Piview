@@ -48,11 +48,14 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         // 3. Redis에 Refresh Token 저장 (7일 유지)
         redisService.setValues(email, refreshToken, Duration.ofDays(7));
 
-        // 4. 쿠키에 토큰 저장 (HttpOnly, Secure 등은 CookieUtil 내부에 구현되어 있다고 가정)
-        cookieUtil.addTokenCookies(response, accessToken, refreshToken);
+        // 4-1 Refresh Token: 해커가 절대 못 훔쳐가게 자물쇠(HttpOnly=true)를 채워서 7일간 굽기
+        CookieUtil.addCookie(response, "refreshToken", refreshToken, 7 * 24 * 60 * 60);
 
-        // 5. 프론트엔드로 리다이렉트할 URL 결정
-        String targetUrl = determineTargetUrl(request, response, authentication, accessToken);
+        // 4-2 Access Token: 프론트엔드가 자바스크립트로 쏙 빼갈 수 있게 자물쇠를 풀고(HttpOnly=false) 딱 60초만 굽습니다!
+        CookieUtil.addTempCookieForFront(response, "accessToken", accessToken, 60);
+
+        // 5. 프론트엔드로 리다이렉트할 URL 결정 (이후 변경 필요)
+        String targetUrl = "http://localhost:3000/oauth2/redirect";
 
         if (response.isCommitted()) {
             log.debug("응답이 이미 커밋되었습니다. {} 로 리다이렉트 할 수 없습니다.", targetUrl);

@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.stream.Collectors;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 @Service
@@ -144,5 +145,12 @@ public class TokenProvider {
 
     public String getEmailFromToken(String token) {
         return parseClaims(token).getSubject();
+    }
+
+    public static String resolveToken(String bearerToken) {
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 }

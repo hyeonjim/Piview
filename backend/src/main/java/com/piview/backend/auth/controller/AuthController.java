@@ -2,6 +2,7 @@ package com.piview.backend.auth.controller;
 
 import com.piview.backend.auth.dto.response.TokenResponseDto;
 import com.piview.backend.auth.service.AuthService;
+import com.piview.backend.global.security.TokenProvider;
 import com.piview.backend.global.security.UserPrincipal;
 import com.piview.backend.global.util.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -49,11 +50,7 @@ public class AuthController {
       HttpServletRequest request,
       HttpServletResponse response) {
 
-    // 헤더에서 "Bearer " 떼어내기
-    String accessToken = null;
-    if (StringUtils.hasText(authorizationHeader) && authorizationHeader.startsWith("Bearer ")) {
-      accessToken = authorizationHeader.substring(7);
-    }
+    String accessToken = TokenProvider.resolveToken(authorizationHeader);
 
     // 토큰과 유저 정보가 정상적으로 존재할 때만 Service 호출 (Redis 블랙리스트 및 삭제 처리)
     if (userPrincipal != null && StringUtils.hasText(accessToken)) {
