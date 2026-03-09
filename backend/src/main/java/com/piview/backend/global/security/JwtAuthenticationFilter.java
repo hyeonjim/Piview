@@ -28,8 +28,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
 
-    // 쿠키에서 accessToken만 쏙 빼오기
-    String accessToken = resolveTokenFromCookie(request);
+    // 헤더에서 accessToken만 쏙 빼오기
+    String accessToken = tokenProvider.resolveToken(request.getHeader("Authorization"));
 
     // 유효성 검사
     if (StringUtils.hasText(accessToken) && tokenProvider.validateToken(accessToken)) {
@@ -51,18 +51,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     filterChain.doFilter(request, response);
-  }
-
-  // 요청(Request)의 쿠키 목록에서 accessToken 값만 찾아내는 역할
-  private String resolveTokenFromCookie(HttpServletRequest request) {
-    Cookie[] cookies = request.getCookies();
-    if (cookies != null) {
-      for (Cookie cookie : cookies) {
-        if ("accessToken".equals(cookie.getName())) {
-          return cookie.getValue();
-        }
-      }
-    }
-    return null;
   }
 }
