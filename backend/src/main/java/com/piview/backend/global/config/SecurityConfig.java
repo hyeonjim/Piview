@@ -1,7 +1,7 @@
 package com.piview.backend.global.config;
 
 import com.piview.backend.auth.service.CustomOAuth2UserService;
-import com.piview.backend.global.security.TokenAuthenticationFilter;
+import com.piview.backend.global.security.JwtAuthenticationFilter;
 import com.piview.backend.global.security.handler.OAuth2FailureHandler;
 import com.piview.backend.global.security.handler.OAuth2SuccessHandler;
 import com.piview.backend.global.security.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
@@ -26,10 +26,10 @@ import java.util.List;
 public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
-    private final TokenAuthenticationFilter tokenAuthenticationFilter;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final OAuth2FailureHandler oAuth2FailureHandler;
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/favicon.ico").permitAll()
                         .requestMatchers("/api/auth/**", "/oauth2/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
-                        // 이 외의 모든 API 요청은 인증(로그인)이 필요함
+
                         .anyRequest().authenticated()
                 )
 
@@ -74,8 +74,8 @@ public class SecurityConfig {
                         .failureHandler(oAuth2FailureHandler)
                 );
 
-        // 7. JWT 문지기 필터를 시큐리티 기본 인증 필터(UsernamePassword)보다 먼저 실행되도록 끼워넣기
-        http.addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        // 7. JWT 문지기 필터
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
