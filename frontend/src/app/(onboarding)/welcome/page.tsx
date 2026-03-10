@@ -3,122 +3,62 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
+import { WELCOME_SLIDES } from "@/constants/_mock/welcomeSlides";
 
-const SLIDE_IMG_1 =
-  "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080";
-const SLIDE_IMG_2 =
-  "https://images.unsplash.com/photo-1666025062728-c33a25e8ee3f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080";
-const SLIDE_IMG_3 =
-  "https://images.unsplash.com/photo-1765964492963-b0aa8c172431?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080";
 const OVERLAY =
   "linear-gradient(to top, rgba(30,27,36,0.92) 0%, rgba(30,27,36,0.5) 40%, rgba(30,27,36,0.1) 65%, transparent 100%)";
-
-const slides = [
-  {
-    image: SLIDE_IMG_1,
-    title: "Discover\nYour Glow",
-    subtitle: "당신의 피부에 맞는 특별한 케어를\n지금 시작하세요.",
-  },
-  {
-    image: SLIDE_IMG_2,
-    title: "Personalized\nFor You",
-    subtitle: "과학적 분석으로 나만의\n스킨케어 루틴을 설계합니다.",
-  },
-  {
-    image: SLIDE_IMG_3,
-    title: "Care &\nAttention",
-    subtitle:
-      "AI 기반 피부 진단과 성분 분석으로\n정확한 맞춤 추천을 경험하세요.",
-  },
-];
 
 export default function WelcomePage() {
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [fading, setFading] = useState(false);
+  const [touchStart,   setTouchStart]   = useState<number | null>(null);
+  const [fading,       setFading]       = useState(false);
 
   useEffect(() => {
-    const interval = setInterval(
-      () => setCurrentSlide((p) => (p + 1) % slides.length),
-      5000,
-    );
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % WELCOME_SLIDES.length);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  const goNext = useCallback(
-    () => setCurrentSlide((p) => (p + 1) % slides.length),
-    [],
-  );
-  const goPrev = useCallback(
-    () => setCurrentSlide((p) => (p - 1 + slides.length) % slides.length),
-    [],
-  );
-  const handleTouchStart = (e: React.TouchEvent) =>
-    setTouchStart(e.touches[0].clientX);
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const goNext = useCallback(() => setCurrentSlide((prev) => (prev + 1) % WELCOME_SLIDES.length), []);
+  const goPrev = useCallback(() => setCurrentSlide((prev) => (prev - 1 + WELCOME_SLIDES.length) % WELCOME_SLIDES.length), []);
+
+  const handleTouchStart = (e: React.TouchEvent) => setTouchStart(e.touches[0].clientX);
+  const handleTouchEnd   = (e: React.TouchEvent) => {
     if (touchStart === null) return;
     const diff = touchStart - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 50) diff > 0 ? goNext() : goPrev();
     setTouchStart(null);
   };
+
   const handleStart = () => {
     setFading(true);
     setTimeout(() => router.push("/skin-test"), 400);
   };
-  const slide = slides[currentSlide];
+
+  const slide = WELCOME_SLIDES[currentSlide];
 
   return (
-    <div
-      className="relative flex flex-col"
-      style={{
-        height: "100%",
-        minHeight: "100dvh",
-        backgroundColor: "#1E1B24",
-        overflow: "hidden",
-        opacity: fading ? 0 : 1,
-        transition: "opacity 0.4s ease",
-      }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* 배경 이미지 */}
-      {slides.map((s, i) => (
-        <div
-          key={i}
-          className="absolute inset-0"
-          style={{
-            opacity: i === currentSlide ? 1 : 0,
-            transition: "opacity 1s ease",
-          }}
-        >
-          <img
-            src={s.image}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ objectPosition: "center 30%" }}
-          />
+    <div className="relative flex flex-col overflow-hidden"
+      style={{ height: "100%", minHeight: "100dvh", backgroundColor: "#1E1B24",
+        opacity: fading ? 0 : 1, transition: "opacity 0.4s ease" }}
+      onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+
+      {/* 배경 이미지 크로스페이드 */}
+      {WELCOME_SLIDES.map((s, i) => (
+        <div key={i} className="absolute inset-0" style={{ opacity: i === currentSlide ? 1 : 0, transition: "opacity 1s ease" }}>
+          <img src={s.image} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: "center 30%" }} />
         </div>
       ))}
 
       {/* 그라디언트 오버레이 */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: OVERLAY }}
-      />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: OVERLAY }} />
 
       {/* 브랜드명 */}
       <div className="relative z-10 flex justify-center pt-14">
-        <p
-          style={{
-            fontFamily: "'Raleway', sans-serif",
-            fontSize: "35px",
-            fontWeight: 700,
-            color: "rgba(255,255,255,0.85)",
-            letterSpacing: "4px",
-            textTransform: "uppercase",
-          }}
-        >
+        <p style={{ fontFamily: "'Raleway', sans-serif", fontSize: "35px", fontWeight: 700,
+          color: "rgba(255,255,255,0.85)", letterSpacing: "4px", textTransform: "uppercase" }}>
           피뷰
         </p>
       </div>
@@ -128,89 +68,42 @@ export default function WelcomePage() {
       {/* 하단 콘텐츠 */}
       <div className="relative z-10 px-7 pb-10">
         <div style={{ minHeight: "140px" }}>
-          <h1
-            style={{
-              fontFamily: "'Raleway', sans-serif",
-              fontSize: "42px",
-              fontWeight: 300,
-              color: "#FFFFFF",
-              lineHeight: 1.15,
-              letterSpacing: "-0.5px",
-              whiteSpace: "pre-line",
-              margin: 0,
-              transition: "opacity 0.5s",
-            }}
-          >
+          <h1 style={{ fontFamily: "'Raleway', sans-serif", fontSize: "42px", fontWeight: 300,
+            color: "#FFFFFF", lineHeight: 1.15, letterSpacing: "-0.5px", whiteSpace: "pre-line",
+            margin: 0, transition: "opacity 0.5s" }}>
             {slide.title}
           </h1>
-          <p
-            style={{
-              fontFamily: "'Raleway', sans-serif",
-              fontSize: "16px",
-              fontWeight: 400,
-              color: "rgba(255,255,255,0.6)",
-              lineHeight: 1.7,
-              marginTop: "16px",
-              whiteSpace: "pre-line",
-              letterSpacing: "0.2px",
-            }}
-          >
+          <p style={{ fontFamily: "'Raleway', sans-serif", fontSize: "16px", fontWeight: 400,
+            color: "rgba(255,255,255,0.6)", lineHeight: 1.7, marginTop: "16px",
+            whiteSpace: "pre-line", letterSpacing: "0.2px" }}>
             {slide.subtitle}
           </p>
         </div>
 
-        {/* 페이지네이션 점 */}
+        {/* 페이지네이션 dots */}
         <div className="flex items-center gap-2 mt-8">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentSlide(i)}
+          {WELCOME_SLIDES.map((_, i) => (
+            <button key={i} onClick={() => setCurrentSlide(i)}
               className="border-none cursor-pointer p-0"
-              style={{
-                width: i === currentSlide ? "24px" : "6px",
-                height: "6px",
-                borderRadius: "3px",
-                backgroundColor:
-                  i === currentSlide
-                    ? "var(--color-brand)"
-                    : "rgba(255,255,255,0.3)",
-                transition: "all 0.4s ease",
-              }}
-            />
+              style={{ width: i === currentSlide ? "24px" : "6px", height: "6px", borderRadius: "3px",
+                backgroundColor: i === currentSlide ? "var(--color-brand)" : "rgba(255,255,255,0.3)",
+                transition: "all 0.4s ease" }} />
           ))}
         </div>
 
-        {/* CTA 행 */}
+        {/* CTA */}
         <div className="flex items-center justify-between mt-8">
-          <button
-            onClick={() => router.push("/home")}
-            className="bg-transparent border-none cursor-pointer p-0"
-            style={{
-              fontFamily: "'Raleway', sans-serif",
-              fontSize: "16px",
-              color: "rgba(255,255,255,0.5)",
-              fontWeight: 400,
-            }}
-          >
+          <button onClick={() => router.push("/home")} className="bg-transparent border-none cursor-pointer p-0"
+            style={{ fontFamily: "'Raleway', sans-serif", fontSize: "16px", color: "rgba(255,255,255,0.5)", fontWeight: 400 }}>
             이미 계정이 있으신가요?{" "}
             <span className="text-brand font-semibold">로그인</span>
           </button>
-          <button
-            onClick={handleStart}
+          <button onClick={handleStart}
             className="flex items-center justify-center cursor-pointer border-none bg-brand"
-            style={{
-              width: "70px",
-              height: "70px",
-              borderRadius: "50%",
-              boxShadow: "0 4px 24px var(--color-brand)",
-              marginRight: "10px",
-              transition: "transform 0.15s ease",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.transform = "scale(1.05)")
-            }
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-          >
+            style={{ width: "70px", height: "70px", borderRadius: "50%",
+              boxShadow: "0 4px 24px rgba(162,170,123,0.53)", transition: "transform 0.15s ease", marginRight: "10px" }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}>
             <ArrowRight size={22} color="#fff" strokeWidth={2} />
           </button>
         </div>

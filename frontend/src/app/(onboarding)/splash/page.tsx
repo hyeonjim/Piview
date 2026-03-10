@@ -19,36 +19,42 @@ export default function SplashPage() {
     <div
       className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
       style={{
-        background:
-          "linear-gradient(160deg, #D4C8BC 4.5%, var(--color-bg-base) 50%)",
+        background: "linear-gradient(160deg, #D4C8BC 4.5%, #ECEADE 50%)",
         opacity: visible ? 1 : 0,
         transition: "opacity 0.6s ease",
       }}
     >
-      {/* 장식 원형 */}
+      {/* Decorative circles */}
       <div
-        className="absolute border border-brand"
+        className="absolute"
         style={{
           width: "300px",
           height: "300px",
           borderRadius: "50%",
+          border: "1px solid #A2AA7B",
           opacity: 0.08,
         }}
       />
       <div
-        className="absolute border border-brand"
+        className="absolute"
         style={{
           width: "450px",
           height: "450px",
           borderRadius: "50%",
+          border: "1px solid #A2AA7B",
           opacity: 0.05,
         }}
       />
 
-      {/* 리프 아이콘 */}
+      {/* Leaf icon */}
       <div
-        className="flex items-center justify-center bg-brand"
-        style={{ width: "48px", height: "48px", borderRadius: "50%" }}
+        className="flex items-center justify-center"
+        style={{
+          width: "48px",
+          height: "48px",
+          borderRadius: "50%",
+          backgroundColor: "#A2AA7B",
+        }}
       >
         <svg
           width="22"
@@ -65,11 +71,16 @@ export default function SplashPage() {
         </svg>
       </div>
 
-      {/* 브랜드명 */}
+      {/* Brand name */}
       <div className="flex flex-col items-center mt-6">
         <p
-          className="text-text-primary font-medium"
-          style={{ fontSize: "32px", letterSpacing: "-0.5px", margin: 0 }}
+          style={{
+            fontSize: "32px",
+            fontWeight: 500,
+            color: "#1A1A1A",
+            letterSpacing: "-0.5px",
+            margin: 0,
+          }}
         >
           PiView
         </p>
@@ -87,16 +98,16 @@ export default function SplashPage() {
         </p>
       </div>
 
-      {/* 로딩 점 */}
+      {/* Loading dots */}
       <div className="absolute bottom-16 flex gap-1.5">
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className="bg-brand"
             style={{
               width: "4px",
               height: "4px",
               borderRadius: "50%",
+              backgroundColor: "#A2AA7B",
               animation: `pulse 1.2s infinite ${i * 0.2}s`,
             }}
           />
@@ -104,7 +115,10 @@ export default function SplashPage() {
       </div>
 
       <style>{`
-        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+        @keyframes pulse {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
+        }
       `}</style>
     </div>
   );
