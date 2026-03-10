@@ -52,8 +52,7 @@ public class SecurityConfig {
                         // 누구나 접근 가능한 URL (헬스 체크, 정적 리소스, 인증 관련)
                         .requestMatchers("/health", "/error").permitAll()
                         .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/favicon.ico").permitAll()
-                        .requestMatchers("/api/auth/**", "/oauth2/**").permitAll()
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**", "/api/v1/oauth2/**").permitAll()
 
                         .anyRequest().authenticated()
                 )
