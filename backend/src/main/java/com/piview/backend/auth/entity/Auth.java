@@ -2,6 +2,10 @@ package com.piview.backend.auth.entity;
 
 import java.time.LocalDateTime;
 
+import com.piview.backend.skin.survey.entity.SurveyAgeGroup;
+import com.piview.backend.skin.survey.entity.SurveyGender;
+import com.piview.backend.skin.survey.entity.SurveySkinType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,7 +20,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -47,23 +51,30 @@ public class Auth {
 
     // 설문 응답으로 갱신되는 사용자 기본 프로필 값들이다.
     // 성별 값을 저장한다.
+    @Enumerated(EnumType.STRING)
     @Column(name = "gender", length = 10)
-    private String gender;
+    private SurveyGender gender;
 
     // 연령대 값을 저장한다.
-    @Column(name = "age_group")
-    private Integer ageGroup;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "age_group", length = 20)
+    private SurveyAgeGroup ageGroup;
 
     // 사용자 피부 타입 값을 저장한다.
+    @Enumerated(EnumType.STRING)
     @Column(name = "my_skin_type", length = 20)
-    private String mySkinType;
+    private SurveySkinType mySkinType;
 
     // 탈퇴 유저 복구(Soft Delete) 처리를 위한 타임스탬프
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     // 설문 제출 시 회원 기본 프로필만 한 번에 갱신할 수 있게 둔다.
-    public void updateSurveyProfile(String gender, Integer ageGroup, String mySkinType) {
+    public void updateSurveyProfile(
+        SurveyGender gender,
+        SurveyAgeGroup ageGroup,
+        SurveySkinType mySkinType
+    ) {
         this.gender = gender;
         this.ageGroup = ageGroup;
         this.mySkinType = mySkinType;
