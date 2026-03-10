@@ -10,7 +10,6 @@ const SLIDE_IMG_2 =
   "https://images.unsplash.com/photo-1666025062728-c33a25e8ee3f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080";
 const SLIDE_IMG_3 =
   "https://images.unsplash.com/photo-1765964492963-b0aa8c172431?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080";
-
 const OVERLAY =
   "linear-gradient(to top, rgba(30,27,36,0.92) 0%, rgba(30,27,36,0.5) 40%, rgba(30,27,36,0.1) 65%, transparent 100%)";
 
@@ -33,8 +32,6 @@ const slides = [
   },
 ];
 
-const ACCENT = "#A2AA7B";
-
 export default function WelcomePage() {
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -42,19 +39,21 @@ export default function WelcomePage() {
   const [fading, setFading] = useState(false);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
+    const interval = setInterval(
+      () => setCurrentSlide((p) => (p + 1) % slides.length),
+      5000,
+    );
     return () => clearInterval(interval);
   }, []);
 
-  const goNext = useCallback(() => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-  }, []);
-  const goPrev = useCallback(() => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  }, []);
-
+  const goNext = useCallback(
+    () => setCurrentSlide((p) => (p + 1) % slides.length),
+    [],
+  );
+  const goPrev = useCallback(
+    () => setCurrentSlide((p) => (p - 1 + slides.length) % slides.length),
+    [],
+  );
   const handleTouchStart = (e: React.TouchEvent) =>
     setTouchStart(e.touches[0].clientX);
   const handleTouchEnd = (e: React.TouchEvent) => {
@@ -63,12 +62,10 @@ export default function WelcomePage() {
     if (Math.abs(diff) > 50) diff > 0 ? goNext() : goPrev();
     setTouchStart(null);
   };
-
   const handleStart = () => {
     setFading(true);
     setTimeout(() => router.push("/skin-test"), 400);
   };
-
   const slide = slides[currentSlide];
 
   return (
@@ -85,7 +82,7 @@ export default function WelcomePage() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Background images with crossfade */}
+      {/* 배경 이미지 */}
       {slides.map((s, i) => (
         <div
           key={i}
@@ -104,13 +101,13 @@ export default function WelcomePage() {
         </div>
       ))}
 
-      {/* Gradient overlay */}
+      {/* 그라디언트 오버레이 */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{ background: OVERLAY }}
       />
 
-      {/* Brand name */}
+      {/* 브랜드명 */}
       <div className="relative z-10 flex justify-center pt-14">
         <p
           style={{
@@ -128,9 +125,8 @@ export default function WelcomePage() {
 
       <div className="flex-1" />
 
-      {/* Bottom content */}
+      {/* 하단 콘텐츠 */}
       <div className="relative z-10 px-7 pb-10">
-        {/* Title + subtitle with fade transition */}
         <div style={{ minHeight: "140px" }}>
           <h1
             style={{
@@ -163,7 +159,7 @@ export default function WelcomePage() {
           </p>
         </div>
 
-        {/* Pagination dots */}
+        {/* 페이지네이션 점 */}
         <div className="flex items-center gap-2 mt-8">
           {slides.map((_, i) => (
             <button
@@ -175,14 +171,16 @@ export default function WelcomePage() {
                 height: "6px",
                 borderRadius: "3px",
                 backgroundColor:
-                  i === currentSlide ? ACCENT : "rgba(255,255,255,0.3)",
+                  i === currentSlide
+                    ? "var(--color-brand)"
+                    : "rgba(255,255,255,0.3)",
                 transition: "all 0.4s ease",
               }}
             />
           ))}
         </div>
 
-        {/* CTA row */}
+        {/* CTA 행 */}
         <div className="flex items-center justify-between mt-8">
           <button
             onClick={() => router.push("/home")}
@@ -195,20 +193,18 @@ export default function WelcomePage() {
             }}
           >
             이미 계정이 있으신가요?{" "}
-            <span style={{ color: ACCENT, fontWeight: 600 }}>로그인</span>
+            <span className="text-brand font-semibold">로그인</span>
           </button>
-
           <button
             onClick={handleStart}
-            className="flex items-center justify-center cursor-pointer border-none"
+            className="flex items-center justify-center cursor-pointer border-none bg-brand"
             style={{
               width: "70px",
               height: "70px",
               borderRadius: "50%",
-              backgroundColor: ACCENT,
-              boxShadow: `0 4px 24px ${ACCENT}88`,
-              transition: "transform 0.15s ease",
+              boxShadow: "0 4px 24px var(--color-brand)",
               marginRight: "10px",
+              transition: "transform 0.15s ease",
             }}
             onMouseEnter={(e) =>
               (e.currentTarget.style.transform = "scale(1.05)")

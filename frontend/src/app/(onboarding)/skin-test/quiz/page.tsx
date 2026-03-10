@@ -3,9 +3,6 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
-const PRIMARY = "#A2AA7B";
-const PRIMARY_BG = "#F0F2E8";
-
 interface QuizQuestion {
   id: number;
   question: string;
@@ -154,9 +151,8 @@ export default function QuizPage() {
   const selectAnswer = useCallback(
     (value: string) => {
       setAnswers((prev) => ({ ...prev, [question.id]: value }));
-      if (question.id === -1 && (value === "male" || value === "female")) {
+      if (question.id === -1 && (value === "male" || value === "female"))
         setGender(value as "female" | "male");
-      }
     },
     [question.id],
   );
@@ -164,54 +160,44 @@ export default function QuizPage() {
   const goNext = useCallback(() => {
     if (!selectedAnswer) return;
     if (currentQ < questions.length - 1) {
-      setCurrentQ((prev) => prev + 1);
+      setCurrentQ((p) => p + 1);
     } else {
-      // answers[1] = 세안 후 피부 상태 → skinType 결정
       const skinMap: Record<string, string> = {
         dry: "dry",
         combination: "combination",
         oily: "oily",
         sensitive: "sensitive",
       };
-      const skinType = skinMap[answers[1]] || "combination";
-      router.push(`/skin-test/result?type=${skinType}`);
+      router.push(
+        `/skin-test/result?type=${skinMap[answers[1]] || "combination"}`,
+      );
     }
-  }, [currentQ, selectedAnswer, questions.length, router]);
+  }, [currentQ, selectedAnswer, questions.length, router, answers]);
 
   const goPrev = useCallback(() => {
-    if (currentQ > 0) {
-      setCurrentQ((prev) => prev - 1);
-    } else {
-      router.push("/skin-test");
-    }
+    if (currentQ > 0) setCurrentQ((p) => p - 1);
+    else router.push("/skin-test");
   }, [currentQ, router]);
 
   return (
     <div className="flex flex-col min-h-full bg-white relative">
-      {/* Progress bar */}
+      {/* 진행 바 */}
       <div className="px-6 pt-4">
         <div className="flex items-center gap-2 mb-1.5">
-          <div
-            className="flex-1 h-1.5 rounded-full overflow-hidden"
-            style={{ backgroundColor: "#F5F5F5" }}
-          >
+          <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-bg-chip">
             <div
-              className="h-full rounded-full transition-all duration-300"
-              style={{ width: `${progress}%`, backgroundColor: PRIMARY }}
+              className="h-full rounded-full transition-all duration-300 bg-brand"
+              style={{ width: `${progress}%` }}
             />
           </div>
           <span
-            style={{
-              fontSize: "15px",
-              color: "#9E9E9E",
-              minWidth: "36px",
-              textAlign: "right",
-            }}
+            className="text-text-muted"
+            style={{ fontSize: "15px", minWidth: "36px", textAlign: "right" }}
           >
             {currentQ + 1}/{questions.length}
           </span>
         </div>
-        <p style={{ fontSize: "15px", color: "#9E9E9E" }}>
+        <p className="text-text-muted" style={{ fontSize: "15px" }}>
           {isGender
             ? "맞춤 진단 시작"
             : gender === "male"
@@ -220,9 +206,9 @@ export default function QuizPage() {
         </p>
       </div>
 
-      {/* Question Content */}
+      {/* 질문 콘텐츠 */}
       <div className="flex-1 px-6 flex flex-col overflow-hidden pb-24">
-        {/* Badge */}
+        {/* 뱃지 */}
         <div className="mt-6">
           <span
             className="inline-flex items-center justify-center"
@@ -230,28 +216,31 @@ export default function QuizPage() {
               width: "32px",
               height: "32px",
               borderRadius: "50%",
+              fontSize: "11px",
+              fontWeight: 700,
               backgroundColor: isAllergy
                 ? "#FFF3E0"
                 : isGender
                   ? "#E3F2FD"
-                  : PRIMARY_BG,
-              fontSize: "11px",
-              fontWeight: 700,
-              color: isAllergy ? "#E65100" : isGender ? "#1565C0" : PRIMARY,
+                  : "var(--color-brand-bg)",
+              color: isAllergy
+                ? "#E65100"
+                : isGender
+                  ? "#1565C0"
+                  : "var(--color-brand)",
             }}
           >
             Q{currentQ + 1}
           </span>
           {isAllergy && (
             <span
-              className="ml-2 inline-flex items-center"
+              className="ml-2 inline-flex items-center font-semibold"
               style={{
                 fontSize: "10px",
                 padding: "2px 8px",
                 borderRadius: "8px",
                 backgroundColor: "#FFF3E0",
                 color: "#E65100",
-                fontWeight: 600,
               }}
             >
               🚨 성분 안전
@@ -259,12 +248,11 @@ export default function QuizPage() {
           )}
         </div>
 
-        {/* Question */}
+        {/* 질문 텍스트 */}
         <h2
+          className="text-text-primary font-semibold"
           style={{
             fontSize: "22px",
-            fontWeight: 600,
-            color: "#1A1A1A",
             lineHeight: 1.4,
             marginTop: "12px",
             whiteSpace: "pre-line",
@@ -273,7 +261,7 @@ export default function QuizPage() {
           {question.question}
         </h2>
 
-        {/* Options */}
+        {/* 선택지 */}
         <div className="flex flex-col gap-2.5 mt-6">
           {question.options.map((option) => {
             const isSelected = selectedAnswer === option.value;
@@ -286,8 +274,10 @@ export default function QuizPage() {
                   minHeight: "56px",
                   padding: "13px 16px",
                   borderRadius: "12px",
-                  backgroundColor: isSelected ? PRIMARY_BG : "#FAFAFA",
-                  border: `1.5px solid ${isSelected ? PRIMARY : "#EFEFEF"}`,
+                  backgroundColor: isSelected
+                    ? "var(--color-brand-bg)"
+                    : "var(--color-bg-chip)",
+                  border: `1.5px solid ${isSelected ? "var(--color-brand)" : "var(--color-border)"}`,
                   boxShadow: isSelected
                     ? "0px 2px 8px rgba(162,170,123,0.15)"
                     : "none",
@@ -297,10 +287,10 @@ export default function QuizPage() {
                   {option.icon}
                 </span>
                 <span
+                  className="text-text-primary"
                   style={{
                     fontSize: "15px",
                     fontWeight: isSelected ? 600 : 400,
-                    color: "#1A1A1A",
                     lineHeight: 1.4,
                   }}
                 >
@@ -308,12 +298,11 @@ export default function QuizPage() {
                 </span>
                 {isSelected && (
                   <div
-                    className="ml-auto shrink-0 flex items-center justify-center"
+                    className="ml-auto shrink-0 flex items-center justify-center bg-brand"
                     style={{
                       width: "20px",
                       height: "20px",
                       borderRadius: "50%",
-                      backgroundColor: PRIMARY,
                     }}
                   >
                     <svg width="11" height="8" viewBox="0 0 11 8" fill="none">
@@ -333,28 +322,26 @@ export default function QuizPage() {
         </div>
       </div>
 
-      {/* Bottom Navigation */}
-      <div
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-6 pb-6 pt-3 flex items-center justify-between"
-        style={{ backgroundColor: "white", borderTop: "1px solid #F5F5F5" }}
-      >
+      {/* 하단 네비게이션 */}
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] px-6 pb-6 pt-3 flex items-center justify-between bg-white border-t border-bg-chip">
         <button
           onClick={goPrev}
-          className="bg-transparent border-none cursor-pointer px-4 py-3 hover:opacity-70 transition-opacity"
-          style={{ fontSize: "15px", color: "#757575", fontWeight: 500 }}
+          className="bg-transparent border-none cursor-pointer px-4 py-3 text-text-hint font-medium hover:opacity-70 transition-opacity"
+          style={{ fontSize: "15px" }}
         >
           ← 이전
         </button>
         <button
           onClick={goNext}
-          className="px-6 py-2.5 transition-all duration-200"
+          className="px-6 py-2.5 font-semibold transition-all duration-200"
           style={{
             borderRadius: "20px",
-            backgroundColor: selectedAnswer ? PRIMARY : "#F0F0F0",
-            color: selectedAnswer ? "#FFFFFF" : "#BDBDBD",
             fontSize: "15px",
-            fontWeight: 600,
             border: "none",
+            backgroundColor: selectedAnswer
+              ? "var(--color-brand)"
+              : "var(--color-border)",
+            color: selectedAnswer ? "#FFFFFF" : "var(--color-text-disabled)",
             cursor: selectedAnswer ? "pointer" : "default",
             boxShadow: selectedAnswer
               ? "0 2px 8px rgba(162,170,123,0.3)"

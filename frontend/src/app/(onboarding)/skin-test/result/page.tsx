@@ -4,9 +4,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
 import { X, Lightbulb, ArrowRight } from "lucide-react";
 
-const PRIMARY = "#A2AA7B";
-const PRIMARY_BG = "#F0F2E8";
-
 const SKIN_TYPE_INFO: Record<
   string,
   { label: string; emoji: string; insight: string }
@@ -37,8 +34,6 @@ const SKIN_TYPE_INFO: Record<
   },
 };
 
-const DEFAULT_TYPE = SKIN_TYPE_INFO.combination;
-
 function ResultContent() {
   const router = useRouter();
   const params = useSearchParams();
@@ -49,32 +44,28 @@ function ResultContent() {
   ];
   const allergies = params.get("allergies")?.split(",").filter(Boolean) || [];
   const ageGroup = params.get("age") || null;
-
-  const typeInfo = SKIN_TYPE_INFO[skinType] || DEFAULT_TYPE;
+  const typeInfo = SKIN_TYPE_INFO[skinType] || SKIN_TYPE_INFO.combination;
 
   return (
     <div className="flex flex-col min-h-full bg-white">
-      {/* Close button */}
       <div className="flex justify-end px-6 pt-4">
         <button
           onClick={() => router.push("/home")}
           className="p-2 bg-transparent border-none cursor-pointer"
         >
-          <X size={22} color="#2C2C2C" />
+          <X size={22} className="text-text-primary" />
         </button>
       </div>
 
-      {/* Scrollable content */}
       <div className="flex-1 px-6 pb-8 overflow-y-auto">
-        {/* Icon */}
+        {/* 이모지 아이콘 */}
         <div className="flex justify-center mt-4">
           <div
-            className="flex items-center justify-center"
+            className="flex items-center justify-center bg-brand-bg"
             style={{
               width: "72px",
               height: "72px",
               borderRadius: "50%",
-              backgroundColor: PRIMARY_BG,
               fontSize: "36px",
             }}
           >
@@ -82,16 +73,14 @@ function ResultContent() {
           </div>
         </div>
 
-        {/* Badge */}
+        {/* 진단 완료 뱃지 */}
         <div className="flex justify-center mt-5">
           <span
+            className="bg-brand text-white font-semibold"
             style={{
               padding: "6px 20px",
               borderRadius: "12px",
-              backgroundColor: PRIMARY,
-              color: "#FFFFFF",
               fontSize: "14px",
-              fontWeight: 600,
               letterSpacing: "0.5px",
             }}
           >
@@ -99,16 +88,15 @@ function ResultContent() {
           </span>
         </div>
 
-        {/* Result */}
+        {/* 결과 */}
         <div className="text-center mt-5">
-          <p style={{ fontSize: "15px", color: "#9E9E9E" }}>
+          <p className="text-text-muted" style={{ fontSize: "15px" }}>
             회원님의 피부 타입은
           </p>
           <p
+            className="text-brand font-bold"
             style={{
               fontSize: "36px",
-              fontWeight: 700,
-              color: PRIMARY,
               marginTop: "6px",
               letterSpacing: "-0.5px",
             }}
@@ -116,55 +104,42 @@ function ResultContent() {
             {typeInfo.label}
           </p>
           {ageGroup && (
-            <p style={{ fontSize: "14px", color: "#AFAFAF", marginTop: "4px" }}>
+            <p
+              className="text-text-faint"
+              style={{ fontSize: "14px", marginTop: "4px" }}
+            >
               연령대: {ageGroup}
             </p>
           )}
         </div>
 
-        {/* Details card */}
-        <div
-          className="mt-8 p-6"
-          style={{ borderRadius: "16px", backgroundColor: PRIMARY_BG }}
-        >
+        {/* 상세 카드 */}
+        <div className="mt-8 p-6 bg-brand-bg" style={{ borderRadius: "16px" }}>
           <div className="flex flex-col gap-4">
-            {/* 피부 타입 */}
             <div className="flex items-start gap-3">
               <span style={{ fontSize: "20px", marginTop: "1px" }}>🎯</span>
               <div>
                 <p
-                  style={{
-                    fontSize: "13px",
-                    color: "#AFAFAF",
-                    marginBottom: "2px",
-                  }}
+                  className="text-text-faint"
+                  style={{ fontSize: "13px", marginBottom: "2px" }}
                 >
                   피부 타입
                 </p>
                 <p
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: 600,
-                    color: "#1A1A1A",
-                  }}
+                  className="text-text-primary font-semibold"
+                  style={{ fontSize: "15px" }}
                 >
                   {typeInfo.label}
                 </p>
               </div>
             </div>
-
-            <div style={{ height: "1px", backgroundColor: `${PRIMARY}30` }} />
-
-            {/* 피부 고민 */}
+            <div className="border-0 bg-brand/30" style={{ height: "1px" }} />
             <div className="flex items-start gap-3">
               <span style={{ fontSize: "20px", marginTop: "1px" }}>😟</span>
               <div>
                 <p
-                  style={{
-                    fontSize: "13px",
-                    color: "#AFAFAF",
-                    marginBottom: "2px",
-                  }}
+                  className="text-text-faint"
+                  style={{ fontSize: "13px", marginBottom: "2px" }}
                 >
                   피부 고민
                 </p>
@@ -173,14 +148,12 @@ function ResultContent() {
                     concerns.map((c) => (
                       <span
                         key={c}
+                        className="bg-white text-brand font-semibold"
                         style={{
                           fontSize: "13px",
                           padding: "2px 10px",
                           borderRadius: "20px",
-                          backgroundColor: "white",
-                          color: PRIMARY,
-                          fontWeight: 600,
-                          border: `1px solid ${PRIMARY}40`,
+                          border: "1px solid var(--color-brand-bg)",
                         }}
                       >
                         {c}
@@ -188,11 +161,8 @@ function ResultContent() {
                     ))
                   ) : (
                     <p
-                      style={{
-                        fontSize: "15px",
-                        fontWeight: 600,
-                        color: "#1A1A1A",
-                      }}
+                      className="text-text-primary font-semibold"
+                      style={{ fontSize: "15px" }}
                     >
                       없음
                     </p>
@@ -200,28 +170,19 @@ function ResultContent() {
                 </div>
               </div>
             </div>
-
-            <div style={{ height: "1px", backgroundColor: `${PRIMARY}30` }} />
-
-            {/* 알레르기 */}
+            <div className="bg-brand/30" style={{ height: "1px" }} />
             <div className="flex items-start gap-3">
               <span style={{ fontSize: "20px", marginTop: "1px" }}>⚠️</span>
               <div>
                 <p
-                  style={{
-                    fontSize: "13px",
-                    color: "#AFAFAF",
-                    marginBottom: "2px",
-                  }}
+                  className="text-text-faint"
+                  style={{ fontSize: "13px", marginBottom: "2px" }}
                 >
                   주의 성분
                 </p>
                 <p
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: 600,
-                    color: "#1A1A1A",
-                  }}
+                  className="text-text-primary font-semibold"
+                  style={{ fontSize: "15px" }}
                 >
                   {allergies.length > 0 ? allergies.join(", ") : "없음"}
                 </p>
@@ -230,7 +191,7 @@ function ResultContent() {
           </div>
         </div>
 
-        {/* Insight card */}
+        {/* 인사이트 카드 — 파란색은 브랜드 고유 UI라 CSS 변수 없음, 직접 값 유지 */}
         <div
           className="mt-4 p-5"
           style={{
@@ -241,39 +202,40 @@ function ResultContent() {
         >
           <div className="flex items-center gap-2 mb-3">
             <Lightbulb size={17} color="#2196F3" />
-            <p style={{ fontSize: "14px", fontWeight: 700, color: "#1565C0" }}>
+            <p
+              className="font-bold"
+              style={{ fontSize: "14px", color: "#1565C0" }}
+            >
               맞춤 인사이트
             </p>
           </div>
-          <p style={{ fontSize: "14px", color: "#1A1A1A", lineHeight: 1.7 }}>
+          <p
+            className="text-text-primary"
+            style={{ fontSize: "14px", lineHeight: 1.7 }}
+          >
             {typeInfo.insight}
           </p>
         </div>
       </div>
 
-      {/* Bottom CTAs */}
+      {/* 하단 CTA */}
       <div className="px-6 pb-10 pt-3 flex flex-col gap-3">
         <button
           onClick={() => router.push("/routine")}
-          className="w-full flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer bg-brand text-white font-semibold border-none"
           style={{
             height: "54px",
             borderRadius: "32px",
-            backgroundColor: PRIMARY,
-            color: "#FFFFFF",
             fontSize: "15px",
-            fontWeight: 600,
-            border: "none",
             boxShadow: "0px 4px 16px rgba(162,170,123,0.35)",
           }}
         >
-          내 제품 등록하러 가기
-          <ArrowRight size={18} color="white" />
+          내 제품 등록하러 가기 <ArrowRight size={18} color="white" />
         </button>
         <button
           onClick={() => router.push("/home")}
-          className="w-full bg-transparent border-none cursor-pointer"
-          style={{ fontSize: "14px", color: "#AFAFAF", padding: "8px 0" }}
+          className="w-full bg-transparent border-none cursor-pointer text-text-faint"
+          style={{ fontSize: "14px", padding: "8px 0" }}
         >
           홈으로 돌아가기
         </button>
@@ -286,10 +248,7 @@ export default function SkinTestResultPage() {
   return (
     <Suspense
       fallback={
-        <div
-          className="flex items-center justify-center min-h-full"
-          style={{ color: "#AFAFAF" }}
-        >
+        <div className="flex items-center justify-center min-h-full text-text-faint">
           Loading...
         </div>
       }

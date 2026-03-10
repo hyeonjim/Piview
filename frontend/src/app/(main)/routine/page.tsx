@@ -11,19 +11,6 @@ import {
   Search,
 } from "lucide-react";
 
-/* ── 색상 토큰 (피그마 원본) ── */
-const C = {
-  primary: "#A2AA7B",
-  primaryBg: "#F0F2E8",
-  primaryLight: "#C5CBA8",
-  surfaceWarm: "#FFFAF5",
-  beigeBg: "#F8F6F0",
-  text: "#2A2A2A",
-  textMuted: "#AFAFAF",
-  border: "#E8E0D0",
-  borderDash: "#D4D0C8",
-};
-
 /* ── 루틴 스텝 정의 ── */
 const STEPS = [
   {
@@ -77,7 +64,6 @@ const STEPS = [
   },
 ];
 
-/* ── 카테고리 아이콘 (피그마 CATEGORY_ICONS 참고) ── */
 const CAT_ICONS: Record<string, string> = {
   클렌저: "CL",
   토너: "TO",
@@ -98,75 +84,51 @@ export default function RoutinePage() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [routineName, setRoutineName] = useState("");
   const [homeView, setHomeView] = useState<"routine" | "owned">("routine");
-
-  /* 드래그 상태 */
   const dragRef = useRef<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   const steps = stepOrder
     .map((id) => STEPS.find((s) => s.id === id))
     .filter(Boolean) as typeof STEPS;
-
   const routineCount = Object.values(routineProducts).filter(Boolean).length;
 
   return (
     <>
-      <div
-        className="flex flex-col min-h-full overflow-y-auto pb-4"
-        style={{ backgroundColor: C.surfaceWarm }}
-      >
-        {/* ── Profile Header ── 피그마: backgroundColor #F8F6F0, px-6 pt-6 pb-5 */}
-        <div style={{ backgroundColor: "#F8F6F0" }} className="px-6 pt-6 pb-5">
-          {/* 프로필 행 */}
-          <div className="flex items-center" style={{ gap: "12px" }}>
+      <div className="flex flex-col min-h-full overflow-y-auto pb-4 bg-warm-bg">
+        {/* ── 프로필 헤더 ── */}
+        <div className="bg-bg-surface px-6 pt-6 pb-5">
+          <div className="flex items-center gap-3">
             <div
-              className="flex items-center justify-center shrink-0"
-              style={{
-                width: "56px",
-                height: "56px",
-                borderRadius: "50%",
-                backgroundColor: C.primaryBg,
-                border: `2px solid ${C.primaryLight}`,
-              }}
+              className="flex items-center justify-center shrink-0 bg-brand-bg border-2 border-brand-light"
+              style={{ width: "56px", height: "56px", borderRadius: "50%" }}
             >
               <span
-                style={{
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  color: C.primary,
-                  letterSpacing: "0.5px",
-                }}
+                className="text-brand font-bold"
+                style={{ fontSize: "12px", letterSpacing: "0.5px" }}
               >
                 F
               </span>
             </div>
             <div className="flex-1 min-w-0">
               <p
-                style={{
-                  fontSize: "18px",
-                  fontWeight: 700,
-                  color: C.text,
-                  letterSpacing: "-0.3px",
-                }}
+                className="text-text-primary font-bold"
+                style={{ fontSize: "18px", letterSpacing: "-0.3px" }}
               >
                 User
               </p>
               <p
-                style={{
-                  fontSize: "12px",
-                  color: C.textMuted,
-                  marginTop: "2px",
-                }}
+                className="text-text-faint"
+                style={{ fontSize: "12px", marginTop: "2px" }}
               >
                 피부 타입을 진단해보세요
               </p>
             </div>
           </div>
 
-          {/* 뷰 토글 — 피그마: borderRadius 12px, bg #ECEADE, mt-4 p-1 */}
+          {/* 뷰 토글 */}
           <div
-            className="flex mt-4 p-1"
-            style={{ borderRadius: "12px", backgroundColor: "#ECEADE" }}
+            className="flex mt-4 p-1 bg-bg-base"
+            style={{ borderRadius: "12px" }}
           >
             {[
               { key: "routine", label: "내 루틴" },
@@ -180,7 +142,10 @@ export default function RoutinePage() {
                   borderRadius: "10px",
                   backgroundColor: homeView === key ? "white" : "transparent",
                   border: "none",
-                  color: homeView === key ? C.text : "#8A7B64",
+                  color:
+                    homeView === key
+                      ? "var(--color-text-primary)"
+                      : "var(--color-warm-beige)",
                   fontSize: "12px",
                   fontWeight: homeView === key ? 700 : 500,
                   boxShadow:
@@ -198,14 +163,12 @@ export default function RoutinePage() {
         {/* ── 내 루틴 섹션 ── */}
         {homeView === "routine" && (
           <div className="px-6 mt-3">
-            {/* 섹션 헤더 */}
             <div className="flex items-center justify-between">
               <div>
                 <h2
+                  className="text-text-primary font-bold"
                   style={{
                     fontSize: "16px",
-                    fontWeight: 700,
-                    color: C.text,
                     letterSpacing: "1.2px",
                     textTransform: "uppercase",
                   }}
@@ -213,51 +176,37 @@ export default function RoutinePage() {
                   내 루틴
                 </h2>
                 <p
-                  style={{
-                    fontSize: "11px",
-                    color: C.textMuted,
-                    marginTop: "2px",
-                  }}
+                  className="text-text-faint"
+                  style={{ fontSize: "11px", marginTop: "2px" }}
                 >
                   {routineCount}/{steps.length}단계 완성 · 길게 눌러 순서 변경
                 </p>
               </div>
 
-              {/* 액션 버튼들 — 피그마: height 자동, borderRadius 40px, fontSize 10px */}
-              <div className="flex shrink-0" style={{ gap: "6px" }}>
+              <div className="flex shrink-0 gap-1.5">
                 {[
                   {
                     label: "OCR",
                     icon: <ScanLine size={11} />,
-                    bg: "white",
-                    color: "#6B6B6B",
-                    border: `1px solid ${C.border}`,
+                    cls: "bg-white border border-border-warm text-text-hint",
                   },
                   {
                     label: "저장",
                     icon: <Save size={11} />,
-                    bg: "white",
-                    color: "#6B6B6B",
-                    border: `1px solid ${C.border}`,
+                    cls: "bg-white border border-border-warm text-text-hint",
                   },
                   {
                     label: "추천",
                     icon: <Wand2 size={11} />,
-                    bg: C.primary,
-                    color: "#FFFFFF",
-                    border: "none",
+                    cls: "bg-brand text-white border-0",
                   },
-                ].map(({ label, icon, bg, color, border }) => (
+                ].map(({ label, icon, cls }) => (
                   <button
                     key={label}
                     onClick={() => label === "저장" && setShowSaveModal(true)}
-                    className="flex items-center px-3 py-1.5 cursor-pointer transition-all duration-200 whitespace-nowrap"
+                    className={`flex items-center gap-1 px-3 py-1.5 cursor-pointer transition-all duration-200 whitespace-nowrap ${cls}`}
                     style={{
-                      gap: "4px",
                       borderRadius: "40px",
-                      backgroundColor: bg,
-                      border,
-                      color,
                       fontSize: "10px",
                       fontWeight: label === "추천" ? 700 : 600,
                       letterSpacing: "0.5px",
@@ -270,12 +219,11 @@ export default function RoutinePage() {
               </div>
             </div>
 
-            {/* 루틴 스텝 카드들 */}
-            <div className="flex flex-col" style={{ marginTop: "12px" }}>
+            {/* 루틴 스텝 카드 */}
+            <div className="flex flex-col mt-3">
               {steps.map((step, i) => {
                 const product = routineProducts[step.id];
                 const isOver = dragOverIdx === i;
-
                 return (
                   <div
                     key={step.id}
@@ -306,71 +254,51 @@ export default function RoutinePage() {
                     style={{
                       marginBottom: "10px",
                       borderTop: isOver
-                        ? `2px solid ${C.primary}`
+                        ? "2px solid var(--color-brand)"
                         : "2px solid transparent",
                       transition: "border-top 0.15s",
                       cursor: "grab",
                     }}
                   >
                     {product ? (
-                      /* ── 제품 있을 때 ── 피그마: bg white, border #E8E0D0, borderRadius 16px */
                       <div
-                        style={{
-                          borderRadius: "16px",
-                          backgroundColor: "white",
-                          border: `1px solid ${C.border}`,
-                          overflow: "hidden",
-                        }}
+                        className="bg-white border border-border-warm overflow-hidden"
+                        style={{ borderRadius: "16px" }}
                       >
-                        {/* 제품 행 — 피그마: px-[15px] py-[15px] */}
                         <div
                           className="flex items-start relative"
                           style={{ padding: "15px", cursor: "pointer" }}
                         >
-                          {/* 이미지 — 피그마: 80×80 borderRadius 12px */}
                           <div
+                            className="bg-bg-surface shrink-0 flex items-center justify-center"
                             style={{
                               width: "80px",
                               height: "80px",
                               borderRadius: "12px",
-                              backgroundColor: "#F8F6F0",
-                              flexShrink: 0,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
                             }}
                           >
                             <span style={{ fontSize: "32px" }}>
                               {step.icon}
                             </span>
                           </div>
-
-                          {/* 정보 — 피그마: ml-3 */}
-                          <div
-                            className="flex-1 min-w-0"
-                            style={{ marginLeft: "12px" }}
-                          >
-                            <div
-                              className="flex items-center"
-                              style={{ gap: "6px", flexWrap: "wrap" }}
-                            >
+                          <div className="flex-1 min-w-0 ml-3">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <span
+                                className="text-text-faint font-medium"
                                 style={{
                                   fontSize: "12px",
-                                  color: C.textMuted,
-                                  fontWeight: 500,
                                   letterSpacing: "0.5px",
                                 }}
                               >
                                 {product.brand}
                               </span>
                               <span
+                                className="bg-bg-outer"
                                 style={{
                                   fontSize: "10px",
                                   padding: "1px 3px",
                                   borderRadius: "3px",
-                                  backgroundColor: "#F0EDE8",
-                                  color: "#7A7060",
+                                  color: "var(--color-warm-beige)",
                                   fontWeight: 500,
                                   lineHeight: 1.4,
                                   whiteSpace: "nowrap",
@@ -380,11 +308,9 @@ export default function RoutinePage() {
                               </span>
                             </div>
                             <p
-                              className="truncate"
+                              className="truncate text-text-primary font-semibold mt-1"
                               style={{
                                 fontSize: "16px",
-                                fontWeight: 600,
-                                color: C.text,
                                 letterSpacing: "0.3px",
                                 margin: 0,
                                 marginTop: "4px",
@@ -393,8 +319,6 @@ export default function RoutinePage() {
                               {product.name}
                             </p>
                           </div>
-
-                          {/* X 버튼 — 피그마: absolute top-3 right-3, size 22px */}
                           <button
                             onClick={() =>
                               setRoutineProducts((prev) => ({
@@ -402,42 +326,33 @@ export default function RoutinePage() {
                                 [step.id]: null,
                               }))
                             }
-                            className="absolute flex items-center justify-center border-none cursor-pointer"
+                            className="absolute flex items-center justify-center border-none cursor-pointer bg-bg-chip"
                             style={{
                               top: "12px",
                               right: "12px",
                               width: "22px",
                               height: "22px",
                               borderRadius: "50%",
-                              backgroundColor: "#F5F5F5",
                               padding: 0,
                             }}
                           >
                             <span
-                              style={{
-                                fontSize: "13px",
-                                lineHeight: 1,
-                                color: C.textMuted,
-                                fontWeight: 600,
-                              }}
+                              className="text-text-faint font-semibold"
+                              style={{ fontSize: "13px", lineHeight: 1 }}
                             >
                               −
                             </span>
                           </button>
                         </div>
-
-                        {/* 제품 추가 버튼 — 피그마: borderTop dashed #E8E0D0, py-2.5 */}
                         <button
                           onClick={() => setShowAddModal(step.id)}
-                          className="w-full flex items-center justify-center cursor-pointer transition-all duration-200"
+                          className="w-full flex items-center justify-center gap-1 cursor-pointer transition-all duration-200 text-brand"
                           style={{
-                            gap: "4px",
                             paddingTop: "10px",
                             paddingBottom: "10px",
                             backgroundColor: "transparent",
                             border: "none",
-                            borderTop: `1px dashed ${C.border}`,
-                            color: C.primary,
+                            borderTop: "1px dashed var(--color-border-warm)",
                           }}
                         >
                           <Plus size={13} />
@@ -453,66 +368,39 @@ export default function RoutinePage() {
                         </button>
                       </div>
                     ) : (
-                      /* ── 제품 없을 때 ── 피그마: border dashed #D4D0C8, px-[10px] py-[16px] */
                       <button
                         onClick={() => setShowAddModal(step.id)}
-                        className="w-full flex items-center cursor-pointer transition-all duration-200"
+                        className="w-full flex items-center gap-3 cursor-pointer transition-all duration-200 bg-white"
                         style={{
-                          gap: "12px",
                           borderRadius: "16px",
-                          backgroundColor: "white",
-                          border: `1px dashed ${C.borderDash}`,
+                          border: "1px dashed var(--color-border-dash)",
                           padding: "16px 10px",
                         }}
                       >
-                        {/* 카테고리 아이콘 — 피그마: 44×44 borderRadius 12px bg #F8F6F0 */}
                         <div
+                          className="bg-bg-surface shrink-0 flex items-center justify-center"
                           style={{
                             width: "44px",
                             height: "44px",
                             borderRadius: "12px",
-                            backgroundColor: "#F8F6F0",
-                            flexShrink: 0,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
                           }}
                         >
                           <span
-                            style={{
-                              fontSize: "11px",
-                              fontWeight: 700,
-                              color: C.textMuted,
-                              letterSpacing: "1px",
-                            }}
+                            className="text-text-faint font-bold"
+                            style={{ fontSize: "11px", letterSpacing: "1px" }}
                           >
                             {CAT_ICONS[step.category] || "PR"}
                           </span>
                         </div>
-
-                        {/* 라벨 */}
                         <div className="flex-1 text-left">
                           <p
-                            style={{
-                              fontSize: "16px",
-                              fontWeight: 600,
-                              color: "#6B6B6B",
-                              letterSpacing: "0.3px",
-                            }}
+                            className="text-text-hint font-semibold"
+                            style={{ fontSize: "16px", letterSpacing: "0.3px" }}
                           >
                             {step.label}
                           </p>
                         </div>
-
-                        {/* + 추가 — 피그마: mr-[15px] */}
-                        <div
-                          className="flex items-center"
-                          style={{
-                            gap: "4px",
-                            marginRight: "15px",
-                            color: C.primary,
-                          }}
-                        >
+                        <div className="flex items-center gap-1 text-brand mr-4">
                           <Plus size={14} />
                           <span
                             style={{
@@ -532,18 +420,13 @@ export default function RoutinePage() {
               })}
             </div>
 
-            {/* ── 루틴 종합 점수 (제품 있을 때) ── */}
+            {/* 루틴 종합 점수 */}
             {routineCount > 0 && (
               <div
-                className="mt-4 p-4"
-                style={{
-                  borderRadius: "16px",
-                  backgroundColor: "white",
-                  border: `1px solid ${C.border}`,
-                }}
+                className="mt-4 p-4 bg-white border border-border-warm"
+                style={{ borderRadius: "16px" }}
               >
-                <div className="flex items-center" style={{ gap: "12px" }}>
-                  {/* Score Ring */}
+                <div className="flex items-center gap-3">
                   <div
                     className="relative shrink-0 flex items-center justify-center"
                     style={{ width: "56px", height: "56px" }}
@@ -558,7 +441,7 @@ export default function RoutinePage() {
                         cy="28"
                         r="22"
                         fill="none"
-                        stroke="#F0EDE8"
+                        stroke="var(--color-bg-outer)"
                         strokeWidth="4"
                       />
                       <circle
@@ -566,7 +449,7 @@ export default function RoutinePage() {
                         cy="28"
                         r="22"
                         fill="none"
-                        stroke={C.primary}
+                        stroke="var(--color-brand)"
                         strokeWidth="4"
                         strokeDasharray={`${(routineCount / steps.length) * 138} 138`}
                         strokeLinecap="round"
@@ -574,27 +457,19 @@ export default function RoutinePage() {
                       />
                     </svg>
                     <span
-                      style={{
-                        fontSize: "13px",
-                        fontWeight: 700,
-                        color: C.primary,
-                        position: "relative",
-                      }}
+                      className="text-brand font-bold"
+                      style={{ fontSize: "13px", position: "relative" }}
                     >
                       {Math.round((routineCount / steps.length) * 100)}
                     </span>
                   </div>
                   <div className="flex-1">
-                    <div
-                      className="flex items-center"
-                      style={{ gap: "6px", marginBottom: "4px" }}
-                    >
-                      <TrendingUp size={13} color={C.primary} />
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <TrendingUp size={13} className="text-brand" />
                       <span
+                        className="text-text-primary font-bold"
                         style={{
                           fontSize: "12px",
-                          fontWeight: 700,
-                          color: C.text,
                           letterSpacing: "0.5px",
                           textTransform: "uppercase",
                         }}
@@ -603,11 +478,8 @@ export default function RoutinePage() {
                       </span>
                     </div>
                     <p
-                      style={{
-                        fontSize: "11px",
-                        color: "#8A7B64",
-                        lineHeight: 1.5,
-                      }}
+                      className="text-warm-beige"
+                      style={{ fontSize: "11px", lineHeight: 1.5 }}
                     >
                       루틴을 완성할수록 피부가 건강해져요!
                     </p>
@@ -619,7 +491,7 @@ export default function RoutinePage() {
         )}
       </div>
 
-      {/* ── 루틴 저장 모달 ── 피그마: fixed top-1/2 left-1/2, borderRadius 20px, maxWidth 320px */}
+      {/* ── 저장 모달 ── */}
       {showSaveModal && (
         <>
           <div
@@ -636,16 +508,12 @@ export default function RoutinePage() {
               boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
             }}
           >
-            <div
-              className="flex items-center"
-              style={{ gap: "8px", marginBottom: "16px" }}
-            >
-              <Save size={18} color={C.primary} />
+            <div className="flex items-center gap-2 mb-4">
+              <Save size={18} className="text-brand" />
               <h3
+                className="text-text-primary font-bold"
                 style={{
                   fontSize: "14px",
-                  fontWeight: 700,
-                  color: C.text,
                   letterSpacing: "0.5px",
                   textTransform: "uppercase",
                 }}
@@ -658,54 +526,47 @@ export default function RoutinePage() {
               placeholder="예: 겨울 보습 루틴"
               value={routineName}
               onChange={(e) => setRoutineName(e.target.value)}
-              className="w-full outline-none"
+              className="w-full outline-none bg-bg-surface border border-border-warm text-text-primary"
               style={{
                 height: "44px",
                 padding: "0 14px",
                 borderRadius: "12px",
-                backgroundColor: "#F8F6F0",
-                border: `1px solid ${C.border}`,
                 fontSize: "13px",
-                color: C.text,
               }}
             />
-            <div className="flex" style={{ gap: "8px", marginTop: "16px" }}>
-              {[
-                {
-                  label: "취소",
-                  onClick: () => setShowSaveModal(false),
-                  bg: "#F8F6F0",
-                  border: `1px solid ${C.border}`,
-                  color: "#6B6B6B",
-                  fw: 600,
-                },
-                {
-                  label: "저장",
-                  onClick: () => setShowSaveModal(false),
-                  bg: routineName.trim() ? C.primary : "#E8E0D0",
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => setShowSaveModal(false)}
+                className="flex-1 py-2.5 cursor-pointer transition-all bg-bg-surface border border-border text-text-hint font-semibold"
+                style={{
+                  borderRadius: "40px",
+                  fontSize: "12px",
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={() => setShowSaveModal(false)}
+                className="flex-1 py-2.5 cursor-pointer transition-all"
+                style={{
+                  borderRadius: "40px",
+                  backgroundColor: routineName.trim()
+                    ? "var(--color-brand)"
+                    : "var(--color-border-warm)",
+                  color: routineName.trim()
+                    ? "#FFFFFF"
+                    : "var(--color-text-faint)",
+                  fontSize: "12px",
+                  fontWeight: 700,
                   border: "none",
-                  color: routineName.trim() ? "#FFFFFF" : C.textMuted,
-                  fw: 700,
-                },
-              ].map(({ label, onClick, bg, border, color, fw }) => (
-                <button
-                  key={label}
-                  onClick={onClick}
-                  className="flex-1 py-2.5 cursor-pointer transition-all"
-                  style={{
-                    borderRadius: "40px",
-                    backgroundColor: bg,
-                    border,
-                    color,
-                    fontSize: "12px",
-                    fontWeight: fw,
-                    letterSpacing: "0.5px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                }}
+              >
+                저장
+              </button>
             </div>
           </div>
         </>
@@ -742,66 +603,51 @@ export default function RoutinePage() {
             >
               <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
                 <div
-                  style={{
-                    width: "32px",
-                    height: "4px",
-                    borderRadius: "2px",
-                    backgroundColor: C.border,
-                  }}
+                  className="bg-border"
+                  style={{ width: "32px", height: "4px", borderRadius: "2px" }}
                 />
                 <button
                   onClick={() => setShowAddModal(null)}
                   className="border-none bg-transparent cursor-pointer"
                 >
-                  <X size={20} color={C.textMuted} />
+                  <X size={20} className="text-text-faint" />
                 </button>
               </div>
               <div className="px-6 pb-6 overflow-y-auto flex-1 min-h-0">
                 <h3
+                  className="text-text-primary font-bold mt-1"
                   style={{
                     fontSize: "14px",
-                    fontWeight: 700,
-                    color: C.text,
-                    marginTop: "4px",
                     letterSpacing: "0.5px",
                     textTransform: "uppercase",
                   }}
                 >
                   {STEPS.find((s) => s.id === showAddModal)?.label} 선택
                 </h3>
-                {/* 검색창 */}
                 <div className="relative mt-3 mb-3">
                   <Search
                     size={15}
-                    color={C.textMuted}
-                    className="absolute left-3 top-1/2 -translate-y-1/2"
+                    className="text-text-faint absolute left-3 top-1/2 -translate-y-1/2"
                   />
                   <input
                     type="text"
                     placeholder="제품명 또는 브랜드 검색..."
                     value={addSearch}
                     onChange={(e) => setAddSearch(e.target.value)}
-                    className="w-full outline-none"
+                    className="w-full outline-none bg-bg-surface border border-border-warm"
                     style={{
                       height: "40px",
                       paddingLeft: "34px",
                       borderRadius: "12px",
-                      backgroundColor: "#F8F6F0",
-                      border: `1px solid ${C.border}`,
                       fontSize: "13px",
                     }}
                   />
                 </div>
-                {/* 더미 빈 상태 */}
                 <div className="flex flex-col items-center py-10">
                   <span style={{ fontSize: "40px" }}>🔍</span>
                   <p
-                    style={{
-                      fontSize: "13px",
-                      color: C.textMuted,
-                      marginTop: "12px",
-                      textAlign: "center",
-                    }}
+                    className="text-text-faint text-center mt-3"
+                    style={{ fontSize: "13px" }}
                   >
                     제품을 검색하거나
                     <br />

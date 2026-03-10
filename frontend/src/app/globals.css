@@ -6,47 +6,61 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ── 디자인 토큰 (피그마 ThemeContext 원본값) ── */
 @theme {
   --max-width-app: 500px;
 
-  /* Primary — 피그마: #A2AA7B */
-  --color-brand: #a2aa7b;
-  --color-brand-light: #c5cba8;
-  --color-brand-dark: #8a9468;
-  --color-brand-bg: #f0f2e8;
+  /* ── Brand (올리브) ── */
+  --color-brand: #a2aa7b; /* bg-brand / text-brand */
+  --color-brand-light: #c5cba8; /* bg-brand-light */
+  --color-brand-dark: #8a9468; /* bg-brand-dark */
+  --color-brand-bg: #f0f2e8; /* bg-brand-bg */
 
-  /* Warm */
-  --color-warm: #c28c7e;
-  --color-warm-bg: #fffaf5;
+  /* ── Warm ── */
+  --color-warm: #c28c7e; /* text-warm */
+  --color-warm-bg: #fffaf5; /* bg-warm-bg */
+  --color-warm-beige: #b8a99a; /* text-warm-beige (인사말, 서브텍스트) */
+  --color-warm-amber: #d4a96a; /* text-warm-amber (태양 아이콘) */
 
-  /* 배경 — 피그마 MobileFrame: #F0EDE8 */
-  --color-bg-base: #f0ede8;
-  --color-bg-surface: #f8f6f0;
-  --color-bg-card: #ffffff;
-  --color-bg-beige: #f8f5ef;
+  /* ── 배경 ── */
+  --color-bg-outer: #f0ede8; /* bg-bg-outer (앱 바깥 배경) */
+  --color-bg-base: #eceade; /* bg-bg-base */
+  --color-bg-surface: #f8f6f0; /* bg-bg-surface */
+  --color-bg-card: #ffffff; /* bg-bg-card */
+  --color-bg-beige: #f8f5ef; /* bg-bg-beige (Tips 카드) */
+  --color-bg-chip: #f5f5f5; /* bg-bg-chip (비활성 칩) */
 
-  /* 텍스트 — 피그마: #1A1A1A / #AFAFAF */
-  --color-text-primary: #1a1a1a;
-  --color-text-secondary: #616161;
-  --color-text-muted: #9e9e9e;
+  /* ── 텍스트 ── */
+  --color-text-primary: #1a1a1a; /* text-text-primary */
+  --color-text-sub: #616161; /* text-text-sub */
+  --color-text-muted: #9e9e9e; /* text-text-muted */
+  --color-text-faint: #afafaf; /* text-text-faint (더 연한 muted) */
+  --color-text-disabled: #bdbdbd; /* text-text-disabled */
+  --color-text-hint: #757575; /* text-text-hint */
 
-  /* 보더 — 피그마: #F0F0F0 / #E8E0D0 */
-  --color-border: #f0f0f0;
-  --color-border-warm: #e8e0d0;
+  /* ── 보더 ── */
+  --color-border: #f0f0f0; /* border-border */
+  --color-border-warm: #e8e0d0; /* border-border-warm */
+  --color-border-dash: #d4d0c8; /* border-border-dash (점선) */
 
-  /* EWG */
-  --color-ewg-safe: #2e7d32;
-  --color-ewg-caution: #f57f17;
-  --color-ewg-danger: #c62828;
+  /* ── EWG ── */
+  --color-ewg-safe: #2e7d32; /* text-ewg-safe */
+  --color-ewg-safe-bg: #e8f5e9; /* bg-ewg-safe-bg */
+  --color-ewg-safe-bar: #4caf50; /* bg-ewg-safe-bar */
+  --color-ewg-caution: #f57f17; /* text-ewg-caution */
+  --color-ewg-caution-bg: #fff8e1; /* bg-ewg-caution-bg */
+  --color-ewg-caution-bar: #ffb300; /* bg-ewg-caution-bar */
+  --color-ewg-danger: #c62828; /* text-ewg-danger */
+  --color-ewg-danger-bg: #ffebee; /* bg-ewg-danger-bg */
+  --color-ewg-danger-bar: #f44336; /* bg-ewg-danger-bar */
 
-  /* 반경 — 피그마 원본 */
+  /* ── 반경 ── */
   --radius-card: 16px;
   --radius-button: 32px;
   --radius-chip: 30px;
   --radius-modal: 20px;
+  --radius-nav: 100px;
 
-  /* 그림자 */
+  /* ── 그림자 ── */
   --shadow-card: 0px 5px 16px 0px rgba(152, 152, 152, 0.2);
   --shadow-nav: 0 8px 32px rgba(120, 130, 80, 0.05);
 }
@@ -104,14 +118,12 @@
   }
 
   body {
-    /* 피그마 MobileFrame: #F0EDE8 */
     background-color: #f0ede8;
     color: #1a1a1a;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* 스크롤바 숨기기 */
   ::-webkit-scrollbar {
     display: none;
   }
@@ -140,7 +152,6 @@
   p {
     line-height: 1.6;
   }
-
   button {
     font-family: inherit;
   }
@@ -148,7 +159,7 @@
     font-family: inherit;
   }
 
-  /* ── 피그마 MobileFrame: 12px 이하 폰트 13px 강제 ── */
+  /* 피그마 MobileFrame: 12px 이하 폰트 13px 강제 */
   [style*="font-size: 8px"],
   [style*="font-size: 9px"],
   [style*="font-size: 10px"],
@@ -156,12 +167,9 @@
   [style*="font-size: 12px"] {
     font-size: 13px !important;
   }
-  .text-xs {
-    font-size: 13px !important;
-  }
+  .text-xs,
   .text-\[10px\],
-  .text-\[9px\],
-  .text-\[8px\] {
+  .text-\[9px\] {
     font-size: 13px !important;
   }
 }

@@ -11,8 +11,6 @@ const TABS = [
   { id: "mypage", href: "/mypage", icon: User, isCenter: false },
 ];
 
-const PRIMARY = "#A2AA7B";
-
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
@@ -24,7 +22,6 @@ export default function BottomNav() {
     if (pathname.startsWith("/mypage")) return "mypage";
     return "home";
   };
-
   const activeTab = getActiveTab();
 
   return (
@@ -52,7 +49,8 @@ export default function BottomNav() {
           borderRadius: "100px",
           backdropFilter: "blur(80px) saturate(220%)",
           WebkitBackdropFilter: "blur(80px) saturate(220%)",
-          backgroundImage: `linear-gradient(170deg, rgba(162,170,123,0.03) 0%, rgba(236,234,222,0.05) 50%, rgba(255,250,245,0.06) 100%)`,
+          backgroundImage:
+            "linear-gradient(170deg, rgba(162,170,123,0.03) 0%, rgba(236,234,222,0.05) 50%, rgba(255,250,245,0.06) 100%)",
           border: "1px solid rgba(255,255,255,0.15)",
           boxShadow:
             "0 8px 32px rgba(120,130,80,0.05), inset 0 1px 0 rgba(255,255,255,0.08)",
@@ -70,17 +68,15 @@ export default function BottomNav() {
               <button
                 key={tab.id}
                 onClick={() => router.push(tab.href)}
-                className="flex items-center justify-center cursor-pointer transition-all duration-200"
+                className="flex items-center justify-center cursor-pointer transition-all duration-200 border-none shrink-0"
                 style={{
                   width: "48px",
                   height: "48px",
                   borderRadius: "50%",
-                  backgroundColor: isActive ? PRIMARY : "#3A3A3A",
+                  backgroundColor: isActive ? "var(--color-brand)" : "#3A3A3A",
                   boxShadow: isActive
-                    ? `0 4px 16px rgba(162,170,123,0.45)`
+                    ? "0 4px 16px rgba(162,170,123,0.45)"
                     : "0 4px 12px rgba(0,0,0,0.2)",
-                  border: "none",
-                  flexShrink: 0,
                 }}
               >
                 <Icon size={22} color="#FFFFFF" strokeWidth={2} />
@@ -92,14 +88,14 @@ export default function BottomNav() {
             <button
               key={tab.id}
               onClick={() => router.push(tab.href)}
-              className="flex items-center justify-center cursor-pointer transition-all duration-200"
+              className="flex items-center justify-center cursor-pointer transition-all duration-200 border-none shrink-0"
               style={{
                 width: "40px",
                 height: "40px",
                 borderRadius: "50%",
-                backgroundColor: isActive ? PRIMARY : "transparent",
-                border: "none",
-                flexShrink: 0,
+                backgroundColor: isActive
+                  ? "var(--color-brand)"
+                  : "transparent",
               }}
             >
               <Icon

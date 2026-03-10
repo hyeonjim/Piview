@@ -4,20 +4,6 @@ import { useState } from "react";
 import { Sparkles, Heart, Plus, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 
-/* ── 색상 토큰 (피그마 ThemeContext) ── */
-const C = {
-  primary: "#A2AA7B",
-  primaryBg: "#F0F2E8",
-  primaryDark: "#8A9468",
-  warmBg: "#FFFAF5",
-  warningBg: "#FDF6E8",
-  text: "#1A1A1A",
-  textMuted: "#9E9E9E",
-  textSub: "#616161",
-  border: "#F0F0F0",
-  chip: "#F5F5F5",
-};
-
 const CATEGORIES = [
   "전체",
   "스킨/토너",
@@ -103,10 +89,15 @@ const DUMMY_PRODUCTS = [
   },
 ];
 
-function getEwgColor(ewg: number) {
-  if (ewg <= 2) return { bg: "#E8F5E9", text: "#2E7D32" };
-  if (ewg <= 6) return { bg: "#FFF8E1", text: "#F57F17" };
-  return { bg: "#FFEBEE", text: "#C62828" };
+function getEwgStyle(ewg: number) {
+  if (ewg <= 2)
+    return { bg: "var(--color-ewg-safe-bg)", text: "var(--color-ewg-safe)" };
+  if (ewg <= 6)
+    return {
+      bg: "var(--color-ewg-caution-bg)",
+      text: "var(--color-ewg-caution)",
+    };
+  return { bg: "var(--color-ewg-danger-bg)", text: "var(--color-ewg-danger)" };
 }
 
 export default function RecommendPage() {
@@ -129,51 +120,40 @@ export default function RecommendPage() {
   };
 
   return (
-    <div
-      className="flex flex-col min-h-full"
-      style={{ backgroundColor: C.warmBg }}
-    >
-      {/* ── 헤더 (피그마: px-6 pt-5 pb-3, gradient warningBg→surfaceWarm) ── */}
+    <div className="flex flex-col min-h-full bg-warm-bg">
+      {/* ── 헤더 ── */}
       <div
         className="px-6 pt-5 pb-3"
         style={{
-          background: `linear-gradient(135deg, ${C.warningBg} 0%, ${C.warmBg} 100%)`,
+          background:
+            "linear-gradient(135deg, var(--color-warning-bg, #FDF6E8) 0%, var(--color-warm-bg) 100%)",
         }}
       >
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Sparkles size={18} color={C.primary} />
-              {/* 피그마: fontSize 20px fontWeight 600 */}
+              <Sparkles size={18} className="text-brand" />
               <h1
-                style={{
-                  fontSize: "20px",
-                  fontWeight: 600,
-                  color: C.text,
-                  margin: 0,
-                }}
+                className="text-text-primary font-semibold"
+                style={{ fontSize: "20px", margin: 0 }}
               >
                 맞춤 추천
               </h1>
             </div>
-            <p style={{ fontSize: "13px", color: C.textMuted, margin: 0 }}>
+            <p
+              className="text-text-muted"
+              style={{ fontSize: "13px", margin: 0 }}
+            >
               내 피부 타입에 맞는 제품을 추천해드려요
             </p>
           </div>
           <button
+            className="flex items-center gap-1 bg-bg-chip text-text-sub font-semibold border-none cursor-pointer"
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
               height: "32px",
               padding: "0 12px",
               borderRadius: "16px",
-              backgroundColor: "#F5F5F5",
-              color: C.textSub,
               fontSize: "12px",
-              fontWeight: 600,
-              border: "none",
-              cursor: "pointer",
             }}
           >
             <SlidersHorizontal size={13} /> 필터
@@ -181,11 +161,8 @@ export default function RecommendPage() {
         </div>
       </div>
 
-      {/* ── 피부타입 필터 (피그마: height 34px, borderRadius 17px, inactive #F5F5F5) ── */}
-      <div
-        className="px-5 py-3"
-        style={{ borderBottom: `1px solid ${C.border}` }}
-      >
+      {/* ── 피부타입 필터 ── */}
+      <div className="px-5 py-3 border-b border-border">
         <div className="flex gap-1.5">
           {["전체", ...SKIN_TYPES].map((s) => {
             const isActive =
@@ -198,17 +175,17 @@ export default function RecommendPage() {
                     s === "전체" ? null : s === selectedSkin ? null : s,
                   )
                 }
+                className="cursor-pointer border-none transition-all"
                 style={{
                   height: "34px",
                   padding: "0 12px",
                   borderRadius: "17px",
-                  backgroundColor: isActive ? C.primary : C.chip,
-                  color: isActive ? "#FFFFFF" : C.textSub,
+                  backgroundColor: isActive
+                    ? "var(--color-brand)"
+                    : "var(--color-bg-chip)",
+                  color: isActive ? "#FFFFFF" : "var(--color-text-sub)",
                   fontSize: "13px",
                   fontWeight: isActive ? 700 : 500,
-                  border: "none",
-                  cursor: "pointer",
-                  transition: "all 0.15s",
                 }}
               >
                 {s}
@@ -218,7 +195,7 @@ export default function RecommendPage() {
         </div>
       </div>
 
-      {/* ── 카테고리 탭 (피그마: active #A2AA7B + white, inactive #F5F5F5 + #616161) ── */}
+      {/* ── 카테고리 탭 ── */}
       <div className="overflow-x-auto px-5 pt-3 pb-2">
         <div className="flex gap-1.5" style={{ width: "max-content" }}>
           {CATEGORIES.map((cat) => {
@@ -227,18 +204,17 @@ export default function RecommendPage() {
               <button
                 key={cat}
                 onClick={() => setSelectedCat(cat)}
+                className="cursor-pointer border-none transition-all whitespace-nowrap"
                 style={{
                   height: "34px",
                   padding: "0 16px",
                   borderRadius: "17px",
-                  backgroundColor: isActive ? C.primary : C.chip,
-                  color: isActive ? "#FFFFFF" : C.textSub,
+                  backgroundColor: isActive
+                    ? "var(--color-brand)"
+                    : "var(--color-bg-chip)",
+                  color: isActive ? "#FFFFFF" : "var(--color-text-sub)",
                   fontSize: "13px",
                   fontWeight: isActive ? 700 : 500,
-                  border: "none",
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                  transition: "all 0.15s",
                 }}
               >
                 {cat}
@@ -250,23 +226,20 @@ export default function RecommendPage() {
 
       {/* ── 제품 수 ── */}
       <div className="px-5 mb-2">
-        <span style={{ fontSize: "13px", color: C.textMuted }}>
-          총 <strong style={{ color: C.text }}>{filtered.length}</strong>개 제품
+        <span className="text-text-muted" style={{ fontSize: "13px" }}>
+          총 <strong className="text-text-primary">{filtered.length}</strong>개
+          제품
         </span>
       </div>
 
-      {/* ── 제품 목록 (피그마 ProductCard 기반) ── */}
+      {/* ── 제품 목록 ── */}
       <div className="px-5 flex flex-col gap-3 pb-28">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center py-16">
             <span style={{ fontSize: "40px" }}>🔍</span>
             <p
-              style={{
-                fontSize: "14px",
-                color: C.textMuted,
-                marginTop: "12px",
-                textAlign: "center",
-              }}
+              className="text-text-muted text-center mt-3"
+              style={{ fontSize: "14px" }}
             >
               해당하는 제품이 없어요.
               <br />
@@ -275,7 +248,7 @@ export default function RecommendPage() {
           </div>
         ) : (
           filtered.map((product) => {
-            const ewgColor = getEwgColor(product.ewg);
+            const ewg = getEwgStyle(product.ewg);
             const isWished = wishlisted.has(product.id);
             return (
               <Link
@@ -284,124 +257,104 @@ export default function RecommendPage() {
                 style={{ textDecoration: "none" }}
               >
                 <div
-                  className="flex items-center gap-3 p-4"
+                  className="flex items-center gap-3 p-4 bg-white border border-border"
                   style={{
                     borderRadius: "16px",
-                    backgroundColor: "#FFFFFF",
-                    border: `1px solid ${C.border}`,
                     boxShadow: "0px 2px 8px rgba(0,0,0,0.04)",
                   }}
                 >
-                  {/* 이미지 (피그마: 72×72, borderRadius 12px) */}
                   <div
-                    className="flex items-center justify-center shrink-0"
+                    className="flex items-center justify-center shrink-0 bg-brand-bg"
                     style={{
                       width: "72px",
                       height: "72px",
                       borderRadius: "12px",
-                      backgroundColor: C.primaryBg,
                     }}
                   >
                     <span style={{ fontSize: "28px" }}>{product.emoji}</span>
                   </div>
-
                   <div className="flex-1 min-w-0">
-                    {/* 브랜드 + EWG */}
                     <div className="flex items-center gap-2 mb-1">
                       <span
-                        style={{
-                          fontSize: "12px",
-                          color: C.textMuted,
-                          fontWeight: 500,
-                        }}
+                        className="text-text-muted font-medium"
+                        style={{ fontSize: "12px" }}
                       >
                         {product.brand}
                       </span>
                       <span
+                        className="font-semibold"
                         style={{
                           fontSize: "11px",
                           padding: "1px 6px",
                           borderRadius: "4px",
-                          backgroundColor: ewgColor.bg,
-                          color: ewgColor.text,
-                          fontWeight: 600,
+                          backgroundColor: ewg.bg,
+                          color: ewg.text,
                         }}
                       >
                         EWG {product.ewg}
                       </span>
                     </div>
-                    {/* 제품명 (피그마: 15px fontWeight 600) */}
                     <p
-                      className="truncate"
-                      style={{
-                        fontSize: "15px",
-                        fontWeight: 600,
-                        color: C.text,
-                        margin: 0,
-                      }}
+                      className="truncate text-text-primary font-semibold"
+                      style={{ fontSize: "15px", margin: 0 }}
                     >
                       {product.name}
                     </p>
-                    {/* 평점 + 가격 */}
                     <div className="flex items-center gap-2 mt-1">
-                      <span style={{ fontSize: "13px", color: C.textMuted }}>
+                      <span
+                        className="text-text-muted"
+                        style={{ fontSize: "13px" }}
+                      >
                         ⭐ {product.rating}
                       </span>
-                      <span style={{ fontSize: "12px", color: "#BDBDBD" }}>
+                      <span
+                        className="text-text-disabled"
+                        style={{ fontSize: "12px" }}
+                      >
                         ({product.reviews.toLocaleString()})
                       </span>
                       <span
-                        style={{
-                          fontSize: "13px",
-                          fontWeight: 600,
-                          color: C.text,
-                        }}
+                        className="text-text-primary font-semibold"
+                        style={{ fontSize: "13px" }}
                       >
                         {product.price}원
                       </span>
                     </div>
                   </div>
-
-                  {/* 찜 + 루틴추가 */}
                   <div className="flex flex-col items-center gap-2">
                     <button
                       onClick={(e) => {
                         e.preventDefault();
                         toggleWish(product.id);
                       }}
+                      className="flex items-center justify-center border-none cursor-pointer"
                       style={{
                         width: "36px",
                         height: "36px",
                         borderRadius: "50%",
-                        backgroundColor: isWished ? "#FFF0F0" : C.chip,
-                        border: "none",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        backgroundColor: isWished
+                          ? "#FFF0F0"
+                          : "var(--color-bg-chip)",
                       }}
                     >
                       <Heart
                         size={16}
-                        color={isWished ? "#E57373" : "#BDBDBD"}
+                        color={
+                          isWished ? "#E57373" : "var(--color-text-disabled)"
+                        }
                         fill={isWished ? "#E57373" : "none"}
                       />
                     </button>
                     <button
                       onClick={(e) => e.preventDefault()}
+                      className="flex items-center justify-center border-none cursor-pointer bg-brand-bg"
                       style={{
                         width: "36px",
                         height: "36px",
                         borderRadius: "50%",
-                        backgroundColor: C.primaryBg,
-                        border: "none",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
                       }}
                     >
-                      <Plus size={16} color={C.primary} />
+                      <Plus size={16} className="text-brand" />
                     </button>
                   </div>
                 </div>
