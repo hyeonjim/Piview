@@ -1,23 +1,31 @@
 package com.piview.backend.auth.entity;
 
-import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 @Entity
-@Table(name = "auth") // DB에 생성될 테이블 이름
+@Table(name = "user")
 @Getter
-@Setter // CustomOAuth2UserService에서 값 업데이트를 위해 사용
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Auth {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long id;
 
     // 닉네임
@@ -37,9 +45,27 @@ public class Auth {
     @Column(name = "provider_id", nullable = false)
     private String providerId;
 
+    // 설문 응답으로 갱신되는 사용자 기본 프로필 값들이다.
+    // 성별 값을 저장한다.
+    @Column(name = "gender", length = 10)
+    private String gender;
+
+    // 연령대 값을 저장한다.
+    @Column(name = "age_group")
+    private Integer ageGroup;
+
+    // 사용자 피부 타입 값을 저장한다.
+    @Column(name = "my_skin_type", length = 20)
+    private String mySkinType;
+
     // 탈퇴 유저 복구(Soft Delete) 처리를 위한 타임스탬프
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    // EntityListeners 만들기
+    // 설문 제출 시 회원 기본 프로필만 한 번에 갱신할 수 있게 둔다.
+    public void updateSurveyProfile(String gender, Integer ageGroup, String mySkinType) {
+        this.gender = gender;
+        this.ageGroup = ageGroup;
+        this.mySkinType = mySkinType;
+    }
 }
