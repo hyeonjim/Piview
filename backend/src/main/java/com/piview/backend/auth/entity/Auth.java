@@ -65,6 +65,10 @@ public class Auth {
     @Column(name = "my_skin_type", length = 20)
     private SurveySkinType mySkinType;
 
+    // 사용자 활성 여부를 저장한다.
+    @Column(name = "exist")
+    private Boolean exist;
+
     // 탈퇴 유저 복구(Soft Delete) 처리를 위한 타임스탬프
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
