@@ -24,6 +24,7 @@ public class SurveyService {
     private final AuthRepository authRepository;
     private final MySkinRepository mySkinRepository;
     private final SurveyScoreCalculator surveyScoreCalculator;
+    private final SurveySkinProblemMapper surveySkinProblemMapper;
 
     @Transactional
     public SurveySubmitResponse submitSurvey(Long authId, SurveySubmitRequest request) {
@@ -31,16 +32,18 @@ public class SurveyService {
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         SurveySkinType mySkinType = calculateSkinType(request);
-        List<String> normalizedSkinProblems = normalizeSkinProblems(request.getSkinProblems());
+        // Q7 설문 문구는 그대로 저장하지 않고, 내부 추천 태그 기준으로 변환해 저장한다.
+        List<String> mappedSkinProblems = surveySkinProblemMapper.mapToTags(request.getSkinProblems());
 
         auth.updateSurveyProfile(request.getGender(), request.getAgeGroup(), mySkinType);
 
+        // 설문은 최신 응답 기준으로 덮어쓴다.
         mySkinRepository.deleteAllByUserId(authId);
-        mySkinRepository.saveAll(createMySkins(authId, normalizedSkinProblems));
+        mySkinRepository.saveAll(createMySkins(authId, mappedSkinProblems));
 
         return SurveySubmitResponse.builder()
             .mySkinType(mySkinType)
-            .skinProblems(normalizedSkinProblems)
+            .skinProblems(mappedSkinProblems)
             .build();
     }
 
@@ -55,12 +58,6 @@ public class SurveyService {
         } catch (IllegalArgumentException exception) {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
-    }
-
-    private List<String> normalizeSkinProblems(List<String> skinProblems) {
-        return skinProblems.stream()
-            .map(String::trim)
-            .toList();
     }
 
     private List<MySkin> createMySkins(Long authId, List<String> skinProblems) {
