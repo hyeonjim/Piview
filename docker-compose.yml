@@ -1,0 +1,116 @@
+version: '3.8'
+
+# ==========================================
+# 🌐 가상 네트워크 & 💾 데이터 영구 보존(볼륨) 설정
+# ==========================================
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  jenkins-data:
+  prod-ai-duckdb:
+  dev-ai-duckdb:
+
+services:
+  # ==========================================
+  # 1. 인프라 코어 (웹 서버, DB, CI/CD)
+  # ==========================================
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      # - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - dev-frontend
+      - prod-frontend
+    networks:
+      - app-network
+
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=piview_dev  # 일단 Dev용 DB만 자동 생성. Prod용은 나중에 접속해서 추가!
+      - TZ=Asia/Seoul
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    user: root
+    ports:
+      - "9090:8080"
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - app-network
+
+  # ==========================================
+  # 2. 🛠️ DEV (개발/테스트) 환경
+  # ==========================================
+  dev-frontend:
+    container_name: dev-frontend
+    build:
+      context: ./frontend
+    networks:
+      - app-network
+
+  dev-backend:
+    container_name: dev-backend
+    build:
+      context: ./backend
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/piview_dev?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    networks:
+      - app-network
+
+  dev-ai:
+    container_name: dev-ai
+    build:
+      context: ./ai
+    volumes:
+      - dev-ai-duckdb:/app/data
+    networks:
+      - app-network
+
+  # ==========================================
+  # 3. 🚀 PROD (운영/실제 서비스) 환경
+  # ==========================================
+  prod-frontend:
+    container_name: prod-frontend
+    build:
+      context: ./frontend
+    networks:
+      - app-network
+
+  prod-backend:
+    container_name: prod-backend
+    build:
+      context: ./backend
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/piview_prod?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    networks:
+      - app-network
+
+  prod-ai:
+    container_name: prod-ai
+    build:
+      context: ./ai
+    volumes:
+      - prod-ai-duckdb:/app/data
+    networks:
+      - app-network
