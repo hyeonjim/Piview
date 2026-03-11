@@ -1,8 +1,8 @@
-package com.piview.backend.auth.controller;
+package com.piview.backend.user.controller;
 
-import com.piview.backend.auth.dto.response.TokenDto;
-import com.piview.backend.auth.dto.response.TokenResponseDto;
-import com.piview.backend.auth.service.AuthService;
+import com.piview.backend.user.dto.response.TokenDto;
+import com.piview.backend.user.dto.response.TokenResponseDto;
+import com.piview.backend.user.service.AuthService;
 import com.piview.backend.global.config.AppProperties;
 import com.piview.backend.global.security.TokenProvider;
 import com.piview.backend.global.security.UserPrincipal;

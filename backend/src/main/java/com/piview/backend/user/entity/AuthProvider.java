@@ -1,4 +1,4 @@
-package com.piview.backend.auth.entity;
+package com.piview.backend.user.entity;
 
 public enum AuthProvider {
     KAKAO

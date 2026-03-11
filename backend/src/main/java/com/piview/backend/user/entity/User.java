@@ -1,4 +1,4 @@
-package com.piview.backend.auth.entity;
+package com.piview.backend.user.entity;
 
 import java.time.LocalDateTime;
 
@@ -25,7 +25,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Auth {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
