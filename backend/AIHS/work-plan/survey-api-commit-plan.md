@@ -4,8 +4,8 @@
 - 대상 API: `POST /api/v1/skin/surveys`
 - 전제: `auth`/보안 코드는 pull 반영된 현재 구조를 기준으로 작업
 - 설문 저장은 로그인 사용자 기준으로 진행
-- 현재 구조에서는 `Auth`가 `users` 테이블과 기본 프로필(`gender`, `ageGroup`, `mySkinType`)을 직접 관리
-- `MySkin.user_id`는 이번 단계에서는 `Auth.id` 기준으로 저장
+- 현재 구조에서는 `User`가 `users` 테이블과 기본 프로필(`gender`, `ageGroup`, `mySkinType`)을 직접 관리
+- `MySkin.user_id`는 이번 단계에서는 `User.id` 기준으로 저장
 
 ## AGENTS 규칙 반영
 - 성공 응답은 `ApiResponse.success(...)` 사용
@@ -48,14 +48,14 @@
 ### 3) `BE-refactor: 설문 저장 기준을 Auth 중심으로 재정렬`
 - 상태: 완료 (`77ef7fd`)
 - 목표:
-  - 설문 저장 기준 엔티티를 `User`가 아닌 `Auth`로 확정
+  - 당시 설문 저장 기준 엔티티를 `User`가 아닌 `Auth`로 확정
 - 변경 대상:
   - `skin/survey` 서비스 설계
   - `MySkin.user_id` 사용 기준 정리
   - 설계 문서/주석 정리
 - 완료 기준:
-  - 로그인 사용자 식별값이 `Auth.id`라는 점 명확화
-  - `User.auth_id` 전제 제거
+  - 당시 로그인 사용자 식별값이 `Auth.id`라는 점 명확화
+  - 기존 `User.auth_id` 전제 제거
 
 ### 4) `BE-feat: 설문 저장 서비스 구현 (Q1~Q7)`
 - 상태: 완료 (`d2de921`)
@@ -63,14 +63,14 @@
   - 로그인 사용자 기준으로 Q1/Q2/Q3~Q6 결과/Q7 고민값 저장
 - 변경 대상:
   - `skin/survey/service/SurveyService.java`
-  - `auth/repository/AuthRepository.java`
+  - 당시 기준 `auth/repository/AuthRepository.java`
   - `skin/survey/repository/MySkinRepository.java`
 - 상세:
-  - `Auth` 조회
+  - 당시 기준 `Auth` 조회
   - `gender`, `ageGroup`, `mySkinType` 갱신
   - 기존 `MySkin` 삭제 후 Q7 다건 재저장
 - 완료 기준:
-  - `Auth` 프로필과 `MySkin` 값이 일관되게 저장
+  - 당시 기준 `Auth` 프로필과 `MySkin` 값이 일관되게 저장
   - 트랜잭션 처리 포함
 
 ### 5) `BE-feat: POST /api/v1/skin/surveys 엔드포인트 추가`
@@ -86,7 +86,24 @@
   - 응답이 `ApiResponse.success(...)` 형태
   - 로그인 사용자 기준으로 저장 성공
 
-### 6) `BE-feat: Q7 피부 고민 태그 매핑 반영`
+### 6) `BE-refactor: Auth -> User 구조 변경 기준으로 설문 저장 동일화`
+- 상태: 미진행
+- 목표:
+  - `origin/back-dev`의 `Auth -> User` 변경을 유지한 채, 설문 저장 로직을 `User` 기준으로 재정렬
+- 변경 대상:
+  - `skin/survey/service/SurveyService.java`
+  - `skin/survey/entity/MySkin.java`
+  - 관련 주석/문서
+- 상세:
+  - `AuthRepository` -> `UserRepository`
+  - `Auth` -> `User`
+  - `authId` -> `userId`
+  - `MySkin.user_id` 설명을 `User.id` 기준으로 정리
+- 완료 기준:
+  - 설문 저장 로직이 `user` 패키지 구조와 모순 없이 동작
+  - 설문 관련 문서/주석이 `User` 기준으로 통일
+
+### 7) `BE-feat: Q7 피부 고민 태그 매핑 반영`
 - 상태: 미진행
 - 목표:
   - 설문 보기 문구와 추천/저장 태그를 분리하고, Q7 입력값을 내부 태그로 정규화
@@ -106,7 +123,7 @@
   - 중복 태그 저장 방지
   - `홍조`, `각질` 같은 다중 매핑 케이스 저장 확인
 
-### 7) `BE-refactor: 설문/인증 예외 처리 공통 규약 정리`
+### 8) `BE-refactor: 설문/인증 예외 처리 공통 규약 정리`
 - 상태: 미진행
 - 목표:
   - 설문 API와 auth API를 공통 응답/예외 규약에 맞춤
@@ -121,7 +138,7 @@
   - Controller에서 임의 `ResponseEntity` 조립 최소화
   - 공통 오류 응답 유지
 
-### 8) `BE-test: 설문 저장/인증 연계 테스트 보강`
+### 9) `BE-test: 설문 저장/인증 연계 테스트 보강`
 - 상태: 미진행
 - 목표:
   - 저장, 검증, 인증 실패 케이스 확인
@@ -136,10 +153,10 @@
   - 동점 규칙 검증
   - Q7 태그 매핑 검증
 
-### 9) `BE-chore: 문서 및 후속 분리 리팩터링 포인트 정리`
+### 10) `BE-chore: 문서 및 후속 분리 리팩터링 포인트 정리`
 - 상태: 미진행
 - 목표:
-  - 이번 범위는 `Auth` 통합 모델로 마무리하고, 추후 `Auth/User` 분리는 별도 리팩터링 트랙으로 남김
+  - 이번 범위는 `User` 통합 모델로 마무리하고, 후속 구조 정리는 별도 리팩터링 트랙으로 남김
 - 변경 대상:
   - 설문 API 관련 문서
   - 구조 메모/TODO
@@ -153,8 +170,9 @@
 3. DataGrip에서 `users`, `my_skin` 테이블 상태 확인
 4. 카카오 로그인으로 토큰 확보
 5. Postman으로 설문 API 저장 확인
-6. Q7 태그 매핑 반영 후 저장 결과 재확인
-7. 안정화 후 7~9단계 순서로 예외/테스트/문서 마무리
+6. `Auth -> User` 동일화 반영 후 저장 결과 재확인
+7. Q7 태그 매핑 반영 후 저장 결과 재확인
+8. 안정화 후 8~10단계 순서로 예외/테스트/문서 마무리
 
 ## DataGrip/테스트 시작 시점 가이드
 - 현재:
@@ -173,7 +191,7 @@
 - 케이스 B: Q1 또는 Q2 누락 -> validation 오류
 - 케이스 C: Q3~Q6 잘못된 선택지 -> 도메인 오류
 - 케이스 D: 동점 케이스 -> 규칙(Q5 > Q4 > Q3)대로 고정 결과
-- 케이스 E: 로그인 사용자 기준 `Auth`/`MySkin` 저장 성공
+- 케이스 E: 로그인 사용자 기준 `User`/`MySkin` 저장 성공
 - 케이스 F: 인증 사용자 미존재 -> 사용자 관련 오류 응답
 - 케이스 G: `홍조` 선택 -> `홍조`, `진정` 2건 저장
 - 케이스 H: `각질` 선택 -> `수분`, `영양` 2건 저장
@@ -182,8 +200,7 @@
 ## 메모
 - OAuth/로그인 구현 자체는 현재 범위 밖이며, 현재는 pull 반영된 인증 구조를 전제로 설문 저장 연동을 진행한다.
 - 경로 규약은 `/api/v1/*` 기준으로 유지한다.
-- 현재 구조에서는 `Auth`를 인증 전용으로 완전히 분리하지 않고, 설문 기본 프로필 저장까지 함께 담당한다.
-- 이후 마이페이지/추천 기능이 커지면 `Auth`와 `User` 분리를 별도 리팩터링 주제로 재검토한다.
-- 2단계는 단위 로직 검증 우선이라 `IllegalArgumentException` 사용이 남아 있을 수 있으며, API 연결 시점(6단계)에서 공통 예외 체계로 정리한다.
-- 6단계의 태그 매핑은 설문 보기 문구와 내부 추천 태그를 분리하기 위한 단계이며, `MySkin`에는 매핑된 태그값을 저장한다.
+- 현재 구조에서는 `User`가 인증과 설문 기본 프로필 저장을 함께 담당한다.
+- 2단계는 단위 로직 검증 우선이라 `IllegalArgumentException` 사용이 남아 있을 수 있으며, API 연결 시점(8단계)에서 공통 예외 체계로 정리한다.
+- 7단계의 태그 매핑은 설문 보기 문구와 내부 추천 태그를 분리하기 위한 단계이며, `MySkin`에는 매핑된 태그값을 저장한다.
 - 서버 실행 및 Postman 전 확인 가이드는 `AIHS/run-guide/spring-server-before-postman.md`에 정리했다.

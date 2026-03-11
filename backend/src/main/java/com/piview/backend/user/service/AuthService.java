@@ -1,6 +1,6 @@
-package com.piview.backend.auth.service;
+package com.piview.backend.user.service;
 
-import com.piview.backend.auth.dto.response.TokenDto;
+import com.piview.backend.user.dto.response.TokenDto;
 import com.piview.backend.global.config.AppProperties;
 import com.piview.backend.global.redis.RedisService;
 import com.piview.backend.global.security.CustomUserDetailsService;
