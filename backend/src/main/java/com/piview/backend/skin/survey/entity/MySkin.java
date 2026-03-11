@@ -25,7 +25,7 @@ public class MySkin {
     @Column(name = "myskin_id")
     private Long id;
 
-    // 설문 프로필(User.id)을 기준으로 피부 고민을 저장한다.
+    // 현재 로그인 사용자의 Auth.id를 기준으로 피부 고민을 저장한다.
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
