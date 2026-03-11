@@ -56,11 +56,18 @@
   --radius-card: 16px;
   --radius-button: 32px;
   --radius-chip: 30px;
+  --radius-badge: 30px;
   --radius-modal: 20px;
+  --radius-icon: 12px;
+  --radius-xs: 4px;
 
   /* 그림자 */
   --shadow-card: 0px 5px 16px 0px rgba(152, 152, 152, 0.2);
   --shadow-nav: 0 8px 32px rgba(120, 130, 80, 0.05);
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  /* 높이 */
+  --height-header: 56px;
 }
 
 @theme inline {
