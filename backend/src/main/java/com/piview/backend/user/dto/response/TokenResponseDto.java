@@ -1,4 +1,4 @@
-package com.piview.backend.auth.dto.response;
+package com.piview.backend.user.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,7 +7,6 @@ import lombok.Getter;
 @Getter
 @Builder
 @AllArgsConstructor
-public class TokenDto {
+public class TokenResponseDto {
   private String accessToken;
-  private String refreshToken;
 }
