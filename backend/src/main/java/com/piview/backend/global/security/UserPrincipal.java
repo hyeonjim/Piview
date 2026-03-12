@@ -1,6 +1,6 @@
 package com.piview.backend.global.security;
 
-import com.piview.backend.auth.entity.Auth;
+import com.piview.backend.user.entity.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -27,21 +27,21 @@ public class UserPrincipal implements OAuth2User, UserDetails {
     }
 
     // 기본 인증 객체 생성
-    public static UserPrincipal create(Auth auth) {
+    public static UserPrincipal create(User user) {
         List<GrantedAuthority> authorities = Collections.singletonList(
                 new SimpleGrantedAuthority("ROLE_USER")
         );
 
         return new UserPrincipal(
-                auth.getId(),
-                auth.getEmail(),
+                user.getId(),
+                user.getEmail(),
                 authorities
         );
     }
 
     // 소셜 로그인 전용 생성
-    public static UserPrincipal create(Auth auth, Map<String, Object> attributes) {
-        UserPrincipal userPrincipal = UserPrincipal.create(auth);
+    public static UserPrincipal create(User user, Map<String, Object> attributes) {
+        UserPrincipal userPrincipal = UserPrincipal.create(user);
         userPrincipal.setAttributes(attributes);
         return userPrincipal;
     }
