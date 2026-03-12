@@ -94,7 +94,7 @@ export default function WelcomePage() {
         {/* CTA */}
         <div className="flex items-center justify-between mt-8">
           <button onClick={() => router.push("/home")} className="bg-transparent border-none cursor-pointer p-0"
-            style={{ fontFamily: "'Raleway', sans-serif", fontSize: "16px", color: "rgba(255,255,255,0.5)", fontWeight: 400 }}>
+            style={{ fontFamily: "'Raleway', sans-serif", fontSize: "18px", color: "rgba(255,255,255,0.5)", fontWeight: 400 }}>
             이미 계정이 있으신가요?{" "}
             <span className="text-brand font-semibold">로그인</span>
           </button>

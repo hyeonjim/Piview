@@ -27,7 +27,7 @@ function ResultContent() {
         {/* 아이콘 */}
         <div className="flex justify-center mt-4">
           <div className="flex items-center justify-center bg-brand-bg"
-            style={{ width: "72px", height: "72px", borderRadius: "50%", fontSize: "36px" }}>
+            style={{ width: "64px", height: "64px", borderRadius: "50%", fontSize: "32px" }}>
             {typeInfo.emoji}
           </div>
         </div>
@@ -35,7 +35,7 @@ function ResultContent() {
         {/* 뱃지 */}
         <div className="flex justify-center mt-5">
           <span className="bg-brand text-white font-semibold"
-            style={{ padding: "6px 20px", borderRadius: "12px", fontSize: "14px", letterSpacing: "0.5px" }}>
+            style={{ padding: "6px 16px", borderRadius: "12px", fontSize: "15px", letterSpacing: "0.5px" }}>
             진단 완료!
           </span>
         </div>

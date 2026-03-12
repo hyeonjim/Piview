@@ -56,7 +56,6 @@ export default function BottomNav() {
             "0 8px 32px rgba(120,130,80,0.05), inset 0 1px 0 rgba(255,255,255,0.08)",
           padding: "0 24px",
           pointerEvents: "auto",
-          backgroundColor: "rgba(248,246,240,0.85)",
         }}
       >
         {TABS.map((tab) => {

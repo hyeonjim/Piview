@@ -22,7 +22,7 @@ export interface SkinTestOption {
 export const SKIN_TEST_OPTIONS: SkinTestOption[] = [
   {
     key:   "photo",
-    href:  "/skin-test/camera",
+    href:  "/skin-test/photo",
     icon:  Camera,
     title: "AI 사진 분석",
     desc:  "얼굴 사진으로 AI가 피부 타입을 분석해요",

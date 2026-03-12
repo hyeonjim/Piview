@@ -3,7 +3,7 @@
  * 모든 상수의 단일 진입점
  *
  * 사용법:
- *   import { ROUTINE_STEPS, SKIN_TYPES } from "@/constants";
+ *   import { ROUTINE_STEPS, SKIN_TYPES, CATEGORY_COLORS } from "@/constants";
  *   import { MOCK_PRODUCTS } from "@/constants/_mock/products";  ← mock은 직접 경로 사용
  *
  * _mock 폴더는 여기서 re-export하지 않음.
@@ -11,6 +11,7 @@
  */
 
 export * from "./categories";
+export * from "./categoryColors";
 export * from "./skinTypes";
 export * from "./skinTypeInfo";
 export * from "./routineSteps";

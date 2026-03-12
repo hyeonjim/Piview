@@ -1,0 +1,166 @@
+/**
+ * components/features/search/CompareModal.tsx
+ *
+ * 제품 2개 비교 모달. search / recommend 페이지 공용.
+ * Product 타입 대신 제네릭 구조로 작성하여 mock/실제 타입 모두 수용.
+ */
+
+"use client";
+
+import { X } from "lucide-react";
+import { SKIN_FUNCTION_COLORS } from "@/constants/categoryColors";
+import { formatPrice } from "@/utils/format";
+
+export interface CompareProduct {
+  id: string | number;
+  brand: string;
+  name: string;
+  emoji?: string;
+  imageUrl?: string;
+  matchScore: number;
+  price: number;
+  volume: string;
+  rating?: number;
+  concerns?: Record<string, boolean>;
+}
+
+interface Props {
+  items: [CompareProduct, CompareProduct];
+  onClose: () => void;
+}
+
+export function CompareModal({ items, onClose }: Props) {
+  const rows: { label: string; vals: string[]; hiIndex?: number }[] = [
+    {
+      label: "매칭 점수",
+      vals: items.map((p) => `${p.matchScore}점`),
+      hiIndex: items[0].matchScore >= items[1].matchScore ? 0 : 1,
+    },
+    {
+      label: "가격",
+      vals: items.map((p) => formatPrice(p.price)),
+      hiIndex: items[0].price <= items[1].price ? 0 : 1,
+    },
+    {
+      label: "용량",
+      vals: items.map((p) => p.volume),
+    },
+    ...(items[0].rating != null
+      ? [{
+          label: "평점",
+          vals: items.map((p) => p.rating?.toFixed(1) ?? "-"),
+          hiIndex: (items[0].rating ?? 0) >= (items[1].rating ?? 0) ? 0 : 1,
+        }]
+      : []),
+  ];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ padding: "40px 20px" }}
+    >
+      <div
+        className="absolute inset-0"
+        style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+        onClick={onClose}
+      />
+      <div
+        className="relative bg-white flex flex-col"
+        style={{ borderRadius: "20px", width: "100%", maxWidth: "420px", maxHeight: "80vh", overflow: "hidden" }}
+      >
+        {/* 헤더 */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
+          <h3 style={{ fontSize: "17px", fontWeight: 600, color: "#1A1A1A" }}>제품 비교</h3>
+          <button
+            onClick={onClose}
+            className="p-1.5 cursor-pointer"
+            style={{ borderRadius: "50%", backgroundColor: "#F5F5F5", border: "none" }}
+          >
+            <X size={16} color="#757575" />
+          </button>
+        </div>
+
+        <div className="px-5 pb-6 overflow-y-auto flex-1" style={{ scrollbarWidth: "none" }}>
+          {/* 제품 이미지 */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            {items.map((p) => (
+              <div key={p.id} className="flex flex-col items-center">
+                <div
+                  className="flex items-center justify-center w-full"
+                  style={{ height: "80px", borderRadius: "12px", backgroundColor: "#F5F5F5", fontSize: "36px" }}
+                >
+                  {p.imageUrl ? (
+                    <img src={p.imageUrl} alt={p.name} style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "12px" }} />
+                  ) : (
+                    p.emoji ?? "🧴"
+                  )}
+                </div>
+                <p style={{ fontSize: "10px", color: "#757575", marginTop: "8px" }}>{p.brand}</p>
+                <p className="text-center" style={{ fontSize: "12px", fontWeight: 600, color: "#1A1A1A", marginTop: "2px", lineHeight: 1.3 }}>
+                  {p.name}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* 비교 행 */}
+          {rows.map((row) => (
+            <div
+              key={row.label}
+              className="grid items-center py-2.5"
+              style={{ gridTemplateColumns: "70px 1fr 1fr", borderBottom: "1px solid #F0F0F0" }}
+            >
+              <p style={{ fontSize: "11px", color: "#757575" }}>{row.label}</p>
+              {row.vals.map((v, i) => (
+                <p
+                  key={i}
+                  className="text-center"
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: row.hiIndex === i ? 700 : 400,
+                    color: row.hiIndex === i ? "var(--color-brand)" : "#1A1A1A",
+                  }}
+                >
+                  {v}
+                </p>
+              ))}
+            </div>
+          ))}
+
+          {/* 피부기능 비교 (concerns 있을 때만) */}
+          {items[0].concerns && (
+            <div className="grid items-start py-2.5" style={{ gridTemplateColumns: "70px 1fr 1fr", borderBottom: "1px solid #F0F0F0" }}>
+              <p style={{ fontSize: "11px", color: "#757575", paddingTop: "2px" }}>피부기능</p>
+              {items.map((p) => {
+                const active = Object.entries(p.concerns ?? {}).filter(([, v]) => v).map(([k]) => k);
+                return (
+                  <div key={p.id} className="flex flex-wrap gap-1 justify-center">
+                    {active.length > 0 ? active.map((fn) => {
+                      const c = SKIN_FUNCTION_COLORS[fn];
+                      return (
+                        <span key={fn} style={{ fontSize: "10px", padding: "2px 6px", borderRadius: "6px",
+                          backgroundColor: c?.chip ?? "#F0F0F0", color: c?.accent ?? "#616161", fontWeight: 500 }}>
+                          {fn}
+                        </span>
+                      );
+                    }) : <span style={{ fontSize: "10px", color: "#BDBDBD" }}>-</span>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 추천 코멘트 */}
+          <div className="mt-3 p-4" style={{ borderRadius: "12px", backgroundColor: "#F0F2E8" }}>
+            <p style={{ fontSize: "13px", fontWeight: 600, color: "#1A1A1A", marginBottom: "4px" }}>💡 PiView 추천</p>
+            <p style={{ fontSize: "12px", color: "#424242", lineHeight: 1.5 }}>
+              {items[0].matchScore >= items[1].matchScore
+                ? `${items[0].brand} ${items[0].name}이(가) 매칭 점수가 더 높아 더 적합합니다.`
+                : `${items[1].brand} ${items[1].name}이(가) 매칭 점수가 더 높아 더 적합합니다.`}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

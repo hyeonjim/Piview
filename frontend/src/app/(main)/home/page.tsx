@@ -88,11 +88,11 @@ export default function HomePage() {
         </Link>
       </div>
 
-      {/* 오늘의 루틴 */}
+      {/* 나의 루틴 */}
       <div className="px-5 mt-7">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-text-primary font-bold" style={{ fontSize: "18px", letterSpacing: "-0.2px", margin: 0 }}>
-            오늘의 루틴
+            나의 루틴
           </h2>
           <span className="text-brand font-medium" style={{ fontSize: "13px", letterSpacing: "0.5px" }}>
             {routine.label} {routine.emoji}

@@ -1,5 +1,6 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
 @import url("https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -8,7 +9,7 @@
 
 /* ── 디자인 토큰 (피그마 ThemeContext 원본값) ── */
 @theme {
-  --max-width-app: 430px;
+  --max-width-app: 500px;
 
   /* Primary — 피그마: #A2AA7B */
   --color-brand: #a2aa7b;
@@ -131,6 +132,13 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* 모바일(767px 이하)에서는 body 배경을 white로 — 피그마 MobileFrame과 동일 */
+  @media (max-width: 767px) {
+    body {
+      background-color: #ffffff;
+    }
+  }
+
   /* 스크롤바 숨기기 */
   ::-webkit-scrollbar {
     display: none;
@@ -138,6 +146,17 @@
   * {
     scrollbar-width: none;
     -ms-overflow-style: none;
+  }
+
+  /* BottomNav 높이 보정용 유틸 클래스 */
+  /* (main)/layout.tsx 의 <main className="pb-nav"> 에서 사용 */
+  .pb-nav {
+    padding-bottom: 92px; /* BottomNav 60px + bottom 16px + 여백 16px */
+  }
+
+  /* 피그마 MobileFrame: 13px 미만 폰트 강제 최소화 방지 */
+  .text-xs {
+    font-size: 13px !important;
   }
 
   h1 {

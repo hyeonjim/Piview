@@ -7,7 +7,8 @@ export default function MainLayout({
 }) {
   return (
     <>
-      <main className="flex-1 pb-nav overflow-y-auto">{children}</main>
+      {/* pb-nav: globals.css에 정의 — BottomNav 60px + bottom 16px + 여백 16px = 92px */}
+      <main className="flex-1 pb-nav">{children}</main>
       <BottomNav />
     </>
   );

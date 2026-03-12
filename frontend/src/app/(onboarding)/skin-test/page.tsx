@@ -38,7 +38,7 @@ export default function SkinTestPage() {
               className="w-full text-left p-5 transition-all duration-200 cursor-pointer relative"
               style={{ borderRadius: "16px",
                 backgroundColor: isSelected ? "var(--color-brand-bg)" : "var(--color-warm-bg)",
-                border: `1.5px solid ${isSelected ? "var(--color-brand)" : "#F0F0F0"}`,
+                border: `1.5px solid ${isSelected ? "var(--color-brand)" : "#E8E0D0"}`,
                 boxShadow: isSelected ? "0px 4px 12px rgba(162,170,123,0.15)" : "0px 1px 3px rgba(0,0,0,0.04)" }}>
               {option.badge && (
                 <span className="absolute top-4 right-4 text-xs font-semibold px-2 py-0.5 bg-brand-bg text-brand"

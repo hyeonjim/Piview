@@ -1,19 +1,59 @@
 "use client";
 
+/**
+ * app/product/[id]/page.tsx
+ *
+ * 변경사항:
+ *  - 루틴추가 버튼: 모달 없이 클릭 즉시 추가 + 상단 토스트
+ *  - 추가 후 버튼이 "✓ 루틴추가됨" 으로 변경됨
+ */
+
 import { useState } from "react";
-import { Heart, ChevronLeft, Package, Star } from "lucide-react";
+import { Heart, ChevronLeft, Package, Star, Check, Plus } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { SkinTypeBadge } from "@/components/common";
 import { MOCK_PRODUCT, MOCK_PURPOSE_SCORES, MOCK_SKIN_TYPE_SCORES } from "@/constants/_mock/product";
 
+const P = "#A2AA7B", PBG = "#F0F2E8";
+
 export default function ProductDetailPage() {
-  const [liked, setLiked] = useState(false);
-  const [owned, setOwned] = useState(false);
+  const [liked,        setLiked]        = useState(false);
+  const [owned,        setOwned]        = useState(false);
+  const [routineAdded, setRoutineAdded] = useState(false);
+  const [toast,        setToast]        = useState("");
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 2500); };
+
+  // ✅ 루틴추가: 모달 없이 즉시 추가 + 토스트
+  const handleAddToRoutine = () => {
+    if (routineAdded) return;
+    setRoutineAdded(true);
+    showToast(`✓ ${MOCK_PRODUCT.name} 루틴에 추가됨!`);
+  };
 
   return (
     <div className="flex flex-col min-h-full bg-bg-base">
+
+      {/* 토스트 */}
+      {toast && (
+        <div
+          className="fixed top-16 left-1/2 z-[60] -translate-x-1/2 pointer-events-none"
+          style={{
+            padding:"10px 18px", borderRadius:40,
+            backgroundColor:"rgba(40,40,40,0.88)", color:"white",
+            fontSize:"13px", fontWeight:600,
+            boxShadow:"0 4px 20px rgba(0,0,0,0.25)",
+            backdropFilter:"blur(8px)",
+            whiteSpace:"nowrap",
+          }}
+        >
+          {toast}
+        </div>
+      )}
+
+      {/* 헤더 */}
       <div className="sticky top-0 z-20 bg-bg-base flex items-center justify-between px-4 h-14">
         <Link href="/search" className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-bg-surface">
           <ChevronLeft size={22} />
@@ -23,11 +63,13 @@ export default function ProductDetailPage() {
         </button>
       </div>
 
+      {/* 이미지 */}
       <div className="h-56 bg-bg-surface flex items-center justify-center mx-5 rounded-2xl">
         <span className="text-6xl">🧴</span>
       </div>
 
       <div className="px-5 py-4 flex flex-col gap-4">
+        {/* 기본 정보 */}
         <div>
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
@@ -45,6 +87,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
+        {/* 평점 + 버튼 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <Star size={14} className="fill-yellow-400 text-yellow-400" />
@@ -53,25 +96,46 @@ export default function ProductDetailPage() {
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setOwned((p) => !p)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-badge border text-xs font-medium transition-all ${owned ? "border-brand bg-brand-pale text-brand" : "border-border text-text-secondary"}`}>
-              <Package size={13} /> 보유
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-badge border text-xs font-medium transition-all ${owned?"border-brand bg-brand-pale text-brand":"border-border text-text-secondary"}`}>
+              <Package size={13}/> 보유
             </button>
             <button onClick={() => setLiked((p) => !p)}>
-              <Heart size={18} className={liked ? "fill-red-400 text-red-400" : "text-text-muted"} />
+              <Heart size={18} className={liked?"fill-red-400 text-red-400":"text-text-muted"} />
             </button>
           </div>
         </div>
 
+        {/* 가격 + 용량 */}
         <div className="flex items-baseline justify-between">
           <span className="text-xl font-bold text-text-primary">₩{MOCK_PRODUCT.price.toLocaleString()}</span>
           <span className="text-sm text-text-muted">{MOCK_PRODUCT.count}</span>
         </div>
 
+        {/* ✅ 루틴추가 버튼 (모달 없이 즉시 추가) */}
+        <button
+          onClick={handleAddToRoutine}
+          disabled={routineAdded}
+          className="w-full flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+          style={{
+            height:46, borderRadius:14,
+            backgroundColor: routineAdded ? "#F0F0F0" : P,
+            color: routineAdded ? "#AFAFAF" : "#fff",
+            border:"none",
+            fontSize:"15px", fontWeight:700,
+          }}
+        >
+          {routineAdded
+            ? <><Check size={16}/> 루틴추가됨</>
+            : <><Plus size={16}/> 루틴추가</>}
+        </button>
+
+        {/* 매칭 점수 */}
         <div className="bg-brand-pale rounded-2xl px-5 py-4 flex items-center justify-between">
           <span className="text-sm font-semibold text-text-primary">나와의 매칭 점수</span>
           <span className="text-2xl font-bold text-brand">{MOCK_PRODUCT.matchScore}</span>
         </div>
 
+        {/* EWG */}
         <div className="bg-bg-card border border-border rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -89,17 +153,17 @@ export default function ProductDetailPage() {
             </div>
           </div>
           <div className="flex h-2 rounded-full overflow-hidden gap-px mb-3">
-            <div className="bg-ewg-safe rounded-full" style={{ flex: MOCK_PRODUCT.ewg.safe }} />
+            <div className="bg-ewg-safe rounded-full"    style={{ flex: MOCK_PRODUCT.ewg.safe    }} />
             <div className="bg-ewg-caution rounded-full" style={{ flex: MOCK_PRODUCT.ewg.caution }} />
             {MOCK_PRODUCT.ewg.danger > 0 && <div className="bg-ewg-danger rounded-full" style={{ flex: MOCK_PRODUCT.ewg.danger }} />}
-            <div className="bg-border rounded-full" style={{ flex: MOCK_PRODUCT.ewg.unknown }} />
+            <div className="bg-border rounded-full"      style={{ flex: MOCK_PRODUCT.ewg.unknown }} />
           </div>
           <div className="grid grid-cols-4 gap-1 text-center">
             {[
-              { label: "1~2등급", sub: "안전",   count: MOCK_PRODUCT.ewg.safe,    color: "text-ewg-safe"    },
-              { label: "3~6등급", sub: "보통",   count: MOCK_PRODUCT.ewg.caution, color: "text-ewg-caution" },
-              { label: "7~10등급",sub: "주의",   count: MOCK_PRODUCT.ewg.danger,  color: "text-ewg-danger"  },
-              { label: "등급 미정",sub: "정보없음",count: MOCK_PRODUCT.ewg.unknown, color: "text-text-muted"  },
+              { label:"1~2등급",  sub:"안전",   count:MOCK_PRODUCT.ewg.safe,    color:"text-ewg-safe"    },
+              { label:"3~6등급",  sub:"보통",   count:MOCK_PRODUCT.ewg.caution, color:"text-ewg-caution" },
+              { label:"7~10등급", sub:"주의",   count:MOCK_PRODUCT.ewg.danger,  color:"text-ewg-danger"  },
+              { label:"등급 미정",sub:"정보없음",count:MOCK_PRODUCT.ewg.unknown, color:"text-text-muted"  },
             ].map((g) => (
               <div key={g.sub}>
                 <p className="text-[10px] text-text-muted">{g.label}</p>
@@ -110,6 +174,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
+        {/* 탭 */}
         <Tabs defaultValue="purpose">
           <TabsList className="w-full bg-bg-surface rounded-xl h-10">
             <TabsTrigger value="ingredients" className="flex-1 text-xs rounded-lg">전성분 분석</TabsTrigger>
