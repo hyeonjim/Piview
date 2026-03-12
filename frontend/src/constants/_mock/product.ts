@@ -41,7 +41,7 @@ export const MOCK_PRODUCT: ProductDetail = {
   price: 28000, count: "60ea", rating: 0, reviewCount: 0,
   skinTypes: ["지성", "복합성"], effects: ["여드름", "안티에이징", "진정"],
   matchScore: 0,
-  ewg: { total: 63, safe: 51, caution: 3, danger: 0, unknown: 9, safePercent: 94 },
+  ewg: { total: 20, safe: 10, caution: 6, danger: 2, unknown: 2, safePercent: 50 },
 };
 export const MOCK_PURPOSE_SCORES: PurposeScore[] = [
   { label: "보습", score: 0 }, { label: "미백", score: 0 },
@@ -81,6 +81,14 @@ export interface ProductDetailFull {
   ingredientDetails:  IngredientDetail[];
   purposeScores:      Record<string, number>;
   skinTypeScores:     Record<string, number>;
+  ewg: {
+    total:       number;
+    safe:        number;
+    caution:     number;
+    danger:      number;
+    unknown:     number;
+    safePercent: number;
+  };
 }
 
 /**
@@ -100,6 +108,7 @@ export const MOCK_PRODUCT_DETAIL: ProductDetailFull = {
   tags: ["여드름", "진정", "저자극"],
   skinType1: "지성",
   skinType2: "복합성",
+  ewg: { total: 20, safe: 10, caution: 6, danger: 2, unknown: 2, safePercent: 50 },
   concerns: {
     아토피: false, 여드름: true, 미백: false, 색소침착: false,
     안티에이징: false, 피지: true, 블랙헤드: true, 수분: false, 영양: false, 진정: true,
@@ -107,22 +116,30 @@ export const MOCK_PRODUCT_DETAIL: ProductDetailFull = {
   ingredientsKr: [
     "정제수", "부틸렌글라이콜", "글리세린", "나이아신아마이드",
     "판테놀", "병풀추출물", "히알루론산나트륨", "알란토인",
-    "살리실산", "카보머", "EDTA이나트륨", "향료",
+    "비에이치티", "살리실산", "카보머", "토코페롤",
+    "리날룰", "시트로넬올", "알파-아이소메틸아이오논", "제라니올",
+    "EDTA이나트륨", "향료",
   ],
-  cautionIngredients: ["살리실산", "향료"],
+  cautionIngredients: ["비에이치티", "살리실산", "리날룰", "시트로넬올", "알파-아이소메틸아이오논", "제라니올"],
   ingredientDetails: [
-    { name: "정제수",       ewgGrade: 1,    funcs: ["용매"] },
-    { name: "부틸렌글라이콜", ewgGrade: 1,   funcs: ["보습제", "용매"] },
-    { name: "글리세린",     ewgGrade: 1,    funcs: ["보습제", "피부컨디셔닝제"] },
-    { name: "나이아신아마이드",ewgGrade: 2,  funcs: ["미백", "피지조절", "항산화"] },
-    { name: "판테놀",       ewgGrade: 1,    funcs: ["보습제", "진정"] },
-    { name: "병풀추출물",   ewgGrade: 1,    funcs: ["진정", "재생", "항염"] },
-    { name: "히알루론산나트륨",ewgGrade: 1,  funcs: ["보습제", "피부컨디셔닝제"] },
-    { name: "알란토인",     ewgGrade: 1,    funcs: ["진정", "재생"] },
-    { name: "살리실산",     ewgGrade: 3,    funcs: ["각질제거", "항균"] },
-    { name: "카보머",       ewgGrade: 2,    funcs: ["점증제"] },
-    { name: "EDTA이나트륨", ewgGrade: 3,    funcs: ["킬레이트제"] },
-    { name: "향료",         ewgGrade: null, funcs: ["향기"] },
+    { name: "정제수",           nameEn: "Water;Aqua",                   ewgGrade: 1,    funcs: ["피부컨디셔닝제", "용제"] },
+    { name: "부틸렌글라이콜",   nameEn: "Butylene Glycol",              ewgGrade: 1,    funcs: ["착향제", "피부컨디셔닝제", "용제", "점도감소제"] },
+    { name: "글리세린",         nameEn: "Glycerin",                     ewgGrade: 1,    funcs: ["보습제", "피부컨디셔닝제", "용제"] },
+    { name: "나이아신아마이드", nameEn: "Niacinamide",                  ewgGrade: 2,    funcs: ["미백", "피지조절", "항산화", "피부컨디셔닝제"] },
+    { name: "판테놀",           nameEn: "Panthenol",                    ewgGrade: 1,    funcs: ["보습제", "진정", "피부컨디셔닝제"] },
+    { name: "병풀추출물",       nameEn: "Centella Asiatica Extract",    ewgGrade: 1,    funcs: ["진정", "재생", "항염"] },
+    { name: "히알루론산나트륨", nameEn: "Sodium Hyaluronate",           ewgGrade: 1,    funcs: ["보습제", "피부컨디셔닝제"] },
+    { name: "알란토인",         nameEn: "Allantoin",                    ewgGrade: 1,    funcs: ["진정", "재생", "상처치유"] },
+    { name: "비에이치티",       nameEn: "BHT",                          ewgGrade: 3,    funcs: ["산화방지제", "착향제"] },
+    { name: "살리실산",         nameEn: "Salicylic Acid",               ewgGrade: 3,    funcs: ["각질제거", "항균", "여드름케어"] },
+    { name: "카보머",           nameEn: "Carbomer",                     ewgGrade: 2,    funcs: ["점증제", "제형안정제"] },
+    { name: "토코페롤",         nameEn: "Tocopherol",                   ewgGrade: 1,    funcs: ["산화방지제", "착향제", "피부컨디셔닝제", "수분증발차단제"] },
+    { name: "리날룰",           nameEn: "Linalool",                     ewgGrade: 3,    funcs: ["착향제"] },
+    { name: "시트로넬올",       nameEn: "Citronellol",                  ewgGrade: 4,    funcs: ["착향제"] },
+    { name: "알파-아이소메틸아이오논", nameEn: "Alpha-Isomethyl Ionone", ewgGrade: 5,   funcs: ["착향제", "피부컨디셔닝제(기타)"] },
+    { name: "제라니올",         nameEn: "Geraniol",                     ewgGrade: 7,    funcs: ["착향제"] },
+    { name: "EDTA이나트륨",     nameEn: "Disodium EDTA",                ewgGrade: 3,    funcs: ["킬레이트제", "방부보조제"] },
+    { name: "향료",             nameEn: "Fragrance",                    ewgGrade: null, funcs: ["착향제"] },
   ],
   purposeScores: {
     보습: 62, 진정: 85, 미백: 55, 각질케어: 70, 모공관리: 78, 항산화: 45,

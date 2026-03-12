@@ -12,10 +12,16 @@
 
 export * from "./categories";
 export * from "./categoryColors";
+export * from "./colors";
 export * from "./skinTypes";
 export * from "./skinTypeInfo";
 export * from "./routineSteps";
+export * from "./routineEvaluation";
 export * from "./quiz";
 export * from "./skinTestOptions";
 export * from "./insights";
 export * from "./ewg";
+export * from "./userSettings";
+export * from "./productCategories";
+export * from "./filterDefaults";
+export * from "./allergens";

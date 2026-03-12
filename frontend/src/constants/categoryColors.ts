@@ -10,6 +10,15 @@ export const CATEGORY_COLORS: Record<string, { bg: string; border: string; accen
   "선크림/스틱":     { bg: "#F8F6F0", border: "#E0D8C4", accent: "#8B7D5E", chip: "#F0EBD8" },
   "세럼/에센스":     { bg: "#F5F3EE", border: "#D9D2C4", accent: "#7A6F5C", chip: "#EAE5DA" },
   "클렌저":          { bg: "#F5F7F0", border: "#D4DCBE", accent: "#6B7A4E", chip: "#E8EDDC" },
+  "클렌징폼":        { bg: "#F5F7F0", border: "#D4DCBE", accent: "#6B7A4E", chip: "#E8EDDC" },
+  "클렌징젤":        { bg: "#F0F5F2", border: "#C8D8CC", accent: "#4E7A60", chip: "#DCE9E1" },
+  "클렌징밤":        { bg: "#F6F4EF", border: "#DDD4C2", accent: "#8B7A5A", chip: "#EDE6D8" },
+  "클렌징오일":      { bg: "#F8F6F0", border: "#E0D8C4", accent: "#8B7D5E", chip: "#F0EBD8" },
+  "클렌징워터":      { bg: "#F0F3F5", border: "#C8D4DC", accent: "#5A6E78", chip: "#DCE4EA" },
+  "클렌징로션":      { bg: "#F7F5F0", border: "#DDD6C8", accent: "#8A7B64", chip: "#EDE8DC" },
+  "로션/에멀젼":     { bg: "#F7F5F0", border: "#DDD6C8", accent: "#8A7B64", chip: "#EDE8DC" },
+  "선스틱":          { bg: "#F8F6F0", border: "#E0D8C4", accent: "#8B7D5E", chip: "#F0EBD8" },
+  "선크림/스틱":     { bg: "#F8F6F0", border: "#E0D8C4", accent: "#8B7D5E", chip: "#F0EBD8" },
   "토너":            { bg: "#F0F4F1", border: "#C5D4C8", accent: "#4A6B52", chip: "#DDE8DF" },
   "세럼":            { bg: "#F5F3EE", border: "#D9D2C4", accent: "#7A6F5C", chip: "#EAE5DA" },
   "선크림":          { bg: "#F8F6F0", border: "#E0D8C4", accent: "#8B7D5E", chip: "#F0EBD8" },
@@ -42,3 +51,11 @@ export const SKIN_TYPE_TAG_COLORS: Record<string, { bg: string; text: string }> 
 };
 
 export const SKIN_TYPE_LABELS_FOR_FILTER = ["건성","지성","복합성","수부지"] as const;
+
+// ── EWG 등급 색상 ──────────────────────────────────────────────────────────
+export function getEwgColor(grade: number | null | undefined): { bg: string; text: string; barColor: string } {
+  if (grade == null) return { bg: "#F5F5F5",  text: "#9E9E9E", barColor: "#E0E0E0" };
+  if (grade <= 2)    return { bg: "#E8F5E9",  text: "#2E7D32", barColor: "#4CAF50" };
+  if (grade <= 6)    return { bg: "#FFF8E1",  text: "#F57F17", barColor: "#FFB300" };
+  return               { bg: "#FFEBEE",  text: "#C62828", barColor: "#F44336" };
+}

@@ -6,62 +6,57 @@
  * 변경사항:
  *  1. "피부 진단 시작하기" → router.push("/skin-test")
  *  2. 루틴 스텝 "+ 추가" 클릭 → 해당 카테고리 추천 제품 모달
+ *  3. 루틴 종합점수 링 UI
+ *  4. useLocalRoutineStore 연동 → 홈 화면과 루틴 상태 공유
  */
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Settings, Plus, Leaf, Package, Check, X, Search, Sparkles } from "lucide-react";
+import { Settings, Plus, Leaf, Package, Check, X, Search, Sparkles, TrendingUp } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Button from "@/components/common/Button";
 import { EmptyState } from "@/components/common";
 import { MYPAGE_ROUTINE_STEPS } from "@/constants";
 import { CATEGORY_COLORS, SKIN_FUNCTION_COLORS, SKIN_TYPE_TAG_COLORS } from "@/constants/categoryColors";
+import { COLOR_BRAND, COLOR_BRAND_BG, COLOR_BRAND_LIGHT, COLOR_TEXT, COLOR_TEXT_MUTED } from "@/constants/colors";
+import { getRoutineEvaluation, getScoreBarColor } from "@/constants/routineEvaluation";
+import { STEP_CATS, STEP_PRODUCTS } from "@/constants/_mock/mypageProducts";
+import { useLocalRoutineStore, type LocalProduct } from "@/stores/useLocalRoutineStore";
 
-const P = "#A2AA7B", PBG = "#F0F2E8", PLT = "#C5CBA8", TEXT = "#1A1A1A", MUTED = "#AFAFAF";
-
-const STEP_CATS: Record<string, string[]> = {
-  CL: ["클렌저", "폼/젤/밤/오일"],
-  PR: ["스킨/토너", "토너", "미스트", "패드"],
-  SR: ["에센스/앰플/세럼", "세럼", "에센스", "세럼/에센스"],
-  LT: ["로션/에멀젼", "로션"],
-  CR: ["크림", "페이스오일"],
-  SC: ["선크림/스틱", "선크림"],
-};
-
-interface SP { id:string; brand:string; name:string; category:string; emoji:string; skinTypes:string[]; effects:string[]; matchScore:number; }
-const STEP_PRODUCTS: SP[] = [
-  { id:"c1",  brand:"아벤느",     name:"클린스 포밍 젤",                   category:"클렌저",        emoji:"🫧", skinTypes:["민감성"],        effects:["진정","수분"],                   matchScore:78 },
-  { id:"c2",  brand:"세타필",     name:"젠틀 스킨 클렌저",                 category:"폼/젤/밤/오일", emoji:"🧴", skinTypes:["건성","민감성"],  effects:["수분","진정"],                   matchScore:82 },
-  { id:"t1",  brand:"아누아",     name:"어성초 77 토너",                   category:"스킨/토너",     emoji:"💧", skinTypes:["지성","복합성"],  effects:["여드름","피지","진정"],           matchScore:92 },
-  { id:"t2",  brand:"미샤",       name:"[니어스킨] 트러블컷 프레시 토너", category:"스킨/토너",     emoji:"💦", skinTypes:["지성","복합성"],  effects:["여드름","피지","블랙헤드","진정"],matchScore:88 },
-  { id:"t3",  brand:"피터스",     name:"0.5% 바하토너",                   category:"스킨/토너",     emoji:"🌊", skinTypes:["지성","수부지"],  effects:["여드름","미백","피지","블랙헤드"],matchScore:85 },
-  { id:"t4",  brand:"라운드랩",   name:"1025 독도 토너",                  category:"스킨/토너",     emoji:"🌿", skinTypes:["민감성","건성"],  effects:["수분","진정"],                   matchScore:87 },
-  { id:"s1",  brand:"코스알엑스",  name:"달팽이 뮤신 96 에센스",           category:"세럼/에센스",   emoji:"✨", skinTypes:["복합성","건성"],  effects:["수분","안티에이징","진정"],       matchScore:95 },
-  { id:"s2",  brand:"이니스프리",  name:"그린티 씨드 세럼",                category:"세럼",          emoji:"🌱", skinTypes:["건성","복합성"],  effects:["수분","영양"],                   matchScore:88 },
-  { id:"s3",  brand:"넘버즈인",   name:"1번 비타민C 세럼",                 category:"세럼",          emoji:"🍋", skinTypes:["건성"],           effects:["미백","색소침착","안티에이징"],   matchScore:83 },
-  { id:"cr1", brand:"피지오겔",   name:"AI 크림",                         category:"크림",          emoji:"🤍", skinTypes:["민감성","건성"],  effects:["수분","진정","아토피"],           matchScore:90 },
-  { id:"cr2", brand:"이니스프리",  name:"그린티 씨드 크림",                category:"크림",          emoji:"💚", skinTypes:["건성","복합성"],  effects:["수분","영양"],                   matchScore:86 },
-  { id:"sc1", brand:"아누아",     name:"어성초 선크림 SPF50+",             category:"선크림",        emoji:"☀️", skinTypes:["지성","복합성"],  effects:["피지","진정"],                   matchScore:91 },
-  { id:"sc2", brand:"라로슈포제", name:"안티헬리오스 XL SPF50+",           category:"선크림",        emoji:"🌤️", skinTypes:["민감성"],         effects:["진정"],                          matchScore:86 },
-];
+const P = COLOR_BRAND, PBG = COLOR_BRAND_BG, PLT = COLOR_BRAND_LIGHT, TEXT = COLOR_TEXT, MUTED = COLOR_TEXT_MUTED;
 
 export default function MyPage() {
   const router = useRouter();
-  const [tab, setTab]     = useState<"routine"|"owned">("routine");
-  const [routine, setRoutine] = useState<Record<string, SP|null>>(
-    Object.fromEntries(MYPAGE_ROUTINE_STEPS.map((s) => [s.code, null]))
-  );
+  const [tab, setTab] = useState<"routine"|"owned">("routine");
+
+  // ── store 연동 (홈과 공유) ──
+  const { routine, setStepProduct } = useLocalRoutineStore();
+
   const [openStep, setOpenStep] = useState<string|null>(null);
   const [addSearch, setAddSearch] = useState("");
   const [isPiview, setIsPiview]   = useState(false);
   const [toast, setToast]         = useState("");
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 2500); };
-  const openModal = (code: string) => { setOpenStep(code); setAddSearch(""); setIsPiview(false); };
+  const openModal  = (code: string) => { setOpenStep(code); setAddSearch(""); setIsPiview(false); };
   const closeModal = () => { setOpenStep(null); setAddSearch(""); setIsPiview(false); };
 
   const filledCount = Object.values(routine).filter(Boolean).length;
+
+  // ── 종합 점수 ──
+  const routineScores = useMemo(() =>
+    Object.values(routine)
+      .filter((p): p is LocalProduct => !!p && p.matchScore > 0)
+      .map((p) => p.matchScore),
+    [routine]
+  );
+  const avgScore = routineScores.length > 0
+    ? Math.round(routineScores.reduce((a, b) => a + b, 0) / routineScores.length) : 0;
+  const evaluation = getRoutineEvaluation(avgScore, routineScores.length);
+  const scoreColor = getScoreBarColor(avgScore);
+  const CIRCUMFERENCE = 138;
+  const strokeDash = routineScores.length > 0 ? (avgScore / 100) * CIRCUMFERENCE : 0;
 
   const modalProducts = useMemo(() => {
     if (!openStep) return [];
@@ -79,10 +74,14 @@ export default function MyPage() {
     return isPiview ? sorted.slice(0, 5) : sorted;
   }, [modalProducts, addSearch, isPiview]);
 
-  const addToRoutine = (product: SP) => {
-    setRoutine((prev) => ({ ...prev, [openStep!]: product }));
+  const addToRoutine = (product: LocalProduct) => {
+    setStepProduct(openStep!, product); // store에 저장 → 홈과 즉시 동기화
     showToast(`✓ ${product.name} 루틴에 추가됨!`);
     closeModal();
+  };
+
+  const removeFromRoutine = (code: string) => {
+    setStepProduct(code, null);
   };
 
   const currentLabel = MYPAGE_ROUTINE_STEPS.find((s) => s.code === openStep)?.label ?? "";
@@ -105,7 +104,6 @@ export default function MyPage() {
           </Link>
         </div>
 
-        {/* ✅ Fix 1 */}
         <Button variant="primary" fullWidth size="md" className="mt-4" onClick={() => router.push("/skin-test")}>
           피부 진단 시작하기
         </Button>
@@ -167,7 +165,7 @@ export default function MyPage() {
                     </div>
                     <div className="flex flex-col gap-1 shrink-0">
                       <button onClick={() => openModal(step.code)} style={{ fontSize:"11px", color:P, fontWeight:600, padding:"3px 10px", borderRadius:8, border:`1px solid ${P}40`, backgroundColor:PBG }}>변경</button>
-                      <button onClick={() => setRoutine((p) => ({ ...p, [step.code]:null }))} style={{ fontSize:"11px", color:MUTED, fontWeight:500, padding:"3px 10px", borderRadius:8, border:"1px solid #E0E0E0", backgroundColor:"white" }}>삭제</button>
+                      <button onClick={() => removeFromRoutine(step.code)} style={{ fontSize:"11px", color:MUTED, fontWeight:500, padding:"3px 10px", borderRadius:8, border:"1px solid #E0E0E0", backgroundColor:"white" }}>삭제</button>
                     </div>
                   </div>
                 ) : (
@@ -176,7 +174,6 @@ export default function MyPage() {
                       {step.code}
                     </div>
                     <p className="flex-1 text-sm font-medium text-text-primary">{step.label}</p>
-                    {/* ✅ Fix 2 */}
                     <button onClick={() => openModal(step.code)} className="flex items-center gap-1 text-xs font-medium" style={{ color:P }}>
                       <Plus size={13}/> 추가
                     </button>
@@ -185,6 +182,44 @@ export default function MyPage() {
               </div>
             );
           })}
+
+          {/* 루틴 종합 점수 카드 */}
+          {filledCount > 0 && (
+            <div className="mt-2 p-4 bg-bg-card border rounded-2xl" style={{ borderColor:`${scoreColor}30` }}>
+              <div className="flex items-center gap-3">
+                <div className="relative shrink-0 flex items-center justify-center" style={{ width:56, height:56 }}>
+                  <svg width="56" height="56" style={{ position:"absolute" }}>
+                    <circle cx="28" cy="28" r="22" fill="none" stroke="#F0EDE8" strokeWidth="4" />
+                    <circle cx="28" cy="28" r="22" fill="none" stroke={scoreColor} strokeWidth="4"
+                      strokeDasharray={`${strokeDash} ${CIRCUMFERENCE}`} strokeLinecap="round"
+                      transform="rotate(-90 28 28)" style={{ transition:"stroke-dasharray 0.6s ease" }} />
+                  </svg>
+                  <span style={{ fontSize:"13px", fontWeight:700, color:scoreColor, position:"relative", zIndex:1 }}>{avgScore}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <TrendingUp size={13} color={scoreColor} />
+                    <span style={{ fontSize:"12px", fontWeight:700, color:TEXT, letterSpacing:"0.5px", textTransform:"uppercase" }}>내 루틴 종합 점수</span>
+                  </div>
+                  <p style={{ fontSize:"11px", color:"#8A7B64", lineHeight:1.5, wordBreak:"keep-all" }}>{evaluation.text}</p>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-3 items-end">
+                {MYPAGE_ROUTINE_STEPS.map((step) => {
+                  const prod = routine[step.code];
+                  if (!prod) return null;
+                  const bc = getScoreBarColor(prod.matchScore);
+                  return (
+                    <div key={step.code} className="flex flex-col items-center gap-0.5">
+                      <span style={{ fontSize:"9px", color:bc, fontWeight:700 }}>{prod.matchScore}</span>
+                      <div style={{ width:6, height:Math.max(8,(prod.matchScore/100)*32), borderRadius:3, backgroundColor:bc, transition:"height 0.4s ease" }} />
+                      <span style={{ fontSize:"8px", color:MUTED, letterSpacing:"0.3px" }}>{step.code}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -209,7 +244,7 @@ export default function MyPage() {
         </div>
       )}
 
-      {/* ✅ Fix 2: 스텝별 추천 제품 모달 */}
+      {/* 스텝별 추천 제품 모달 */}
       {openStep && (
         <>
           <div className="fixed inset-0 z-40" style={{ backgroundColor:"rgba(0,0,0,0.5)", backdropFilter:"blur(4px)" }} onClick={closeModal} />
@@ -217,8 +252,6 @@ export default function MyPage() {
             <div className="bg-white flex flex-col pointer-events-auto"
               style={{ borderRadius:20, width:"100%", maxWidth:420, maxHeight:"100%", boxShadow:"0 8px 40px rgba(0,0,0,0.18)", overflow:"hidden" }}>
               <div className="px-6 pb-6 overflow-y-auto flex-1 min-h-0" style={{ scrollbarWidth:"none" }}>
-
-                {/* 헤더 */}
                 <div className="flex items-center justify-between" style={{ marginTop:15 }}>
                   <h3 style={{ fontSize:"14px", fontWeight:700, color:"#2A2A2A", letterSpacing:"0.5px", textTransform:"uppercase" }}>
                     {currentLabel} 선택
@@ -235,8 +268,6 @@ export default function MyPage() {
                     </button>
                   </div>
                 </div>
-
-                {/* 검색 */}
                 <div className="relative mt-3 mb-3">
                   <Search size={16} color="#A09080" className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"/>
                   <input type="text" value={addSearch} onChange={(e) => setAddSearch(e.target.value)}
@@ -249,14 +280,11 @@ export default function MyPage() {
                     </button>
                   )}
                 </div>
-
                 {isPiview && (
                   <div className="flex items-center gap-1.5 mb-2" style={{ fontSize:"12px", color:P, fontWeight:600 }}>
                     <Sparkles size={13}/> 피뷰가 추천하는 {currentLabel} 제품
                   </div>
                 )}
-
-                {/* 제품 목록 */}
                 {displayProducts.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10" style={{ color:"#A09080" }}>
                     <Package size={32} style={{ marginBottom:8, opacity:0.5 }}/>
@@ -265,7 +293,7 @@ export default function MyPage() {
                 ) : (
                   <div className="flex flex-col gap-3">
                     {displayProducts.map((product, idx) => {
-                      const isAdded = Object.values(routine).some((r) => r?.id === product.id);
+                      const isAdded = !!routine[openStep!] && routine[openStep!]?.id === product.id;
                       const catC = CATEGORY_COLORS[product.category];
                       return (
                         <div key={product.id} style={{ borderRadius:14, padding:12, backgroundColor:isAdded?PBG:"white", border:`1px solid ${isAdded?PLT:"#E8E0D0"}` }}>
