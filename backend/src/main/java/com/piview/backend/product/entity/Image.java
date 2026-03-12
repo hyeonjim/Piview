@@ -15,7 +15,7 @@ import lombok.*;
 public class Image {
 
     /**
-     * product <-> imageUrl: 한상품 당 한 상품으로 매칭된다.
+     * product <-> imageUrl: 한 상품 당 하나의 이미지로 매칭된다.
      */
     @Id
     @Column(name = "image_id")
