@@ -65,7 +65,7 @@
     - `checkstyle/naver-checkstyle-rules.xml`
     - `checkstyle/naver-checkstyle-suppressions.xml`
 
-- 패키지명: 전부 소문자 (`com.piview.backend.user`)
+- 패키지명: 전부 소문자 (`com.piview.backend.auth`)
 - 클래스/인터페이스명: `PascalCase` (`UserService`)
 - 메서드명: `camelCase` (`findById`)
 - 멤버 변수명: `camelCase` (`userName`)
@@ -87,7 +87,7 @@ com.piview.backend
     security
     common
 
-  user
+  auth
     controller
     service
     repository
