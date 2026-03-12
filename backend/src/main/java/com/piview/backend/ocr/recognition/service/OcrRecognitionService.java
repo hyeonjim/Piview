@@ -1,18 +1,21 @@
 package com.piview.backend.ocr.recognition.service;
 
+import com.piview.backend.global.exception.CustomException;
+import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.ocr.recognition.dto.OcrFastApiResponseDto;
 import com.piview.backend.ocr.recognition.dto.OcrRecognitionResponseDto;
 import com.piview.backend.ocr.recognition.repository.OcrProductRepository;
 import com.piview.backend.product.entity.Product;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
@@ -23,20 +26,37 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class OcrRecognitionService {
 
     private final OcrProductRepository productRepository;
-    private final RestClient restClient = RestClient.create();
-
-    @Value("${fastapi.ocr.url:http://localhost:8000/extract-text}")
-    private String fastApiUrl;
+    private final RestClient restClient;
+    private final String fastApiUrl;
 
     private record ScoredProduct(Product product, int score) {}
 
+    // 생성자 -> 여기서 RestClient에 타임아웃 씌우기
+    public OcrRecognitionService(
+            OcrProductRepository productRepository,
+            @Value("${fastapi.ocr.url:http://localhost:8000/extract-text}") String fastApiUrl) {
+
+        this.productRepository = productRepository;
+        this.fastApiUrl = fastApiUrl;
+
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(3000); // 파이썬 서버와 연결하는 데 3초 이상 걸리면 포기
+        requestFactory.setReadTimeout(10000);   // 파이썬 서버가 분석 결과를 10초 안에 안 주면 포기
+
+        this.restClient = RestClient.builder()
+                .requestFactory(requestFactory)
+                .build();
+    }
+
     // 이미지 받아서 파이썬 서버로 보내고 단어리스트 받기
     public OcrRecognitionResponseDto processImageRecognition(MultipartFile image) {
+        if (image == null || image.isEmpty()) {
+            throw new CustomException(ErrorCode.INVALID_IMAGE_FILE);
+        }
 
         List<String> extractedWords = extractTextFromFastApi(image);
         log.info("📸 [OCR 단어 추출 완료] : {}", extractedWords);
@@ -59,23 +79,24 @@ public class OcrRecognitionService {
                     .body(OcrFastApiResponseDto.class);
 
             if (ocrResponse == null || !"success".equals(ocrResponse.status()) || ocrResponse.top_candidates() == null) {
-                throw new RuntimeException("AI 서버 텍스트 추출 실패");
+                throw new CustomException(ErrorCode.AI_TEXT_EXTRACTION_FAILED);
             }
 
             return ocrResponse.top_candidates().stream()
                     .map(OcrFastApiResponseDto.Candidate::text)
                     .collect(Collectors.toList());
 
-        } catch (Exception e) {
-            log.error("❌ FastAPI 통신 중 에러: ", e);
-            throw new RuntimeException("OCR 서버 통신 실패", e);
+        } catch (RestClientException e) {
+            // 타임아웃 선을 넘어서 Exception이 터지면 여기서 잡아서 프론트엔드로 전달
+            log.error("❌ FastAPI 통신 지연/에러: ", e);
+            throw new CustomException(ErrorCode.AI_SERVER_TIMEOUT);
         }
     }
 
     // product db 매칭 및 채점 로직
     private OcrRecognitionResponseDto findBestMatchingProduct(List<String> cleanedWords) {
         if (cleanedWords == null || cleanedWords.isEmpty()) {
-            return OcrRecognitionResponseDto.builder().isSuccess(false).build();
+            throw new CustomException(ErrorCode.OCR_TEXT_NOT_FOUND);
         }
 
         // 1차 후보 긁어오기 : 공백 제거 + 중복 방지
@@ -90,7 +111,7 @@ public class OcrRecognitionService {
         }
 
         if (candidateProducts.isEmpty()) {
-            return OcrRecognitionResponseDto.builder().isSuccess(false).build();
+            throw new CustomException(ErrorCode.COSMETICS_NOT_FOUND);
         }
 
         // 정밀 채점
@@ -103,7 +124,7 @@ public class OcrRecognitionService {
         }
 
         if (scoredList.isEmpty()) {
-            return OcrRecognitionResponseDto.builder().isSuccess(false).build();
+            throw new CustomException(ErrorCode.COSMETICS_NOT_FOUND);
         }
 
         // 점수 내림차순
