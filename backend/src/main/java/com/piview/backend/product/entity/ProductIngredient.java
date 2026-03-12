@@ -14,7 +14,7 @@ public class ProductIngredient {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long id;
+    private Long productIngredientId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
@@ -35,7 +35,7 @@ public class ProductIngredient {
     private String nameEn;
 
     @Column(name = "position")
-    private Short position;     // 성분 순서(앞일 수록 함량이 높아서 가중치를 부여해야 함)
+    private Integer position;     // 성분 순서(앞일 수록 함량이 높아서 가중치를 부여해야 함)
 
     @Column(name = "is_matched", nullable = false)
     private Boolean isMatched;
