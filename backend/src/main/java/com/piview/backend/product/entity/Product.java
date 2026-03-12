@@ -30,8 +30,9 @@ public class Product {
     @JoinColumn(name = "image_id")
     private Image image;
 
-    @Column(name = "skin_type_id")
-    private Integer skinTypeId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "skin_type_id", nullable = false)
+    private SkinType skinTypeId;
 
     @Column(name = "name", length = 70)
     private String name;
