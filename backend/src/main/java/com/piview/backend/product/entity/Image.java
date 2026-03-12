@@ -12,8 +12,11 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @AllArgsConstructor
-public class ProductImage {
+public class Image {
 
+    /**
+     * product <-> imageUrl: 한상품 당 한 상품으로 매칭된다.
+     */
     @Id
     @Column(name = "image_id")
     private Long imageId;

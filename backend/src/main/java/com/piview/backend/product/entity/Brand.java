@@ -1,11 +1,14 @@
 package com.piview.backend.product.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.*;
 
 @Entity
 @Table(name = "Brand")
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@AllArgsConstructor
 public class Brand {
 
     @Id

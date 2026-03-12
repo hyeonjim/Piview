@@ -26,9 +26,9 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "image_id")
-    private ProductImage image;
+    private Image image;
 
     @Column(name = "skin_type_id")
     private Integer skinTypeId;

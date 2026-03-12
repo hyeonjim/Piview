@@ -17,7 +17,7 @@ public class Category {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "big_category_id")
-    private BigCategory bigCagetory;
+    private BigCategory bigCategory;
 
     @Column(name = "category_name")
     private String categoryName;
