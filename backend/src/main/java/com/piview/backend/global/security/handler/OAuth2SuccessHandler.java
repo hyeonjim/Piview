@@ -1,5 +1,6 @@
 package com.piview.backend.global.security.handler;
 
+import com.piview.backend.global.config.AppProperties;
 import com.piview.backend.global.redis.RedisService;
 import com.piview.backend.global.security.TokenProvider;
 import com.piview.backend.global.security.UserPrincipal;
@@ -29,30 +30,37 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private final TokenProvider tokenProvider;
     private final RedisService redisService;
-    private final CookieUtil cookieUtil;
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
+    private final AppProperties appProperties;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 
-        // 1. 유저 정보 꺼내기
+        // 유저 정보 꺼내기
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         String email = userPrincipal.getEmail();
 
         log.info("카카오 로그인 성공! JWT 발급 시작 - 이메일: {}", email);
 
-        // 2. JWT Access Token & Refresh Token 생성
+        // JWT Access Token & Refresh Token 생성
         String accessToken = tokenProvider.createToken(authentication);
         String refreshToken = tokenProvider.createRefreshToken(authentication);
 
-        // 3. Redis에 Refresh Token 저장 (7일 유지)
-        redisService.setValues(email, refreshToken, Duration.ofDays(7));
+        long expireDays = appProperties.getAuth().getRefreshTokenExpirationDays();
+        redisService.setValues(email, refreshToken, Duration.ofDays(expireDays));
 
-        // 4. 쿠키에 토큰 저장 (HttpOnly, Secure 등은 CookieUtil 내부에 구현되어 있다고 가정)
-        cookieUtil.addTokenCookies(response, accessToken, refreshToken);
+        // Refresh Token: 해커가 절대 못 훔쳐가게 HttpOnly=true 채우기
+        int refreshCookieExpireSeconds = (int) (expireDays * 24 * 60 * 60);
+        CookieUtil.addCookie(response, "refreshToken", refreshToken, refreshCookieExpireSeconds,
+            appProperties.getAuth().isCookieSecure());
 
-        // 5. 프론트엔드로 리다이렉트할 URL 결정
-        String targetUrl = determineTargetUrl(request, response, authentication, accessToken);
+        // Access Token 임시 쿠키 : 프론트엔드가 자바스크립트로 쏙 빼갈 수 있게 HttpOnly=false로 하고 딱 60초만 굽기
+        int tempCookieExpireSeconds = appProperties.getAuth().getOauth2CookieExpireSeconds();
+        CookieUtil.addTempCookieForFront(response, "accessToken", accessToken, tempCookieExpireSeconds,
+            appProperties.getAuth().isCookieSecure());
+
+        // properties에서 리다이렉트할 URL 가져오기
+        String targetUrl = appProperties.getOauth2().getSuccessRedirectUri();
 
         if (response.isCommitted()) {
             log.debug("응답이 이미 커밋되었습니다. {} 로 리다이렉트 할 수 없습니다.", targetUrl);

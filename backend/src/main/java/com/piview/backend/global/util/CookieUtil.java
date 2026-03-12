@@ -84,11 +84,12 @@ public class CookieUtil {
     }
 
     // 일반 쿠키 저장 (OAuth2 인가 요청 정보 임시 저장용)
-    public static void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
+    public static void addCookie(HttpServletResponse response, String name, String value, int maxAge, boolean secure) {
         Cookie cookie = new Cookie(name, value);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
         cookie.setMaxAge(maxAge);
+        cookie.setSecure(secure);
         response.addCookie(cookie);
     }
 
@@ -127,5 +128,16 @@ public class CookieUtil {
         } catch (Exception e) {
             throw new IllegalArgumentException("쿠키 역직렬화에 실패했습니다.", e);
         }
+    }
+
+    public static void addTempCookieForFront(HttpServletResponse response, String name, String value, int maxAge, boolean secure) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setPath("/");
+
+        // 자바스크립트(document.cookie)로 읽을 수 있도록 HttpOnly를 꺼주기
+        cookie.setHttpOnly(false);
+        cookie.setMaxAge(maxAge);
+        cookie.setSecure(secure);
+        response.addCookie(cookie);
     }
 }

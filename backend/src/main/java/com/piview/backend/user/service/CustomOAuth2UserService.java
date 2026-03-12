@@ -1,8 +1,8 @@
-package com.piview.backend.auth.service;
+package com.piview.backend.user.service;
 
-import com.piview.backend.auth.entity.Auth;
-import com.piview.backend.auth.entity.AuthProvider;
-import com.piview.backend.auth.repository.AuthRepository;
+import com.piview.backend.user.entity.User;
+import com.piview.backend.user.entity.AuthProvider;
+import com.piview.backend.user.repository.UserRepository;
 import com.piview.backend.global.security.UserPrincipal;
 import com.piview.backend.global.security.oauth2.OAuth2UserInfo;
 import com.piview.backend.global.security.oauth2.OAuth2UserInfoFactory;
@@ -25,7 +25,7 @@ import java.util.Optional;
 @Slf4j
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    private final AuthRepository authRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -54,50 +54,50 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         // 이메일로 DB 조회 (기존 회원인지 검증)
-        Optional<Auth> authOptional = authRepository.findByEmail(userInfo.getEmail());
-        Auth auth;
+        Optional<User> authOptional = userRepository.findByEmail(userInfo.getEmail());
+        User user;
 
         if (authOptional.isPresent()) {
-            auth = authOptional.get();
+            user = authOptional.get();
 
             // 소셜 제공자 검증
-            if (auth.getProvider() != AuthProvider.valueOf(registrationId.toUpperCase())) {
+            if (user.getProvider() != AuthProvider.valueOf(registrationId.toUpperCase())) {
                 throw new OAuth2AuthenticationException(new OAuth2Error("invalid_provider"),
-                        auth.getProvider() + " 계정으로 가입된 이메일입니다. 해당 계정으로 로그인해주세요.", null);
+                        user.getProvider() + " 계정으로 가입된 이메일입니다. 해당 계정으로 로그인해주세요.", null);
             }
 
             // 탈퇴한 유저 복구 로직
-            if (auth.getDeletedAt() != null) {
-                log.info("탈퇴 유저 복구 처리: {}", auth.getEmail());
-                auth.setDeletedAt(null);
+            if (user.getDeletedAt() != null) {
+                log.info("탈퇴 유저 복구 처리: {}", user.getEmail());
+                user.setDeletedAt(null);
             }
 
             // 로그인 시 최신 프로필 정보 업데이트
-            auth = updateExistingUser(auth, userInfo);
+            user = updateExistingUser(user, userInfo);
 
         } else {
             // 신규 가입
-            auth = registerNewUser(userRequest, userInfo);
+            user = registerNewUser(userRequest, userInfo);
         }
 
-        return UserPrincipal.create(auth, attributes);
+        return UserPrincipal.create(user, attributes);
     }
 
     // 신규 회원 가입 처리
-    private Auth registerNewUser(OAuth2UserRequest userRequest, OAuth2UserInfo userInfo) {
-        Auth auth = new Auth();
-        auth.setProvider(AuthProvider.valueOf(userRequest.getClientRegistration().getRegistrationId().toUpperCase()));
-        auth.setProviderId(userInfo.getId());
+    private User registerNewUser(OAuth2UserRequest userRequest, OAuth2UserInfo userInfo) {
+        User user = new User();
+        user.setProvider(AuthProvider.valueOf(userRequest.getClientRegistration().getRegistrationId().toUpperCase()));
+        user.setProviderId(userInfo.getId());
 
-        auth.setName(userInfo.getName());
-        auth.setEmail(userInfo.getEmail());
+        user.setName(userInfo.getName());
+        user.setEmail(userInfo.getEmail());
 
-        return authRepository.save(auth);
+        return userRepository.save(user);
     }
 
     // 기존 회원 정보 업데이트 처리
-    private Auth updateExistingUser(Auth existingAuth, OAuth2UserInfo userInfo) {
-        existingAuth.setName(userInfo.getName());
-        return authRepository.save(existingAuth);
+    private User updateExistingUser(User existingUser, OAuth2UserInfo userInfo) {
+        existingUser.setName(userInfo.getName());
+        return userRepository.save(existingUser);
     }
 }
