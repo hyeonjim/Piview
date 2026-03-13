@@ -5,7 +5,7 @@ import lombok.Builder;
 
 @Builder
 public record ProductSearchPageResponseDto(
-    List<ProductSearchResponseDto> products, // 이름 변경된 DTO 리스트
+    List<ProductSearchResponseDto> products,
     Boolean hasNext,
     int page,
     int size
