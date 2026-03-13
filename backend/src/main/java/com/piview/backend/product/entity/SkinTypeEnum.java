@@ -6,5 +6,8 @@ package com.piview.backend.product.entity;
  * - 소문자로 저장한 이유: @Enumerated(EnumType.STRING) 저장을 위해
  */
 public enum SkinTypeEnum {
-    dry, oily, combination, subuji
+    DRY,
+    OILY,
+    COMBINATION,
+    SUBUJI
 }

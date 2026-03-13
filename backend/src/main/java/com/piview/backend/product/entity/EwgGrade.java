@@ -5,5 +5,8 @@ package com.piview.backend.product.entity;
  * low(안전, 1-2), medium(주의, 3-6), high(위험, 7-10), unknown(정보 없음)
  */
 public enum EwgGrade {
-    low, medium, high, unknown
+    LOW,
+    MEDIUM,
+    HIGH,
+    UNKNOWN
 }
