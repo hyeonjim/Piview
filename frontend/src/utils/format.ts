@@ -39,3 +39,10 @@ export function formatDate(dateStr: string | null | undefined): string {
   if (isNaN(d.getTime())) return dateStr;
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
 }
+
+/** Set 토글 - 있으면 제거, 없으면 추가 */
+export function toggleSet<T>(prev: Set<T>, value: T): Set<T> {
+  const next = new Set(prev);
+  next.has(value) ? next.delete(value) : next.add(value);
+  return next;
+}
