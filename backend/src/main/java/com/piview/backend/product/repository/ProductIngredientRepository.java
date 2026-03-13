@@ -16,7 +16,7 @@ public class ProductIngredientRepository {
     /**
      * 특정 제품의 성분 목록 (position 오름차순 = 함량 높은 성분부터)
      *
-     * LEFT CJOIN FETCH pi.ingredient:
+     * LEFT JOIN FETCH pi.ingredient:
      *      ingredient_id가 null인 성분도 함께 조회
      *      INNER JOIN이면 매칭 실패 성분은 아예 목록에서 빠짐
      *
