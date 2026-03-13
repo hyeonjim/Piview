@@ -22,35 +22,186 @@
 
 ## 프로젝트 문서
 
+- 백엔드 API는 프론트엔드와의 협업을 위해 항상 일관된 JSON 응답 계약을 유지해야 하며, 공통 응답 및 예외 처리 방식은 아래 규약을 기준으로 통일한다.
+
+### 공통 API 응답 & 예외 처리 규약
+
+- 아래 공통 API 응답 및 예외 처리 규약은 백엔드 작업 시 반드시 준수한다.
+- 성공 응답은 Controller 계층에서 `ResponseEntity`를 직접 반환하지 않고 반드시 `ApiResponse.success(...)` 형태를 사용한다.
+- 반환 데이터가 있으면 `ApiResponse.success(data)`를 사용한다.
+- 반환 데이터가 없으면 `ApiResponse.success()` 또는 `ApiResponse.success(message, null)`를 사용한다.
+- 비즈니스 로직 실패는 Service 계층에서 `CustomException`을 `throw` 하여 처리하고, 예외 응답 변환은 `GlobalExceptionHandler`에 위임한다.
+- Controller에서 성공/실패 응답 포맷을 제각각 직접 조립하거나, 예외를 `try-catch`로 삼켜서 임의 JSON을 반환하지 않는다.
+- 새로운 예외 상황이 필요하면 프로젝트의 공통 예외 처리 체계를 우선 따른다.
+- 새로운 비즈니스 예외가 필요할 때는 예외 클래스를 임의로 늘리지 말고 `ErrorCode`에 추가하여 `CustomException`으로 처리한다.
+- 새로운 케이스가 필요하면 기존 공통 예외 처리 클래스를 그대로 사용하면서 `ErrorCode`에 상태 코드와 클라이언트에게 보여줄 구체적인 메시지를 추가하는 방식으로 커스텀한다.
+- 클라이언트 입력값 검증은 Request DTO의 Bean Validation 어노테이션과 `@Valid`를 우선 사용한다.
+- 검증 실패 응답 포맷은 공통 예외 처리 규약을 따르며, Controller에서 동일 검증 로직을 중복 구현하지 않는다.
+- 아래 클래스들은 현재 공통 응답/예외 처리 규약의 기준 구현으로 간주한다.
+    - `src/main/java/com/piview/backend/global/exception/ApiResponse.java`
+    - `src/main/java/com/piview/backend/global/exception/CustomException.java`
+    - `src/main/java/com/piview/backend/global/exception/ErrorCode.java`
+    - `src/main/java/com/piview/backend/global/exception/GlobalExceptionHandler.java`
+- 새로 작성하는 공통 API 응답과 비즈니스 예외 처리 코드는 위 구현을 우선 사용하고, 기존 계약을 깨지 않는 방향으로 맞춘다.
+- 필요한 예외 메시지는 `ErrorCode`를 통해 케이스별로 구체화한다. 예: `해당 상품을 찾을 수 없습니다.`, `상품의 재고가 부족합니다.`
+- 구조 변경이나 공통 예외 처리 리팩터링이 필요하면 기존 계약을 유지하는 범위에서 신중히 진행한다.
+- 기존 구현을 수정할 때는 주변 코드와 계약을 우선 맞추고, 대규모 구조 변경은 사용자 요청이나 명확한 필요가 있을 때만 진행한다.
+
 ## 스킬 메모
 
-- 백엔드(Java/Spring) 작업 시 아래 스킬을 우선 사용합니다.
+- 백엔드(Java/Spring) 작업 시 공통 API 응답 및 예외 처리 규약 외의 일반적인 구현, 설계, 구조화 작업에서는 아래 스킬을 우선 참고한다.
     - `java-architect`
     - `spring-boot-engineer`
     - `java-spring-boot`
 - 원칙:
-    - 아키텍처/패키지 설계는 `java-architect` 우선
-    - Spring Boot 구현/보안/계층 패턴은 `spring-boot-engineer` 우선
-    - 초기 부트스트랩/템플릿 작업은 `java-spring-boot` 우선
+    - 아키텍처/패키지 설계는 `java-architect`를 우선 참고한다.
+    - Spring Boot 구현/보안/계층 패턴은 `spring-boot-engineer`를 우선 참고한다.
+    - 초기 부트스트랩/템플릿 작업은 `java-spring-boot`를 우선 참고한다.
+    - 단, 공통 API 응답 및 예외 처리 규약과 충돌하는 경우에는 규약을 우선 적용한다.
 
 ## 명명 규칙 (Java Backend)
 
 - 이 프로젝트의 Java lint 기준은 아래 2개 파일을 기준으로 한다.
     - `checkstyle/naver-checkstyle-rules.xml`
     - `checkstyle/naver-checkstyle-suppressions.xml`
-- 강제 규칙:
-    - 소스 인코딩은 UTF-8
-- 에이전트 작업 지침:
-    - 코드 생성/수정 시 아래 명명 규칙을 기본값으로 적용한다.
-    - 기존 코드가 규칙과 달라도, 사용자 요청 없이 대규모 리네이밍/정리 작업은 진행하지 않는다.
-- 코드 내 일시 억제 주석:
-    - `@checkstyle:off` / `@checkstyle:on`
-    - 한 줄 억제: `@checkstyle:ignore`
 
-- 패키지명: 전부 소문자 (`com.example.user.service`) (`com.piview.backend.auth`)
+- 패키지명: 전부 소문자 (`com.piview.backend.user`)
 - 클래스/인터페이스명: `PascalCase` (`UserService`)
-- 메서드명: `camelCase` (`^[a-z][a-z0-9][a-zA-Z0-9_]*$`) (`findById`)
-- 멤버 변수명: `camelCase` (`^[a-z][a-zA-Z0-9][a-zA-Z0-9]*$`, `_` 불가) (`userName`)
-- 파라미터명: `camelCase` (`^[a-z][a-zA-Z0-9][a-zA-Z0-9]*$`, `_` 불가) (`userId`)
-- 로컬 변수명: `camelCase` (`^[a-z][a-zA-Z0-9][a-zA-Z0-9]*$`, `_` 불가, 단 `for` 루프 1글자 변수 허용) (`totalCount`)
+- 메서드명: `camelCase` (`findById`)
+- 멤버 변수명: `camelCase` (`userName`)
+- 파라미터명: `camelCase`  (`userId`)
+- 로컬 변수명: `camelCase` (단 `for` 루프 1글자 변수 허용) (`totalCount`)
 - 약어 규칙: 대문자 약어 길이는 기본 1자 이하, 예외 `DAO`, `BO` (`userDAO`)
+
+## 패키지 구조 가이드
+
+- 현재 백엔드 패키지 구조는 아직 최종 확정 상태는 아니다.
+- 다만 기능 위주의 폴더 구조를 기준으로 작업하며, 새 기능 추가나 구조 설계 시 아래 구조를 우선 차용한다.
+- 실제 구현 시에는 기존 코드베이스 구조와 인접 패키지 패턴을 함께 고려한다.
+
+```text
+com.piview.backend
+  global
+    config
+    exception
+    security
+    common
+
+  user
+    controller
+    service
+    repository
+    entity
+    dto
+      request
+      response
+
+  user
+    profile
+      controller
+      service
+      repository
+      entity
+      dto
+        request
+        response
+    disliked
+      controller
+      service
+      repository
+      entity
+      dto
+        request
+        response
+
+  skin
+    survey
+      controller
+      service
+      repository
+      entity
+      dto
+        request
+        response
+    analysis
+      controller
+      service
+      repository
+      entity
+      dto
+        request
+        response
+
+  product
+    catalog
+      controller
+      service
+      repository
+      entity
+      dto
+        request
+        response
+    ingredient
+      service
+      repository
+      entity
+      dto
+        response
+    like
+      controller
+      service
+      repository
+      entity
+      dto
+        request
+        response
+    compare
+      controller
+      service
+      dto
+        request
+        response
+
+  routine
+    core
+      controller
+      service
+      repository
+      entity
+      dto
+        request
+        response
+    item
+      controller
+      service
+      repository
+      entity
+      dto
+        request
+        response
+    main
+      controller
+      service
+    recommendation
+      controller
+      service
+      dto
+        request
+        response
+
+  ocr
+    recognition
+      controller
+      service
+      dto
+        request
+        response
+    registration
+      controller
+      service
+      repository
+      entity
+      dto
+        request
+        response
+```
