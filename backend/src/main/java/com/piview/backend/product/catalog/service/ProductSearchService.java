@@ -19,11 +19,9 @@ public class ProductSearchService {
   private final ProductSearchRepository productSearchRepository;
 
   public ProductSearchPageResponseDto searchProducts(String rawKeyword, Pageable pageable, Long userId) {
-    // 검색어 띄어쓰기 무시를 위한 전처리
-    String keyword = rawKeyword.replaceAll("\\s+", "");
 
     // 검색 전용 레포지토리에서 Slice(페이징) 결과 조회
-    Slice<Product> productSlice = productSearchRepository.searchByBrandOrProductName(keyword, pageable);
+    Slice<Product> productSlice = productSearchRepository.searchProductsByKeywords(rawKeyword, pageable);
 
     // Search 전용 개별 record로 매핑
     List<ProductSearchResponseDto> productDtos = productSlice.getContent().stream()
