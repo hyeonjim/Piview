@@ -16,7 +16,7 @@ public class Tag {
 
     @Id
     @Column(name = "tag_id")
-    private Long id;
+    private Long tagId;
 
     @Column(name = "tag")
     private String tag;

@@ -136,7 +136,7 @@ public class OcrRecognitionService {
         // 제일 높은 점수의 상품만 dto로 반환
         return OcrRecognitionResponseDto.builder()
                 .isSuccess(true)
-                .productId(bestProduct.getId())
+                .productId(bestProduct.getProductId())
                 .brandName(bestProduct.getBrand().getBrandName())
                 .productName(bestProduct.getName())
                 .matchAccuracy(bestScore)
