@@ -24,7 +24,6 @@ public class ProductSearchController {
       @RequestParam(value = "page", defaultValue = "0") int page,
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
-    // 로그인한 유저 정보 가져오기 (비로그인 허용 시 userDetails가 null일 수 있으므로 주의)
     Long userId = (userPrincipal != null) ? userPrincipal.getId() : null;
 
     // 페이지 번호와 함께 10개씩 가져오도록 사이즈 고정
