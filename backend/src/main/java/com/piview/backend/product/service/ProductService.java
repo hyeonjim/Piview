@@ -17,7 +17,5 @@ public class ProductService {
     private final ProductIngredientRepository productIngredientRepository;
     private final ProductTagScoreRepository productTagScoreRepository;
 
-    public List <ProductSummaryResponse> searchProducts(String name, String brand,
-                                                        Long categoryId, Integer bigCategoryId,
-                                                        String skinType, )
+
 }
