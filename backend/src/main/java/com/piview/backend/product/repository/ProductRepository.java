@@ -38,7 +38,7 @@ public class ProductRepository {
      * sexMaxResults(50): 추후 페이지 확장(무한 스크롤 방지)
      */
 
-    public List<Product> findByContidions(
+    public List<Product> findByConditions(
             String name, String brand,
             Long categoryId, Integer bigCategoryId,
             String skinType, List<Integer> tagIds) {
