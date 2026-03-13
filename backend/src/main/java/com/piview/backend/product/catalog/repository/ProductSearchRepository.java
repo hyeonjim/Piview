@@ -13,6 +13,8 @@ public interface ProductSearchRepository extends JpaRepository<Product, Long>{
   @Query("SELECT p FROM Product p " +
       "JOIN FETCH p.brand b " +
       "LEFT JOIN FETCH p.image i " +
+      "LEFT JOIN FETCH p.category c " +
+      "LEFT JOIN FETCH p.skinScore s " +
       "WHERE p.name LIKE %:keyword% " +
       "OR b.brandName LIKE %:keyword%")
   Slice<Product> searchByBrandOrProductName(@Param("keyword") String keyword, Pageable pageable);
