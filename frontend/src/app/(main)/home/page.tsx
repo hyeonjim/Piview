@@ -1,143 +1,188 @@
 "use client";
 
-import { Search, Sparkles, ChevronRight, Droplets, Sun, Smile } from "lucide-react";
+import { Sparkles, ArrowRight, Leaf, Sun, Moon, Droplets, Settings, Star } from "lucide-react";
+import Link from "next/link";
+import { SKINCARE_INSIGHTS } from "@/constants";
+import { useLocalRoutineStore, ROUTINE_STEP_META } from "@/stores/useLocalRoutineStore";
 
-// ─── 임시 더미 데이터 (API 연결 전) ─────────────────────
-const DUMMY_USER = {
-  name: "User",
-  skinType: "건성 피부",
-  ageRange: "20대",
+function getGreeting(): { text: string; icon: React.ReactNode } {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12)  return { text: "Good Morning",   icon: <Sun  size={16} className="text-warm-amber" /> };
+  if (h >= 12 && h < 18) return { text: "Good Afternoon", icon: <Sun  size={16} className="text-warm-amber" /> };
+  return                         { text: "Good Evening",   icon: <Moon size={16} className="text-warm-beige" /> };
+}
+
+const ICON_MAP = {
+  droplets: (size: number) => <Droplets size={size} className="text-brand" />,
+  sun:      (size: number) => <Sun      size={size} className="text-warm-amber" />,
+  leaf:     (size: number) => <Leaf     size={size} className="text-brand" />,
 };
-
-const DUMMY_ROUTINE = [
-  { step: 1, emoji: "💧", name: "미스트", sub: "Hydrating Mist" },
-  { step: 2, emoji: "☀️", name: "선크림", sub: "SPF 50+ 덧바르기" },
-  { step: 3, emoji: "💋", name: "립밤",  sub: "Lip Moisturizer" },
-];
-
-const DUMMY_TIPS = [
-  { icon: Droplets, title: "수분 관리",  desc: "충분한 수분 공급이 건강한 피부의 기본입니다" },
-  { icon: Sun,      title: "자외선 차단", desc: "외출 20분 전 선크림을 꼼꼼히 발라주세요" },
-  { icon: Smile,    title: "수면 케어",  desc: "충분한 수면이 피부 재생을 도와줍니다" },
-];
-
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return { text: "GOOD MORNING",  emoji: "🌤️" };
-  if (hour < 18) return { text: "GOOD AFTERNOON", emoji: "☀️" };
-  return { text: "GOOD EVENING", emoji: "🌙" };
-}
-
-function getTimeOfDay() {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Morning";
-  if (hour < 18) return "Afternoon";
-  return "Evening";
-}
 
 export default function HomePage() {
   const greeting = getGreeting();
-  const timeOfDay = getTimeOfDay();
+  const nickname = "User";
+
+  const { routine } = useLocalRoutineStore();
+
+  const mainRoutineItems = ROUTINE_STEP_META
+    .map((meta) => ({ meta, product: routine[meta.code] }))
+    .filter((item) => item.product !== null) as {
+      meta: typeof ROUTINE_STEP_META[number];
+      product: NonNullable<typeof routine[string]>;
+    }[];
+
+  const hasRoutine = mainRoutineItems.length > 0;
 
   return (
-    <div className="flex flex-col min-h-full bg-bg-surface">
+    <div className="flex flex-col min-h-full overflow-y-auto bg-warm-bg">
 
-      {/* ── 상단 헤더 ── */}
-      <div className="flex items-center justify-between px-5 pt-12 pb-4">
-        <div>
-          <p className="text-xs font-semibold tracking-widest text-text-muted uppercase">
-            {greeting.emoji} {greeting.text}
-          </p>
-          <h1 className="text-2xl font-bold text-text-primary mt-0.5">
-            {DUMMY_USER.name}님,
-          </h1>
-          <p className="text-sm text-text-muted mt-0.5">
-            오늘의 스킨케어 루틴을 확인해보세요
-          </p>
+      {/* 헤더 */}
+      <div className="px-6 pt-14 pb-2">
+        <div className="flex items-center gap-1.5 mb-1">
+          {greeting.icon}
+          <span className="text-warm-beige font-medium text-xs tracking-[1.5px] uppercase">
+            {greeting.text}
+          </span>
         </div>
-        <button className="w-10 h-10 rounded-full bg-bg-base flex items-center justify-center">
-          <Search size={18} className="text-text-secondary" />
-        </button>
-      </div>
-
-      <div className="flex flex-col gap-5 px-5 pb-6">
-
-        {/* ── AI SKIN ANALYSIS 배너 ── */}
-        <div className="rounded-card bg-brand p-5 flex items-center justify-between">
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-1.5">
-              <Sparkles size={13} className="text-brand-pale" />
-              <span className="text-2xs font-bold tracking-widest text-brand-pale uppercase">
-                AI Skin Analysis
-              </span>
-            </div>
-            <p className="text-xl font-bold text-text-inverse leading-snug">
-              나만의 피부 타입을<br />분석해보세요
-            </p>
-            <p className="text-xs text-brand-pale mt-0.5">
-              맞춤 루틴을 추천받을 수 있어요
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[28px] font-bold text-text-primary tracking-[-0.3px] m-0 leading-[1.2]">
+              {nickname}님,
+            </h1>
+            <p className="text-[15px] text-text-muted mt-1">
+              오늘의 스킨케어 루틴을 확인해보세요
             </p>
           </div>
-          <button className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-            <ChevronRight size={20} className="text-white" />
+          <button className="w-9 h-9 rounded-full bg-white border-none flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+            <Settings size={18} className="text-warm-beige" />
           </button>
         </div>
+      </div>
 
-        {/* ── 오늘의 루틴 ── */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold text-text-primary">오늘의 루틴</h2>
-            <span className="text-sm text-text-muted">{timeOfDay} 🌤️</span>
-          </div>
+      {/* AI 피부 진단 배너 */}
+      <div className="mx-5 mt-5">
+        <Link href="/skin-test" className="block">
+          <button
+            className="w-full border-none cursor-pointer relative overflow-hidden rounded-[20px] min-h-[140px] p-0 bg-gradient-to-br from-brand to-brand-dark"
+          >
+            <div className="absolute -top-10 right-[60px] w-[100px] h-[100px] rounded-full bg-white/[0.06]" />
+            <div className="absolute -bottom-7 right-10 w-20 h-20 rounded-full bg-white/[0.04]" />
+            <div className="flex items-center justify-between relative z-10 p-6">
+              <div className="text-left">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-[10px] bg-white/20">
+                    <Sparkles size={16} color="#fff" />
+                  </div>
+                  <span className="text-xs font-semibold text-white/80 tracking-[1.5px] uppercase">
+                    AI Skin Analysis
+                  </span>
+                </div>
+                <p className="text-xl font-bold text-white m-0 leading-[1.3]">
+                  나만의 피부 타입을<br />분석해보세요
+                </p>
+                <p className="text-xs text-white/70 mt-2">맞춤 루틴을 추천받을 수 있어요</p>
+              </div>
+              <div className="flex items-center justify-center shrink-0 w-12 h-12 rounded-full bg-white/20">
+                <ArrowRight size={22} color="#fff" />
+              </div>
+            </div>
+          </button>
+        </Link>
+      </div>
 
-          <div className="rounded-card bg-bg-card shadow-card overflow-hidden">
-            {DUMMY_ROUTINE.map((item, idx) => (
-              <div key={item.step}>
-                <div className="flex items-center gap-3 px-4 py-3.5">
-                  {/* 스텝 번호 */}
-                  <div className="w-6 h-6 rounded-full bg-bg-base flex items-center justify-center flex-shrink-0">
-                    <span className="text-2xs font-bold text-text-muted">{item.step}</span>
-                  </div>
-                  {/* 이모지 아이콘 */}
-                  <div className="w-9 h-9 rounded-icon bg-bg-surface flex items-center justify-center flex-shrink-0 text-lg">
-                    {item.emoji}
-                  </div>
-                  {/* 텍스트 */}
-                  <div className="flex flex-col">
-                    <span className="text-base font-semibold text-text-primary">{item.name}</span>
-                    <span className="text-xs text-text-muted">{item.sub}</span>
+      {/* 나의 루틴 */}
+      <div className="px-5 mt-7">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-text-primary tracking-[-0.2px] m-0">나의 루틴</h2>
+          {hasRoutine ? (
+            <span className="text-xs font-medium text-brand tracking-[0.5px]">
+              {mainRoutineItems.length}단계
+            </span>
+          ) : (
+            <Link href="/mypage">
+              <span className="text-xs font-medium text-brand tracking-[0.5px] cursor-pointer">
+                설정하기 →
+              </span>
+            </Link>
+          )}
+        </div>
+
+        {hasRoutine ? (
+          <div className="flex flex-col">
+            {mainRoutineItems.map(({ meta, product }, i) => (
+              <div
+                key={meta.code}
+                className="flex items-center gap-4 py-3.5"
+                style={{ borderBottom: i < mainRoutineItems.length - 1 ? "1px solid rgba(0,0,0,0.05)" : "none" }}
+              >
+                {/* 스텝 번호 */}
+                <div className="flex flex-col items-center w-7">
+                  <div
+                    className={`flex items-center justify-center w-7 h-7 rounded-full ${i === 0 ? "bg-brand" : "bg-[#F5F0E8]"}`}
+                  >
+                    <span className={`text-xs font-semibold ${i === 0 ? "text-white" : "text-warm-beige"}`}>
+                      {i + 1}
+                    </span>
                   </div>
                 </div>
-                {idx < DUMMY_ROUTINE.length - 1 && (
-                  <div className="mx-4 h-px bg-bg-base" />
+
+                {/* 이모지 */}
+                <span className="text-2xl w-9 text-center shrink-0">{product.emoji}</span>
+
+                {/* 정보 */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-brand m-0 tracking-[0.3px]">{meta.label}</p>
+                  <p className="truncate text-[15px] font-semibold text-text-primary m-0 mt-px">{product.name}</p>
+                  <p className="text-xs text-warm-beige m-0 mt-px">{product.brand}</p>
+                </div>
+
+                {/* 점수 */}
+                {product.matchScore > 0 && (
+                  <div className="shrink-0 flex flex-col items-center min-w-[36px]">
+                    <span className="text-sm font-bold text-brand">{product.matchScore}</span>
+                    <span className="text-[9px] text-text-muted tracking-[0.3px]">SCORE</span>
+                  </div>
                 )}
               </div>
             ))}
           </div>
-        </div>
-
-        {/* ── Skincare Tips ── */}
-        <div>
-          <h2 className="text-lg font-bold text-text-primary mb-3">Skincare Tips</h2>
-          <div className="flex flex-col gap-2">
-            {DUMMY_TIPS.map((tip) => {
-              const Icon = tip.icon;
-              return (
-                <div key={tip.title} className="rounded-card bg-bg-card shadow-card flex items-center gap-3 px-4 py-4">
-                  <div className="w-9 h-9 rounded-icon bg-bg-surface flex items-center justify-center flex-shrink-0">
-                    <Icon size={18} className="text-brand" />
-                  </div>
-                  <div>
-                    <p className="text-base font-semibold text-text-primary">{tip.title}</p>
-                    <p className="text-xs text-text-muted mt-0.5">{tip.desc}</p>
-                  </div>
-                </div>
-              );
-            })}
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 rounded-card bg-bg-beige">
+            <Star size={28} color="#E0D6C8" className="mb-2" />
+            <p className="text-sm font-medium text-warm-beige m-0 text-center">아직 루틴이 없어요</p>
+            <p className="text-xs text-text-disabled m-0 mt-1 text-center leading-[1.5]">
+              마이페이지에서 루틴을 설정해보세요
+            </p>
+            <Link href="/mypage">
+              <button className="mt-4 flex items-center gap-1 cursor-pointer border-none px-[18px] py-2 rounded-[20px] bg-brand text-white text-xs font-semibold">
+                <Leaf size={13} /> 루틴 설정하기
+              </button>
+            </Link>
           </div>
-        </div>
-
+        )}
       </div>
+
+      {/* Skincare Tips */}
+      <div className="px-5 mt-7">
+        <h2 className="text-lg font-bold text-text-primary tracking-[-0.2px] m-0 mb-3.5">
+          Skincare Tips
+        </h2>
+        <div className="flex flex-col gap-3">
+          {SKINCARE_INSIGHTS.map((item) => (
+            <div key={item.label} className="flex items-start gap-4 p-4 bg-bg-beige rounded-card">
+              <div className="bg-white flex items-center justify-center shrink-0 w-10 h-10 rounded-[12px]">
+                {ICON_MAP[item.iconName](18)}
+              </div>
+              <div>
+                <p className="text-[15px] font-semibold text-text-primary m-0">{item.label}</p>
+                <p className="text-xs text-text-muted m-0 mt-px leading-[1.5]">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="h-24" />
     </div>
   );
 }
