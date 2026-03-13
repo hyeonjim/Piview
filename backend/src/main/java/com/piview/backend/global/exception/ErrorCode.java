@@ -12,6 +12,9 @@ public enum ErrorCode {
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
     INVALID_IMAGE_FILE(HttpStatus.BAD_REQUEST, "이미지 파일이 비어있거나 손상되었습니다."),
 
+    // 403 FORBIDDEN
+    UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "본인의 화장품 목록만 접근 및 삭제할 수 있습니다."),
+
     // 404 NOT_FOUND
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
     COSMETICS_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 상품을 찾을 수 없습니다."),

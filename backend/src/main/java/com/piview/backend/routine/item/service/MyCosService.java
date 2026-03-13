@@ -1,5 +1,7 @@
 package com.piview.backend.routine.item.service;
 
+import com.piview.backend.global.exception.CustomException;
+import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.routine.item.dto.MyCosResponseDto;
 import com.piview.backend.routine.item.entity.MyCos;
 import com.piview.backend.routine.item.repository.MyCosRepository;
@@ -31,5 +33,20 @@ public class MyCosService {
                         .imageUrl(mc.getProduct().getImage().getUrl()) // Product -> Image 접근
                         .build())
                 .toList(); // Stream을 List로 변환
+    }
+
+    @Transactional
+    public void deleteMyCos(Long userId, Long myCosId) {
+
+        // B에서 지우려는 MyCos 데이터를 찾기
+        MyCos myCos = myCosRepository.findById(myCosId)
+            .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED_ACCESS));
+
+        // 보안 핵심 (IDOR 방어): 이 제품의 주인이 지금 요청한 유저가 맞는지 확인
+        if (!myCos.getUser().getId().equals(userId)) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
+        }
+
+        myCosRepository.delete(myCos);
     }
 }

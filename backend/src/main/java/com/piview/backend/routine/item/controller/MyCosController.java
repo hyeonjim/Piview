@@ -29,4 +29,15 @@ public class MyCosController {
         List<MyCosResponseDto> response = myCosService.getMyCosList(userId);
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{myCosId}")
+    public ResponseEntity<String> deleteMyCos(
+        @PathVariable("myCosId") Long myCosId,
+        @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        // 서비스로 로그인한 유저 ID와 삭제할 제품 ID를 함께 넘기기
+        myCosService.deleteMyCos(userPrincipal.getId(), myCosId);
+
+        return ResponseEntity.ok("제품이 성공적으로 삭제되었습니다.");
+    }
 }

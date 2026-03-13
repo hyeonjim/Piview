@@ -29,7 +29,6 @@ import org.hibernate.annotations.SQLRestriction;
 @NoArgsConstructor
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE users SET exist = false, deleted_at = CURRENT_TIMESTAMP WHERE user_id = ?")
-@SQLRestriction("exist = true")
 public class User extends BaseEntity {
 
     @Id
@@ -72,7 +71,7 @@ public class User extends BaseEntity {
 
     // 사용자 활성 여부를 저장한다.
     @Column(name = "exist")
-    private Boolean exist = true;
+    private Boolean exist;
 
     // 탈퇴 유저 복구(Soft Delete) 처리를 위한 타임스탬프
     @Column(name = "deleted_at")
