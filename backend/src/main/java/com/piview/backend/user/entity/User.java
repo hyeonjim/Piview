@@ -2,6 +2,7 @@ package com.piview.backend.user.entity;
 
 import java.time.LocalDateTime;
 
+import com.piview.backend.global.util.BaseEntity;
 import com.piview.backend.skin.survey.entity.SurveyAgeGroup;
 import com.piview.backend.skin.survey.entity.SurveyGender;
 import com.piview.backend.skin.survey.entity.SurveySkinType;
@@ -18,6 +19,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "users")
@@ -25,7 +28,9 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+@SQLDelete(sql = "UPDATE users SET exist = false, deleted_at = CURRENT_TIMESTAMP WHERE user_id = ?")
+@SQLRestriction("exist = true")
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -67,7 +72,7 @@ public class User {
 
     // 사용자 활성 여부를 저장한다.
     @Column(name = "exist")
-    private Boolean exist;
+    private Boolean exist = true;
 
     // 탈퇴 유저 복구(Soft Delete) 처리를 위한 타임스탬프
     @Column(name = "deleted_at")
