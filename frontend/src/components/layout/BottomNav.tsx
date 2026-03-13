@@ -44,16 +44,15 @@ export default function BottomNav() {
         className="flex items-center justify-between"
         style={{
           width: "100%",
-          maxWidth: "480px",
+          maxWidth: "380px",
           height: "60px",
           borderRadius: "100px",
-          backdropFilter: "blur(40px) saturate(180%)",
-          WebkitBackdropFilter: "blur(40px) saturate(180%)",
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(5px)",
           background:
-            "linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.15) 100%)",
-          border: "1px solid rgba(255,255,255,0.3)",
-          boxShadow:
-            "0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 1px rgba(255,255,255,0.4)",
+            "linear-gradient(154deg, rgba(162,170,123,0.12) 3.5%, rgba(236,234,222,0.06) 101.94%)",
+          border: "1px solid rgba(255,255,255,0.35)",
+          boxShadow: "0 10px 40px 0 rgba(120,130,80,0.26)",
           padding: "0 24px",
           pointerEvents: "auto",
         }}
@@ -72,10 +71,10 @@ export default function BottomNav() {
                   width: "48px",
                   height: "48px",
                   borderRadius: "50%",
-                  backgroundColor: isActive ? "var(--color-brand)" : "#3A3A3A",
+                  backgroundColor: isActive ? "var(--color-brand)" : "#a6a2a2",
                   boxShadow: isActive
                     ? "0 4px 16px rgba(162,170,123,0.45)"
-                    : "0 4px 12px rgba(0,0,0,0.2)",
+                    : "0 4px 12px rgba(0,0,0,0.15)",
                 }}
               >
                 <Icon size={22} color="#FFFFFF" strokeWidth={2} />
