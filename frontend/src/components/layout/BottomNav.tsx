@@ -7,7 +7,7 @@ const TABS = [
   { id: "search", href: "/search", icon: Search, isCenter: false },
   { id: "recommend", href: "/recommend", icon: Sparkles, isCenter: false },
   { id: "home", href: "/home", icon: Home, isCenter: true },
-  { id: "wishlist", href: "/likes", icon: Heart, isCenter: false },
+  { id: "likes", href: "/likes", icon: Heart, isCenter: false },
   { id: "mypage", href: "/mypage", icon: User, isCenter: false },
 ];
 
@@ -18,7 +18,7 @@ export default function BottomNav() {
   const getActiveTab = () => {
     if (pathname.startsWith("/search")) return "search";
     if (pathname.startsWith("/recommend")) return "recommend";
-    if (pathname.startsWith("/likes")) return "wishlist";
+    if (pathname.startsWith("/likes")) return "likes";
     if (pathname.startsWith("/mypage")) return "mypage";
     return "home";
   };
@@ -47,13 +47,13 @@ export default function BottomNav() {
           maxWidth: "480px",
           height: "60px",
           borderRadius: "100px",
-          backdropFilter: "blur(80px) saturate(220%)",
-          WebkitBackdropFilter: "blur(80px) saturate(220%)",
-          backgroundImage:
-            "linear-gradient(170deg, rgba(162,170,123,0.03) 0%, rgba(236,234,222,0.05) 50%, rgba(255,250,245,0.06) 100%)",
-          border: "1px solid rgba(255,255,255,0.15)",
+          backdropFilter: "blur(40px) saturate(180%)",
+          WebkitBackdropFilter: "blur(40px) saturate(180%)",
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.15) 100%)",
+          border: "1px solid rgba(255,255,255,0.3)",
           boxShadow:
-            "0 8px 32px rgba(120,130,80,0.05), inset 0 1px 0 rgba(255,255,255,0.08)",
+            "0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 1px rgba(255,255,255,0.4)",
           padding: "0 24px",
           pointerEvents: "auto",
         }}
@@ -101,7 +101,7 @@ export default function BottomNav() {
                 size={20}
                 color={isActive ? "#FFFFFF" : "rgba(60,60,60,0.55)"}
                 strokeWidth={isActive ? 2 : 1.5}
-                fill={tab.id === "wishlist" && isActive ? "#FFFFFF" : "none"}
+                fill={tab.id === "likes" && isActive ? "#FFFFFF" : "none"}
               />
             </button>
           );

@@ -8,14 +8,14 @@
  */
 
 /** 피부 타입 레이블 (필터 칩용 — 짧은 이름) */
-export const SKIN_TYPE_LABELS = ["건성", "지성", "복합성", "민감성"] as const;
+export const SKIN_TYPE_LABELS = ["건성", "지성", "복합성", "수부지"] as const;
 
 /** 피부 타입 선택 옵션 (아이콘 포함) */
 export const SKIN_TYPES = [
   { id: "dry",         icon: "💧", label: "건성"   },
   { id: "oily",        icon: "💦", label: "지성"   },
   { id: "combination", icon: "🔀", label: "복합성" },
-  { id: "sensitive",   icon: "🌹", label: "민감성" },
+  { id: "dehydrated",  icon: "💧💦", label: "수부지" },
 ] as const;
 
 /** 성별 선택 옵션 */

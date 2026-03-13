@@ -35,7 +35,7 @@ export interface ProductImage {
 }
 
 // 피부타입 매칭 (ERD: SkinTypes)
-export type SkinTypeMatch = "건성" | "지성" | "복합성" | "민감성" | "중성";
+export type SkinTypeMatch = "건성" | "지성" | "복합성" | "수부지";
 export interface SkinTypeTag {
   id: number;
   skinType: SkinTypeMatch;

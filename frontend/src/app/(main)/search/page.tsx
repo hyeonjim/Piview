@@ -7,7 +7,7 @@ import { MAIN_CATEGORIES, BRANDS } from "@/constants/productCategories";
 import { DEFAULT_FILTER } from "@/constants/filterDefaults";
 import { FilterModal, FilterState } from "@/components/common/FilterModal";
 import { CategoryFilter } from "@/components/common/CategoryFilter";
-import { ProductListCard } from "@/components/common/ProductListCard";
+import ProductCard from "@/components/common/ProductCard";
 import { Pagination } from "@/components/common/Pagination";
 import { Toast } from "@/components/common/Toast";
 import { useToast } from "@/hooks";
@@ -22,14 +22,14 @@ const PRODUCTS = MOCK_SEARCH_PRODUCTS.map((p, i) => ({
 
 export default function SearchPage() {
   const [selectedMain, setSelectedMain] = useState<string | null>(null);
-  const [selectedSub,  setSelectedSub]  = useState<string | null>(null);
-  const [page,         setPage]         = useState(1);
-  const [showFilter,   setShowFilter]   = useState(false);
-  const [filter,       setFilter]       = useState<FilterState>(DEFAULT_FILTER);
+  const [selectedSub, setSelectedSub] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [showFilter, setShowFilter] = useState(false);
+  const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER);
 
   const [routineAdded, setRoutineAdded] = useState<Set<number>>(new Set());
-  const [wished,       setWished]       = useState<Set<number>>(new Set());
-  const [owned,        setOwned]        = useState<Set<number>>(new Set());
+  const [wished, setWished] = useState<Set<number>>(new Set());
+  const [owned, setOwned] = useState<Set<number>>(new Set());
 
   const { toastMsg, showToast } = useToast();
 
@@ -48,18 +48,22 @@ export default function SearchPage() {
     let list = PRODUCTS;
     if (selectedSub) list = list.filter((p) => p.category === selectedSub);
     else if (selectedMain)
-      list = list.filter((p) => (MAIN_CATEGORIES[selectedMain] ?? []).includes(p.category));
+      list = list.filter((p) =>
+        (MAIN_CATEGORIES[selectedMain] ?? []).includes(p.category),
+      );
     if (filter.filterSkin)
       list = list.filter((p) => p.skinTypes.includes(filter.filterSkin!));
     if (filter.filterFns.size > 0)
-      list = list.filter((p) => [...filter.filterFns].some((f) => p.effects.includes(f)));
+      list = list.filter((p) =>
+        [...filter.filterFns].some((f) => p.effects.includes(f)),
+      );
     if (filter.filterBrands.size > 0)
       list = list.filter((p) => filter.filterBrands.has(p.brand));
     return list;
   }, [selectedMain, selectedSub, filter]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="flex flex-col min-h-full bg-white">
@@ -67,8 +71,13 @@ export default function SearchPage() {
 
       {/* 헤더 */}
       <div className="px-6 pt-5 pb-3 flex items-center justify-between bg-gradient-to-b from-[#F5F2EA] to-white">
-        <h1 className="text-xl font-semibold text-text-primary m-0">전체 제품</h1>
-        <FilterButton filterCount={filterCount} onClick={() => setShowFilter(true)} />
+        <h1 className="text-xl font-semibold text-text-primary m-0">
+          전체 제품
+        </h1>
+        <FilterButton
+          filterCount={filterCount}
+          onClick={() => setShowFilter(true)}
+        />
       </div>
 
       <CategoryFilter
@@ -84,7 +93,7 @@ export default function SearchPage() {
           <EmptyResult />
         ) : (
           paginated.map((p) => (
-            <ProductListCard
+            <ProductCard
               key={p.id}
               id={p.id}
               brand={p.brand}
@@ -93,13 +102,16 @@ export default function SearchPage() {
               categoryShort={p.categoryShort}
               skinTypes={p.skinTypes}
               effects={p.effects}
-              matchScore={p.matchScore}
-              inRoutine={routineAdded.has(p.id)}
-              isWished={wished.has(p.id)}
-              isOwned={owned.has(p.id)}
-              onAddRoutine={() => !routineAdded.has(p.id) && addToRoutine(p.id, p.name)}
-              onToggleWish={() => setWished((prev) => toggleSet(prev, p.id))}
-              onToggleOwned={() => setOwned((prev) => toggleSet(prev, p.id))}
+              layout="vertical"
+              actions={{
+                onAddRoutine: () => !routineAdded.has(p.id) && addToRoutine(p.id, p.name),
+                inRoutine: routineAdded.has(p.id),
+                onToggleOwned: () => setOwned((prev) => toggleSet(prev, p.id)),
+                isOwned: owned.has(p.id),
+                onToggleWish: () => setWished((prev) => toggleSet(prev, p.id)),
+                isWished: wished.has(p.id),
+                showCompare: true,
+              }}
             />
           ))
         )}
@@ -120,7 +132,13 @@ export default function SearchPage() {
   );
 }
 
-function FilterButton({ filterCount, onClick }: { filterCount: number; onClick: () => void }) {
+function FilterButton({
+  filterCount,
+  onClick,
+}: {
+  filterCount: number;
+  onClick: () => void;
+}) {
   return (
     <button
       onClick={onClick}
@@ -128,7 +146,10 @@ function FilterButton({ filterCount, onClick }: { filterCount: number; onClick: 
         filterCount > 0 ? "bg-brand" : "bg-bg-chip"
       }`}
     >
-      <SlidersHorizontal size={17} color={filterCount > 0 ? "#fff" : "#616161"} />
+      <SlidersHorizontal
+        size={17}
+        color={filterCount > 0 ? "#fff" : "#616161"}
+      />
       {filterCount > 0 && (
         <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-[#FF5252] text-white text-[9px] font-bold border-2 border-white">
           {filterCount}
@@ -143,7 +164,9 @@ function EmptyResult() {
     <div className="flex flex-col items-center py-16">
       <span className="text-[40px]">🔍</span>
       <p className="text-center mt-3 text-xs text-text-muted">
-        해당하는 제품이 없어요.<br />필터를 바꿔보세요
+        해당하는 제품이 없어요.
+        <br />
+        필터를 바꿔보세요
       </p>
     </div>
   );
