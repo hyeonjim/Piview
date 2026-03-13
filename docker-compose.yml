@@ -35,7 +35,7 @@ services:
     image: mysql:8.0
     container_name: mysql-db
     environment:
-      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_DATABASE=piview_dev  # 일단 Dev용 DB만 자동 생성. Prod용은 나중에 접속해서 추가!
       - TZ=Asia/Seoul
     ports:
