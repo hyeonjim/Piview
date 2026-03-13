@@ -1,9 +1,14 @@
 package com.piview.backend.routine.item.entity;
 
+import com.piview.backend.global.util.BaseEntity;
 import com.piview.backend.product.entity.Product;
 import com.piview.backend.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "my_cos")
@@ -11,7 +16,9 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class MyCos {
+@SQLDelete(sql = "UPDATE my_cos SET deleted_at = CURRENT_TIMESTAMP WHERE my_cos_id = ?")
+@SQLRestriction("deleted_at IS NULL")
+public class MyCos extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,8 +29,10 @@ public class MyCos {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }
