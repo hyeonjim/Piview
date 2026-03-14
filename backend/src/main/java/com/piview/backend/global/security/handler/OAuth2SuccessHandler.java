@@ -15,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -32,6 +31,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final RedisService redisService;
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
     private final AppProperties appProperties;
+    private final CookieUtil cookieUtil;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -51,16 +51,14 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         // Refresh Token: 해커가 절대 못 훔쳐가게 HttpOnly=true 채우기
         int refreshCookieExpireSeconds = (int) (expireDays * 24 * 60 * 60);
-        CookieUtil.addCookie(response, "refreshToken", refreshToken, refreshCookieExpireSeconds,
-            appProperties.getAuth().isCookieSecure());
+        cookieUtil.addCookie(response, "refreshToken", refreshToken, refreshCookieExpireSeconds);
 
         // Access Token 임시 쿠키 : 프론트엔드가 자바스크립트로 쏙 빼갈 수 있게 HttpOnly=false로 하고 딱 60초만 굽기
         int tempCookieExpireSeconds = appProperties.getAuth().getOauth2CookieExpireSeconds();
-        CookieUtil.addTempCookieForFront(response, "accessToken", accessToken, tempCookieExpireSeconds,
-            appProperties.getAuth().isCookieSecure());
+        cookieUtil.addTempCookieForFront(response, "accessToken", accessToken, tempCookieExpireSeconds);
 
         // properties에서 리다이렉트할 URL 가져오기
-        String targetUrl = appProperties.getOauth2().getSuccessRedirectUri();
+        String targetUrl = determineTargetUrl(request);
 
         if (response.isCommitted()) {
             log.debug("응답이 이미 커밋되었습니다. {} 로 리다이렉트 할 수 없습니다.", targetUrl);
@@ -74,7 +72,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
-    protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response, Authentication authentication, String accessToken) {
+    protected String determineTargetUrl(HttpServletRequest request) {
         // 프론트엔드에서 로그인 요청 시 보냈던 redirect_uri 쿠키 찾기
         Optional<String> redirectUri = CookieUtil.getCookie(request, REDIRECT_URI_PARAM_COOKIE_NAME)
                 .map(Cookie::getValue);
@@ -85,12 +83,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 ? "http://localhost:3000/oauth2/redirect"  // 로컬 프론트엔드 개발 서버 - 테스트용
                 : "https://cosmetics-domain.com/oauth2/redirect"; // 운영 서버 (실제 도메인으로 변경 필요)
 
-        String targetUrl = redirectUri.orElse(defaultTargetUrl);
-
-        // Access Token을 쿼리 파라미터로 붙여서 프론트엔드로 전달
-        return UriComponentsBuilder.fromUriString(targetUrl)
-                .queryParam("token", accessToken)
-                .build().toUriString();
+        return redirectUri.orElse(defaultTargetUrl);
     }
 
     protected void clearAuthenticationAttributes(HttpServletRequest request, HttpServletResponse response) {
