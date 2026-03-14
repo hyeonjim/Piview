@@ -19,4 +19,8 @@ public interface MyCosRepository extends JpaRepository<MyCos, Long> {
             "JOIN FETCH p.image " +
             "WHERE m.user.id = :userId")
     List<MyCos> findAllByUserIdWithProduct(@Param("userId") Long userId);
+
+    // 유저 ID와 상품 ID로 이미 저장된 데이터가 있는지 확인 (중복 방지용)
+    @Query("SELECT COUNT(m) > 0 FROM MyCos m WHERE m.user.id = :userId AND m.product.productId = :productId")
+    boolean existsByUserIdAndProductId(@Param("userId") Long userId, @Param("productId") Long productId);
 }
