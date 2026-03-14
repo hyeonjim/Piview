@@ -20,6 +20,9 @@ public enum ErrorCode {
     COSMETICS_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 상품을 찾을 수 없습니다."),
     OCR_TEXT_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지에서 화장품 관련 텍스트를 찾을 수 없습니다."),
 
+    // 409 CONFLICT
+    ALREADY_SAVED_PRODUCT(HttpStatus.CONFLICT, "이미 보관함에 존재하는 상품입니다."),
+
     // 503 SERVICE_UNAVAILABLE
     AI_SERVER_TIMEOUT(HttpStatus.SERVICE_UNAVAILABLE, "AI 서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요."),
 
