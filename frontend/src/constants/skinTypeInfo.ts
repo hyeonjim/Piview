@@ -29,10 +29,10 @@ export const SKIN_TYPE_INFO: Record<string, SkinTypeInfo> = {
     emoji:   "🔀",
     insight: "T존과 볼 부위의 특성이 달라요. 부위별로 다른 케어가 효과적이에요. 오일-프리 제품으로 T존을 관리하고 볼에는 충분한 수분을 공급해주세요.",
   },
-  sensitive: {
-    label:   "민감성 피부",
-    emoji:   "🌹",
-    insight: "자극에 예민한 피부예요. 향료, 알코올, 인공색소가 없는 제품을 선택하고, 새 제품은 패치 테스트 후 사용하세요.",
+  dehydrated: {
+    label:   "수부지 피부",
+    emoji:   "💧💦",
+    insight: "피지는 많지만 수분이 부족한 피부예요. 유·수분 밸런스를 맞추는 것이 중요하며, 가벼운 수분 세럼과 오일 프리 크림을 함께 사용하세요.",
   },
 };
 

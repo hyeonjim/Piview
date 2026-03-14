@@ -145,6 +145,6 @@ export const MOCK_PRODUCT_DETAIL: ProductDetailFull = {
     보습: 62, 진정: 85, 미백: 55, 각질케어: 70, 모공관리: 78, 항산화: 45,
   },
   skinTypeScores: {
-    건성: 55, 지성: 88, 복합성: 82, 수부지: 60, 민감성: 50,
+    건성: 55, 지성: 88, 복합성: 82, 수부지: 60,
   },
 };

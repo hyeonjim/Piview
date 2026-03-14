@@ -4,15 +4,16 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Settings, Plus, Leaf, Package, Check, X, Search, Sparkles, TrendingUp,
+  Settings, Plus, Leaf, Package, X, Search, Sparkles, TrendingUp,
 } from "lucide-react";
 import { Toast } from "@/components/common/Toast";
 import { useToast } from "@/hooks";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Button from "@/components/common/Button";
 import { EmptyState } from "@/components/common";
+import ProductCard from "@/components/common/ProductCard";
 import { MYPAGE_ROUTINE_STEPS } from "@/constants";
-import { CATEGORY_COLORS, SKIN_FUNCTION_COLORS, SKIN_TYPE_TAG_COLORS } from "@/constants/categoryColors";
+import { CATEGORY_COLORS, SKIN_FUNCTION_COLORS } from "@/constants/categoryColors";
 import { getRoutineEvaluation, getScoreBarColor } from "@/constants/routineEvaluation";
 import { STEP_CATS, STEP_PRODUCTS } from "@/constants/_mock/mypageProducts";
 import { useLocalRoutineStore, type LocalProduct } from "@/stores/useLocalRoutineStore";
@@ -353,95 +354,28 @@ export default function MyPage() {
                   <div className="flex flex-col gap-3">
                     {displayProducts.map((product, idx) => {
                       const isAdded = !!routine[openStep!] && routine[openStep!]?.id === product.id;
-                      const catC = CATEGORY_COLORS[product.category];
+
                       return (
-                        <div
+                        <ProductCard
                           key={product.id}
-                          className="rounded-[14px] p-3 border"
-                          style={{
-                            backgroundColor: isAdded ? "var(--color-brand-bg)" : "white",
-                            borderColor: isAdded ? "var(--color-brand-light)" : "#E8E0D0",
+                          id={product.id}
+                          name={product.name}
+                          brand={product.brand}
+                          emoji={product.emoji}
+                          category={product.category}
+                          skinTypes={product.skinTypes}
+                          effects={product.effects}
+                          variant="modal"
+                          rankingIndex={idx}
+                          showRanking={isPiview}
+                          isRecommended={isPiview}
+                          actions={{
+                            onAddRoutine: () => addToRoutine(product),
+                            inRoutine: isAdded,
                           }}
-                        >
-                          {isPiview && (
-                            <div
-                              className="inline-flex items-center gap-1 mb-2 px-2 py-[2px] rounded-lg text-[11px] font-bold text-white"
-                              style={{ backgroundColor: idx < 3 ? "var(--color-brand)" : "#B0A890" }}
-                            >
-                              {["🥇","🥈","🥉"][idx] ?? "✦"} {idx + 1}위
-                            </div>
-                          )}
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="shrink-0 flex items-center justify-center rounded-xl text-[28px]"
-                              style={{ width: 60, height: 60, backgroundColor: "#F8F6F0" }}
-                            >
-                              {product.emoji}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                                <span className="text-xs text-text-muted">{product.brand}</span>
-                                {catC && (
-                                  <span
-                                    className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-medium"
-                                    style={{ backgroundColor: catC.chip, color: catC.accent }}
-                                  >
-                                    {product.category}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="truncate text-sm font-semibold text-[#2A2A2A]">{product.name}</p>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {product.skinTypes.map((st) => {
-                                  const c = SKIN_TYPE_TAG_COLORS[st] ?? { bg: "#F0EDE8", text: "#7A7060" };
-                                  return (
-                                    <span
-                                      key={st}
-                                      className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-semibold"
-                                      style={{ backgroundColor: c.bg, color: c.text }}
-                                    >
-                                      {st}
-                                    </span>
-                                  );
-                                })}
-                              </div>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {product.effects.slice(0, 3).map((fn) => {
-                                  const fc = SKIN_FUNCTION_COLORS[fn];
-                                  return fc ? (
-                                    <span
-                                      key={fn}
-                                      className="text-[10px] px-[5px] py-[1px] rounded-[4px] font-medium"
-                                      style={{ backgroundColor: fc.chip, color: fc.accent }}
-                                    >
-                                      {fn}
-                                    </span>
-                                  ) : null;
-                                })}
-                              </div>
-                            </div>
-                            <div className="flex flex-col items-center shrink-0">
-                              <span className="text-[15px] font-bold text-brand">{product.matchScore}</span>
-                              <span className="text-[9px] text-text-muted tracking-[0.3px]">SCORE</span>
-                            </div>
-                          </div>
-                          <div className="flex gap-2 mt-2.5">
-                            <button
-                              onClick={() => addToRoutine(product)}
-                              disabled={isAdded}
-                              className={`flex items-center justify-center gap-1 flex-1 h-8 rounded-[40px] border-none cursor-pointer transition-all active:scale-[0.97] text-xs font-bold ${
-                                isAdded ? "bg-brand-bg text-brand" : "bg-brand text-white"
-                              }`}
-                            >
-                              {isAdded ? <><Check size={11} /> 루틴추가됨</> : <><Plus size={11} /> 루틴추가</>}
-                            </button>
-                            <Link href={`/product/${product.id}`} onClick={closeModal}>
-                              <button className="flex items-center justify-center h-8 px-3 rounded-[40px] border border-border-warm bg-white text-xs text-text-muted font-medium cursor-pointer active:scale-[0.97]">
-                                상세보기
-                              </button>
-                            </Link>
-                          </div>
-                        </div>
+                          showDetailButton={true}
+                          onDetailClick={closeModal}
+                        />
                       );
                     })}
                   </div>

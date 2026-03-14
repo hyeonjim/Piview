@@ -1,6 +1,6 @@
 // src/types/user.ts
 
-export type SkinType = "건성" | "지성" | "복합성" | "민감성" | "중성";
+export type SkinType = "건성" | "지성" | "복합성" | "수부지";
 export type Gender = "female" | "male";
 
 export interface User {

@@ -21,7 +21,6 @@ const SKIN_TYPE_LABEL: Record<string, string> = {
   건성: "🌵 건성",
   지성: "💦 지성",
   복합성: "⚖️ 복합성",
-  민감성: "🌸 민감성",
   수부지: "💧 수부지",
 };
 

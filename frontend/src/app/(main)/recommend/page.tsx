@@ -6,7 +6,7 @@ import { MAIN_CATEGORIES, BRANDS } from "@/constants/productCategories";
 import { DEFAULT_FILTER } from "@/constants/filterDefaults";
 import { FilterModal, FilterState } from "@/components/common/FilterModal";
 import { CategoryFilter } from "@/components/common/CategoryFilter";
-import { ProductListCard } from "@/components/common/ProductListCard";
+import ProductCard from "@/components/common/ProductCard";
 import { Pagination } from "@/components/common/Pagination";
 import { Toast } from "@/components/common/Toast";
 import { useToast } from "@/hooks";
@@ -87,7 +87,7 @@ export default function RecommendPage() {
           <EmptyResult />
         ) : (
           paginated.map((product) => (
-            <ProductListCard
+            <ProductCard
               key={product.id}
               id={product.id}
               brand={product.brand}
@@ -96,14 +96,18 @@ export default function RecommendPage() {
               emoji={product.emoji}
               skinTypes={product.skinTypes}
               effects={product.effects}
-              matchScore={product.matchScore}
+              layout="vertical"
               reason={product.reason}
-              inRoutine={inRoutine.has(product.id)}
-              isWished={wished.has(product.id)}
-              isOwned={owned.has(product.id)}
-              onAddRoutine={() => !inRoutine.has(product.id) && addRoutine(product.id, product.name)}
-              onToggleWish={() => setWished((prev) => toggleSet(prev, product.id))}
-              onToggleOwned={() => setOwned((prev) => toggleSet(prev, product.id))}
+              isRecommended={!!product.reason}
+              actions={{
+                onAddRoutine: () => !inRoutine.has(product.id) && addRoutine(product.id, product.name),
+                inRoutine: inRoutine.has(product.id),
+                onToggleOwned: () => setOwned((prev) => toggleSet(prev, product.id)),
+                isOwned: owned.has(product.id),
+                onToggleWish: () => setWished((prev) => toggleSet(prev, product.id)),
+                isWished: wished.has(product.id),
+                showCompare: true,
+              }}
             />
           ))
         )}

@@ -7,7 +7,7 @@ const TABS = [
   { id: "search", href: "/search", icon: Search, isCenter: false },
   { id: "recommend", href: "/recommend", icon: Sparkles, isCenter: false },
   { id: "home", href: "/home", icon: Home, isCenter: true },
-  { id: "wishlist", href: "/likes", icon: Heart, isCenter: false },
+  { id: "likes", href: "/likes", icon: Heart, isCenter: false },
   { id: "mypage", href: "/mypage", icon: User, isCenter: false },
 ];
 
@@ -18,7 +18,7 @@ export default function BottomNav() {
   const getActiveTab = () => {
     if (pathname.startsWith("/search")) return "search";
     if (pathname.startsWith("/recommend")) return "recommend";
-    if (pathname.startsWith("/likes")) return "wishlist";
+    if (pathname.startsWith("/likes")) return "likes";
     if (pathname.startsWith("/mypage")) return "mypage";
     return "home";
   };
@@ -44,16 +44,15 @@ export default function BottomNav() {
         className="flex items-center justify-between"
         style={{
           width: "100%",
-          maxWidth: "480px",
+          maxWidth: "380px",
           height: "60px",
           borderRadius: "100px",
-          backdropFilter: "blur(80px) saturate(220%)",
-          WebkitBackdropFilter: "blur(80px) saturate(220%)",
-          backgroundImage:
-            "linear-gradient(170deg, rgba(162,170,123,0.03) 0%, rgba(236,234,222,0.05) 50%, rgba(255,250,245,0.06) 100%)",
-          border: "1px solid rgba(255,255,255,0.15)",
-          boxShadow:
-            "0 8px 32px rgba(120,130,80,0.05), inset 0 1px 0 rgba(255,255,255,0.08)",
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(5px)",
+          background:
+            "linear-gradient(154deg, rgba(162,170,123,0.12) 3.5%, rgba(236,234,222,0.06) 101.94%)",
+          border: "1px solid rgba(255,255,255,0.35)",
+          boxShadow: "0 10px 40px 0 rgba(120,130,80,0.26)",
           padding: "0 24px",
           pointerEvents: "auto",
         }}
@@ -72,10 +71,10 @@ export default function BottomNav() {
                   width: "48px",
                   height: "48px",
                   borderRadius: "50%",
-                  backgroundColor: isActive ? "var(--color-brand)" : "#3A3A3A",
+                  backgroundColor: isActive ? "var(--color-brand)" : "#a6a2a2",
                   boxShadow: isActive
                     ? "0 4px 16px rgba(162,170,123,0.45)"
-                    : "0 4px 12px rgba(0,0,0,0.2)",
+                    : "0 4px 12px rgba(0,0,0,0.15)",
                 }}
               >
                 <Icon size={22} color="#FFFFFF" strokeWidth={2} />
@@ -101,7 +100,7 @@ export default function BottomNav() {
                 size={20}
                 color={isActive ? "#FFFFFF" : "rgba(60,60,60,0.55)"}
                 strokeWidth={isActive ? 2 : 1.5}
-                fill={tab.id === "wishlist" && isActive ? "#FFFFFF" : "none"}
+                fill={tab.id === "likes" && isActive ? "#FFFFFF" : "none"}
               />
             </button>
           );

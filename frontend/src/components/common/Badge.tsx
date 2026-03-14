@@ -38,14 +38,13 @@ export function CategoryBadge({
 
 /* ────────────────────────────────────────
    SkinTypeBadge — 피부타입 표시 뱃지
-   ex) 건성, 지성, 복합성, 민감성
+   ex) 건성, 지성, 복합성, 수부지
 ──────────────────────────────────────── */
 const SKIN_TYPE_COLORS: Record<string, string> = {
   건성: "bg-blue-50 text-blue-600 border-blue-200",
   지성: "bg-yellow-50 text-yellow-600 border-yellow-200",
   복합성: "bg-purple-50 text-purple-600 border-purple-200",
-  민감성: "bg-red-50 text-red-600 border-red-200",
-  중성: "bg-green-50 text-green-600 border-green-200",
+  수부지: "bg-teal-50 text-teal-600 border-teal-200",
 };
 
 interface SkinTypeBadgeProps {

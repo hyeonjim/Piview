@@ -45,7 +45,6 @@ export const SKIN_TYPE_TAG_COLORS: Record<string, { bg: string; text: string }> 
   "건성":   { bg: "#E8F0F8", text: "#3A6B9F" },
   "지성":   { bg: "#FFF3E0", text: "#C27A1E" },
   "복합성": { bg: "#F3E8F9", text: "#7B3FA0" },
-  "민감성": { bg: "#FDEAEA", text: "#C0392B" },
   "수부지": { bg: "#EDE9FE", text: "#5B21B6" },
   "모든피부":{ bg: "#E8F4EC", text: "#3D7A52" },
 };
