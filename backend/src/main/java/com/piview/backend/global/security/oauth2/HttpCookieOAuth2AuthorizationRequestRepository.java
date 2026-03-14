@@ -1,7 +1,6 @@
 package com.piview.backend.global.security.oauth2;
 
-import com.piview.backend.global.config.AppProperties;
-import com.piview.backend.global.util.CookieUtil; // 수정된 패키지명 반영
+import com.piview.backend.global.util.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,7 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class HttpCookieOAuth2AuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
-    private final AppProperties appProperties;
+    private final CookieUtil cookieUtil;
 
     public static final String OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME = "oauth2_auth_request";
     public static final String REDIRECT_URI_PARAM_COOKIE_NAME = "redirect_uri";
@@ -37,16 +36,14 @@ public class HttpCookieOAuth2AuthorizationRequestRepository implements Authoriza
         }
 
         // 인증 요청 정보 저장 (직렬화 활용)
-        CookieUtil.addCookie(response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME,
-            CookieUtil.serialize(authorizationRequest), COOKIE_EXPIRE_SECONDS,
-            appProperties.getAuth().isCookieSecure());
+        cookieUtil.addCookie(response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME,
+            CookieUtil.serialize(authorizationRequest), COOKIE_EXPIRE_SECONDS);
 
         String redirectUriAfterLogin = request.getParameter(REDIRECT_URI_PARAM_COOKIE_NAME);
         if (StringUtils.hasText(redirectUriAfterLogin)) {
             // 프론트엔드가 요청한 리다이렉트 URI 저장
-            CookieUtil.addCookie(response, REDIRECT_URI_PARAM_COOKIE_NAME,
-                redirectUriAfterLogin, COOKIE_EXPIRE_SECONDS,
-                appProperties.getAuth().isCookieSecure());
+            cookieUtil.addCookie(response, REDIRECT_URI_PARAM_COOKIE_NAME,
+                redirectUriAfterLogin, COOKIE_EXPIRE_SECONDS);
         }
     }
 
@@ -58,7 +55,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository implements Authoriza
 
     // 4. 진짜 쿠키 삭제 헬퍼 메서드 (로그인 성공/실패 핸들러에서 호출됨)
     public void removeAuthorizationRequestCookies(HttpServletRequest request, HttpServletResponse response) {
-        CookieUtil.deleteCookie(request, response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME);
-        CookieUtil.deleteCookie(request, response, REDIRECT_URI_PARAM_COOKIE_NAME);
+        cookieUtil.deleteCookie(request, response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME);
+        cookieUtil.deleteCookie(request, response, REDIRECT_URI_PARAM_COOKIE_NAME);
     }
 }
