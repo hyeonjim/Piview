@@ -4,6 +4,7 @@ import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.product.catalog.repository.ProductSearchRepository;
 import com.piview.backend.product.entity.Product;
+import com.piview.backend.product.repository.ProductRepository;
 import com.piview.backend.routine.item.dto.MyCosCreateRequestDto;
 import com.piview.backend.routine.item.dto.MyCosResponseDto;
 import com.piview.backend.routine.item.entity.MyCos;
@@ -49,7 +50,7 @@ public class MyCosService {
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 상품 유효성 검사 및 엔티티 조회
-        Product product = productSearchRepository.findById(requestDto.getProductId())
+        Product product = productSearchRepository.findById(requestDto.productId())
             .orElseThrow(() -> new CustomException(ErrorCode.COSMETICS_NOT_FOUND));
 
         // 중복 저장 방지: 이미 보관함에 있는 상품이면 409 에러 발생
