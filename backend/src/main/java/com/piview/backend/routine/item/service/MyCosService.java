@@ -76,7 +76,7 @@ public class MyCosService {
 
         // 지우려는 MyCos 데이터를 찾기
         MyCos myCos = myCosRepository.findById(myCosId)
-            .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED_ACCESS));
+            .orElseThrow(() -> new CustomException(ErrorCode.MY_COS_NOT_FOUND));
 
         // 보안 핵심 (IDOR 방어): 이 제품의 주인이 지금 요청한 유저가 맞는지 확인
         if (!myCos.getUser().getId().equals(userId)) {
