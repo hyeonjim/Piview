@@ -1,5 +1,6 @@
 package com.piview.backend.routine.core.entity;
 
+import com.piview.backend.global.util.BaseEntity;
 import com.piview.backend.product.entity.Product;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -10,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class RoutineDetail {
+public class RoutineDetail extends BaseEntity {
 
   @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "routine_detail_id", nullable = false)
