@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -22,4 +23,6 @@ public interface RoutineRepository extends JpaRepository<MyRoutine, Long> {
   // 가장 최근에 생성된 루틴 하나 조회
   Optional<MyRoutine> findFirstByUserIdOrderByIdDesc(Long userId);
 
+  // 사용자의 모든 루틴 리스트 조회
+  List<MyRoutine> findAllByUserId(Long userId);
 }

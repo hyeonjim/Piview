@@ -86,6 +86,20 @@ public class RoutineService {
     targetRoutine.changeMainStatus(true);
   }
 
+  // 루틴 전체 목록 조회
+  public List<RoutineListResponse> getUserRoutines(Long userId) {
+    List<MyRoutine> routines = routineRepository.findAllByUserId(userId);
+
+    return routines.stream()
+        .map(routine -> new RoutineListResponse(
+            routine.getId(),
+            routine.getTitle(),
+            routine.isMain(),
+            routine.getDetails().size() // 루틴 내 제품 개수 계산
+        ))
+        .toList();
+  }
+
   // 루틴 상세 조회
   public RoutineResponse getRoutineDetails(Long userId, Long routineId) {
     MyRoutine routine = routineRepository.findById(routineId)
