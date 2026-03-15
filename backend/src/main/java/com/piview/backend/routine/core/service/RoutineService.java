@@ -40,6 +40,17 @@ public class RoutineService {
     return routineRepository.save(routine).getId();
   }
 
+  // 메인 루틴 변경
+  @Transactional
+  public void setMainRoutine(Long userId, Long targetRoutineId) {
+    routineRepository.updateIsMainFalseByUserId(userId); // 벌크 연산
+
+    MyRoutine targetRoutine = routineRepository.findById(targetRoutineId)
+        .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
+
+    targetRoutine.changeMainStatus(true);
+  }
+
   // 루틴 상세 조회
   public RoutineResponse getRoutineDetails(Long routineId) {
     MyRoutine routine = routineRepository.findById(routineId)

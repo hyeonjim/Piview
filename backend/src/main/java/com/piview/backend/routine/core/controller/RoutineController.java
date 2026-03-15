@@ -28,10 +28,27 @@ public class RoutineController {
     return ResponseEntity.ok(routineId);
   }
 
+  // 루틴 수정(순서 및 이름 변경)
+
+  // 메인 루틴으로 설정
+  @PatchMapping("/{routineId}/main")
+  public ResponseEntity<Void> setMainRoutine(
+      @PathVariable Long routineId,
+      @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+    Long userId = userPrincipal.getId();
+    routineService.setMainRoutine(userId, routineId);
+    return ResponseEntity.ok().build();
+  }
+
+  // 루틴 목록 조회
+
   // 루틴 상세정보 조회
   @GetMapping("/{routineId}")
   public ResponseEntity<RoutineResponse> getRoutineDetails(@PathVariable Long routineId) {
     RoutineResponse response = routineService.getRoutineDetails(routineId);
     return ResponseEntity.ok(response);
   }
+
+  // 루틴 삭제
 }
