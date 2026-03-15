@@ -1,3 +1,9 @@
+/**
+ * utils/chosung.ts
+ * 한글 초성 그룹핑 유틸리티
+ * (기존 chosungUtils.ts → 이름 변경)
+ */
+
 const CHOSUNG_LIST = [
   "ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ",
   "ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ",
@@ -10,11 +16,14 @@ const CHOSUNG_GROUPS: Record<string, string[]> = {
 };
 export const GROUP_ORDER = ["ㄱ","ㄴ","ㄷ","ㄹ","ㅁ","ㅂ","ㅅ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
 
+// 한글 글자의 초성 추출
 export function getChosung(char: string): string {
   const code = char.charCodeAt(0);
   if (code >= 0xAC00 && code <= 0xD7A3) return CHOSUNG_LIST[Math.floor((code - 0xAC00) / 588)];
   return char.toUpperCase();
 }
+
+// 브랜드 첫 글자의 초성 그룹 키 반환
 export function getGroupKey(brand: string): string {
   const first = getChosung(brand.charAt(0));
   for (const [group, members] of Object.entries(CHOSUNG_GROUPS)) {
@@ -22,6 +31,8 @@ export function getGroupKey(brand: string): string {
   }
   return "기타";
 }
+
+// 브랜드 목록을 초성 그룹별로 분류
 export function groupBrandsByChosung(brands: string[]): Record<string, string[]> {
   const grouped: Record<string, string[]> = {};
   brands.forEach((brand) => {

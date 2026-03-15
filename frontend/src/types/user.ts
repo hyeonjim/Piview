@@ -2,16 +2,20 @@
 
 export type SkinType = "건성" | "지성" | "복합성" | "수부지";
 export type Gender = "female" | "male";
+export type AgeGroup = "10" | "20" | "30" | "40";
 
 export interface User {
   id: number;
-  provider: string;       // 카카오 OAuth
-  providerId: string;
+  provider: string;              // 카카오 OAuth
+  providerId: string;            // ERD: provider_id
   email: string | null;
   name: string | null;
   gender: Gender | null;
-  ageRange: string | null; // "20대", "30대" 등
-  skinType: SkinType | null;
+  ageRange: string | null;       // 구버전 호환 ("20대", "30대" 등)
+  ageGroup: AgeGroup | null;     // ERD: age_group ENUM (신규)
+  skinType: SkinType | null;     // 구버전 호환
+  mySkinType: SkinType | null;   // ERD: my_skin_type (신규)
+  exist: boolean;                // ERD: exist → 소프트 딜리트 플래그 (신규)
   mySkinProblems: MySkinProblem[]; // 피부고민 (N:M)
 }
 

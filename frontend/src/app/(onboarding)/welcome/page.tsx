@@ -31,34 +31,16 @@ const DESC_STYLE = {
   whiteSpace: "pre-line" as const,
   letterSpacing: "0.2px",
 };
-const SIGN_IN_STYLE = {
-  fontFamily: "'Raleway', sans-serif",
-  fontSize: "18px",
-  color: "rgba(255,255,255,0.5)",
-  fontWeight: 400,
-};
-const START_BTN_STYLE = {
-  width: "70px",
-  height: "70px",
-  borderRadius: "50%",
-  boxShadow: "0 4px 24px rgba(162,170,123,0.53)",
-  transition: "transform 0.15s ease",
-  marginRight: "10px",
-};
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
 import { WELCOME_SLIDES } from "@/constants/_mock/welcomeSlides";
 
 const OVERLAY =
   "linear-gradient(to top, rgba(30,27,36,0.92) 0%, rgba(30,27,36,0.5) 40%, rgba(30,27,36,0.1) 65%, transparent 100%)";
 
 export default function WelcomePage() {
-  const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [fading, setFading] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -88,9 +70,13 @@ export default function WelcomePage() {
     setTouchStart(null);
   };
 
-  const handleStart = () => {
-    setFading(true);
-    setTimeout(() => router.push("/skin-test"), 400);
+  /**
+   * 카카오 로그인 버튼 클릭 핸들러
+   * window.location.href로 이동 → 백엔드가 카카오 인증 서버로 리다이렉트
+   * ⚠️ API 연동 시 NEXT_PUBLIC_API_URL 환경변수 설정 필요
+   */
+  const handleKakaoLogin = () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/oauth2/authorization/kakao`;
   };
 
   const slide = WELCOME_SLIDES[currentSlide];
@@ -102,8 +88,6 @@ export default function WelcomePage() {
         height: "100%",
         minHeight: "100dvh",
         backgroundColor: "#1E1B24",
-        opacity: fading ? 0 : 1,
-        transition: "opacity 0.4s ease",
       }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -168,26 +152,24 @@ export default function WelcomePage() {
           ))}
         </div>
 
-        {/* CTA */}
-        <div className="flex items-center justify-between mt-8">
+        {/* 카카오 로그인 버튼 */}
+        <div className="mt-8">
           <button
-            onClick={() => router.push("/home")}
-            className="bg-transparent border-none cursor-pointer p-0"
-            style={SIGN_IN_STYLE}
+            onClick={handleKakaoLogin}
+            className="w-full flex items-center justify-center gap-3 cursor-pointer border-none rounded-2xl"
+            style={{
+              backgroundColor: "#FEE500",
+              height: "54px",
+              fontSize: "16px",
+              fontWeight: 600,
+              color: "rgba(0,0,0,0.85)",
+            }}
           >
-            이미 계정이 있으신가요?{" "}
-            <span className="text-brand font-semibold">로그인</span>
-          </button>
-          <button
-            onClick={handleStart}
-            className="flex items-center justify-center cursor-pointer border-none bg-brand"
-            style={START_BTN_STYLE}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.transform = "scale(1.05)")
-            }
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-          >
-            <ArrowRight size={22} color="#fff" strokeWidth={2} />
+            {/* 카카오 말풍선 아이콘 (SVG inline — 외부 이미지 의존 없음) */}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="rgba(0,0,0,0.85)">
+              <path d="M12 3C6.477 3 2 6.477 2 11c0 2.897 1.553 5.453 3.926 7.07L4.9 21.5a.5.5 0 0 0 .7.55l4.13-2.32A11.3 11.3 0 0 0 12 20c5.523 0 10-3.477 10-8S17.523 3 12 3z" />
+            </svg>
+            카카오로 시작하기
           </button>
         </div>
       </div>
