@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Sparkles, ArrowRight, Leaf, Sun, Moon, Droplets, Settings, Star } from "lucide-react";
 import Link from "next/link";
 import { SKINCARE_INSIGHTS } from "@/constants";
@@ -23,6 +24,11 @@ export default function HomePage() {
   const nickname = "User";
 
   const { routine } = useLocalRoutineStore();
+
+  // 페이지 마운트 시 localStorage에서 루틴 복구
+  useEffect(() => {
+    useLocalRoutineStore.persist.rehydrate();
+  }, []);
 
   const mainRoutineItems = ROUTINE_STEP_META
     .map((meta) => ({ meta, product: routine[meta.code] }))
