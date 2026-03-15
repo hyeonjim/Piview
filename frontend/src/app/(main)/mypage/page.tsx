@@ -43,6 +43,7 @@ import {
   type LocalProduct,
 } from "@/stores/useLocalRoutineStore";
 import { useUserStore } from "@/stores/useUserStore";
+import { authService } from "@/services/auth";
 
 export default function MyPage() {
   const router = useRouter();
@@ -54,7 +55,7 @@ export default function MyPage() {
    */
   const handleLogout = async () => {
     try {
-      // await authService.logout();
+      await authService.logout();
     } finally {
       // 로컬 상태 전체 초기화
       useUserStore.getState().clearUser();

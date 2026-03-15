@@ -19,8 +19,6 @@ const client = axios.create({
 });
 
 // ── 응답 인터셉터: accessToken 만료(401) 처리 ──────────────────────────────
-// ⚠️ API 연동 시 활성화 (현재는 주석 처리)
-/*
 client.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -45,6 +43,5 @@ client.interceptors.response.use(
     }
   },
 );
-*/
 
 export default client;

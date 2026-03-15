@@ -1,5 +1,5 @@
 /**
- * app/oauth/callback/page.tsx
+ * app/oauth2/redirect/page.tsx
  * 카카오 OAuth 콜백 처리 페이지
  *
  * 플로우:
@@ -22,7 +22,7 @@ export default function OAuthCallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // ⚠️ API 연동 시: authService.getMe()가 실제 BE 호출로 교체됨
+        // authService.getMe()가 실제 BE 호출로 교체 완료
         const user = await authService.getMe();
         useUserStore.getState().setUser(user);
 
