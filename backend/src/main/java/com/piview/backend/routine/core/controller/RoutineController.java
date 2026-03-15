@@ -63,4 +63,14 @@ public class RoutineController {
   }
 
   // 루틴 삭제
+  @DeleteMapping("/{routineId}")
+  public ResponseEntity<Void> deleteRoutine(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @PathVariable Long routineId) {
+
+    Long userId = userPrincipal.getId();
+    routineService.deleteRoutine(userId, routineId);
+
+    return ResponseEntity.noContent().build(); // 204 No Content 반환 (성공적으로 삭제됨)
+  }
 }
