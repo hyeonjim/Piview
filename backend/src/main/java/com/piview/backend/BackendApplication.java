@@ -8,7 +8,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 @EnableConfigurationProperties(AppProperties.class)
 @SpringBootApplication
 public class BackendApplication {
-    private int stttt_Sttt;
     public static void main(String[] args) {
         SpringApplication.run(BackendApplication.class, args);
     }

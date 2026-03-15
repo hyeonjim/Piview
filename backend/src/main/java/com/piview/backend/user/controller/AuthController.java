@@ -28,6 +28,7 @@ public class AuthController {
 
   private final AuthService authService;
   private final AppProperties appProperties;
+  private final CookieUtil cookieUtil;
 
   // 토큰 재발급 API
   @PostMapping("/refresh")
@@ -41,9 +42,8 @@ public class AuthController {
 
     TokenDto serverTokens = authService.reissue(refreshToken);
 
-    CookieUtil.addCookie(response, "refreshToken", serverTokens.getRefreshToken(),
-        (int)(appProperties.getAuth().getRefreshTokenExpirationDays() * 24 * 60 * 60),
-        appProperties.getAuth().isCookieSecure());
+    cookieUtil.addCookie(response, "refreshToken", serverTokens.getRefreshToken(),
+        (int)(appProperties.getAuth().getRefreshTokenExpirationDays() * 24 * 60 * 60));
 
     return ResponseEntity.ok(new TokenResponseDto(serverTokens.getAccessToken()));
   }
@@ -64,7 +64,7 @@ public class AuthController {
     }
 
     // 브라우저 속 refresh token 제거
-    CookieUtil.deleteCookie(request, response, "refreshToken");
+    cookieUtil.deleteCookie(request, response, "refreshToken");
 
     return ResponseEntity.ok("로그아웃 되었습니다.");
   }

@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers("/health", "/error").permitAll()
                         .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/favicon.ico").permitAll()
                         .requestMatchers("/api/v1/auth/**", "/api/v1/oauth2/**").permitAll()
+                        .requestMatchers("/api/v1/ocr/**").permitAll()
 
                         .anyRequest().authenticated()
                 )
