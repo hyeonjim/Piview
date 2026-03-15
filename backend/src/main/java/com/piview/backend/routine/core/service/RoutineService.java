@@ -72,7 +72,7 @@ public class RoutineService {
 
     redisDraftService.clearDraft(userId);
 
-    return routineRepository.save(routine).getId();
+    return savedRoutine.getId();
   }
 
   // 메인 루틴 변경
