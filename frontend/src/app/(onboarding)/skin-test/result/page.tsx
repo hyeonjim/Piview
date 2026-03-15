@@ -174,7 +174,7 @@ function ResultContent() {
       {/* 하단 CTA */}
       <div className="px-6 pb-10 pt-3 flex flex-col gap-3">
         <button
-          onClick={() => router.push("/routine")}
+          onClick={() => router.push("/mypage")}
           className="w-full flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer border-none bg-brand text-white font-semibold"
           style={{
             height: "54px",
@@ -184,13 +184,6 @@ function ResultContent() {
           }}
         >
           내 제품 등록하러 가기 <ArrowRight size={18} color="white" />
-        </button>
-        <button
-          onClick={() => router.push("/home")}
-          className="w-full bg-transparent border-none cursor-pointer text-text-faint"
-          style={{ fontSize: "14px", padding: "8px 0" }}
-        >
-          홈으로 돌아가기
         </button>
       </div>
     </div>

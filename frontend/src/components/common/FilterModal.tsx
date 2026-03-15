@@ -20,7 +20,7 @@ const RANGE_INPUT_BASE: React.CSSProperties = {
 
 import React, { useEffect } from "react";
 import { X, RotateCcw } from "lucide-react";
-import { getGroupKey, GROUP_ORDER } from "@/utils/chosungUtils";
+import { getGroupKey, GROUP_ORDER } from "@/utils/chosung";
 import {
   SKIN_FUNCTIONS,
   SKIN_TYPE_LABELS_FOR_FILTER,
