@@ -113,6 +113,8 @@ services:
       # 딱 이거 하나만 남기면 돼! (application-dev.yml을 읽으라는 뜻)
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_CONFIG_LOCATION=file:/app/application-dev.yml
+      - DEV_REDIS_PASSWORD=${DEV_REDIS_PASSWORD}
+
     volumes:
       # 💡 EC2에 있는 yml 파일을 컨테이너 안으로 배달!
       - ./application-dev.yml:/app/application-dev.yml
@@ -144,10 +146,15 @@ services:
       context: ./backend
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_CONFIG_LOCATION=file:/app/application-prod.yml
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/piview_prod?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
       - REDIS_HOST=prod-redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${PROD_REDIS_PASSWORD}
+
+    volumes:
+      # 💡 EC2에 있는 yml 파일을 컨테이너 안으로 배달!
+      - ./application-prod.yml:/app/application-prod.yml
 
     networks:
       - app-network
