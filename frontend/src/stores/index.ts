@@ -12,3 +12,4 @@ export {
 export { useRoutineStore } from "./useRoutineStore";
 export { useLocalRoutineStore } from "./useLocalRoutineStore";
 export { useFilterStore, selectActiveFilterCount } from "./useFilterStore";
+export { useSurveyStore } from "./useSurveyStore";

@@ -67,3 +67,6 @@ pnpm-debug.log*
 **/.env
 **/.pytest_cache/
 **/target/
+
+# claude
+# *.claude

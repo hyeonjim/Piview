@@ -78,7 +78,7 @@ export default function SelectPage() {
 
   return (
     <div className="flex flex-col min-h-full bg-white">
-      <div className="px-6 pt-4 pb-6 overflow-y-auto pb-28">
+      <div className="px-6 pt-4 pb-28 overflow-y-auto">
         {/* 뒤로가기 */}
         <button
           onClick={() => router.push("/skin-test")}

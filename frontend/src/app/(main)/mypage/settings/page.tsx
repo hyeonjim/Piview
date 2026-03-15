@@ -183,35 +183,37 @@ export default function SettingsPage() {
             AI 사진 분석이나 피부타입 퀴즈를 다시 진행할 수 있어요
           </p>
           <div className="flex flex-col gap-3">
-            <Link href="/skin-test/photo">
-              <button className="flex items-center gap-3 w-full p-4 cursor-pointer transition-all duration-200 active:scale-[0.98] bg-white border border-border rounded-card">
-                <div className="flex items-center justify-center shrink-0 w-11 h-11 rounded-[14px] bg-[#E8F5E9]">
-                  <Camera size={22} color="#4CAF50" />
-                </div>
-                <div className="flex flex-col items-start">
-                  <span className="text-sm font-semibold text-text-primary">
-                    AI 사진 분석
-                  </span>
-                  <span className="text-xs text-text-muted mt-0.5">
-                    셀피를 촬영해 피부 상태를 분석해요
-                  </span>
-                </div>
-              </button>
+            <Link
+              href="/skin-test/photo"
+              className="flex items-center gap-3 w-full p-4 cursor-pointer transition-all duration-200 active:scale-[0.98] bg-white border border-border rounded-card"
+            >
+              <div className="flex items-center justify-center shrink-0 w-11 h-11 rounded-[14px] bg-[#E8F5E9]">
+                <Camera size={22} color="#4CAF50" />
+              </div>
+              <div className="flex flex-col items-start">
+                <span className="text-sm font-semibold text-text-primary">
+                  AI 사진 분석
+                </span>
+                <span className="text-xs text-text-muted mt-0.5">
+                  셀피를 촬영해 피부 상태를 분석해요
+                </span>
+              </div>
             </Link>
-            <Link href="/skin-test/quiz">
-              <button className="flex items-center gap-3 w-full p-4 cursor-pointer transition-all duration-200 active:scale-[0.98] bg-white border border-border rounded-card">
-                <div className="flex items-center justify-center shrink-0 w-11 h-11 rounded-[14px] bg-brand-bg">
-                  <ClipboardList size={22} className="text-brand" />
-                </div>
-                <div className="flex flex-col items-start">
-                  <span className="text-sm font-semibold text-text-primary">
-                    피부타입 퀴즈
-                  </span>
-                  <span className="text-xs text-text-muted mt-0.5">
-                    간단한 질문으로 피부타입을 알아봐요
-                  </span>
-                </div>
-              </button>
+            <Link
+              href="/skin-test/survey/1"
+              className="flex items-center gap-3 w-full p-4 cursor-pointer transition-all duration-200 active:scale-[0.98] bg-white border border-border rounded-card"
+            >
+              <div className="flex items-center justify-center shrink-0 w-11 h-11 rounded-[14px] bg-brand-bg">
+                <ClipboardList size={22} className="text-brand" />
+              </div>
+              <div className="flex flex-col items-start">
+                <span className="text-sm font-semibold text-text-primary">
+                  피부타입 퀴즈
+                </span>
+                <span className="text-xs text-text-muted mt-0.5">
+                  간단한 질문으로 피부타입을 알아봐요
+                </span>
+              </div>
             </Link>
           </div>
         </div>
