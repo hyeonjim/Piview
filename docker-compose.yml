@@ -110,6 +110,10 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/piview_dev?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
+
       - REDIS_HOST=develop-redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${DEV_REDIS_PASSWORD}
