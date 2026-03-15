@@ -1,5 +1,33 @@
 "use client";
 
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const SPLASH_BG = "linear-gradient(160deg, #D4C8BC 4.5%, #ECEADE 50%)";
+const RING_INNER_STYLE = {
+  width: "300px",
+  height: "300px",
+  borderRadius: "50%",
+  border: "1px solid #A2AA7B",
+  opacity: 0.08,
+};
+const RING_OUTER_STYLE = {
+  width: "450px",
+  height: "450px",
+  borderRadius: "50%",
+  border: "1px solid #A2AA7B",
+  opacity: 0.05,
+};
+const LOGO_CIRCLE_STYLE = {
+  width: "48px",
+  height: "48px",
+  borderRadius: "50%",
+  backgroundColor: "#A2AA7B",
+};
+const BRAND_TITLE_STYLE = {
+  fontFamily: "'Playfair Display', serif",
+  fontSize: "32px",
+};
+const DOT_BASE_STYLE = { width: "4px", height: "4px" };
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -19,7 +47,7 @@ export default function SplashPage() {
     <div
       className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
       style={{
-        background: "linear-gradient(160deg, #D4C8BC 4.5%, #ECEADE 50%)",
+        background: SPLASH_BG,
         opacity: visible ? 1 : 0,
         transition: "opacity 0.6s ease",
       }}
@@ -28,16 +56,14 @@ export default function SplashPage() {
       <div
         className="absolute"
         style={{
-          width: "300px", height: "300px", borderRadius: "50%",
-          border: "1px solid #A2AA7B", opacity: 0.08,
+          ...RING_INNER_STYLE,
           animation: "splashScaleIn 1.2s ease both",
         }}
       />
       <div
         className="absolute"
         style={{
-          width: "450px", height: "450px", borderRadius: "50%",
-          border: "1px solid #A2AA7B", opacity: 0.05,
+          ...RING_OUTER_STYLE,
           animation: "splashScaleIn 1.4s 0.15s ease both",
         }}
       />
@@ -46,8 +72,7 @@ export default function SplashPage() {
       <div
         className="flex items-center justify-center"
         style={{
-          width: "48px", height: "48px", borderRadius: "50%",
-          backgroundColor: "#A2AA7B",
+          ...LOGO_CIRCLE_STYLE,
           animation: "splashFadeUp 0.7s 0.2s ease both",
           opacity: 0,
         }}
@@ -68,11 +93,13 @@ export default function SplashPage() {
       </div>
 
       {/* Brand name */}
-      <div className="flex flex-col items-center mt-6" style={{ animation: "splashFadeUp 0.6s 0.4s ease both" }}>
+      <div
+        className="flex flex-col items-center mt-6"
+        style={{ animation: "splashFadeUp 0.6s 0.4s ease both" }}
+      >
         <p
           style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: "32px",
+            ...BRAND_TITLE_STYLE,
             fontWeight: 500,
             color: "#1A1A1A",
             letterSpacing: "-0.5px",
@@ -98,13 +125,15 @@ export default function SplashPage() {
       </div>
 
       {/* Loading dots */}
-      <div className="absolute bottom-16 flex gap-1.5" style={{ animation: "splashFadeIn 0.4s 1.0s ease both", opacity: 0 }}>
+      <div
+        className="absolute bottom-16 flex gap-1.5"
+        style={{ animation: "splashFadeIn 0.4s 1.0s ease both", opacity: 0 }}
+      >
         {[0, 1, 2].map((i) => (
           <div
             key={i}
             style={{
-              width: "4px",
-              height: "4px",
+              ...DOT_BASE_STYLE,
               borderRadius: "50%",
               backgroundColor: "#A2AA7B",
               animation: `pulse 1.2s infinite ${i * 0.2}s`,

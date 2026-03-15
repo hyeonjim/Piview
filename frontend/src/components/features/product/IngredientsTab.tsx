@@ -8,6 +8,36 @@
 
 "use client";
 
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const SEARCH_INPUT_STYLE = {
+  height: "40px",
+  paddingLeft: "14px",
+  paddingRight: "14px",
+  borderRadius: "10px",
+  backgroundColor: "#F5F5F5",
+  border: "none",
+  fontSize: "13px",
+  color: "#1A1A1A",
+};
+const INGRED_DIVIDER = "1px solid #F0F0F0";
+const INGRED_NAME_STYLE = {
+  fontSize: "13px",
+  color: "#1A1A1A",
+  flex: 1,
+  paddingRight: "12px",
+};
+const EWG_DOT_BASE = { width: "8px", height: "8px", borderRadius: "50%" };
+const EWG_SCORE_STYLE = { fontSize: "11px", fontWeight: 600 };
+const EMPTY_TEXT_STYLE = {
+  fontSize: "13px",
+  color: "#9E9E9E",
+  textAlign: "center" as const,
+  padding: "24px 0",
+};
+const LEGEND_WRAP_STYLE = { borderRadius: "10px", backgroundColor: "#F8F8F8" };
+const LEGEND_DOT_BASE = { width: "8px", height: "8px", borderRadius: "50%" };
+const LEGEND_TEXT_STYLE = { fontSize: "10px", color: "#757575" };
+
 import { useState } from "react";
 
 interface Ingredient {
@@ -37,7 +67,7 @@ export function IngredientsTab({ ingredients }: Props) {
   const [search, setSearch] = useState("");
 
   const filtered = ingredients.filter((i) =>
-    i.name.toLowerCase().includes(search.toLowerCase())
+    i.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -50,11 +80,7 @@ export function IngredientsTab({ ingredients }: Props) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full outline-none"
-          style={{
-            height: "40px", paddingLeft: "14px", paddingRight: "14px",
-            borderRadius: "10px", backgroundColor: "#F5F5F5",
-            border: "none", fontSize: "13px", color: "#1A1A1A",
-          }}
+          style={SEARCH_INPUT_STYLE}
         />
       </div>
 
@@ -64,20 +90,23 @@ export function IngredientsTab({ ingredients }: Props) {
           <div
             key={`${ing.name}-${i}`}
             className="flex items-center justify-between py-2.5"
-            style={{ borderBottom: i < filtered.length - 1 ? "1px solid #F0F0F0" : "none" }}
+            style={{
+              borderBottom:
+                i < filtered.length - 1 ? "1px solid #F0F0F0" : "none",
+            }}
           >
-            <span style={{ fontSize: "13px", color: "#1A1A1A", flex: 1, paddingRight: "12px" }}>
-              {ing.name}
-            </span>
+            <span style={INGRED_NAME_STYLE}>{ing.name}</span>
             {ing.ewgScore !== undefined && (
               <div className="flex items-center gap-1.5 shrink-0">
                 <div
                   style={{
-                    width: "8px", height: "8px", borderRadius: "50%",
+                    ...EWG_DOT_BASE,
                     backgroundColor: ewgColor(ing.ewgScore),
                   }}
                 />
-                <span style={{ fontSize: "11px", color: ewgColor(ing.ewgScore), fontWeight: 600 }}>
+                <span
+                  style={{ ...EWG_SCORE_STYLE, color: ewgColor(ing.ewgScore) }}
+                >
                   {ing.ewgScore ?? "?"} {ewgLabel(ing.ewgScore)}
                 </span>
               </div>
@@ -86,22 +115,23 @@ export function IngredientsTab({ ingredients }: Props) {
         ))}
 
         {filtered.length === 0 && (
-          <p style={{ fontSize: "13px", color: "#9E9E9E", textAlign: "center", padding: "24px 0" }}>
-            검색 결과가 없습니다
-          </p>
+          <p style={EMPTY_TEXT_STYLE}>검색 결과가 없습니다</p>
         )}
       </div>
 
       {/* EWG 범례 */}
-      <div className="flex items-center gap-4 mt-4 p-3" style={{ borderRadius: "10px", backgroundColor: "#F8F8F8" }}>
+      <div
+        className="flex items-center gap-4 mt-4 p-3"
+        style={LEGEND_WRAP_STYLE}
+      >
         {[
           { label: "안전 (1-2)", color: "#4CAF50" },
           { label: "주의 (3-6)", color: "#FF9800" },
           { label: "위험 (7-10)", color: "#F44336" },
         ].map((item) => (
           <div key={item.label} className="flex items-center gap-1">
-            <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: item.color }} />
-            <span style={{ fontSize: "10px", color: "#757575" }}>{item.label}</span>
+            <div style={{ ...LEGEND_DOT_BASE, backgroundColor: item.color }} />
+            <span style={LEGEND_TEXT_STYLE}>{item.label}</span>
           </div>
         ))}
       </div>

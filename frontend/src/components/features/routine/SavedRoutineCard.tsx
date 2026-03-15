@@ -7,6 +7,48 @@
 
 "use client";
 
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const CARD_STYLE = {
+  borderRadius: "14px",
+  backgroundColor: "#F8F6F0",
+  border: "1px solid #EAE5DA",
+};
+const ICON_WRAP_STYLE = {
+  width: "40px",
+  height: "40px",
+  borderRadius: "12px",
+  backgroundColor: "var(--color-brand)",
+};
+const ICON_EMOJI_STYLE = { fontSize: "18px" };
+const NAME_TEXT_STYLE = {
+  fontSize: "14px",
+  fontWeight: 600,
+  color: "#1A1A1A",
+  margin: 0,
+};
+const META_TEXT_STYLE = {
+  fontSize: "11px",
+  color: "#9E9E9E",
+  margin: "2px 0 0",
+};
+const LOAD_BTN_STYLE = {
+  height: "30px",
+  padding: "0 10px",
+  borderRadius: "8px",
+  border: "none",
+  backgroundColor: "var(--color-brand)",
+  color: "#FFFFFF",
+  fontSize: "11px",
+  fontWeight: 600,
+};
+const DELETE_BTN_STYLE = {
+  width: "30px",
+  height: "30px",
+  borderRadius: "8px",
+  border: "none",
+  backgroundColor: "#F0EDE8",
+};
+
 import { Trash2, RotateCcw } from "lucide-react";
 
 interface Props {
@@ -17,24 +59,27 @@ interface Props {
   onDelete?: () => void;
 }
 
-export function SavedRoutineCard({ name, stepCount, createdAt, onLoad, onDelete }: Props) {
+export function SavedRoutineCard({
+  name,
+  stepCount,
+  createdAt,
+  onLoad,
+  onDelete,
+}: Props) {
   return (
-    <div
-      className="flex items-center gap-3 p-3.5"
-      style={{ borderRadius: "14px", backgroundColor: "#F8F6F0", border: "1px solid #EAE5DA" }}
-    >
+    <div className="flex items-center gap-3 p-3.5" style={CARD_STYLE}>
       {/* 아이콘 */}
       <div
         className="flex items-center justify-center shrink-0"
-        style={{ width: "40px", height: "40px", borderRadius: "12px", backgroundColor: "var(--color-brand)" }}
+        style={ICON_WRAP_STYLE}
       >
-        <span style={{ fontSize: "18px" }}>📋</span>
+        <span style={ICON_EMOJI_STYLE}>📋</span>
       </div>
 
       {/* 정보 */}
       <div className="flex-1 min-w-0">
-        <p style={{ fontSize: "14px", fontWeight: 600, color: "#1A1A1A", margin: 0 }}>{name}</p>
-        <p style={{ fontSize: "11px", color: "#9E9E9E", margin: "2px 0 0" }}>
+        <p style={NAME_TEXT_STYLE}>{name}</p>
+        <p style={META_TEXT_STYLE}>
           {stepCount}단계{createdAt && ` · ${createdAt}`}
         </p>
       </div>
@@ -43,8 +88,7 @@ export function SavedRoutineCard({ name, stepCount, createdAt, onLoad, onDelete 
       <button
         onClick={onLoad}
         className="flex items-center gap-1 cursor-pointer transition-all active:scale-95"
-        style={{ height: "30px", padding: "0 10px", borderRadius: "8px", border: "none",
-          backgroundColor: "var(--color-brand)", color: "#FFFFFF", fontSize: "11px", fontWeight: 600 }}
+        style={LOAD_BTN_STYLE}
       >
         <RotateCcw size={11} /> 불러오기
       </button>
@@ -53,7 +97,7 @@ export function SavedRoutineCard({ name, stepCount, createdAt, onLoad, onDelete 
       <button
         onClick={onDelete}
         className="flex items-center justify-center cursor-pointer transition-all active:scale-90"
-        style={{ width: "30px", height: "30px", borderRadius: "8px", border: "none", backgroundColor: "#F0EDE8" }}
+        style={DELETE_BTN_STYLE}
       >
         <Trash2 size={13} color="#C0392B" />
       </button>

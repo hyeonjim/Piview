@@ -1,5 +1,49 @@
 "use client";
 
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const NAV_WRAPPER_STYLE: React.CSSProperties = {
+  position: "fixed",
+  bottom: "16px",
+  left: "50%",
+  transform: "translateX(-50%)",
+  zIndex: 50,
+  pointerEvents: "none",
+  width: "100%",
+  maxWidth: "600px",
+  display: "flex",
+  justifyContent: "center",
+  padding: "0 24px",
+};
+
+const NAV_CONTAINER_STYLE: React.CSSProperties = {
+  width: "100%",
+  maxWidth: "380px",
+  height: "60px",
+  borderRadius: "100px",
+  backdropFilter: "blur(4px)",
+  WebkitBackdropFilter: "blur(5px)",
+  background:
+    "linear-gradient(154deg, rgba(162,170,123,0.12) 3.5%, rgba(236,234,222,0.06) 101.94%)",
+  border: "1px solid rgba(255,255,255,0.35)",
+  boxShadow: "0 10px 40px 0 rgba(120,130,80,0.26)",
+  padding: "0 24px",
+  pointerEvents: "auto",
+};
+
+const NAV_CENTER_BTN_BASE: React.CSSProperties = {
+  width: "48px",
+  height: "48px",
+  borderRadius: "50%",
+};
+
+const NAV_BTN_BASE: React.CSSProperties = {
+  width: "40px",
+  height: "40px",
+  borderRadius: "50%",
+};
+
+import React from "react";
+
 import { useRouter, usePathname } from "next/navigation";
 import { Home, Search, Sparkles, Heart, User } from "lucide-react";
 
@@ -25,37 +69,10 @@ export default function BottomNav() {
   const activeTab = getActiveTab();
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        bottom: "16px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: 50,
-        pointerEvents: "none",
-        width: "100%",
-        maxWidth: "600px",
-        display: "flex",
-        justifyContent: "center",
-        padding: "0 24px",
-      }}
-    >
+    <div style={NAV_WRAPPER_STYLE}>
       <div
         className="flex items-center justify-between"
-        style={{
-          width: "100%",
-          maxWidth: "380px",
-          height: "60px",
-          borderRadius: "100px",
-          backdropFilter: "blur(4px)",
-          WebkitBackdropFilter: "blur(5px)",
-          background:
-            "linear-gradient(154deg, rgba(162,170,123,0.12) 3.5%, rgba(236,234,222,0.06) 101.94%)",
-          border: "1px solid rgba(255,255,255,0.35)",
-          boxShadow: "0 10px 40px 0 rgba(120,130,80,0.26)",
-          padding: "0 24px",
-          pointerEvents: "auto",
-        }}
+        style={NAV_CONTAINER_STYLE}
       >
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -68,9 +85,7 @@ export default function BottomNav() {
                 onClick={() => router.push(tab.href)}
                 className="flex items-center justify-center cursor-pointer transition-all duration-200 border-none shrink-0"
                 style={{
-                  width: "48px",
-                  height: "48px",
-                  borderRadius: "50%",
+                  ...NAV_CENTER_BTN_BASE,
                   backgroundColor: isActive ? "var(--color-brand)" : "#a6a2a2",
                   boxShadow: isActive
                     ? "0 4px 16px rgba(162,170,123,0.45)"
@@ -88,9 +103,7 @@ export default function BottomNav() {
               onClick={() => router.push(tab.href)}
               className="flex items-center justify-center cursor-pointer transition-all duration-200 border-none shrink-0"
               style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
+                ...NAV_BTN_BASE,
                 backgroundColor: isActive
                   ? "var(--color-brand)"
                   : "transparent",

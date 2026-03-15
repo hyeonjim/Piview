@@ -1,10 +1,26 @@
 "use client";
 
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const ROUTINE_CARD_BORDER_EMPTY = "#F0F0F0";
+const ROUTINE_CARD_BORDER_FILLED = "rgba(162,170,123,0.19)";
+const ROUTINE_STEP_ICON_BG = "#F8F6F0";
+const SCORE_RING_TRACK_COLOR = "#F0EDE8";
+const SCORE_RING_SIZE = { width: 56, height: 56 };
+const SEARCH_INPUT_PADDING_CLEAR = 36;
+const SEARCH_INPUT_PADDING_DEFAULT = 12;
+
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Settings, Plus, Leaf, Package, X, Search, Sparkles, TrendingUp,
+  Settings,
+  Plus,
+  Leaf,
+  Package,
+  X,
+  Search,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import { Toast } from "@/components/common/Toast";
 import { useToast } from "@/hooks";
@@ -13,10 +29,19 @@ import Button from "@/components/common/Button";
 import { EmptyState } from "@/components/common";
 import ProductCard from "@/components/common/ProductCard";
 import { MYPAGE_ROUTINE_STEPS, ROUTINE_STEPS } from "@/constants/routineSteps";
-import { CATEGORY_COLORS, SKIN_FUNCTION_COLORS } from "@/constants/categoryColors";
-import { getRoutineEvaluation, getScoreBarColor } from "@/constants/routineEvaluation";
+import {
+  CATEGORY_COLORS,
+  SKIN_FUNCTION_COLORS,
+} from "@/constants/categoryColors";
+import {
+  getRoutineEvaluation,
+  getScoreBarColor,
+} from "@/constants/routineEvaluation";
 import { STEP_PRODUCTS } from "@/constants/_mock/mypageProducts";
-import { useLocalRoutineStore, type LocalProduct } from "@/stores/useLocalRoutineStore";
+import {
+  useLocalRoutineStore,
+  type LocalProduct,
+} from "@/stores/useLocalRoutineStore";
 
 export default function MyPage() {
   const router = useRouter();
@@ -28,9 +53,9 @@ export default function MyPage() {
   useEffect(() => {
     useLocalRoutineStore.persist.rehydrate();
   }, []);
-  const [openStep,  setOpenStep]  = useState<string | null>(null);
+  const [openStep, setOpenStep] = useState<string | null>(null);
   const [addSearch, setAddSearch] = useState("");
-  const [isPiview,  setIsPiview]  = useState(false);
+  const [isPiview, setIsPiview] = useState(false);
   const { toastMsg, showToast } = useToast();
 
   // 모달 열릴 때 body 스크롤 차단 — BottomNav가 z-50이라 모달이 뒤로 숨는 문제 방지
@@ -40,11 +65,21 @@ export default function MyPage() {
     } else {
       document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [openStep]);
 
-  const openModal  = (code: string) => { setOpenStep(code); setAddSearch(""); setIsPiview(false); };
-  const closeModal = ()              => { setOpenStep(null); setAddSearch(""); setIsPiview(false); };
+  const openModal = (code: string) => {
+    setOpenStep(code);
+    setAddSearch("");
+    setIsPiview(false);
+  };
+  const closeModal = () => {
+    setOpenStep(null);
+    setAddSearch("");
+    setIsPiview(false);
+  };
 
   const filledProducts = useMemo(
     () => Object.values(routine).filter((p): p is LocalProduct => !!p),
@@ -53,30 +88,40 @@ export default function MyPage() {
   const filledCount = filledProducts.length;
 
   const routineScores = useMemo(
-    () => filledProducts.filter((p) => p.matchScore > 0).map((p) => p.matchScore),
+    () =>
+      filledProducts.filter((p) => p.matchScore > 0).map((p) => p.matchScore),
     [filledProducts],
   );
   const avgScore =
     routineScores.length > 0
-      ? Math.round(routineScores.reduce((a, b) => a + b, 0) / routineScores.length)
+      ? Math.round(
+          routineScores.reduce((a, b) => a + b, 0) / routineScores.length,
+        )
       : 0;
-  const evaluation  = getRoutineEvaluation(avgScore, routineScores.length);
-  const scoreColor  = getScoreBarColor(avgScore);
+  const evaluation = getRoutineEvaluation(avgScore, routineScores.length);
+  const scoreColor = getScoreBarColor(avgScore);
   const CIRCUMFERENCE = 138;
-  const strokeDash  = routineScores.length > 0 ? (avgScore / 100) * CIRCUMFERENCE : 0;
+  const strokeDash =
+    routineScores.length > 0 ? (avgScore / 100) * CIRCUMFERENCE : 0;
 
   const modalProducts = useMemo(() => {
     if (!openStep) return [];
     // ROUTINE_STEPS의 categories를 직접 참조 — STEP_CATS 불필요
-    const cats = ROUTINE_STEPS.find((s) => s.code === openStep)?.categories ?? [];
-    return STEP_PRODUCTS.filter((p) => cats.some((c) => p.category === c || p.category.includes(c)));
+    const cats =
+      ROUTINE_STEPS.find((s) => s.code === openStep)?.categories ?? [];
+    return STEP_PRODUCTS.filter((p) =>
+      cats.some((c) => p.category === c || p.category.includes(c)),
+    );
   }, [openStep]);
 
   const displayProducts = useMemo(() => {
     let list = modalProducts;
     if (addSearch) {
       const q = addSearch.toLowerCase();
-      list = list.filter((p) => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q));
+      list = list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q),
+      );
     }
     const sorted = [...list].sort((a, b) => b.matchScore - a.matchScore);
     return isPiview ? sorted.slice(0, 5) : sorted;
@@ -90,7 +135,8 @@ export default function MyPage() {
 
   const removeFromRoutine = (code: string) => setStepProduct(code, null);
 
-  const currentLabel = MYPAGE_ROUTINE_STEPS.find((s) => s.code === openStep)?.label ?? "";
+  const currentLabel =
+    MYPAGE_ROUTINE_STEPS.find((s) => s.code === openStep)?.label ?? "";
 
   return (
     <div className="flex flex-col min-h-full bg-bg-base">
@@ -98,18 +144,31 @@ export default function MyPage() {
       <div className="px-5 pt-5 pb-4 bg-bg-card">
         <div className="flex items-center gap-3">
           <Avatar className="w-14 h-14 bg-bg-surface border border-border">
-            <AvatarFallback className="text-text-muted font-semibold text-lg bg-bg-surface">F</AvatarFallback>
+            <AvatarFallback className="text-text-muted font-semibold text-lg bg-bg-surface">
+              F
+            </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-base font-bold text-text-primary">User</p>
-            <p className="text-xs text-text-muted mt-0.5">피부 타입을 진단해보세요</p>
+            <p className="text-xs text-text-muted mt-0.5">
+              피부 타입을 진단해보세요
+            </p>
           </div>
-          <Link href="/mypage/settings" className="w-9 h-9 flex items-center justify-center rounded-full border border-border">
+          <Link
+            href="/mypage/settings"
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-border"
+          >
             <Settings size={16} className="text-text-muted" />
           </Link>
         </div>
 
-        <Button variant="primary" fullWidth size="md" className="mt-4" onClick={() => router.push("/skin-test")}>
+        <Button
+          variant="primary"
+          fullWidth
+          size="md"
+          className="mt-4"
+          onClick={() => router.push("/skin-test")}
+        >
           피부 진단 시작하기
         </Button>
 
@@ -119,10 +178,20 @@ export default function MyPage() {
               key={t}
               onClick={() => setTab(t)}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                tab === t ? "bg-bg-card text-text-primary shadow-sm" : "text-text-muted"
+                tab === t
+                  ? "bg-bg-card text-text-primary shadow-sm"
+                  : "text-text-muted"
               }`}
             >
-              {t === "routine" ? <><Leaf size={14} /> 내 루틴</> : <><Package size={14} /> 보유제품</>}
+              {t === "routine" ? (
+                <>
+                  <Leaf size={14} /> 내 루틴
+                </>
+              ) : (
+                <>
+                  <Package size={14} /> 보유제품
+                </>
+              )}
             </button>
           ))}
         </div>
@@ -134,17 +203,22 @@ export default function MyPage() {
           <div className="flex items-start justify-between mb-1">
             <div>
               <p className="text-base font-bold text-text-primary">내 루틴</p>
-              <p className="text-xs text-text-muted">{filledCount}/6단계 완성</p>
+              <p className="text-xs text-text-muted">
+                {filledCount}/6단계 완성
+              </p>
             </div>
             <div className="flex gap-1.5">
               {(["OCR", "저장", "추천"] as const).map((a, i) => (
                 <button
                   key={a}
                   className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-badge border font-medium ${
-                    i === 2 ? "bg-brand text-white border-brand" : "border-border text-text-secondary"
+                    i === 2
+                      ? "bg-brand text-white border-brand"
+                      : "border-border text-text-secondary"
                   }`}
                 >
-                  {a === "OCR" ? "⇄ " : a === "저장" ? "📋 " : "✦ "}{a}
+                  {a === "OCR" ? "⇄ " : a === "저장" ? "📋 " : "✦ "}
+                  {a}
                 </button>
               ))}
             </div>
@@ -156,24 +230,35 @@ export default function MyPage() {
               <div
                 key={step.code}
                 className="bg-bg-card border rounded-2xl px-4 py-3 transition-all"
-                style={{ borderColor: filled ? "rgba(162,170,123,0.19)" : "#F0F0F0" }}
+                style={{
+                  borderColor: filled
+                    ? ROUTINE_CARD_BORDER_FILLED
+                    : ROUTINE_CARD_BORDER_EMPTY,
+                }}
               >
                 {filled ? (
                   <div className="flex items-center gap-3">
                     <div
                       className="shrink-0 flex items-center justify-center rounded-xl text-[26px]"
-                      style={{ width: 52, height: 52, backgroundColor: "#F8F6F0" }}
+                      style={{
+                        width: 52,
+                        height: 52,
+                        backgroundColor: ROUTINE_STEP_ICON_BG,
+                      }}
                     >
                       {filled.emoji}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                        <span className="text-[11px] text-text-muted">{filled.brand}</span>
+                        <span className="text-[11px] text-text-muted">
+                          {filled.brand}
+                        </span>
                         {CATEGORY_COLORS[filled.category] && (
                           <span
                             className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-medium"
                             style={{
-                              backgroundColor: CATEGORY_COLORS[filled.category].chip,
+                              backgroundColor:
+                                CATEGORY_COLORS[filled.category].chip,
                               color: CATEGORY_COLORS[filled.category].accent,
                             }}
                           >
@@ -181,7 +266,9 @@ export default function MyPage() {
                           </span>
                         )}
                       </div>
-                      <p className="truncate text-sm font-semibold text-text-primary">{filled.name}</p>
+                      <p className="truncate text-sm font-semibold text-text-primary">
+                        {filled.name}
+                      </p>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {filled.effects.slice(0, 3).map((fn) => {
                           const fc = SKIN_FUNCTION_COLORS[fn];
@@ -189,7 +276,10 @@ export default function MyPage() {
                             <span
                               key={fn}
                               className="text-[10px] px-[5px] py-[1px] rounded-[4px] font-medium"
-                              style={{ backgroundColor: fc.chip, color: fc.accent }}
+                              style={{
+                                backgroundColor: fc.chip,
+                                color: fc.accent,
+                              }}
                             >
                               {fn}
                             </span>
@@ -217,7 +307,9 @@ export default function MyPage() {
                     <div className="w-10 h-10 rounded-xl bg-bg-surface flex items-center justify-center text-xs font-bold text-text-muted shrink-0">
                       {step.code}
                     </div>
-                    <p className="flex-1 text-sm font-medium text-text-primary">{step.label}</p>
+                    <p className="flex-1 text-sm font-medium text-text-primary">
+                      {step.label}
+                    </p>
                     <button
                       onClick={() => openModal(step.code)}
                       className="flex items-center gap-1 text-xs font-medium text-brand cursor-pointer border-none bg-transparent"
@@ -237,19 +329,38 @@ export default function MyPage() {
               style={{ borderColor: `${scoreColor}30` }}
             >
               <div className="flex items-center gap-3">
-                <div className="relative shrink-0 flex items-center justify-center" style={{ width: 56, height: 56 }}>
+                <div
+                  className="relative shrink-0 flex items-center justify-center"
+                  style={SCORE_RING_SIZE}
+                >
                   <svg width="56" height="56" className="absolute">
-                    <circle cx="28" cy="28" r="22" fill="none" stroke="#F0EDE8" strokeWidth="4" />
                     <circle
-                      cx="28" cy="28" r="22" fill="none"
-                      stroke={scoreColor} strokeWidth="4"
+                      cx="28"
+                      cy="28"
+                      r="22"
+                      fill="none"
+                      stroke={SCORE_RING_TRACK_COLOR}
+                      strokeWidth="4"
+                    />
+                    <circle
+                      cx="28"
+                      cy="28"
+                      r="22"
+                      fill="none"
+                      stroke={scoreColor}
+                      strokeWidth="4"
                       strokeDasharray={`${strokeDash} ${CIRCUMFERENCE}`}
                       strokeLinecap="round"
                       transform="rotate(-90 28 28)"
                       style={{ transition: "stroke-dasharray 0.6s ease" }}
                     />
                   </svg>
-                  <span className="relative z-[1] text-[13px] font-bold" style={{ color: scoreColor }}>{avgScore}</span>
+                  <span
+                    className="relative z-[1] text-[13px] font-bold"
+                    style={{ color: scoreColor }}
+                  >
+                    {avgScore}
+                  </span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-1">
@@ -258,7 +369,9 @@ export default function MyPage() {
                       내 루틴 종합 점수
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#8A7B64] leading-[1.5] break-keep">{evaluation.text}</p>
+                  <p className="text-[11px] text-[#8A7B64] leading-[1.5] break-keep">
+                    {evaluation.text}
+                  </p>
                 </div>
               </div>
               <div className="flex gap-2 mt-3 items-end">
@@ -267,13 +380,26 @@ export default function MyPage() {
                   if (!prod) return null;
                   const bc = getScoreBarColor(prod.matchScore);
                   return (
-                    <div key={step.code} className="flex flex-col items-center gap-0.5">
-                      <span className="text-[9px] font-bold" style={{ color: bc }}>{prod.matchScore}</span>
+                    <div
+                      key={step.code}
+                      className="flex flex-col items-center gap-0.5"
+                    >
+                      <span
+                        className="text-[9px] font-bold"
+                        style={{ color: bc }}
+                      >
+                        {prod.matchScore}
+                      </span>
                       <div
                         className="w-1.5 rounded-[3px] transition-[height] duration-[400ms] ease-in-out"
-                        style={{ height: Math.max(8, (prod.matchScore / 100) * 32), backgroundColor: bc }}
+                        style={{
+                          height: Math.max(8, (prod.matchScore / 100) * 32),
+                          backgroundColor: bc,
+                        }}
                       />
-                      <span className="text-[8px] text-text-muted tracking-[0.3px]">{step.code}</span>
+                      <span className="text-[8px] text-text-muted tracking-[0.3px]">
+                        {step.code}
+                      </span>
                     </div>
                   );
                 })}
@@ -294,7 +420,9 @@ export default function MyPage() {
             <EmptyState
               icon={Package}
               title="보유한 제품이 없습니다"
-              description={'제품 상세에서 "보유중" 버튼을 눌러\n제품을 등록해보세요'}
+              description={
+                '제품 상세에서 "보유중" 버튼을 눌러\n제품을 등록해보세요'
+              }
             />
           </div>
         </div>
@@ -320,7 +448,9 @@ export default function MyPage() {
                     <button
                       onClick={() => setIsPiview((v) => !v)}
                       className={`flex items-center gap-1 cursor-pointer transition-all active:scale-95 px-3 py-[5px] rounded-[20px] text-xs font-bold border-none ${
-                        isPiview ? "bg-brand text-white" : "bg-[#F8F6F0] text-brand border border-brand"
+                        isPiview
+                          ? "bg-brand text-white"
+                          : "bg-[#F8F6F0] text-brand border border-brand"
                       }`}
                     >
                       <Sparkles size={13} /> 피뷰추천
@@ -336,14 +466,22 @@ export default function MyPage() {
 
                 {/* 검색 */}
                 <div className="relative mt-3 mb-3">
-                  <Search size={16} color="#A09080" className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Search
+                    size={16}
+                    color="#A09080"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                  />
                   <input
                     type="text"
                     value={addSearch}
                     onChange={(e) => setAddSearch(e.target.value)}
                     placeholder="제품명 또는 브랜드 검색"
                     className="w-full h-10 pl-9 pr-3 rounded-xl border border-border-warm bg-[#FAF8F5] text-xs text-[#2A2A2A] outline-none"
-                    style={{ paddingRight: addSearch ? 36 : 12 }}
+                    style={{
+                      paddingRight: addSearch
+                        ? SEARCH_INPUT_PADDING_CLEAR
+                        : SEARCH_INPUT_PADDING_DEFAULT,
+                    }}
                   />
                   {addSearch && (
                     <button
@@ -369,7 +507,9 @@ export default function MyPage() {
                 ) : (
                   <div className="flex flex-col gap-3">
                     {displayProducts.map((product, idx) => {
-                      const isAdded = !!routine[openStep!] && routine[openStep!]?.id === product.id;
+                      const isAdded =
+                        !!routine[openStep!] &&
+                        routine[openStep!]?.id === product.id;
 
                       return (
                         <ProductCard
