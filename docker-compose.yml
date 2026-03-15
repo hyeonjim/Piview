@@ -20,8 +20,10 @@ services:
   mysql-db:
     image: mysql:8.0
     container_name: mysql-db
+    env_file:
+      - .env
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+#      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - TZ=Asia/Seoul
     ports:
       - "3306:3306"
