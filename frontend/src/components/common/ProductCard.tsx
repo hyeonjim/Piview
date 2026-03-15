@@ -1,6 +1,9 @@
 // src/components/common/ProductCard.tsx
 "use client";
 
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const MODAL_THUMB_STYLE = { width: 60, height: 60, backgroundColor: "#F8F6F0" };
+
 import { Heart, Plus, Check, Package, GitCompareArrows } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -180,7 +183,7 @@ export default function ProductCard({
             {/* 썸네일 */}
             <div
               className="shrink-0 flex items-center justify-center rounded-xl"
-              style={{ width: 60, height: 60, backgroundColor: "#F8F6F0" }}
+              style={MODAL_THUMB_STYLE}
             >
               {emoji ? (
                 <span className="text-[28px]">{emoji}</span>

@@ -1,118 +1,275 @@
 // ⚠️ 미연결 컴포넌트 — 백엔드 연동 시 페이지에 연결 예정
 /**
- * components/features/routine/RoutineStepCard.tsx
+ * components/features/search/ProductListItem.tsx
  *
- * 루틴 페이지의 단계별 카드.
- * 제품이 있으면 제품 정보, 없으면 추가 유도 UI.
+ * 검색/추천 페이지의 제품 행 카드.
+ * 기존 ProductCard (common) 는 세로형/가로형 레이아웃용이고,
+ * 이 컴포넌트는 태그·액션버튼이 포함된 상세 리스트 카드.
  */
 
 "use client";
 
-import { Plus, X } from "lucide-react";
-import Link from "next/link";
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const LIST_ITEM_LINK_STYLE = { textDecoration: "none" };
+const THUMB_BASE_STYLE = {
+  width: "80px",
+  height: "80px",
+  borderRadius: "12px",
+  backgroundColor: "white",
+  fontSize: "32px",
+};
+const THUMB_IMG_STYLE = {
+  width: "80px",
+  height: "80px",
+  objectFit: "cover" as const,
+};
+const BRAND_TEXT_STYLE = {
+  fontSize: "10px",
+  color: "#9E9E9E",
+  fontWeight: 500,
+};
+const NAME_TEXT_STYLE = { fontSize: "13px", fontWeight: 600, color: "#1A1A1A" };
+const ROUTINE_BADGE_STYLE = {
+  fontSize: "10px",
+  padding: "2px 6px",
+  borderRadius: "6px",
+  backgroundColor: "#F0F2E8",
+  color: "var(--color-brand)",
+  fontWeight: 600,
+};
+const PRICE_TEXT_STYLE = {
+  fontSize: "12px",
+  fontWeight: 700,
+  color: "#1A1A1A",
+};
+const VOLUME_TEXT_STYLE = { fontSize: "11px", color: "#9E9E9E" };
+const CAT_BADGE_BASE = {
+  fontSize: "10px",
+  padding: "2px 6px",
+  borderRadius: "6px",
+  fontWeight: 500,
+};
+const TAG_BADGE_BASE = {
+  fontSize: "9px",
+  padding: "1px 4px",
+  borderRadius: "3px",
+};
+const ACTION_BTN_BASE = {
+  height: "30px",
+  padding: "0 12px",
+  borderRadius: "8px",
+  border: "none",
+};
+const WISH_BTN_STYLE = {
+  height: "30px",
+  padding: "0 10px",
+  borderRadius: "8px",
+  border: "none",
+};
 
-export interface RoutineStepCardProduct {
+import { Plus, Package, GitCompareArrows, Heart } from "lucide-react";
+import Link from "next/link";
+import {
+  CATEGORY_COLORS,
+  SKIN_FUNCTION_COLORS,
+  SKIN_TYPE_TAG_COLORS,
+} from "@/constants/categoryColors";
+import { formatPrice } from "@/utils/format";
+
+export interface ProductListItemData {
   id: string | number;
-  name: string;
   brand: string;
+  name: string;
+  category: string;
+  skinType1?: string;
+  skinType2?: string;
+  concerns: Record<string, boolean>;
+  price: number;
+  volume: string;
+  rating: number;
+  reviews: number;
   emoji: string;
   imageUrl?: string;
+  matchScore: number;
 }
 
 interface Props {
-  stepNumber: number;
-  stepLabel: string;      // ex: "클렌저"
-  stepIcon: string;       // ex: "🫧"
-  category: string;       // 검색 링크용
-  product?: RoutineStepCardProduct | null;
-  isFirst?: boolean;
-  onRemove?: () => void;
-  onAdd?: () => void;
+  product: ProductListItemData;
+  isLiked: boolean;
+  isInRoutine?: boolean;
+  inCompare?: boolean;
+  onAddToRoutine?: () => void;
+  onToggleLikelist?: () => void;
+  onToggleCompare?: () => void;
 }
 
-export function RoutineStepCard({
-  stepNumber, stepLabel, stepIcon, category,
-  product, isFirst = false, onRemove, onAdd,
+export function ProductListItem({
+  product: p,
+  isLiked,
+  isInRoutine = false,
+  inCompare = false,
+  onAddToRoutine,
+  onToggleLikelist,
+  onToggleCompare,
 }: Props) {
+  const catColor = CATEGORY_COLORS[p.category];
+  const activeConcerns = Object.entries(p.concerns)
+    .filter(([, v]) => v)
+    .map(([k]) => k);
+
   return (
     <div
-      className="flex items-center gap-3"
-      style={{ padding: "12px 0", borderBottom: "1px solid rgba(0,0,0,0.05)" }}
+      className="p-3.5 transition-all duration-200"
+      style={{
+        borderRadius: "14px",
+        backgroundColor: catColor ? catColor.bg : "#FAFAFA",
+        border: `1.5px solid ${catColor ? catColor.border : "#F0F0F0"}`,
+      }}
     >
-      {/* 번호 */}
-      <div
-        className="flex items-center justify-center shrink-0"
-        style={{
-          width: "28px", height: "28px", borderRadius: "50%",
-          backgroundColor: isFirst ? "var(--color-brand)" : "#F5F0E8",
-        }}
+      <Link
+        href={`/product/${p.id}`}
+        className="flex items-start gap-3"
+        style={LIST_ITEM_LINK_STYLE}
       >
-        <span style={{ fontSize: "12px", fontWeight: 600, color: isFirst ? "#fff" : "#B8A99A" }}>
-          {stepNumber}
-        </span>
-      </div>
+        {/* 이미지 */}
+        <div
+          className="shrink-0 flex items-center justify-center overflow-hidden"
+          style={{
+            ...THUMB_BASE_STYLE,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            border: `1px solid ${catColor ? catColor.border : "#F0F0F0"}`,
+          }}
+        >
+          {p.imageUrl ? (
+            <img src={p.imageUrl} alt={p.name} style={THUMB_IMG_STYLE} />
+          ) : (
+            p.emoji
+          )}
+        </div>
 
-      {product ? (
-        <>
-          {/* 제품 이미지 */}
-          <div
-            className="flex items-center justify-center overflow-hidden shrink-0"
-            style={{ width: "64px", height: "64px", borderRadius: "10px", backgroundColor: "#F8F5EF" }}
-          >
-            {product.imageUrl ? (
-              <img src={product.imageUrl} alt={product.name}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              <span style={{ fontSize: "24px" }}>{product.emoji}</span>
+        {/* 정보 */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap mb-1">
+            <span style={BRAND_TEXT_STYLE}>{p.brand}</span>
+            {catColor && (
+              <span
+                style={{
+                  ...CAT_BADGE_BASE,
+                  backgroundColor: catColor.chip,
+                  color: catColor.accent,
+                }}
+              >
+                {p.category}
+              </span>
             )}
+            {isInRoutine && <span style={ROUTINE_BADGE_STYLE}>루틴중</span>}
           </div>
 
-          {/* 제품 정보 */}
-          <div className="flex-1 min-w-0">
-            <p style={{ fontSize: "11px", fontWeight: 500, color: "var(--color-brand)", margin: 0 }}>{stepLabel}</p>
-            <Link href={`/product/${product.id}`}>
-              <p className="truncate" style={{ fontSize: "14px", fontWeight: 500, color: "#1A1A1A", margin: "1px 0 0" }}>
-                {product.name}
-              </p>
-            </Link>
-            <p style={{ fontSize: "11px", color: "#B8A99A", margin: 0 }}>{product.brand}</p>
+          <p className="truncate" style={NAME_TEXT_STYLE}>
+            {p.name}
+          </p>
+
+          {/* 태그 */}
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {[p.skinType1, p.skinType2].filter(Boolean).map((st) => {
+              const c = SKIN_TYPE_TAG_COLORS[st!] ?? {
+                bg: "#F0EDE8",
+                text: "#7A7060",
+              };
+              return (
+                <span
+                  key={st}
+                  style={{
+                    ...TAG_BADGE_BASE,
+                    backgroundColor: c.bg,
+                    color: c.text,
+                    fontWeight: 600,
+                  }}
+                >
+                  {st}
+                </span>
+              );
+            })}
+            {activeConcerns.slice(0, 3).map((fn) => {
+              const fc = SKIN_FUNCTION_COLORS[fn];
+              return (
+                <span
+                  key={fn}
+                  style={{
+                    ...TAG_BADGE_BASE,
+                    backgroundColor: fc?.chip ?? "#F8F6F0",
+                    color: fc?.accent ?? "#8A7B64",
+                    fontWeight: 500,
+                  }}
+                >
+                  {fn}
+                </span>
+              );
+            })}
           </div>
 
-          {/* 제거 버튼 */}
-          <button
-            onClick={onRemove}
-            className="shrink-0 flex items-center justify-center cursor-pointer transition-all active:scale-90"
-            style={{ width: "28px", height: "28px", borderRadius: "50%", backgroundColor: "#F5F5F5", border: "none" }}
-          >
-            <X size={14} color="#9E9E9E" />
-          </button>
-        </>
-      ) : (
-        <>
-          {/* 빈 슬롯 아이콘 */}
-          <div
-            className="flex items-center justify-center shrink-0"
-            style={{ width: "64px", height: "64px", borderRadius: "10px", backgroundColor: "#F5F0E8" }}
-          >
-            <span style={{ fontSize: "24px", opacity: 0.5 }}>{stepIcon}</span>
+          {/* 가격 / 평점 */}
+          <div className="flex items-center gap-2 mt-2">
+            <span style={PRICE_TEXT_STYLE}>{formatPrice(p.price)}</span>
+            <span style={VOLUME_TEXT_STYLE}>
+              ⭐ {p.rating} ({p.reviews.toLocaleString()})
+            </span>
           </div>
+        </div>
+      </Link>
 
-          {/* 안내 텍스트 */}
-          <div className="flex-1 min-w-0">
-            <p style={{ fontSize: "11px", fontWeight: 500, color: "var(--color-brand)", margin: 0 }}>{stepLabel}</p>
-            <p style={{ fontSize: "13px", color: "#B8A99A", margin: "2px 0 0" }}>제품을 추가해보세요</p>
-          </div>
-
-          {/* 추가 버튼 */}
-          <button
-            onClick={onAdd}
-            className="shrink-0 flex items-center justify-center cursor-pointer transition-all active:scale-90"
-            style={{ width: "28px", height: "28px", borderRadius: "50%", backgroundColor: "var(--color-brand)", border: "none" }}
-          >
-            <Plus size={14} color="#fff" />
-          </button>
-        </>
-      )}
+      {/* 액션 버튼 */}
+      <div className="flex items-center gap-2 mt-2.5">
+        <button
+          onClick={onAddToRoutine}
+          className="flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+          style={{
+            height: "30px",
+            padding: "0 12px",
+            borderRadius: "8px",
+            border: "none",
+            backgroundColor: isInRoutine ? "#E8F0E0" : "#F0F2E8",
+            color: "var(--color-brand)",
+            fontSize: "11px",
+            fontWeight: 500,
+          }}
+        >
+          <Plus size={12} /> {isInRoutine ? "루틴중" : "루틴추가"}
+        </button>
+        <button
+          onClick={onToggleLikelist}
+          className="flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+          style={{
+            height: "30px",
+            padding: "0 12px",
+            borderRadius: "8px",
+            border: "none",
+            backgroundColor: isLiked ? "#FFF0F0" : "#F5F5F5",
+            color: isLiked ? "#E57373" : "#9E9E9E",
+            fontSize: "11px",
+            fontWeight: 500,
+          }}
+        >
+          <Heart size={12} fill={isLiked ? "#E57373" : "none"} />{" "}
+          {isLiked ? "찜됨" : "찜"}
+        </button>
+        <button
+          onClick={onToggleCompare}
+          className="flex items-center gap-1 cursor-pointer transition-all active:scale-95 ml-auto"
+          style={{
+            height: "30px",
+            padding: "0 10px",
+            borderRadius: "8px",
+            border: "none",
+            backgroundColor: inCompare ? "#E8F5E9" : "#F5F5F5",
+            color: inCompare ? "#4CAF50" : "#9E9E9E",
+            fontSize: "11px",
+            fontWeight: 500,
+          }}
+        >
+          <GitCompareArrows size={12} />
+        </button>
+      </div>
     </div>
   );
 }

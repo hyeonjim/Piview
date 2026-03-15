@@ -8,6 +8,77 @@
 
 "use client";
 
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const MODAL_OVERLAY_BG = {
+  backgroundColor: "rgba(0,0,0,0.5)",
+  backdropFilter: "blur(4px)",
+};
+const MODAL_CONTAINER = {
+  borderRadius: "20px",
+  width: "100%",
+  maxWidth: "420px",
+  maxHeight: "80vh",
+  overflow: "hidden",
+};
+const MODAL_HEADER_TITLE = {
+  fontSize: "17px",
+  fontWeight: 600,
+  color: "#1A1A1A",
+};
+const CLOSE_BTN_STYLE = {
+  borderRadius: "50%",
+  backgroundColor: "#F5F5F5",
+  border: "none",
+};
+const SCROLL_BODY_STYLE = { scrollbarWidth: "none" as const };
+const THUMB_CONTAINER = {
+  height: "80px",
+  borderRadius: "12px",
+  backgroundColor: "#F5F5F5",
+  fontSize: "36px",
+};
+const THUMB_IMG_STYLE = {
+  width: "80px",
+  height: "80px",
+  objectFit: "cover" as const,
+  borderRadius: "12px",
+};
+const BRAND_TEXT_STYLE = {
+  fontSize: "10px",
+  color: "#757575",
+  marginTop: "8px",
+};
+const NAME_TEXT_STYLE = {
+  fontSize: "12px",
+  fontWeight: 600,
+  color: "#1A1A1A",
+  marginTop: "2px",
+  lineHeight: 1.3,
+};
+const COMPARE_ROW_STYLE = {
+  gridTemplateColumns: "70px 1fr 1fr",
+  borderBottom: "1px solid #F0F0F0",
+};
+const COMPARE_LABEL_STYLE = { fontSize: "11px", color: "#757575" };
+const OUTER_PAD_STYLE = { padding: "40px 20px" };
+const SKIN_FN_LABEL_STYLE = {
+  fontSize: "11px",
+  color: "#757575",
+  paddingTop: "2px",
+};
+const MATCH_BADGE_STYLE = { borderRadius: "12px", backgroundColor: "#F0F2E8" };
+const MATCH_TITLE_STYLE = {
+  fontSize: "13px",
+  fontWeight: 600,
+  color: "#1A1A1A",
+  marginBottom: "4px",
+};
+const MATCH_DESC_STYLE = {
+  fontSize: "12px",
+  color: "#424242",
+  lineHeight: 1.5,
+};
+
 import { X } from "lucide-react";
 import { SKIN_FUNCTION_COLORS } from "@/constants/categoryColors";
 import { formatPrice } from "@/utils/format";
@@ -47,57 +118,63 @@ export function CompareModal({ items, onClose }: Props) {
       vals: items.map((p) => p.volume),
     },
     ...(items[0].rating != null
-      ? [{
-          label: "평점",
-          vals: items.map((p) => p.rating?.toFixed(1) ?? "-"),
-          hiIndex: (items[0].rating ?? 0) >= (items[1].rating ?? 0) ? 0 : 1,
-        }]
+      ? [
+          {
+            label: "평점",
+            vals: items.map((p) => p.rating?.toFixed(1) ?? "-"),
+            hiIndex: (items[0].rating ?? 0) >= (items[1].rating ?? 0) ? 0 : 1,
+          },
+        ]
       : []),
   ];
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ padding: "40px 20px" }}
+      style={OUTER_PAD_STYLE}
     >
       <div
         className="absolute inset-0"
-        style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+        style={MODAL_OVERLAY_BG}
         onClick={onClose}
       />
-      <div
-        className="relative bg-white flex flex-col"
-        style={{ borderRadius: "20px", width: "100%", maxWidth: "420px", maxHeight: "80vh", overflow: "hidden" }}
-      >
+      <div className="relative bg-white flex flex-col" style={MODAL_CONTAINER}>
         {/* 헤더 */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
-          <h3 style={{ fontSize: "17px", fontWeight: 600, color: "#1A1A1A" }}>제품 비교</h3>
+          <h3 style={MODAL_HEADER_TITLE}>제품 비교</h3>
           <button
             onClick={onClose}
             className="p-1.5 cursor-pointer"
-            style={{ borderRadius: "50%", backgroundColor: "#F5F5F5", border: "none" }}
+            style={CLOSE_BTN_STYLE}
           >
             <X size={16} color="#757575" />
           </button>
         </div>
 
-        <div className="px-5 pb-6 overflow-y-auto flex-1" style={{ scrollbarWidth: "none" }}>
+        <div
+          className="px-5 pb-6 overflow-y-auto flex-1"
+          style={SCROLL_BODY_STYLE}
+        >
           {/* 제품 이미지 */}
           <div className="grid grid-cols-2 gap-3 mb-4">
             {items.map((p) => (
               <div key={p.id} className="flex flex-col items-center">
                 <div
                   className="flex items-center justify-center w-full"
-                  style={{ height: "80px", borderRadius: "12px", backgroundColor: "#F5F5F5", fontSize: "36px" }}
+                  style={THUMB_CONTAINER}
                 >
                   {p.imageUrl ? (
-                    <img src={p.imageUrl} alt={p.name} style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "12px" }} />
+                    <img
+                      src={p.imageUrl}
+                      alt={p.name}
+                      style={THUMB_IMG_STYLE}
+                    />
                   ) : (
-                    p.emoji ?? "🧴"
+                    (p.emoji ?? "🧴")
                   )}
                 </div>
-                <p style={{ fontSize: "10px", color: "#757575", marginTop: "8px" }}>{p.brand}</p>
-                <p className="text-center" style={{ fontSize: "12px", fontWeight: 600, color: "#1A1A1A", marginTop: "2px", lineHeight: 1.3 }}>
+                <p style={BRAND_TEXT_STYLE}>{p.brand}</p>
+                <p className="text-center" style={NAME_TEXT_STYLE}>
                   {p.name}
                 </p>
               </div>
@@ -109,9 +186,9 @@ export function CompareModal({ items, onClose }: Props) {
             <div
               key={row.label}
               className="grid items-center py-2.5"
-              style={{ gridTemplateColumns: "70px 1fr 1fr", borderBottom: "1px solid #F0F0F0" }}
+              style={COMPARE_ROW_STYLE}
             >
-              <p style={{ fontSize: "11px", color: "#757575" }}>{row.label}</p>
+              <p style={COMPARE_LABEL_STYLE}>{row.label}</p>
               {row.vals.map((v, i) => (
                 <p
                   key={i}
@@ -130,21 +207,41 @@ export function CompareModal({ items, onClose }: Props) {
 
           {/* 피부기능 비교 (concerns 있을 때만) */}
           {items[0].concerns && (
-            <div className="grid items-start py-2.5" style={{ gridTemplateColumns: "70px 1fr 1fr", borderBottom: "1px solid #F0F0F0" }}>
-              <p style={{ fontSize: "11px", color: "#757575", paddingTop: "2px" }}>피부기능</p>
+            <div className="grid items-start py-2.5" style={COMPARE_ROW_STYLE}>
+              <p style={SKIN_FN_LABEL_STYLE}>피부기능</p>
               {items.map((p) => {
-                const active = Object.entries(p.concerns ?? {}).filter(([, v]) => v).map(([k]) => k);
+                const active = Object.entries(p.concerns ?? {})
+                  .filter(([, v]) => v)
+                  .map(([k]) => k);
                 return (
-                  <div key={p.id} className="flex flex-wrap gap-1 justify-center">
-                    {active.length > 0 ? active.map((fn) => {
-                      const c = SKIN_FUNCTION_COLORS[fn];
-                      return (
-                        <span key={fn} style={{ fontSize: "10px", padding: "2px 6px", borderRadius: "6px",
-                          backgroundColor: c?.chip ?? "#F0F0F0", color: c?.accent ?? "#616161", fontWeight: 500 }}>
-                          {fn}
-                        </span>
-                      );
-                    }) : <span style={{ fontSize: "10px", color: "#BDBDBD" }}>-</span>}
+                  <div
+                    key={p.id}
+                    className="flex flex-wrap gap-1 justify-center"
+                  >
+                    {active.length > 0 ? (
+                      active.map((fn) => {
+                        const c = SKIN_FUNCTION_COLORS[fn];
+                        return (
+                          <span
+                            key={fn}
+                            style={{
+                              fontSize: "10px",
+                              padding: "2px 6px",
+                              borderRadius: "6px",
+                              backgroundColor: c?.chip ?? "#F0F0F0",
+                              color: c?.accent ?? "#616161",
+                              fontWeight: 500,
+                            }}
+                          >
+                            {fn}
+                          </span>
+                        );
+                      })
+                    ) : (
+                      <span style={{ fontSize: "10px", color: "#BDBDBD" }}>
+                        -
+                      </span>
+                    )}
                   </div>
                 );
               })}
@@ -152,9 +249,9 @@ export function CompareModal({ items, onClose }: Props) {
           )}
 
           {/* 추천 코멘트 */}
-          <div className="mt-3 p-4" style={{ borderRadius: "12px", backgroundColor: "#F0F2E8" }}>
-            <p style={{ fontSize: "13px", fontWeight: 600, color: "#1A1A1A", marginBottom: "4px" }}>💡 PiView 추천</p>
-            <p style={{ fontSize: "12px", color: "#424242", lineHeight: 1.5 }}>
+          <div className="mt-3 p-4" style={MATCH_BADGE_STYLE}>
+            <p style={MATCH_TITLE_STYLE}>💡 PiView 추천</p>
+            <p style={MATCH_DESC_STYLE}>
               {items[0].matchScore >= items[1].matchScore
                 ? `${items[0].brand} ${items[0].name}이(가) 매칭 점수가 더 높아 더 적합합니다.`
                 : `${items[1].brand} ${items[1].name}이(가) 매칭 점수가 더 높아 더 적합합니다.`}

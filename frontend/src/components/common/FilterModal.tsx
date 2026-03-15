@@ -10,35 +10,53 @@
  */
 "use client";
 
-import { useEffect } from "react";
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const RANGE_INPUT_BASE: React.CSSProperties = {
+  top: 6,
+  height: 20,
+  appearance: "none",
+  background: "transparent",
+};
+
+import React, { useEffect } from "react";
 import { X, RotateCcw } from "lucide-react";
 import { getGroupKey, GROUP_ORDER } from "@/utils/chosungUtils";
-import { SKIN_FUNCTIONS, SKIN_TYPE_LABELS_FOR_FILTER } from "@/constants/categoryColors";
+import {
+  SKIN_FUNCTIONS,
+  SKIN_TYPE_LABELS_FOR_FILTER,
+} from "@/constants/categoryColors";
 
 const PRICE_MAX = 1_000_000;
 
 export interface FilterState {
-  filterSkin:    string | null;
-  filterFns:     Set<string>;
+  filterSkin: string | null;
+  filterFns: Set<string>;
   filterChosung: string | null;
-  filterBrands:  Set<string>;
-  priceRange:    [number, number];
+  filterBrands: Set<string>;
+  priceRange: [number, number];
 }
 
 interface FilterModalProps {
-  open:            boolean;
-  onClose:         () => void;
-  state:           FilterState;
-  onChange:        (next: Partial<FilterState>) => void;
-  onReset:         () => void;
-  resultCount:     number;
+  open: boolean;
+  onClose: () => void;
+  state: FilterState;
+  onChange: (next: Partial<FilterState>) => void;
+  onReset: () => void;
+  resultCount: number;
   availableBrands: string[];
 }
 
 export function FilterModal({
-  open, onClose, state, onChange, onReset, resultCount, availableBrands,
+  open,
+  onClose,
+  state,
+  onChange,
+  onReset,
+  resultCount,
+  availableBrands,
 }: FilterModalProps) {
-  const { filterSkin, filterFns, filterChosung, filterBrands, priceRange } = state;
+  const { filterSkin, filterFns, filterChosung, filterBrands, priceRange } =
+    state;
 
   // 브랜드 초성 그룹핑 — chosungUtils 활용
   const grouped: Record<string, string[]> = {};
@@ -52,7 +70,9 @@ export function FilterModal({
   // 모달 열릴 때 body 스크롤 차단
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   if (!open) return null;
@@ -92,18 +112,27 @@ export function FilterModal({
 
           {/* 바디 */}
           <div className="overflow-y-auto flex-1 px-5 pb-2">
-
             {/* 피부타입 */}
             <Section title="피부타입">
               <div className="flex flex-wrap gap-2">
                 {["전체", ...SKIN_TYPE_LABELS_FOR_FILTER].map((st) => {
-                  const isActive = st === "전체" ? !filterSkin : filterSkin === st;
+                  const isActive =
+                    st === "전체" ? !filterSkin : filterSkin === st;
                   return (
                     <Chip
                       key={st}
                       label={st}
                       active={isActive}
-                      onClick={() => onChange({ filterSkin: st === "전체" ? null : filterSkin === st ? null : st })}
+                      onClick={() =>
+                        onChange({
+                          filterSkin:
+                            st === "전체"
+                              ? null
+                              : filterSkin === st
+                                ? null
+                                : st,
+                        })
+                      }
                     />
                   );
                 })}
@@ -140,7 +169,12 @@ export function FilterModal({
                   return (
                     <button
                       key={key}
-                      onClick={() => onChange({ filterChosung: isActive ? null : key, filterBrands: new Set() })}
+                      onClick={() =>
+                        onChange({
+                          filterChosung: isActive ? null : key,
+                          filterBrands: new Set(),
+                        })
+                      }
                       className={`flex items-center justify-center w-[45px] h-[30px] rounded-[10px] cursor-pointer text-sm font-bold border ${
                         isActive
                           ? "bg-brand text-white border-transparent"
@@ -195,22 +229,43 @@ export function FilterModal({
                   }}
                 />
                 <input
-                  type="range" min={0} max={PRICE_MAX} step={1000} value={priceRange[0]}
+                  type="range"
+                  min={0}
+                  max={PRICE_MAX}
+                  step={1000}
+                  value={priceRange[0]}
                   onChange={(e) => {
                     const v = Number(e.target.value);
-                    onChange({ priceRange: [Math.min(v, priceRange[1] - 1000), priceRange[1]] });
+                    onChange({
+                      priceRange: [
+                        Math.min(v, priceRange[1] - 1000),
+                        priceRange[1],
+                      ],
+                    });
                   }}
                   className="absolute w-full"
-                  style={{ top: 6, height: 20, appearance: "none", background: "transparent", zIndex: priceRange[0] > PRICE_MAX * 0.5 ? 5 : 3 }}
+                  style={{
+                    ...RANGE_INPUT_BASE,
+                    zIndex: priceRange[0] > PRICE_MAX * 0.5 ? 5 : 3,
+                  }}
                 />
                 <input
-                  type="range" min={0} max={PRICE_MAX} step={1000} value={priceRange[1]}
+                  type="range"
+                  min={0}
+                  max={PRICE_MAX}
+                  step={1000}
+                  value={priceRange[1]}
                   onChange={(e) => {
                     const v = Number(e.target.value);
-                    onChange({ priceRange: [priceRange[0], Math.max(v, priceRange[0] + 1000)] });
+                    onChange({
+                      priceRange: [
+                        priceRange[0],
+                        Math.max(v, priceRange[0] + 1000),
+                      ],
+                    });
                   }}
                   className="absolute w-full"
-                  style={{ top: 6, height: 20, appearance: "none", background: "transparent", zIndex: 4 }}
+                  style={{ ...RANGE_INPUT_BASE, zIndex: 4 }}
                 />
                 <style>{`
                   input[type="range"]::-webkit-slider-thumb {
@@ -250,14 +305,22 @@ export function FilterModal({
 }
 
 // ── 내부 컴포넌트 ─────────────────────────────────────────────────────
-function Section({ title, rightLabel, children }: {
-  title: string; rightLabel?: string; children: React.ReactNode;
+function Section({
+  title,
+  rightLabel,
+  children,
+}: {
+  title: string;
+  rightLabel?: string;
+  children: React.ReactNode;
 }) {
   return (
     <div className="mb-5">
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm font-bold text-text-primary m-0">{title}</p>
-        {rightLabel && <p className="text-xs text-text-hint m-0">{rightLabel}</p>}
+        {rightLabel && (
+          <p className="text-xs text-text-hint m-0">{rightLabel}</p>
+        )}
       </div>
       {children}
     </div>
@@ -268,7 +331,15 @@ function Divider() {
   return <div className="border-t border-border mb-5" />;
 }
 
-function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function Chip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       onClick={onClick}

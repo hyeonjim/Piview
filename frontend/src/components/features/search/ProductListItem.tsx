@@ -9,9 +9,71 @@
 
 "use client";
 
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const LIST_ITEM_LINK_STYLE = { textDecoration: "none" };
+const THUMB_BASE_STYLE = {
+  width: "80px",
+  height: "80px",
+  borderRadius: "12px",
+  backgroundColor: "white",
+  fontSize: "32px",
+};
+const THUMB_IMG_STYLE = {
+  width: "80px",
+  height: "80px",
+  objectFit: "cover" as const,
+};
+const BRAND_TEXT_STYLE = {
+  fontSize: "10px",
+  color: "#9E9E9E",
+  fontWeight: 500,
+};
+const NAME_TEXT_STYLE = { fontSize: "13px", fontWeight: 600, color: "#1A1A1A" };
+const ROUTINE_BADGE_STYLE = {
+  fontSize: "10px",
+  padding: "2px 6px",
+  borderRadius: "6px",
+  backgroundColor: "#F0F2E8",
+  color: "var(--color-brand)",
+  fontWeight: 600,
+};
+const PRICE_TEXT_STYLE = {
+  fontSize: "12px",
+  fontWeight: 700,
+  color: "#1A1A1A",
+};
+const VOLUME_TEXT_STYLE = { fontSize: "11px", color: "#9E9E9E" };
+const CAT_BADGE_BASE = {
+  fontSize: "10px",
+  padding: "2px 6px",
+  borderRadius: "6px",
+  fontWeight: 500,
+};
+const TAG_BADGE_BASE = {
+  fontSize: "9px",
+  padding: "1px 4px",
+  borderRadius: "3px",
+};
+const ACTION_BTN_BASE = {
+  height: "30px",
+  padding: "0 12px",
+  borderRadius: "8px",
+  border: "none",
+};
+const WISH_BTN_STYLE = {
+  height: "30px",
+  padding: "0 10px",
+  borderRadius: "8px",
+  border: "none",
+};
+
 import { Plus, Package, GitCompareArrows, Heart } from "lucide-react";
 import Link from "next/link";
-import { CATEGORY_COLORS, SKIN_FUNCTION_COLORS, SKIN_TYPE_TAG_COLORS } from "@/constants/categoryColors";
+import {
+  CATEGORY_COLORS,
+  SKIN_FUNCTION_COLORS,
+  SKIN_TYPE_TAG_COLORS,
+} from "@/constants/categoryColors";
 import { formatPrice } from "@/utils/format";
 
 export interface ProductListItemData {
@@ -51,7 +113,9 @@ export function ProductListItem({
   onToggleCompare,
 }: Props) {
   const catColor = CATEGORY_COLORS[p.category];
-  const activeConcerns = Object.entries(p.concerns).filter(([, v]) => v).map(([k]) => k);
+  const activeConcerns = Object.entries(p.concerns)
+    .filter(([, v]) => v)
+    .map(([k]) => k);
 
   return (
     <div
@@ -62,19 +126,22 @@ export function ProductListItem({
         border: `1.5px solid ${catColor ? catColor.border : "#F0F0F0"}`,
       }}
     >
-      <Link href={`/product/${p.id}`} className="flex items-start gap-3" style={{ textDecoration: "none" }}>
+      <Link
+        href={`/product/${p.id}`}
+        className="flex items-start gap-3"
+        style={LIST_ITEM_LINK_STYLE}
+      >
         {/* 이미지 */}
         <div
           className="shrink-0 flex items-center justify-center overflow-hidden"
           style={{
-            width: "80px", height: "80px", borderRadius: "12px",
-            backgroundColor: "white", fontSize: "32px",
+            ...THUMB_BASE_STYLE,
             boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
             border: `1px solid ${catColor ? catColor.border : "#F0F0F0"}`,
           }}
         >
           {p.imageUrl ? (
-            <img src={p.imageUrl} alt={p.name} style={{ width: "80px", height: "80px", objectFit: "cover" }} />
+            <img src={p.imageUrl} alt={p.name} style={THUMB_IMG_STYLE} />
           ) : (
             p.emoji
           )}
@@ -83,30 +150,42 @@ export function ProductListItem({
         {/* 정보 */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap mb-1">
-            <span style={{ fontSize: "10px", color: "#9E9E9E", fontWeight: 500 }}>{p.brand}</span>
+            <span style={BRAND_TEXT_STYLE}>{p.brand}</span>
             {catColor && (
-              <span style={{ fontSize: "10px", padding: "2px 6px", borderRadius: "6px",
-                backgroundColor: catColor.chip, color: catColor.accent, fontWeight: 500 }}>
+              <span
+                style={{
+                  ...CAT_BADGE_BASE,
+                  backgroundColor: catColor.chip,
+                  color: catColor.accent,
+                }}
+              >
                 {p.category}
               </span>
             )}
-            {isInRoutine && (
-              <span style={{ fontSize: "10px", padding: "2px 6px", borderRadius: "6px",
-                backgroundColor: "#F0F2E8", color: "var(--color-brand)", fontWeight: 600 }}>
-                루틴중
-              </span>
-            )}
+            {isInRoutine && <span style={ROUTINE_BADGE_STYLE}>루틴중</span>}
           </div>
 
-          <p className="truncate" style={{ fontSize: "13px", fontWeight: 600, color: "#1A1A1A" }}>{p.name}</p>
+          <p className="truncate" style={NAME_TEXT_STYLE}>
+            {p.name}
+          </p>
 
           {/* 태그 */}
           <div className="flex flex-wrap gap-1 mt-1.5">
             {[p.skinType1, p.skinType2].filter(Boolean).map((st) => {
-              const c = SKIN_TYPE_TAG_COLORS[st!] ?? { bg: "#F0EDE8", text: "#7A7060" };
+              const c = SKIN_TYPE_TAG_COLORS[st!] ?? {
+                bg: "#F0EDE8",
+                text: "#7A7060",
+              };
               return (
-                <span key={st} style={{ fontSize: "9px", padding: "1px 4px", borderRadius: "3px",
-                  backgroundColor: c.bg, color: c.text, fontWeight: 600 }}>
+                <span
+                  key={st}
+                  style={{
+                    ...TAG_BADGE_BASE,
+                    backgroundColor: c.bg,
+                    color: c.text,
+                    fontWeight: 600,
+                  }}
+                >
                   {st}
                 </span>
               );
@@ -114,8 +193,15 @@ export function ProductListItem({
             {activeConcerns.slice(0, 3).map((fn) => {
               const fc = SKIN_FUNCTION_COLORS[fn];
               return (
-                <span key={fn} style={{ fontSize: "9px", padding: "1px 4px", borderRadius: "3px",
-                  backgroundColor: fc?.chip ?? "#F8F6F0", color: fc?.accent ?? "#8A7B64", fontWeight: 500 }}>
+                <span
+                  key={fn}
+                  style={{
+                    ...TAG_BADGE_BASE,
+                    backgroundColor: fc?.chip ?? "#F8F6F0",
+                    color: fc?.accent ?? "#8A7B64",
+                    fontWeight: 500,
+                  }}
+                >
                   {fn}
                 </span>
               );
@@ -124,8 +210,8 @@ export function ProductListItem({
 
           {/* 가격 / 평점 */}
           <div className="flex items-center gap-2 mt-2">
-            <span style={{ fontSize: "12px", fontWeight: 700, color: "#1A1A1A" }}>{formatPrice(p.price)}</span>
-            <span style={{ fontSize: "11px", color: "#9E9E9E" }}>
+            <span style={PRICE_TEXT_STYLE}>{formatPrice(p.price)}</span>
+            <span style={VOLUME_TEXT_STYLE}>
               ⭐ {p.rating} ({p.reviews.toLocaleString()})
             </span>
           </div>
@@ -137,27 +223,49 @@ export function ProductListItem({
         <button
           onClick={onAddToRoutine}
           className="flex items-center gap-1 cursor-pointer transition-all active:scale-95"
-          style={{ height: "30px", padding: "0 12px", borderRadius: "8px", border: "none",
+          style={{
+            height: "30px",
+            padding: "0 12px",
+            borderRadius: "8px",
+            border: "none",
             backgroundColor: isInRoutine ? "#E8F0E0" : "#F0F2E8",
-            color: "var(--color-brand)", fontSize: "11px", fontWeight: 500 }}
+            color: "var(--color-brand)",
+            fontSize: "11px",
+            fontWeight: 500,
+          }}
         >
           <Plus size={12} /> {isInRoutine ? "루틴중" : "루틴추가"}
         </button>
         <button
           onClick={onToggleLikelist}
           className="flex items-center gap-1 cursor-pointer transition-all active:scale-95"
-          style={{ height: "30px", padding: "0 12px", borderRadius: "8px", border: "none",
+          style={{
+            height: "30px",
+            padding: "0 12px",
+            borderRadius: "8px",
+            border: "none",
             backgroundColor: isLiked ? "#FFF0F0" : "#F5F5F5",
-            color: isLiked ? "#E57373" : "#9E9E9E", fontSize: "11px", fontWeight: 500 }}
+            color: isLiked ? "#E57373" : "#9E9E9E",
+            fontSize: "11px",
+            fontWeight: 500,
+          }}
         >
-          <Heart size={12} fill={isLiked ? "#E57373" : "none"} /> {isLiked ? "찜됨" : "찜"}
+          <Heart size={12} fill={isLiked ? "#E57373" : "none"} />{" "}
+          {isLiked ? "찜됨" : "찜"}
         </button>
         <button
           onClick={onToggleCompare}
           className="flex items-center gap-1 cursor-pointer transition-all active:scale-95 ml-auto"
-          style={{ height: "30px", padding: "0 10px", borderRadius: "8px", border: "none",
+          style={{
+            height: "30px",
+            padding: "0 10px",
+            borderRadius: "8px",
+            border: "none",
             backgroundColor: inCompare ? "#E8F5E9" : "#F5F5F5",
-            color: inCompare ? "#4CAF50" : "#9E9E9E", fontSize: "11px", fontWeight: 500 }}
+            color: inCompare ? "#4CAF50" : "#9E9E9E",
+            fontSize: "11px",
+            fontWeight: 500,
+          }}
         >
           <GitCompareArrows size={12} />
         </button>

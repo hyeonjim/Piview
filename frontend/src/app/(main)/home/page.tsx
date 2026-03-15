@@ -1,5 +1,8 @@
 "use client";
 
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const ROUTINE_DIVIDER = "1px solid rgba(0,0,0,0.05)";
+
 import { useEffect } from "react";
 import {
   Sparkles,
@@ -147,9 +150,7 @@ export default function HomePage() {
                 className="flex items-center gap-4 py-3.5"
                 style={{
                   borderBottom:
-                    i < mainRoutineItems.length - 1
-                      ? "1px solid rgba(0,0,0,0.05)"
-                      : "none",
+                    i < mainRoutineItems.length - 1 ? ROUTINE_DIVIDER : "none",
                 }}
               >
                 {/* 스텝 번호 */}

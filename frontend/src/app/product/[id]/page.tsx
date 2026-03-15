@@ -1,6 +1,21 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const MATCH_RING_SIZE = { width: 64, height: 64 };
+const EWG_BAR_CONTAINER = { height: 8, gap: 2 };
+const EWG_BAR_RADIUS = 4;
+const EWG_UNKNOWN_COLOR = "#E0E0E0";
+const CAUTION_CHIP_STYLE = { backgroundColor: "#FFF3E0", color: "#BF360C" };
+const ALLERGEN_CHIP_STYLE = { backgroundColor: "#FFEBEE", color: "#B71C1C" };
+const INGRED_DIVIDER = "1px solid #F5F5F5";
+const RANGE_INPUT_BASE: React.CSSProperties = {
+  top: 6,
+  height: 20,
+  appearance: "none",
+  background: "transparent",
+};
+
+import React, { useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ChevronLeft,
@@ -225,7 +240,7 @@ export default function ProductDetailPage() {
           <div className="flex items-center gap-4">
             <div
               className="relative shrink-0 flex items-center justify-center"
-              style={{ width: 64, height: 64 }}
+              style={MATCH_RING_SIZE}
             >
               <svg width="64" height="64" className="absolute">
                 <circle
@@ -302,20 +317,20 @@ export default function ProductDetailPage() {
 
           <div
             className="flex rounded-full overflow-hidden mb-3"
-            style={{ height: 8, gap: 2 }}
+            style={EWG_BAR_CONTAINER}
           >
             <div
               style={{
                 flex: safe,
                 backgroundColor: "var(--color-ewg-safe)",
-                borderRadius: 4,
+                borderRadius: EWG_BAR_RADIUS,
               }}
             />
             <div
               style={{
                 flex: caution,
                 backgroundColor: "var(--color-ewg-caution)",
-                borderRadius: 4,
+                borderRadius: EWG_BAR_RADIUS,
               }}
             />
             {danger > 0 && (
@@ -323,15 +338,15 @@ export default function ProductDetailPage() {
                 style={{
                   flex: danger,
                   backgroundColor: "var(--color-ewg-danger)",
-                  borderRadius: 4,
+                  borderRadius: EWG_BAR_RADIUS,
                 }}
               />
             )}
             <div
               style={{
                 flex: unknown,
-                backgroundColor: "#E0E0E0",
-                borderRadius: 4,
+                backgroundColor: EWG_UNKNOWN_COLOR,
+                borderRadius: EWG_BAR_RADIUS,
               }}
             />
           </div>
@@ -390,7 +405,7 @@ export default function ProductDetailPage() {
                     <span
                       key={ing}
                       className="text-xs px-[10px] py-[3px] rounded-[6px] font-medium"
-                      style={{ backgroundColor: "#FFF3E0", color: "#BF360C" }}
+                      style={CAUTION_CHIP_STYLE}
                     >
                       {ing}
                     </span>
@@ -436,7 +451,7 @@ export default function ProductDetailPage() {
                     <span
                       key={name}
                       className="text-xs px-[10px] py-[3px] rounded-[6px] font-medium"
-                      style={{ backgroundColor: "#FFEBEE", color: "#B71C1C" }}
+                      style={ALLERGEN_CHIP_STYLE}
                     >
                       {name}
                     </span>
@@ -528,7 +543,7 @@ export default function ProductDetailPage() {
                       style={{
                         borderBottom:
                           idx < d.ingredientDetails.length - 1
-                            ? "1px solid #F5F5F5"
+                            ? INGRED_DIVIDER
                             : "none",
                       }}
                     >

@@ -1,5 +1,8 @@
 "use client";
 
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const HEADER_BG = "linear-gradient(135deg, #FFF0F0 0%, #FFFFFF 100%)";
+
 import { Heart } from "lucide-react";
 import { Toast } from "@/components/common/Toast";
 import { useToast } from "@/hooks";
@@ -24,12 +27,7 @@ export default function LikesPage() {
       <Toast msg={toastMsg} />
 
       {/* 헤더 */}
-      <div
-        className="px-6 pt-5 pb-3"
-        style={{
-          background: "linear-gradient(135deg, #FFF0F0 0%, #FFFFFF 100%)",
-        }}
-      >
+      <div className="px-6 pt-5 pb-3" style={{ background: HEADER_BG }}>
         <div className="flex items-center gap-2">
           <Heart size={18} color="#E57373" fill="#E57373" />
           <h1 className="text-xl font-semibold text-text-primary m-0">

@@ -8,6 +8,46 @@
 
 "use client";
 
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const CARD_STYLE = {
+  borderRadius: "20px",
+  backgroundColor: "#F8F6F0",
+  border: "1px solid #EAE5DA",
+};
+const AVATAR_STYLE = {
+  width: "52px",
+  height: "52px",
+  borderRadius: "50%",
+  backgroundColor: "var(--color-brand)",
+};
+const AVATAR_ICON_STYLE = { fontSize: "22px" };
+const NAME_TEXT_STYLE = {
+  fontSize: "18px",
+  fontWeight: 700,
+  color: "#1A1A1A",
+  margin: 0,
+};
+const META_TEXT_STYLE = {
+  fontSize: "12px",
+  color: "#9E9E9E",
+  margin: "2px 0 0",
+};
+const SETTINGS_BTN_STYLE = {
+  width: "36px",
+  height: "36px",
+  borderRadius: "50%",
+  backgroundColor: "white",
+  border: "1px solid #EAE5DA",
+};
+const SKIN_TEST_BTN_STYLE = {
+  fontSize: "13px",
+  fontWeight: 600,
+  padding: "5px 14px",
+  borderRadius: "20px",
+  backgroundColor: "var(--color-brand)",
+  color: "white",
+};
+
 import { Settings } from "lucide-react";
 import Link from "next/link";
 
@@ -27,25 +67,27 @@ const SKIN_TYPE_LABEL: Record<string, string> = {
 
 export function ProfileCard({ name, skinType, ageGroup, gender }: Props) {
   return (
-    <div
-      className="mx-5 mb-5 p-5"
-      style={{ borderRadius: "20px", backgroundColor: "#F8F6F0", border: "1px solid #EAE5DA" }}
-    >
+    <div className="mx-5 mb-5 p-5" style={CARD_STYLE}>
       <div className="flex items-start justify-between">
         {/* 아바타 + 이름 */}
         <div className="flex items-center gap-3">
           <div
             className="flex items-center justify-center"
-            style={{ width: "52px", height: "52px", borderRadius: "50%", backgroundColor: "var(--color-brand)" }}
+            style={AVATAR_STYLE}
           >
-            <span style={{ fontSize: "22px" }}>👤</span>
+            <span style={AVATAR_ICON_STYLE}>👤</span>
           </div>
           <div>
-            <p style={{ fontSize: "18px", fontWeight: 700, color: "#1A1A1A", margin: 0 }}>
-              {name ?? "User"}님
-            </p>
-            <p style={{ fontSize: "12px", color: "#9E9E9E", margin: "2px 0 0" }}>
-              {[ageGroup, gender === "female" ? "여성" : gender === "male" ? "남성" : null]
+            <p style={NAME_TEXT_STYLE}>{name ?? "User"}님</p>
+            <p style={META_TEXT_STYLE}>
+              {[
+                ageGroup,
+                gender === "female"
+                  ? "여성"
+                  : gender === "male"
+                    ? "남성"
+                    : null,
+              ]
                 .filter(Boolean)
                 .join(" · ") || "프로필을 설정해보세요"}
             </p>
@@ -56,7 +98,7 @@ export function ProfileCard({ name, skinType, ageGroup, gender }: Props) {
         <Link href="/mypage/settings">
           <button
             className="flex items-center justify-center cursor-pointer"
-            style={{ width: "36px", height: "36px", borderRadius: "50%", backgroundColor: "white", border: "1px solid #EAE5DA" }}
+            style={SETTINGS_BTN_STYLE}
           >
             <Settings size={16} color="#9E9E9E" />
           </button>
@@ -66,10 +108,7 @@ export function ProfileCard({ name, skinType, ageGroup, gender }: Props) {
       {/* 피부타입 뱃지 */}
       {skinType && (
         <div className="mt-3 flex items-center gap-2">
-          <span
-            style={{ fontSize: "13px", fontWeight: 600, padding: "5px 14px", borderRadius: "20px",
-              backgroundColor: "var(--color-brand)", color: "white" }}
-          >
+          <span style={SKIN_TEST_BTN_STYLE}>
             {SKIN_TYPE_LABEL[skinType] ?? skinType}
           </span>
         </div>
