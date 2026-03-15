@@ -102,26 +102,26 @@ interface Props {
 }
 
 export function CompareModal({ items, onClose }: Props) {
-  const rows: { label: string; vals: string[]; hiIndex?: number }[] = [
+  const rows: { label: string; values: string[]; hiIndex?: number }[] = [
     {
       label: "매칭 점수",
-      vals: items.map((p) => `${p.matchScore}점`),
+      values: items.map((product) => `${product.matchScore}점`),
       hiIndex: items[0].matchScore >= items[1].matchScore ? 0 : 1,
     },
     {
       label: "가격",
-      vals: items.map((p) => formatPrice(p.price)),
+      values: items.map((product) => formatPrice(product.price)),
       hiIndex: items[0].price <= items[1].price ? 0 : 1,
     },
     {
       label: "용량",
-      vals: items.map((p) => p.volume),
+      values: items.map((product) => product.volume),
     },
     ...(items[0].rating != null
       ? [
           {
             label: "평점",
-            vals: items.map((p) => p.rating?.toFixed(1) ?? "-"),
+            values: items.map((product) => product.rating?.toFixed(1) ?? "-"),
             hiIndex: (items[0].rating ?? 0) >= (items[1].rating ?? 0) ? 0 : 1,
           },
         ]
@@ -157,25 +157,25 @@ export function CompareModal({ items, onClose }: Props) {
         >
           {/* 제품 이미지 */}
           <div className="grid grid-cols-2 gap-3 mb-4">
-            {items.map((p) => (
-              <div key={p.id} className="flex flex-col items-center">
+            {items.map((product) => (
+              <div key={product.id} className="flex flex-col items-center">
                 <div
                   className="flex items-center justify-center w-full"
                   style={THUMB_CONTAINER}
                 >
-                  {p.imageUrl ? (
+                  {product.imageUrl ? (
                     <img
-                      src={p.imageUrl}
-                      alt={p.name}
+                      src={product.imageUrl}
+                      alt={product.name}
                       style={THUMB_IMG_STYLE}
                     />
                   ) : (
-                    (p.emoji ?? "🧴")
+                    (product.emoji ?? "🧴")
                   )}
                 </div>
-                <p style={BRAND_TEXT_STYLE}>{p.brand}</p>
+                <p style={BRAND_TEXT_STYLE}>{product.brand}</p>
                 <p className="text-center" style={NAME_TEXT_STYLE}>
-                  {p.name}
+                  {product.name}
                 </p>
               </div>
             ))}
@@ -189,17 +189,17 @@ export function CompareModal({ items, onClose }: Props) {
               style={COMPARE_ROW_STYLE}
             >
               <p style={COMPARE_LABEL_STYLE}>{row.label}</p>
-              {row.vals.map((v, i) => (
+              {row.values.map((value, index) => (
                 <p
-                  key={i}
+                  key={index}
                   className="text-center"
                   style={{
                     fontSize: "13px",
-                    fontWeight: row.hiIndex === i ? 700 : 400,
-                    color: row.hiIndex === i ? "var(--color-brand)" : "#1A1A1A",
+                    fontWeight: row.hiIndex === index ? 700 : 400,
+                    color: row.hiIndex === index ? "var(--color-brand)" : "#1A1A1A",
                   }}
                 >
-                  {v}
+                  {value}
                 </p>
               ))}
             </div>
@@ -209,31 +209,31 @@ export function CompareModal({ items, onClose }: Props) {
           {items[0].concerns && (
             <div className="grid items-start py-2.5" style={COMPARE_ROW_STYLE}>
               <p style={SKIN_FN_LABEL_STYLE}>피부기능</p>
-              {items.map((p) => {
-                const active = Object.entries(p.concerns ?? {})
-                  .filter(([, v]) => v)
-                  .map(([k]) => k);
+              {items.map((product) => {
+                const active = Object.entries(product.concerns ?? {})
+                  .filter(([, isActive]) => isActive)
+                  .map(([functionName]) => functionName);
                 return (
                   <div
-                    key={p.id}
+                    key={product.id}
                     className="flex flex-wrap gap-1 justify-center"
                   >
                     {active.length > 0 ? (
-                      active.map((fn) => {
-                        const c = SKIN_FUNCTION_COLORS[fn];
+                      active.map((functionName) => {
+                        const colorConfig = SKIN_FUNCTION_COLORS[functionName];
                         return (
                           <span
-                            key={fn}
+                            key={functionName}
                             style={{
                               fontSize: "10px",
                               padding: "2px 6px",
                               borderRadius: "6px",
-                              backgroundColor: c?.chip ?? "#F0F0F0",
-                              color: c?.accent ?? "#616161",
+                              backgroundColor: colorConfig?.chip ?? "#F0F0F0",
+                              color: colorConfig?.accent ?? "#616161",
                               fontWeight: 500,
                             }}
                           >
-                            {fn}
+                            {functionName}
                           </span>
                         );
                       })

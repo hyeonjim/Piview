@@ -31,10 +31,10 @@ export default function RecommendPage() {
   const [inRoutine, setInRoutine] = useState<Set<string>>(new Set());
   const [owned, setOwned] = useState<Set<string>>(new Set());
 
-  const { toastMsg, showToast } = useToast();
+  const { toastMessage, showToast } = useToast();
 
   const addRoutine = (id: string, name: string) => {
-    setInRoutine((p) => new Set([...p, id]));
+    setInRoutine((prev) => new Set([...prev, id]));
     showToast(`✓ ${name} 루틴에 추가됨!`);
   };
 
@@ -48,47 +48,47 @@ export default function RecommendPage() {
     let list = MOCK_RECOMMEND;
     // 검색어 필터
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+      const searchKeyword = searchQuery.toLowerCase();
       list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q),
+        (product) =>
+          product.name.toLowerCase().includes(searchKeyword) || product.brand.toLowerCase().includes(searchKeyword),
       );
     }
-    if (selectedSub) list = list.filter((p) => p.category === selectedSub);
+    if (selectedSub) list = list.filter((product) => product.category === selectedSub);
     else if (selectedMain)
-      list = list.filter((p) =>
-        (MAIN_CATEGORIES[selectedMain] ?? []).includes(p.category),
+      list = list.filter((product) =>
+        (MAIN_CATEGORIES[selectedMain] ?? []).includes(product.category),
       );
     if (filter.filterSkin)
-      list = list.filter((p) => p.skinTypes.includes(filter.filterSkin!));
+      list = list.filter((product) => product.skinTypes.includes(filter.filterSkin!));
     if (filter.filterFns.size > 0)
-      list = list.filter((p) =>
-        [...filter.filterFns].some((f) => p.effects.includes(f)),
+      list = list.filter((product) =>
+        [...filter.filterFns].some((effect) => product.effects.includes(effect)),
       );
     if (filter.filterBrands.size > 0)
-      list = list.filter((p) => filter.filterBrands.has(p.brand));
+      list = list.filter((product) => filter.filterBrands.has(product.brand));
     return [...list].sort((a, b) => b.matchScore - a.matchScore);
   }, [selectedMain, selectedSub, searchQuery, filter]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const handleSearchChange = (val: string) => {
-    setSearchQuery(val);
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
     setPage(1);
   };
-  const handleMainSelect = (val: string | null) => {
-    setSelectedMain(val);
+  const handleMainSelect = (value: string | null) => {
+    setSelectedMain(value);
     setPage(1);
   };
-  const handleSubSelect = (val: string | null) => {
-    setSelectedSub(val);
+  const handleSubSelect = (value: string | null) => {
+    setSelectedSub(value);
     setPage(1);
   };
 
   return (
     <div className="flex flex-col min-h-full bg-warm-bg">
-      <Toast msg={toastMsg} />
+      <Toast msg={toastMessage} />
 
       {/* 헤더 */}
       <div className="px-6 pt-5 pb-3 bg-gradient-to-br from-[#FFF8EE] to-[#F5F2EA]">

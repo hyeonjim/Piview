@@ -104,7 +104,7 @@ interface Props {
 }
 
 export function ProductListItem({
-  product: p,
+  product,
   isLiked,
   isInRoutine = false,
   inCompare = false,
@@ -112,10 +112,10 @@ export function ProductListItem({
   onToggleLikelist,
   onToggleCompare,
 }: Props) {
-  const catColor = CATEGORY_COLORS[p.category];
-  const activeConcerns = Object.entries(p.concerns)
-    .filter(([, v]) => v)
-    .map(([k]) => k);
+  const catColor = CATEGORY_COLORS[product.category];
+  const activeConcerns = Object.entries(product.concerns)
+    .filter(([, isActive]) => isActive)
+    .map(([concernName]) => concernName);
 
   return (
     <div
@@ -127,7 +127,7 @@ export function ProductListItem({
       }}
     >
       <Link
-        href={`/product/${p.id}`}
+        href={`/product/${product.id}`}
         className="flex items-start gap-3"
         style={LIST_ITEM_LINK_STYLE}
       >
@@ -140,17 +140,17 @@ export function ProductListItem({
             border: `1px solid ${catColor ? catColor.border : "#F0F0F0"}`,
           }}
         >
-          {p.imageUrl ? (
-            <img src={p.imageUrl} alt={p.name} style={THUMB_IMG_STYLE} />
+          {product.imageUrl ? (
+            <img src={product.imageUrl} alt={product.name} style={THUMB_IMG_STYLE} />
           ) : (
-            p.emoji
+            product.emoji
           )}
         </div>
 
         {/* 정보 */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap mb-1">
-            <span style={BRAND_TEXT_STYLE}>{p.brand}</span>
+            <span style={BRAND_TEXT_STYLE}>{product.brand}</span>
             {catColor && (
               <span
                 style={{
@@ -159,50 +159,50 @@ export function ProductListItem({
                   color: catColor.accent,
                 }}
               >
-                {p.category}
+                {product.category}
               </span>
             )}
             {isInRoutine && <span style={ROUTINE_BADGE_STYLE}>루틴중</span>}
           </div>
 
           <p className="truncate" style={NAME_TEXT_STYLE}>
-            {p.name}
+            {product.name}
           </p>
 
           {/* 태그 */}
           <div className="flex flex-wrap gap-1 mt-1.5">
-            {[p.skinType1, p.skinType2].filter(Boolean).map((st) => {
-              const c = SKIN_TYPE_TAG_COLORS[st!] ?? {
+            {[product.skinType1, product.skinType2].filter(Boolean).map((skinType) => {
+              const skinTypeColor = SKIN_TYPE_TAG_COLORS[skinType!] ?? {
                 bg: "#F0EDE8",
                 text: "#7A7060",
               };
               return (
                 <span
-                  key={st}
+                  key={skinType}
                   style={{
                     ...TAG_BADGE_BASE,
-                    backgroundColor: c.bg,
-                    color: c.text,
+                    backgroundColor: skinTypeColor.bg,
+                    color: skinTypeColor.text,
                     fontWeight: 600,
                   }}
                 >
-                  {st}
+                  {skinType}
                 </span>
               );
             })}
-            {activeConcerns.slice(0, 3).map((fn) => {
-              const fc = SKIN_FUNCTION_COLORS[fn];
+            {activeConcerns.slice(0, 3).map((concernName) => {
+              const concernColor = SKIN_FUNCTION_COLORS[concernName];
               return (
                 <span
-                  key={fn}
+                  key={concernName}
                   style={{
                     ...TAG_BADGE_BASE,
-                    backgroundColor: fc?.chip ?? "#F8F6F0",
-                    color: fc?.accent ?? "#8A7B64",
+                    backgroundColor: concernColor?.chip ?? "#F8F6F0",
+                    color: concernColor?.accent ?? "#8A7B64",
                     fontWeight: 500,
                   }}
                 >
-                  {fn}
+                  {concernName}
                 </span>
               );
             })}
@@ -210,9 +210,9 @@ export function ProductListItem({
 
           {/* 가격 / 평점 */}
           <div className="flex items-center gap-2 mt-2">
-            <span style={PRICE_TEXT_STYLE}>{formatPrice(p.price)}</span>
+            <span style={PRICE_TEXT_STYLE}>{formatPrice(product.price)}</span>
             <span style={VOLUME_TEXT_STYLE}>
-              ⭐ {p.rating} ({p.reviews.toLocaleString()})
+              ⭐ {product.rating} ({product.reviews.toLocaleString()})
             </span>
           </div>
         </div>

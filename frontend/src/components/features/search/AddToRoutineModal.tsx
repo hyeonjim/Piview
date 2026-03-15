@@ -83,9 +83,9 @@ export function AddToRoutineModal({
   onClose,
 }: Props) {
   // 제품 카테고리에 매칭되는 스텝을 자동 추천
-  const recommendedStep = ROUTINE_STEPS.find((s) =>
-    s.categories.some(
-      (c) => c === product.category || product.category?.includes(c),
+  const recommendedStep = ROUTINE_STEPS.find((step) =>
+    step.categories.some(
+      (category) => category === product.category || product.category?.includes(category),
     ),
   );
 

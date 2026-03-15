@@ -35,19 +35,19 @@ import { useRouter } from "next/navigation";
 import {
   GENDER_QUESTION,
   COMMON_QUESTIONS,
-  FEMALE_QUESTIONS,
-  MALE_QUESTIONS,
+  WOMEN_QUESTIONS,
+  MEN_QUESTIONS,
   ALLERGY_QUESTION,
   SKIN_TYPE_MAP,
 } from "@/constants";
 
 export default function QuizPage() {
   const router = useRouter();
-  const [gender, setGender] = useState<"female" | "male">("female");
+  const [gender, setGender] = useState<"women" | "men">("women");
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
 
-  const genderQuestions = gender === "male" ? MALE_QUESTIONS : FEMALE_QUESTIONS;
+  const genderQuestions = gender === "men" ? MEN_QUESTIONS : WOMEN_QUESTIONS;
   const questions = [
     GENDER_QUESTION,
     ...COMMON_QUESTIONS,
@@ -64,8 +64,8 @@ export default function QuizPage() {
   const selectAnswer = useCallback(
     (value: string) => {
       setAnswers((prev) => ({ ...prev, [question.id]: value }));
-      if (question.id === -1 && (value === "male" || value === "female")) {
-        setGender(value as "female" | "male");
+      if (question.id === -1 && (value === "men" || value === "women")) {
+        setGender(value as "women" | "men");
       }
     },
     [question.id],
@@ -104,7 +104,7 @@ export default function QuizPage() {
         <p className="text-text-muted" style={CATEGORY_TEXT_STYLE}>
           {isGender
             ? "맞춤 진단 시작"
-            : gender === "male"
+            : gender === "men"
               ? "남성 맞춤 진단"
               : "여성 맞춤 진단"}
         </p>

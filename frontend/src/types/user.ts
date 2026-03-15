@@ -1,7 +1,7 @@
 // src/types/user.ts
 
 export type SkinType = "건성" | "지성" | "복합성" | "수부지";
-export type Gender = "female" | "male";
+export type Gender = "women" | "men";
 
 export interface User {
   id: number;

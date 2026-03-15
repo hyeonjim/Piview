@@ -327,7 +327,7 @@ export default function PhotoAnalysisPage() {
 
   /* ── AI 분석 시작 → skin-test/select로 이동 (TODO: 실제 AI 분석 연동) ── */
   const handleAnalysisStart = () => {
-    router.push("/skin-test/select");
+    router.push("/mypage");
   };
 
   return (
@@ -506,7 +506,7 @@ export default function PhotoAnalysisPage() {
 
             {/* 건너뛰기 */}
             <button
-              onClick={() => router.push("/skin-test/select")}
+              onClick={() => router.push("/mypage")}
               className="bg-transparent border-none cursor-pointer"
               style={HINT_BOTTOM_TEXT}
             >
@@ -540,7 +540,7 @@ export default function PhotoAnalysisPage() {
                 다시 촬영
               </button>
               <button
-                onClick={() => router.push("/skin-test/select")}
+                onClick={() => router.push("/mypage")}
                 className="flex-1 transition-all active:scale-[0.97] cursor-pointer border-none"
                 style={RETRY_BTN_STYLE}
               >

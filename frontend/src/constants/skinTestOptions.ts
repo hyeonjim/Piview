@@ -7,7 +7,7 @@
  *   - src/app/(onboarding)/skin-test/page.tsx → SKIN_TEST_OPTIONS
  */
 
-import { Camera, Target, ClipboardList } from "lucide-react";
+import { Camera, Target } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface SkinTestOption {
@@ -34,12 +34,5 @@ export const SKIN_TEST_OPTIONS: SkinTestOption[] = [
     icon:  Target,
     title: "알고 있어요",
     desc:  "피부 타입을 직접 선택합니다",
-  },
-  {
-    key:   "quiz",
-    href:  "/skin-test/quiz",
-    icon:  ClipboardList,
-    title: "잘 모르겠어요",
-    desc:  "간단한 퀴즈로 진단받기",
   },
 ];

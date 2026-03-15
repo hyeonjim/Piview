@@ -56,7 +56,7 @@ export default function MyPage() {
   const [openStep, setOpenStep] = useState<string | null>(null);
   const [addSearch, setAddSearch] = useState("");
   const [isPiview, setIsPiview] = useState(false);
-  const { toastMsg, showToast } = useToast();
+  const { toastMessage, showToast } = useToast();
 
   // 모달 열릴 때 body 스크롤 차단 — BottomNav가 z-50이라 모달이 뒤로 숨는 문제 방지
   useEffect(() => {
@@ -82,20 +82,20 @@ export default function MyPage() {
   };
 
   const filledProducts = useMemo(
-    () => Object.values(routine).filter((p): p is LocalProduct => !!p),
+    () => Object.values(routine).filter((product): product is LocalProduct => !!product),
     [routine],
   );
   const filledCount = filledProducts.length;
 
   const routineScores = useMemo(
     () =>
-      filledProducts.filter((p) => p.matchScore > 0).map((p) => p.matchScore),
+      filledProducts.filter((product) => product.matchScore > 0).map((product) => product.matchScore),
     [filledProducts],
   );
   const avgScore =
     routineScores.length > 0
       ? Math.round(
-          routineScores.reduce((a, b) => a + b, 0) / routineScores.length,
+          routineScores.reduce((acc, score) => acc + score, 0) / routineScores.length,
         )
       : 0;
   const evaluation = getRoutineEvaluation(avgScore, routineScores.length);
@@ -109,18 +109,18 @@ export default function MyPage() {
     // ROUTINE_STEPS의 categories를 직접 참조 — STEP_CATS 불필요
     const cats =
       ROUTINE_STEPS.find((s) => s.code === openStep)?.categories ?? [];
-    return STEP_PRODUCTS.filter((p) =>
-      cats.some((c) => p.category === c || p.category.includes(c)),
+    return STEP_PRODUCTS.filter((product) =>
+      cats.some((category) => product.category === category || product.category.includes(category)),
     );
   }, [openStep]);
 
   const displayProducts = useMemo(() => {
     let list = modalProducts;
     if (addSearch) {
-      const q = addSearch.toLowerCase();
+      const searchKeyword = addSearch.toLowerCase();
       list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q),
+        (product) =>
+          product.name.toLowerCase().includes(searchKeyword) || product.brand.toLowerCase().includes(searchKeyword),
       );
     }
     const sorted = [...list].sort((a, b) => b.matchScore - a.matchScore);
@@ -428,7 +428,7 @@ export default function MyPage() {
         </div>
       )}
 
-      <Toast msg={toastMsg} />
+      <Toast msg={toastMessage} />
 
       {/* 스텝별 추천 제품 모달 */}
       {openStep && (
@@ -446,7 +446,7 @@ export default function MyPage() {
                   </h3>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setIsPiview((v) => !v)}
+                      onClick={() => setIsPiview((prev) => !prev)}
                       className={`flex items-center gap-1 cursor-pointer transition-all active:scale-95 px-3 py-[5px] rounded-[20px] text-xs font-bold border-none ${
                         isPiview
                           ? "bg-brand text-white"

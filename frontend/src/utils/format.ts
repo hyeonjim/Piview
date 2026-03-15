@@ -35,9 +35,9 @@ export function formatVolume(volume: string | null | undefined): string {
 /** 날짜를 "YYYY.MM.DD" 형식으로 */
 export function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "";
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
 }
 
 /** Set 토글 - 있으면 제거, 없으면 추가 */

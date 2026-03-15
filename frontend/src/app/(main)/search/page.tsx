@@ -20,9 +20,9 @@ import { Search } from "lucide-react";
 const PAGE_SIZE = 10;
 
 // matchScore 보완 — ⚠️ API 연동 시 서버에서 계산된 값으로 교체
-const PRODUCTS = MOCK_SEARCH_PRODUCTS.map((p, i) => ({
-  ...p,
-  matchScore: p.matchScore ?? 78 + (i % 18),
+const PRODUCTS = MOCK_SEARCH_PRODUCTS.map((product, index) => ({
+  ...product,
+  matchScore: product.matchScore ?? 78 + (index % 18),
 }));
 
 export default function SearchPage() {
@@ -37,10 +37,10 @@ export default function SearchPage() {
   const [routineAdded, setRoutineAdded] = useState<Set<string>>(new Set());
   const [owned, setOwned] = useState<Set<string>>(new Set());
 
-  const { toastMsg, showToast } = useToast();
+  const { toastMessage, showToast } = useToast();
 
   const addToRoutine = (id: string, name: string) => {
-    setRoutineAdded((p) => new Set([...p, id]));
+    setRoutineAdded((prev) => new Set([...prev, id]));
     showToast(`✓ ${name} 루틴에 추가됨!`);
   };
 
@@ -54,25 +54,25 @@ export default function SearchPage() {
     let list = PRODUCTS;
     // 검색어 필터
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+      const searchKeyword = searchQuery.toLowerCase();
       list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q),
+        (product) =>
+          product.name.toLowerCase().includes(searchKeyword) || product.brand.toLowerCase().includes(searchKeyword),
       );
     }
-    if (selectedSub) list = list.filter((p) => p.category === selectedSub);
+    if (selectedSub) list = list.filter((product) => product.category === selectedSub);
     else if (selectedMain)
-      list = list.filter((p) =>
-        (MAIN_CATEGORIES[selectedMain] ?? []).includes(p.category),
+      list = list.filter((product) =>
+        (MAIN_CATEGORIES[selectedMain] ?? []).includes(product.category),
       );
     if (filter.filterSkin)
-      list = list.filter((p) => p.skinTypes.includes(filter.filterSkin!));
+      list = list.filter((product) => product.skinTypes.includes(filter.filterSkin!));
     if (filter.filterFns.size > 0)
-      list = list.filter((p) =>
-        [...filter.filterFns].some((f) => p.effects.includes(f)),
+      list = list.filter((product) =>
+        [...filter.filterFns].some((effect) => product.effects.includes(effect)),
       );
     if (filter.filterBrands.size > 0)
-      list = list.filter((p) => filter.filterBrands.has(p.brand));
+      list = list.filter((product) => filter.filterBrands.has(product.brand));
     return list;
   }, [selectedMain, selectedSub, searchQuery, filter]);
 
@@ -80,22 +80,22 @@ export default function SearchPage() {
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // 검색어/필터 변경 시 페이지 초기화
-  const handleSearchChange = (val: string) => {
-    setSearchQuery(val);
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
     setPage(1);
   };
-  const handleMainSelect = (val: string | null) => {
-    setSelectedMain(val);
+  const handleMainSelect = (value: string | null) => {
+    setSelectedMain(value);
     setPage(1);
   };
-  const handleSubSelect = (val: string | null) => {
-    setSelectedSub(val);
+  const handleSubSelect = (value: string | null) => {
+    setSelectedSub(value);
     setPage(1);
   };
 
   return (
     <div className="flex flex-col min-h-full bg-white">
-      <Toast msg={toastMsg} />
+      <Toast msg={toastMessage} />
 
       {/* 헤더 */}
       <div className="px-6 pt-5 pb-3 bg-gradient-to-b from-[#F5F2EA] to-white">
@@ -131,24 +131,24 @@ export default function SearchPage() {
             description="검색어나 필터를 바꿔보세요"
           />
         ) : (
-          paginated.map((p) => (
+          paginated.map((product) => (
             <ProductCard
-              key={p.id}
-              id={p.id}
-              brand={p.brand}
-              name={p.name}
-              category={p.category}
-              emoji={p.emoji}
-              skinTypes={p.skinTypes}
-              effects={p.effects}
+              key={product.id}
+              id={product.id}
+              brand={product.brand}
+              name={product.name}
+              category={product.category}
+              emoji={product.emoji}
+              skinTypes={product.skinTypes}
+              effects={product.effects}
               actions={{
                 onAddRoutine: () =>
-                  !routineAdded.has(p.id) && addToRoutine(p.id, p.name),
-                inRoutine: routineAdded.has(p.id),
-                onToggleOwned: () => setOwned((prev) => toggleSet(prev, p.id)),
-                isOwned: owned.has(p.id),
-                onToggleLike: () => toggleLike(p.id),
-                isLiked: isLiked(p.id),
+                  !routineAdded.has(product.id) && addToRoutine(product.id, product.name),
+                inRoutine: routineAdded.has(product.id),
+                onToggleOwned: () => setOwned((prev) => toggleSet(prev, product.id)),
+                isOwned: owned.has(product.id),
+                onToggleLike: () => toggleLike(product.id),
+                isLiked: isLiked(product.id),
                 showCompare: true,
               }}
             />
