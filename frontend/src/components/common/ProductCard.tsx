@@ -47,8 +47,8 @@ interface ProductCardProps {
     inRoutine?: boolean;
     onToggleOwned?: () => void;
     isOwned?: boolean;
-    onToggleWish?: () => void;
-    isWished?: boolean;
+    onToggleLike?: () => void;
+    isLiked?: boolean;
     showCompare?: boolean;
     onCompare?: () => void;
   };
@@ -95,7 +95,7 @@ export default function ProductCard({
   const handleWishToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    actions?.onToggleWish?.();
+    actions?.onToggleLike?.();
   };
 
   const handleActionClick = (e: React.MouseEvent, callback?: () => void) => {
@@ -471,20 +471,20 @@ export default function ProductCard({
             </button>
           )}
 
-          {actions.onToggleWish && !onLike && (
+          {actions.onToggleLike && !onLike && (
             <button
-              onClick={(e) => handleActionClick(e, actions.onToggleWish)}
+              onClick={(e) => handleActionClick(e, actions.onToggleLike)}
               className={cn(
                 "flex items-center justify-center h-8 px-[10px] rounded-[40px] cursor-pointer transition-all active:scale-[0.97] border",
-                actions.isWished
+                actions.isLiked
                   ? "border-[#FFCDD2] bg-[#FFF0F3]"
                   : "border-border-warm bg-white",
               )}
             >
               <Heart
                 size={16}
-                color={actions.isWished ? "#E57373" : "var(--color-text-muted)"}
-                fill={actions.isWished ? "#E57373" : "none"}
+                color={actions.isLiked ? "#E57373" : "var(--color-text-muted)"}
+                fill={actions.isLiked ? "#E57373" : "none"}
               />
             </button>
           )}

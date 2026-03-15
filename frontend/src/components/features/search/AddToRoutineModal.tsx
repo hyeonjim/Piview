@@ -1,3 +1,4 @@
+// ⚠️ 미연결 컴포넌트 — 백엔드 연동 시 페이지에 연결 예정
 "use client";
 
 /**
@@ -15,18 +16,9 @@
  */
 
 import { X, Check, Plus } from "lucide-react";
+import { ROUTINE_STEPS, type RoutineStepKey } from "@/constants/routineSteps";
 
-// 피그마 allRoutineSteps 기반 — 여성 기준 (추후 성별 분기 가능)
-export const ROUTINE_STEPS = [
-  { key: "cleanser",  label: "클렌저",         code: "CL", icon: "🫧", categories: ["클렌저", "클렌징폼", "클렌징오일", "클렌징밀크"] },
-  { key: "toner",     label: "스킨/토너/미스트", code: "TN", icon: "💧", categories: ["스킨/토너", "토너", "미스트"] },
-  { key: "serum",     label: "세럼/에센스",     code: "SR", icon: "✨", categories: ["에센스/앰플/세럼", "세럼", "에센스"] },
-  { key: "lotion",    label: "로션/에멀전",     code: "LT", icon: "🥛", categories: ["로션/에멀젼", "로션", "에멀전"] },
-  { key: "cream",     label: "크림/오일",       code: "CR", icon: "🫙", categories: ["크림", "페이스오일", "아이크림"] },
-  { key: "sunscreen", label: "선크림",          code: "SC", icon: "☀️", categories: ["선케어", "선크림", "선스틱"] },
-] as const;
-
-export type RoutineStepKey = typeof ROUTINE_STEPS[number]["key"];
+export type { RoutineStepKey };
 
 interface ProductBase {
   id: string | number;

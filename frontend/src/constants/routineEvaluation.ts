@@ -5,7 +5,10 @@
  * 사용처:
  *   - src/app/(main)/mypage/page.tsx
  */
-import { COLOR_BRAND, COLOR_TEXT_MUTED } from "./colors";
+
+// colors.ts 의존성 제거 — CSS 변수로 직접 참조
+const COLOR_BRAND     = "var(--color-brand)";
+const COLOR_TEXT_MUTED = "var(--color-text-muted)";
 
 export interface RoutineEvaluation {
   text:  string;

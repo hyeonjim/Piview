@@ -1,3 +1,4 @@
+// ⚠️ 미연결 컴포넌트 — 백엔드 연동 시 페이지에 연결 예정
 /**
  * components/features/search/ProductListItem.tsx
  *
@@ -32,21 +33,21 @@ export interface ProductListItemData {
 
 interface Props {
   product: ProductListItemData;
-  isWished: boolean;
+  isLiked: boolean;
   isInRoutine?: boolean;
   inCompare?: boolean;
   onAddToRoutine?: () => void;
-  onToggleWishlist?: () => void;
+  onToggleLikelist?: () => void;
   onToggleCompare?: () => void;
 }
 
 export function ProductListItem({
   product: p,
-  isWished,
+  isLiked,
   isInRoutine = false,
   inCompare = false,
   onAddToRoutine,
-  onToggleWishlist,
+  onToggleLikelist,
   onToggleCompare,
 }: Props) {
   const catColor = CATEGORY_COLORS[p.category];
@@ -143,13 +144,13 @@ export function ProductListItem({
           <Plus size={12} /> {isInRoutine ? "루틴중" : "루틴추가"}
         </button>
         <button
-          onClick={onToggleWishlist}
+          onClick={onToggleLikelist}
           className="flex items-center gap-1 cursor-pointer transition-all active:scale-95"
           style={{ height: "30px", padding: "0 12px", borderRadius: "8px", border: "none",
-            backgroundColor: isWished ? "#FFF0F0" : "#F5F5F5",
-            color: isWished ? "#E57373" : "#9E9E9E", fontSize: "11px", fontWeight: 500 }}
+            backgroundColor: isLiked ? "#FFF0F0" : "#F5F5F5",
+            color: isLiked ? "#E57373" : "#9E9E9E", fontSize: "11px", fontWeight: 500 }}
         >
-          <Heart size={12} fill={isWished ? "#E57373" : "none"} /> {isWished ? "찜됨" : "찜"}
+          <Heart size={12} fill={isLiked ? "#E57373" : "none"} /> {isLiked ? "찜됨" : "찜"}
         </button>
         <button
           onClick={onToggleCompare}

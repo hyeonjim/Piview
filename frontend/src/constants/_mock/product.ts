@@ -148,3 +148,56 @@ export const MOCK_PRODUCT_DETAIL: ProductDetailFull = {
     건성: 55, 지성: 88, 복합성: 82, 수부지: 60,
   },
 };
+
+// ── id별 mock 맵 ──────────────────────────────────────────────────────────────
+// searchProducts(s1~s12), mypageProducts(c1~c2, t1~t4, s1~s3, cr1~cr2, sc1~sc2) 커버
+// ⚠️ API 연동 시 productService.getProduct(id) 로 교체 — 이 맵 전체 삭제
+
+/**
+ * id로 mock 제품 상세 조회
+ * - searchProducts에서 기본 정보(이름/브랜드/카테고리/피부타입/효과 등) 가져옴
+ * - 성분/EWG/점수 등 상세 필드는 MOCK_PRODUCT_DETAIL 기본값으로 채움
+ * ⚠️ API 연동 시 이 함수만 productService.getProduct(id) 로 교체
+ */
+import { MOCK_SEARCH_PRODUCTS } from "@/constants/_mock/searchProducts";
+import { STEP_PRODUCTS } from "@/constants/_mock/mypageProducts";
+
+export function getMockProductById(id: string): ProductDetailFull {
+  // searchProducts에서 먼저 찾기
+  const fromSearch = MOCK_SEARCH_PRODUCTS.find((p) => p.id === id);
+  if (fromSearch) {
+    return {
+      ...MOCK_PRODUCT_DETAIL,
+      id: fromSearch.id,
+      name: fromSearch.name,
+      brand: fromSearch.brand,
+      category: fromSearch.category,
+      emoji: fromSearch.emoji,
+      matchScore: fromSearch.matchScore,
+      tags: fromSearch.effects,
+      skinType1: fromSearch.skinType1,
+      skinType2: fromSearch.skinType2,
+      concerns: fromSearch.concerns,
+    };
+  }
+
+  // mypageProducts(루틴 모달)에서 찾기
+  const fromMypage = STEP_PRODUCTS.find((p) => p.id === id);
+  if (fromMypage) {
+    return {
+      ...MOCK_PRODUCT_DETAIL,
+      id: fromMypage.id,
+      name: fromMypage.name,
+      brand: fromMypage.brand,
+      category: fromMypage.category,
+      emoji: fromMypage.emoji,
+      matchScore: fromMypage.matchScore,
+      tags: fromMypage.effects,
+      skinType1: fromMypage.skinTypes[0],
+      skinType2: fromMypage.skinTypes[1],
+    };
+  }
+
+  // 없는 id면 기본값 fallback
+  return MOCK_PRODUCT_DETAIL;
+}

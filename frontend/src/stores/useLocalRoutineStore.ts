@@ -10,6 +10,11 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { ROUTINE_STEPS, INITIAL_ROUTINE } from "@/constants/routineSteps";
+
+// 스텝 메타 재export — home/page.tsx 등 기존 import 경로 유지
+export { ROUTINE_STEPS as ROUTINE_STEP_META };
+export type { RoutineStep as RoutineStepMeta } from "@/constants/routineSteps";
 
 // 마이페이지 루틴에서 쓰는 제품 타입 (mock)
 export interface LocalProduct {
@@ -26,23 +31,6 @@ export interface LocalProduct {
 // 루틴 스텝 코드 → 제품 매핑
 export type LocalRoutineMap = Record<string, LocalProduct | null>;
 
-// 스텝 메타 (홈 화면 표시용)
-export interface RoutineStepMeta {
-  code: string;
-  label: string;
-  icon: string; // emoji
-}
-
-// 스텝 순서 정의 (마이페이지와 동기화)
-export const ROUTINE_STEP_META: RoutineStepMeta[] = [
-  { code: "CL", label: "클렌저",               icon: "🫧" },
-  { code: "PR", label: "스킨/토너",             icon: "💧" },
-  { code: "SR", label: "세럼/에센스",           icon: "✨" },
-  { code: "LT", label: "로션/에멀전",           icon: "🧴" },
-  { code: "CR", label: "크림/오일",             icon: "🤍" },
-  { code: "SC", label: "선크림",                icon: "☀️" },
-];
-
 interface LocalRoutineStore {
   routine: LocalRoutineMap;
   setRoutine: (routine: LocalRoutineMap) => void;
@@ -50,26 +38,22 @@ interface LocalRoutineStore {
   clearRoutine: () => void;
 }
 
-const INITIAL_ROUTINE: LocalRoutineMap = Object.fromEntries(
-  ROUTINE_STEP_META.map((s) => [s.code, null])
-);
-
 export const useLocalRoutineStore = create<LocalRoutineStore>()(
   persist(
     (set) => ({
-      routine: INITIAL_ROUTINE,
+      routine: INITIAL_ROUTINE as LocalRoutineMap,
 
       setRoutine: (routine) => set({ routine }),
 
       setStepProduct: (code, product) =>
         set((state) => ({ routine: { ...state.routine, [code]: product } })),
 
-      clearRoutine: () => set({ routine: INITIAL_ROUTINE }),
+      clearRoutine: () => set({ routine: INITIAL_ROUTINE as LocalRoutineMap }),
     }),
     {
-      name: "piview-routine",                        // localStorage 키 이름
-      storage: createJSONStorage(() => localStorage), // 저장소 지정
-      skipHydration: true,                           // SSR 환경에서 하이드레이션 에러 방지
+      name: "piview-routine",
+      storage: createJSONStorage(() => localStorage),
+      skipHydration: true,
     }
   )
 );

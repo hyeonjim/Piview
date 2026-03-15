@@ -1,12 +1,12 @@
 /**
  * hooks/index.ts
- * 커스텀 훅 단일 진입점
+ * 훅 일괄 export
  *
  * 사용법:
- *   import { useToast, useScroll, useCompare, useWishlist } from "@/hooks";
+ *   import { useToast, useScroll, useCompare, useLike } from "@/hooks";
  */
 
-export { useScroll } from "./useScroll";
 export { useToast } from "./useToast";
+export { useScroll } from "./useScroll";
 export { useCompare } from "./useCompare";
-export { useWishlist } from "./useWishlist";
+export { useLike } from "./useLike";

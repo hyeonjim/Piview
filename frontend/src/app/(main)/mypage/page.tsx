@@ -12,10 +12,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Button from "@/components/common/Button";
 import { EmptyState } from "@/components/common";
 import ProductCard from "@/components/common/ProductCard";
-import { MYPAGE_ROUTINE_STEPS } from "@/constants";
+import { MYPAGE_ROUTINE_STEPS, ROUTINE_STEPS } from "@/constants/routineSteps";
 import { CATEGORY_COLORS, SKIN_FUNCTION_COLORS } from "@/constants/categoryColors";
 import { getRoutineEvaluation, getScoreBarColor } from "@/constants/routineEvaluation";
-import { STEP_CATS, STEP_PRODUCTS } from "@/constants/_mock/mypageProducts";
+import { STEP_PRODUCTS } from "@/constants/_mock/mypageProducts";
 import { useLocalRoutineStore, type LocalProduct } from "@/stores/useLocalRoutineStore";
 
 export default function MyPage() {
@@ -67,7 +67,8 @@ export default function MyPage() {
 
   const modalProducts = useMemo(() => {
     if (!openStep) return [];
-    const cats = STEP_CATS[openStep] ?? [];
+    // ROUTINE_STEPS의 categories를 직접 참조 — STEP_CATS 불필요
+    const cats = ROUTINE_STEPS.find((s) => s.code === openStep)?.categories ?? [];
     return STEP_PRODUCTS.filter((p) => cats.some((c) => p.category === c || p.category.includes(c)));
   }, [openStep]);
 

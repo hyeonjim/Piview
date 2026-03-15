@@ -1,3 +1,4 @@
+// ⚠️ 미연결 컴포넌트 — 백엔드 연동 시 페이지에 연결 예정
 /**
  * components/features/routine/SavedRoutineCard.tsx
  *
