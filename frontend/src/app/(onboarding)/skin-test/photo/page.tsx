@@ -410,18 +410,6 @@ export default function PhotoAnalysisPage() {
           </button>
 
           <span style={TITLE_TEXT_STYLE}>AI 피부 분석</span>
-
-          {!preview ? (
-            <button
-              onClick={switchCamera}
-              className="flex items-center justify-center border-none cursor-pointer"
-              style={ICON_BTN_STYLE}
-            >
-              <SwitchCamera size={18} color="#fff" />
-            </button>
-          ) : (
-            <div style={SPACER_40} />
-          )}
         </div>
 
         {/* ── 가이드 텍스트 ── */}
@@ -506,7 +494,7 @@ export default function PhotoAnalysisPage() {
 
             {/* 건너뛰기 */}
             <button
-              onClick={() => router.push("/mypage")}
+              onClick={() => router.push("/skin-test/survey/1")}
               className="bg-transparent border-none cursor-pointer"
               style={HINT_BOTTOM_TEXT}
             >
@@ -540,7 +528,7 @@ export default function PhotoAnalysisPage() {
                 다시 촬영
               </button>
               <button
-                onClick={() => router.push("/mypage")}
+                onClick={() => router.push("/skin-test/survey/1")}
                 className="flex-1 transition-all active:scale-[0.97] cursor-pointer border-none"
                 style={RETRY_BTN_STYLE}
               >

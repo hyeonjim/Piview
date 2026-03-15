@@ -30,7 +30,7 @@ const CHECK_CIRCLE_STYLE = {
 const PREV_BTN_STYLE = { fontSize: "15px" };
 const NEXT_BTN_BASE = { borderRadius: "20px", fontSize: "15px" };
 
-import { useState, useCallback } from "react";
+import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   GENDER_QUESTION,
@@ -40,8 +40,39 @@ import {
   ALLERGY_QUESTION,
   SKIN_TYPE_MAP,
 } from "@/constants";
+import { useSurveyStore } from "@/stores/useSurveyStore";
 
-export default function QuizPage() {
+/** 전체 질문 수 (성별 1 + 공통 3 + 성별 맞춤 3 + 알레르기 1) */
+const TOTAL_QUESTIONS = 8;
+
+/**
+ * 질문 번호(1~8)로 QuizQuestion 반환
+ * 5~7번은 선택된 성별에 따라 다른 질문을 반환
+ */
+function getQuestionByNumber(
+  number: number,
+  gender: "female" | "male",
+) {
+  if (number === 1) return GENDER_QUESTION;
+  if (number === 2) return COMMON_QUESTIONS[0]; // 연령대
+  if (number === 3) return COMMON_QUESTIONS[1]; // 세안 후 피부
+  if (number === 4) return COMMON_QUESTIONS[2]; // 제품 반응
+  if (number >= 5 && number <= 7) {
+    const genderQuestions = gender === "male" ? MALE_QUESTIONS : FEMALE_QUESTIONS;
+    return genderQuestions[number - 5];
+  }
+  if (number === 8) return ALLERGY_QUESTION;
+  return null;
+}
+
+export default function SurveyPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const questionNumber = parseInt(id, 10); // 1-based URL 파라미터
+
   const router = useRouter();
   const [gender, setGender] = useState<"women" | "men">("women");
   const [currentQ, setCurrentQ] = useState(0);
@@ -56,8 +87,8 @@ export default function QuizPage() {
   ];
   const question = questions[currentQ];
   const selectedAnswer = answers[question.id];
-  const progress = ((currentQ + 1) / questions.length) * 100;
-  const isLast = currentQ === questions.length - 1;
+  const progress = (questionNumber / TOTAL_QUESTIONS) * 100;
+  const isLast = questionNumber === TOTAL_QUESTIONS;
   const isAllergy = question.id === 6;
   const isGender = question.id === -1;
 
@@ -71,20 +102,27 @@ export default function QuizPage() {
     [question.id],
   );
 
-  const goNext = useCallback(() => {
+  /** 다음 질문 또는 결과 페이지로 이동 */
+  const goNext = () => {
     if (!selectedAnswer) return;
-    if (currentQ < questions.length - 1) {
-      setCurrentQ((prev) => prev + 1);
-    } else {
+    if (isLast) {
+      // 세안 후 피부 상태(question id: 1) 기준으로 피부 타입 결정
       const skinType = SKIN_TYPE_MAP[answers[1]] || "combination";
+      resetSurvey(); // 설문 완료 후 스토어 초기화
       router.push(`/skin-test/result?type=${skinType}`);
+    } else {
+      router.push(`/skin-test/survey/${questionNumber + 1}`);
     }
-  }, [currentQ, selectedAnswer, questions.length, answers, router]);
+  };
 
-  const goPrev = useCallback(() => {
-    if (currentQ > 0) setCurrentQ((prev) => prev - 1);
-    else router.push("/skin-test");
-  }, [currentQ, router]);
+  /** 이전 질문 또는 skin-test 선택 페이지로 이동 */
+  const goPrev = () => {
+    if (questionNumber > 1) {
+      router.push(`/skin-test/survey/${questionNumber - 1}`);
+    } else {
+      router.push("/skin-test");
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-full bg-white relative">
@@ -98,7 +136,7 @@ export default function QuizPage() {
             />
           </div>
           <span className="text-text-muted" style={PROGRESS_TEXT_STYLE}>
-            {currentQ + 1}/{questions.length}
+            {questionNumber}/{TOTAL_QUESTIONS}
           </span>
         </div>
         <p className="text-text-muted" style={CATEGORY_TEXT_STYLE}>
@@ -133,7 +171,7 @@ export default function QuizPage() {
                   : "var(--color-brand)",
             }}
           >
-            Q{currentQ + 1}
+            Q{questionNumber}
           </span>
           {isAllergy && (
             <span
@@ -204,7 +242,7 @@ export default function QuizPage() {
       </div>
 
       {/* 하단 네비게이션 */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-6 pb-6 pt-3 flex items-center justify-between bg-white border-t border-border">
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-107.5 px-6 pb-6 pt-3 flex items-center justify-between bg-white border-t border-border">
         <button
           onClick={goPrev}
           className="bg-transparent border-none cursor-pointer px-4 py-3 hover:opacity-70 transition-opacity text-text-hint font-medium"

@@ -42,10 +42,28 @@ import {
   useLocalRoutineStore,
   type LocalProduct,
 } from "@/stores/useLocalRoutineStore";
+import { useUserStore } from "@/stores/useUserStore";
+import { authService } from "@/services/auth";
 
 export default function MyPage() {
   const router = useRouter();
   const [tab, setTab] = useState<"routine" | "owned">("routine");
+
+  /**
+   * 로그아웃 핸들러
+   * ⚠️ API 연동 시 authService.logout() 주석 해제 → 백엔드가 httpOnly 쿠키 만료 처리
+   */
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      // 로컬 상태 전체 초기화
+      useUserStore.getState().clearUser();
+      useLocalRoutineStore.getState().clearRoutine();
+      localStorage.removeItem("piview-routine"); // zustand persist 키
+      router.push("/splash");
+    }
+  };
 
   const { routine, setStepProduct } = useLocalRoutineStore();
 
@@ -160,6 +178,13 @@ export default function MyPage() {
           >
             <Settings size={16} className="text-text-muted" />
           </Link>
+          {/* 로그아웃 버튼 — ⚠️ API 연동 시 authService.logout() 활성화 */}
+          <button
+            onClick={handleLogout}
+            className="text-xs text-text-muted border-none bg-transparent cursor-pointer px-2 py-1"
+          >
+            로그아웃
+          </button>
         </div>
 
         <Button

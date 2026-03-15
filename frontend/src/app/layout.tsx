@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Providers } from "@/lib/providers";
 import "./globals.css";
 
 // 실제 사용 weight만 서브셋으로 로드 — 2MB → ~1MB
@@ -43,7 +44,7 @@ export default function RootLayout({
       <body>
         <div className="min-h-screen bg-bg-base">
           <div className="mx-auto min-h-screen bg-white flex flex-col relative w-full max-w-[500px] shadow-[0_0_0_1px_rgba(162,170,123,0.08),0_8px_60px_rgba(0,0,0,0.10)]">
-            {children}
+            <Providers>{children}</Providers>
           </div>
         </div>
       </body>
