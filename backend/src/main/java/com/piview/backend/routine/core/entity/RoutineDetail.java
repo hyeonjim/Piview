@@ -27,16 +27,16 @@ public class RoutineDetail extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "product_id")
-  private Product productId;
+  private Product product;
 
   @Column(name = "step_order", nullable = false)
   private Integer stepOrder;
 
   @Builder
-  public RoutineDetail(MyRoutine myRoutine, RoutineColumn routineColumn, Product productId, Integer stepOrder) {
+  public RoutineDetail(MyRoutine myRoutine, RoutineColumn routineColumn, Product product, Integer stepOrder) {
     this.myRoutine = myRoutine;
     this.routineColumn = routineColumn;
-    this.productId = productId;
+    this.product = product;
     this.stepOrder = stepOrder;
   }
 
