@@ -72,9 +72,11 @@ services:
     container_name: nginx
     ports:
       - "80:80"
-      - "3000:3000"
+      - "443:443"   # HTTPS (Prod용)
+      - "3000:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - /etc/letsencrypt:/etc/letsencrypt
     depends_on:
       - dev-frontend
       - prod-frontend
