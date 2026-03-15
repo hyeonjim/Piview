@@ -69,4 +69,4 @@ pnpm-debug.log*
 **/target/
 
 # claude
-# *.claude
+*.claude
