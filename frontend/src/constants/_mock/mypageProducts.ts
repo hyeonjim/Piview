@@ -6,19 +6,9 @@
  *    교체 시: productService.getRecommendedByStep(stepCode) 로 대체
  *
  * 사용처:
- *   - src/app/(main)/mypage/page.tsx → STEP_PRODUCTS, STEP_CATS
+ *   - src/app/(main)/mypage/page.tsx → STEP_PRODUCTS
  */
 import { LocalProduct } from "@/stores/useLocalRoutineStore";
-
-/** 루틴 스텝 코드 → 대응 카테고리 목록 */
-export const STEP_CATS: Record<string, string[]> = {
-  CL: ["클렌저", "폼/젤/밤/오일"],
-  PR: ["스킨/토너", "토너", "미스트", "패드"],
-  SR: ["에센스/앰플/세럼", "세럼", "에센스", "세럼/에센스"],
-  LT: ["로션/에멀젼", "로션"],
-  CR: ["크림", "페이스오일"],
-  SC: ["선크림/스틱", "선크림"],
-};
 
 /** 스텝별 추천 제품 목록 */
 export const STEP_PRODUCTS: LocalProduct[] = [

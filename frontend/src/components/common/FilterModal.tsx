@@ -1,36 +1,21 @@
+/**
+ * components/common/FilterModal.tsx
+ * 검색/추천 페이지 공용 필터 모달 (피부타입 / 피부기능 / 브랜드 / 가격)
+ *
+ * ⚠️ SearchFilterModal.tsx는 이 파일로 통합됨 — 삭제 가능
+ *
+ * 사용처:
+ *   - app/(main)/search/page.tsx
+ *   - app/(main)/recommend/page.tsx
+ */
 "use client";
 
 import { useEffect } from "react";
 import { X, RotateCcw } from "lucide-react";
+import { getGroupKey, GROUP_ORDER } from "@/utils/chosungUtils";
 import { SKIN_FUNCTIONS, SKIN_TYPE_LABELS_FOR_FILTER } from "@/constants/categoryColors";
 
-// ── 초성 유틸 ────────────────────────────────────────────────────────
-const GROUP_ORDER = ["ㄱ","ㄴ","ㄷ","ㄹ","ㅁ","ㅂ","ㅅ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ","A-Z","기타"];
-
-function getChosung(str: string): string {
-  const code = str.charCodeAt(0);
-  if (code >= 0xAC00 && code <= 0xD7A3) {
-    const idx = Math.floor((code - 0xAC00) / 28 / 21);
-    return ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"][idx] ?? "기타";
-  }
-  if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) return "A-Z";
-  return "기타";
-}
-
-export function getGroupKey(b: string) {
-  const cs = getChosung(b);
-  return (["ㄲ","ㄸ","ㅃ","ㅆ","ㅉ"].includes(cs) || !GROUP_ORDER.includes(cs)) ? "기타" : cs;
-}
-
-export function buildGroupedBrands(brands: string[]) {
-  const grouped: Record<string, string[]> = {};
-  brands.forEach((b) => {
-    const k = getGroupKey(b);
-    if (!grouped[k]) grouped[k] = [];
-    grouped[k].push(b);
-  });
-  return { grouped, keys: GROUP_ORDER.filter((k) => grouped[k]) };
-}
+const PRICE_MAX = 1_000_000;
 
 export interface FilterState {
   filterSkin:    string | null;
@@ -50,10 +35,21 @@ interface FilterModalProps {
   availableBrands: string[];
 }
 
-export function FilterModal({ open, onClose, state, onChange, onReset, resultCount, availableBrands }: FilterModalProps) {
+export function FilterModal({
+  open, onClose, state, onChange, onReset, resultCount, availableBrands,
+}: FilterModalProps) {
   const { filterSkin, filterFns, filterChosung, filterBrands, priceRange } = state;
-  const { grouped, keys } = buildGroupedBrands(availableBrands);
 
+  // 브랜드 초성 그룹핑 — chosungUtils 활용
+  const grouped: Record<string, string[]> = {};
+  availableBrands.forEach((b) => {
+    const k = getGroupKey(b);
+    if (!grouped[k]) grouped[k] = [];
+    grouped[k].push(b);
+  });
+  const groupKeys = GROUP_ORDER.filter((k) => grouped[k]);
+
+  // 모달 열릴 때 body 스크롤 차단
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -63,25 +59,25 @@ export function FilterModal({ open, onClose, state, onChange, onReset, resultCou
 
   return (
     <>
-      {/* 딤 배경 */}
+      {/* 딤 */}
       <div
-        className="fixed inset-0 z-[60] bg-[rgba(0,0,0,0.45)] backdrop-blur-sm"
+        className="fixed inset-0 z-[60] bg-[rgba(0,0,0,0.5)] backdrop-blur-[4px]"
         onClick={onClose}
       />
 
-      {/* 모달 컨테이너 */}
+      {/* 모달 */}
       <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 py-6 pointer-events-none">
         <div
-          className="bg-white flex flex-col w-full max-w-[440px] max-h-[88vh] rounded-modal shadow-[0_8px_40px_rgba(0,0,0,0.18)] overflow-hidden pointer-events-auto"
+          className="relative bg-white flex flex-col w-full max-w-[440px] max-h-[90vh] rounded-modal shadow-[0_8px_40px_rgba(0,0,0,0.18)] overflow-hidden pointer-events-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* 헤더 */}
-          <div className="flex items-center justify-between shrink-0 px-5 pt-5 pb-3.5">
+          <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
             <h3 className="text-base font-bold text-text-primary m-0">필터</h3>
             <div className="flex items-center gap-2">
               <button
                 onClick={onReset}
-                className="flex items-center gap-1 bg-transparent border-none cursor-pointer text-xs text-text-muted px-2 py-1"
+                className="flex items-center gap-1 bg-transparent border-none cursor-pointer text-xs text-text-muted"
               >
                 <RotateCcw size={13} /> 초기화
               </button>
@@ -107,7 +103,7 @@ export function FilterModal({ open, onClose, state, onChange, onReset, resultCou
                       key={st}
                       label={st}
                       active={isActive}
-                      onClick={() => onChange({ filterSkin: st === "전체" ? null : st === filterSkin ? null : st })}
+                      onClick={() => onChange({ filterSkin: st === "전체" ? null : filterSkin === st ? null : st })}
                     />
                   );
                 })}
@@ -119,21 +115,18 @@ export function FilterModal({ open, onClose, state, onChange, onReset, resultCou
             {/* 피부기능 */}
             <Section title="피부기능">
               <div className="flex flex-wrap gap-2">
-                {SKIN_FUNCTIONS.map((fn) => {
-                  const isActive = filterFns.has(fn);
-                  return (
-                    <Chip
-                      key={fn}
-                      label={fn}
-                      active={isActive}
-                      onClick={() => {
-                        const n = new Set(filterFns);
-                        n.has(fn) ? n.delete(fn) : n.add(fn);
-                        onChange({ filterFns: n });
-                      }}
-                    />
-                  );
-                })}
+                {SKIN_FUNCTIONS.map((fn) => (
+                  <Chip
+                    key={fn}
+                    label={fn}
+                    active={filterFns.has(fn)}
+                    onClick={() => {
+                      const n = new Set(filterFns);
+                      n.has(fn) ? n.delete(fn) : n.add(fn);
+                      onChange({ filterFns: n });
+                    }}
+                  />
+                ))}
               </div>
             </Section>
 
@@ -141,14 +134,14 @@ export function FilterModal({ open, onClose, state, onChange, onReset, resultCou
 
             {/* 브랜드 초성 */}
             <Section title="브랜드">
-              <div className="grid grid-cols-7 gap-2 mb-2">
-                {keys.map((key) => {
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {groupKeys.map((key) => {
                   const isActive = filterChosung === key;
                   return (
                     <button
                       key={key}
-                      onClick={() => { onChange({ filterChosung: isActive ? null : key, filterBrands: new Set() }); }}
-                      className={`flex items-center justify-center h-9 rounded-[10px] cursor-pointer transition-all text-[15px] font-bold border ${
+                      onClick={() => onChange({ filterChosung: isActive ? null : key, filterBrands: new Set() })}
+                      className={`flex items-center justify-center w-[45px] h-[30px] rounded-[10px] cursor-pointer text-sm font-bold border ${
                         isActive
                           ? "bg-brand text-white border-transparent"
                           : "bg-bg-chip text-text-sub border-border"
@@ -171,7 +164,7 @@ export function FilterModal({ open, onClose, state, onChange, onReset, resultCou
                           n.has(brand) ? n.delete(brand) : n.add(brand);
                           onChange({ filterBrands: n });
                         }}
-                        className={`shrink-0 h-[30px] px-3.5 rounded-[15px] cursor-pointer whitespace-nowrap transition-all text-xs border ${
+                        className={`h-[30px] px-3 rounded-[15px] cursor-pointer text-xs border transition-all ${
                           isActive
                             ? "bg-brand-bg text-brand border-brand-light font-semibold"
                             : "bg-bg-chip text-text-hint border-transparent font-normal"
@@ -187,7 +180,7 @@ export function FilterModal({ open, onClose, state, onChange, onReset, resultCou
 
             <Divider />
 
-            {/* 가격 슬라이더 */}
+            {/* 가격 슬라이더 — step 1000원 */}
             <Section
               title="가격"
               rightLabel={`${priceRange[0].toLocaleString()}원 ~ ${priceRange[1].toLocaleString()}원`}
@@ -197,29 +190,40 @@ export function FilterModal({ open, onClose, state, onChange, onReset, resultCou
                 <div
                   className="absolute top-3.5 h-1 rounded-sm bg-brand"
                   style={{
-                    left: `${(priceRange[0] / 1000000) * 100}%`,
-                    right: `${100 - (priceRange[1] / 1000000) * 100}%`,
+                    left: `${(priceRange[0] / PRICE_MAX) * 100}%`,
+                    right: `${100 - (priceRange[1] / PRICE_MAX) * 100}%`,
                   }}
                 />
                 <input
-                  type="range" min={0} max={1000000} step={10000} value={priceRange[0]}
+                  type="range" min={0} max={PRICE_MAX} step={1000} value={priceRange[0]}
                   onChange={(e) => {
                     const v = Number(e.target.value);
-                    onChange({ priceRange: [Math.min(v, priceRange[1] - 10000), priceRange[1]] });
+                    onChange({ priceRange: [Math.min(v, priceRange[1] - 1000), priceRange[1]] });
                   }}
                   className="absolute w-full"
-                  style={{ top: 6, height: 20, appearance: "none", background: "transparent", zIndex: priceRange[0] > 500000 ? 5 : 3 }}
+                  style={{ top: 6, height: 20, appearance: "none", background: "transparent", zIndex: priceRange[0] > PRICE_MAX * 0.5 ? 5 : 3 }}
                 />
                 <input
-                  type="range" min={0} max={1000000} step={10000} value={priceRange[1]}
+                  type="range" min={0} max={PRICE_MAX} step={1000} value={priceRange[1]}
                   onChange={(e) => {
                     const v = Number(e.target.value);
-                    onChange({ priceRange: [priceRange[0], Math.max(v, priceRange[0] + 10000)] });
+                    onChange({ priceRange: [priceRange[0], Math.max(v, priceRange[0] + 1000)] });
                   }}
                   className="absolute w-full"
                   style={{ top: 6, height: 20, appearance: "none", background: "transparent", zIndex: 4 }}
                 />
-                <style>{`input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--color-brand);border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.25);cursor:pointer}`}</style>
+                <style>{`
+                  input[type="range"]::-webkit-slider-thumb {
+                    -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+                    background:var(--color-brand); border:3px solid #fff;
+                    box-shadow:0 1px 4px rgba(0,0,0,.2); cursor:pointer;
+                  }
+                  input[type="range"]::-moz-range-thumb {
+                    width:20px; height:20px; border-radius:50%;
+                    background:var(--color-brand); border:3px solid #fff;
+                    box-shadow:0 1px 4px rgba(0,0,0,.2); cursor:pointer;
+                  }
+                `}</style>
               </div>
               <div className="flex items-center justify-between mt-1">
                 <span className="text-[11px] text-text-muted">0원</span>
@@ -245,8 +249,10 @@ export function FilterModal({ open, onClose, state, onChange, onReset, resultCou
   );
 }
 
-// ── 내부 컴포넌트 ────────────────────────────────────────────────────
-function Section({ title, rightLabel, children }: { title: string; rightLabel?: string; children: React.ReactNode }) {
+// ── 내부 컴포넌트 ─────────────────────────────────────────────────────
+function Section({ title, rightLabel, children }: {
+  title: string; rightLabel?: string; children: React.ReactNode;
+}) {
   return (
     <div className="mb-5">
       <div className="flex items-center justify-between mb-3">

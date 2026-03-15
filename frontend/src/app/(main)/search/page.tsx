@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { SlidersHorizontal } from "lucide-react";
-import { MOCK_SEARCH_PRODUCTS } from "@/constants/_mock/products";
+import { MOCK_SEARCH_PRODUCTS } from "@/constants/_mock/searchProducts";
 import { MAIN_CATEGORIES, BRANDS } from "@/constants/productCategories";
 import { DEFAULT_FILTER } from "@/constants/filterDefaults";
 import { FilterModal, FilterState } from "@/components/common/FilterModal";
@@ -10,30 +9,37 @@ import { CategoryFilter } from "@/components/common/CategoryFilter";
 import ProductCard from "@/components/common/ProductCard";
 import { Pagination } from "@/components/common/Pagination";
 import { Toast } from "@/components/common/Toast";
+import EmptyState from "@/components/common/EmptyState";
+import FilterButton from "@/components/common/FilterButton";
+import SearchBar from "@/components/common/SearchBar";
 import { useToast } from "@/hooks";
+import { useLike } from "@/hooks/useLike";
 import { toggleSet } from "@/utils/format";
+import { Search } from "lucide-react";
 
 const PAGE_SIZE = 10;
 
+// matchScore 보완 — ⚠️ API 연동 시 서버에서 계산된 값으로 교체
 const PRODUCTS = MOCK_SEARCH_PRODUCTS.map((p, i) => ({
   ...p,
-  matchScore: 78 + (i % 18),
+  matchScore: p.matchScore ?? 78 + (i % 18),
 }));
 
 export default function SearchPage() {
   const [selectedMain, setSelectedMain] = useState<string | null>(null);
   const [selectedSub, setSelectedSub] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [showFilter, setShowFilter] = useState(false);
   const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER);
 
-  const [routineAdded, setRoutineAdded] = useState<Set<number>>(new Set());
-  const [wished, setWished] = useState<Set<number>>(new Set());
-  const [owned, setOwned] = useState<Set<number>>(new Set());
+  const { toggleLike, isLiked } = useLike();
+  const [routineAdded, setRoutineAdded] = useState<Set<string>>(new Set());
+  const [owned, setOwned] = useState<Set<string>>(new Set());
 
   const { toastMsg, showToast } = useToast();
 
-  const addToRoutine = (id: number, name: string) => {
+  const addToRoutine = (id: string, name: string) => {
     setRoutineAdded((p) => new Set([...p, id]));
     showToast(`✓ ${name} 루틴에 추가됨!`);
   };
@@ -46,6 +52,14 @@ export default function SearchPage() {
 
   const filtered = useMemo(() => {
     let list = PRODUCTS;
+    // 검색어 필터
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q),
+      );
+    }
     if (selectedSub) list = list.filter((p) => p.category === selectedSub);
     else if (selectedMain)
       list = list.filter((p) =>
@@ -60,37 +74,62 @@ export default function SearchPage() {
     if (filter.filterBrands.size > 0)
       list = list.filter((p) => filter.filterBrands.has(p.brand));
     return list;
-  }, [selectedMain, selectedSub, filter]);
+  }, [selectedMain, selectedSub, searchQuery, filter]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // 검색어/필터 변경 시 페이지 초기화
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setPage(1);
+  };
+  const handleMainSelect = (val: string | null) => {
+    setSelectedMain(val);
+    setPage(1);
+  };
+  const handleSubSelect = (val: string | null) => {
+    setSelectedSub(val);
+    setPage(1);
+  };
 
   return (
     <div className="flex flex-col min-h-full bg-white">
       <Toast msg={toastMsg} />
 
       {/* 헤더 */}
-      <div className="px-6 pt-5 pb-3 flex items-center justify-between bg-gradient-to-b from-[#F5F2EA] to-white">
-        <h1 className="text-xl font-semibold text-text-primary m-0">
-          전체 제품
-        </h1>
-        <FilterButton
-          filterCount={filterCount}
-          onClick={() => setShowFilter(true)}
+      <div className="px-6 pt-5 pb-3 bg-gradient-to-b from-[#F5F2EA] to-white">
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-xl font-semibold text-text-primary m-0">
+            전체 제품
+          </h1>
+          <FilterButton
+            filterCount={filterCount}
+            onClick={() => setShowFilter(true)}
+          />
+        </div>
+        <SearchBar
+          value={searchQuery}
+          onChange={handleSearchChange}
+          placeholder="제품명, 브랜드 검색..."
         />
       </div>
 
       <CategoryFilter
         selectedMain={selectedMain}
         selectedSub={selectedSub}
-        onMainSelect={setSelectedMain}
-        onSubSelect={setSelectedSub}
+        onMainSelect={handleMainSelect}
+        onSubSelect={handleSubSelect}
       />
 
       {/* 제품 목록 */}
       <div className="px-6 pt-1 flex flex-col gap-2.5 pb-28">
         {filtered.length === 0 ? (
-          <EmptyResult />
+          <EmptyState
+            icon={Search}
+            title="해당하는 제품이 없어요"
+            description="검색어나 필터를 바꿔보세요"
+          />
         ) : (
           paginated.map((p) => (
             <ProductCard
@@ -99,17 +138,17 @@ export default function SearchPage() {
               brand={p.brand}
               name={p.name}
               category={p.category}
-              categoryShort={p.categoryShort}
+              emoji={p.emoji}
               skinTypes={p.skinTypes}
               effects={p.effects}
-              layout="vertical"
               actions={{
-                onAddRoutine: () => !routineAdded.has(p.id) && addToRoutine(p.id, p.name),
+                onAddRoutine: () =>
+                  !routineAdded.has(p.id) && addToRoutine(p.id, p.name),
                 inRoutine: routineAdded.has(p.id),
                 onToggleOwned: () => setOwned((prev) => toggleSet(prev, p.id)),
                 isOwned: owned.has(p.id),
-                onToggleWish: () => setWished((prev) => toggleSet(prev, p.id)),
-                isWished: wished.has(p.id),
+                onToggleLike: () => toggleLike(p.id),
+                isLiked: isLiked(p.id),
                 showCompare: true,
               }}
             />
@@ -128,46 +167,6 @@ export default function SearchPage() {
         resultCount={filtered.length}
         availableBrands={BRANDS}
       />
-    </div>
-  );
-}
-
-function FilterButton({
-  filterCount,
-  onClick,
-}: {
-  filterCount: number;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`relative flex items-center justify-center w-9 h-9 rounded-full border-none cursor-pointer ${
-        filterCount > 0 ? "bg-brand" : "bg-bg-chip"
-      }`}
-    >
-      <SlidersHorizontal
-        size={17}
-        color={filterCount > 0 ? "#fff" : "#616161"}
-      />
-      {filterCount > 0 && (
-        <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-[#FF5252] text-white text-[9px] font-bold border-2 border-white">
-          {filterCount}
-        </span>
-      )}
-    </button>
-  );
-}
-
-function EmptyResult() {
-  return (
-    <div className="flex flex-col items-center py-16">
-      <span className="text-[40px]">🔍</span>
-      <p className="text-center mt-3 text-xs text-text-muted">
-        해당하는 제품이 없어요.
-        <br />
-        필터를 바꿔보세요
-      </p>
     </div>
   );
 }
