@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -23,10 +23,25 @@ export default function MyPage() {
   const [tab, setTab] = useState<"routine" | "owned">("routine");
 
   const { routine, setStepProduct } = useLocalRoutineStore();
+
+  // 페이지 마운트 시 localStorage에서 루틴 복구
+  useEffect(() => {
+    useLocalRoutineStore.persist.rehydrate();
+  }, []);
   const [openStep,  setOpenStep]  = useState<string | null>(null);
   const [addSearch, setAddSearch] = useState("");
   const [isPiview,  setIsPiview]  = useState(false);
   const { toastMsg, showToast } = useToast();
+
+  // 모달 열릴 때 body 스크롤 차단 — BottomNav가 z-50이라 모달이 뒤로 숨는 문제 방지
+  useEffect(() => {
+    if (openStep) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [openStep]);
 
   const openModal  = (code: string) => { setOpenStep(code); setAddSearch(""); setIsPiview(false); };
   const closeModal = ()              => { setOpenStep(null); setAddSearch(""); setIsPiview(false); };
@@ -290,10 +305,10 @@ export default function MyPage() {
       {openStep && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-[rgba(0,0,0,0.5)] backdrop-blur-[4px]"
+            className="fixed inset-0 z-[60] bg-[rgba(0,0,0,0.5)] backdrop-blur-[4px]"
             onClick={closeModal}
           />
-          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none py-10 px-5">
+          <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none py-10 px-5">
             <div className="bg-white flex flex-col pointer-events-auto rounded-[20px] w-full max-w-[420px] max-h-full shadow-[0_8px_40px_rgba(0,0,0,0.18)] overflow-hidden">
               <div className="px-6 pb-6 overflow-y-auto flex-1 min-h-0">
                 <div className="flex items-center justify-between mt-[15px]">

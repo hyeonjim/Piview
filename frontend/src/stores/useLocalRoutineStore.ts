@@ -9,6 +9,7 @@
  */
 
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 // 마이페이지 루틴에서 쓰는 제품 타입 (mock)
 export interface LocalProduct {
@@ -53,13 +54,22 @@ const INITIAL_ROUTINE: LocalRoutineMap = Object.fromEntries(
   ROUTINE_STEP_META.map((s) => [s.code, null])
 );
 
-export const useLocalRoutineStore = create<LocalRoutineStore>((set) => ({
-  routine: INITIAL_ROUTINE,
+export const useLocalRoutineStore = create<LocalRoutineStore>()(
+  persist(
+    (set) => ({
+      routine: INITIAL_ROUTINE,
 
-  setRoutine: (routine) => set({ routine }),
+      setRoutine: (routine) => set({ routine }),
 
-  setStepProduct: (code, product) =>
-    set((state) => ({ routine: { ...state.routine, [code]: product } })),
+      setStepProduct: (code, product) =>
+        set((state) => ({ routine: { ...state.routine, [code]: product } })),
 
-  clearRoutine: () => set({ routine: INITIAL_ROUTINE }),
-}));
+      clearRoutine: () => set({ routine: INITIAL_ROUTINE }),
+    }),
+    {
+      name: "piview-routine",                        // localStorage 키 이름
+      storage: createJSONStorage(() => localStorage), // 저장소 지정
+      skipHydration: true,                           // SSR 환경에서 하이드레이션 에러 방지
+    }
+  )
+);
