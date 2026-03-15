@@ -9,8 +9,7 @@
  */
 
 export type SkinType = "건성" | "지성" | "복합성" | "수부지";
-// ⚠️ ERD COMMENT는 "men, women"이지만 현재 타입: male/female → BE 팀 확인 필요
-export type Gender = "male" | "female";
+export type Gender = "men" | "women";
 export type AgeGroup = "10" | "20" | "30" | "40";
 
 // ERD: User

@@ -1,7 +1,7 @@
 // src/types/user.ts
 
 export type SkinType = "건성" | "지성" | "복합성" | "수부지";
-export type Gender = "female" | "male";
+export type Gender = "men" | "women";
 export type AgeGroup = "10" | "20" | "30" | "40";
 
 export interface User {
@@ -46,9 +46,9 @@ export interface TypeQuestion {
   question: string;
 }
 
+// ⚠️ 변경: skinType 제거 (ERD Answer 테이블에 해당 컬럼 없음)
 export interface Answer {
-  id: number;
+  id: number;           // ERD: answer_id
   questionId: number;
   answer: string;
-  skinType: SkinType;
 }
