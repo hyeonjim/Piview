@@ -75,7 +75,7 @@ public class ProductRepository {
         }
 
         if (!conditions.isEmpty()) {
-            jpql.append("WHERE ").append(String.join(" And ", conditions)).append(" ");
+            jpql.append("WHERE ").append(String.join(" AND ", conditions)).append(" ");
         }
 
         jpql.append("ORDER BY p.productId DESC");
