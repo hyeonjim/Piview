@@ -1,6 +1,7 @@
 package com.piview.backend.routine.core.repository;
 
 
+import com.piview.backend.routine.core.dto.RoutineListResponse;
 import com.piview.backend.routine.core.entity.MyRoutine;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -25,4 +26,11 @@ public interface RoutineRepository extends JpaRepository<MyRoutine, Long> {
 
   // 사용자의 모든 루틴 리스트 조회
   List<MyRoutine> findAllByUserId(Long userId);
+
+  @Query("SELECT RoutineListResponse(" +
+      "r.id, r.title, r.isMain, CAST(COUNT(rd.id) AS int)) " +
+      "FROM MyRoutine r LEFT JOIN r.details rd " +
+      "WHERE r.userId = :userId " +
+      "GROUP BY r.id, r.title, r.isMain")
+  List<RoutineListResponse> findRoutineListByUserId(@Param("userId") Long userId);
 }

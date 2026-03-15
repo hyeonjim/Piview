@@ -88,16 +88,7 @@ public class RoutineService {
 
   // 루틴 전체 목록 조회
   public List<RoutineListResponse> getUserRoutines(Long userId) {
-    List<MyRoutine> routines = routineRepository.findAllByUserId(userId);
-
-    return routines.stream()
-        .map(routine -> new RoutineListResponse(
-            routine.getId(),
-            routine.getTitle(),
-            routine.isMain(),
-            routine.getDetails().size() // 루틴 내 제품 개수 계산
-        ))
-        .toList();
+    return routineRepository.findRoutineListByUserId(userId);
   }
 
   // 루틴 상세 조회
