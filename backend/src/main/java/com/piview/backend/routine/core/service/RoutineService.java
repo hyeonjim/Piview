@@ -1,9 +1,13 @@
 package com.piview.backend.routine.core.service;
 
+import com.piview.backend.product.catalog.repository.ProductSearchRepository;
+import com.piview.backend.product.entity.Product;
+import com.piview.backend.product.repository.ProductRepository;
 import com.piview.backend.routine.core.dto.*;
 import com.piview.backend.routine.core.entity.MyRoutine;
 import com.piview.backend.routine.core.entity.RoutineColumn;
 import com.piview.backend.routine.core.entity.RoutineDetail;
+import com.piview.backend.routine.core.repository.RoutineColumnRepository;
 import com.piview.backend.routine.core.repository.RoutineRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +24,10 @@ import java.util.stream.Collectors;
 public class RoutineService {
 
   private final RoutineRepository routineRepository;
+  private final RoutineColumnRepository routineColumnRepository;
+  private final ProductSearchRepository productSearchRepository;
+
+  private final RedisDraftService redisDraftService;
 
   // 루틴 생성 및 저장
   @Transactional
@@ -29,11 +37,40 @@ public class RoutineService {
       throw new IllegalStateException("루틴은 최대 6개까지만 생성할 수 있습니다.");
     }
 
+    // redis에서 임시 루틴 데이터 불러오기
+    List<DraftItemDto> draftItems = redisDraftService.getDraftItems(userId);
+
+    if (draftItems == null || draftItems.isEmpty()) {
+      throw new IllegalArgumentException("루틴에 추가된 화장품이 없습니다.");
+    }
+
     MyRoutine routine = MyRoutine.builder()
         .userId(userId)
         .title(title)
         .isMain(routineCount == 0) // 첫 루틴이면 자동으로 메인
         .build();
+
+    for (DraftItemDto item : draftItems) {
+      RoutineColumn column = routineColumnRepository.findById(item.columnId())
+          .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 루틴 단계입니다."));
+
+      Product product = productSearchRepository.findById(item.productId())
+          .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
+
+      RoutineDetail detail = RoutineDetail.builder()
+          .myRoutine(routine)
+          .routineColumn(column)
+          .product(product)
+          .stepOrder(item.stepOrder())
+          .build();
+
+      // 엔티티에 만들어둔 리스트에 쏙쏙 담아줍니다.
+      routine.getDetails().add(detail);
+    }
+
+    MyRoutine savedRoutine = routineRepository.save(routine);
+
+    redisDraftService.clearDraft(userId);
 
     return routineRepository.save(routine).getId();
   }
