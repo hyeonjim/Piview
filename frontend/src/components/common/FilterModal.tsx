@@ -60,12 +60,12 @@ export function FilterModal({
 
   // 브랜드 초성 그룹핑 — chosungUtils 활용
   const grouped: Record<string, string[]> = {};
-  availableBrands.forEach((b) => {
-    const k = getGroupKey(b);
-    if (!grouped[k]) grouped[k] = [];
-    grouped[k].push(b);
+  availableBrands.forEach((brand) => {
+    const groupKey = getGroupKey(brand);
+    if (!grouped[groupKey]) grouped[groupKey] = [];
+    grouped[groupKey].push(brand);
   });
-  const groupKeys = GROUP_ORDER.filter((k) => grouped[k]);
+  const groupKeys = GROUP_ORDER.filter((groupKey) => grouped[groupKey]);
 
   // 모달 열릴 때 body 스크롤 차단
   useEffect(() => {
@@ -144,15 +144,15 @@ export function FilterModal({
             {/* 피부기능 */}
             <Section title="피부기능">
               <div className="flex flex-wrap gap-2">
-                {SKIN_FUNCTIONS.map((fn) => (
+                {SKIN_FUNCTIONS.map((functionName) => (
                   <Chip
-                    key={fn}
-                    label={fn}
-                    active={filterFns.has(fn)}
+                    key={functionName}
+                    label={functionName}
+                    active={filterFns.has(functionName)}
                     onClick={() => {
-                      const n = new Set(filterFns);
-                      n.has(fn) ? n.delete(fn) : n.add(fn);
-                      onChange({ filterFns: n });
+                      const newSet = new Set(filterFns);
+                      newSet.has(functionName) ? newSet.delete(functionName) : newSet.add(functionName);
+                      onChange({ filterFns: newSet });
                     }}
                   />
                 ))}
@@ -194,9 +194,9 @@ export function FilterModal({
                       <button
                         key={brand}
                         onClick={() => {
-                          const n = new Set(filterBrands);
-                          n.has(brand) ? n.delete(brand) : n.add(brand);
-                          onChange({ filterBrands: n });
+                          const newSet = new Set(filterBrands);
+                          newSet.has(brand) ? newSet.delete(brand) : newSet.add(brand);
+                          onChange({ filterBrands: newSet });
                         }}
                         className={`h-[30px] px-3 rounded-[15px] cursor-pointer text-xs border transition-all ${
                           isActive
@@ -235,10 +235,10 @@ export function FilterModal({
                   step={1000}
                   value={priceRange[0]}
                   onChange={(e) => {
-                    const v = Number(e.target.value);
+                    const value = Number(e.target.value);
                     onChange({
                       priceRange: [
-                        Math.min(v, priceRange[1] - 1000),
+                        Math.min(value, priceRange[1] - 1000),
                         priceRange[1],
                       ],
                     });
@@ -256,11 +256,11 @@ export function FilterModal({
                   step={1000}
                   value={priceRange[1]}
                   onChange={(e) => {
-                    const v = Number(e.target.value);
+                    const value = Number(e.target.value);
                     onChange({
                       priceRange: [
                         priceRange[0],
-                        Math.max(v, priceRange[0] + 1000),
+                        Math.max(value, priceRange[0] + 1000),
                       ],
                     });
                   }}

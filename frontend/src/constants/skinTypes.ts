@@ -20,8 +20,8 @@ export const SKIN_TYPES = [
 
 /** 성별 선택 옵션 */
 export const GENDER_OPTIONS = [
-  { id: "female", icon: "👩", label: "여성" },
-  { id: "male",   icon: "👨", label: "남성" },
+  { id: "women", icon: "👩", label: "여성" },
+  { id: "men",   icon: "👨", label: "남성" },
 ] as const;
 
 /** 연령대 선택 옵션 */

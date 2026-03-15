@@ -66,8 +66,8 @@ function ewgLabel(score: number | null | undefined): string {
 export function IngredientsTab({ ingredients }: Props) {
   const [search, setSearch] = useState("");
 
-  const filtered = ingredients.filter((i) =>
-    i.name.toLowerCase().includes(search.toLowerCase()),
+  const filtered = ingredients.filter((ingredient) =>
+    ingredient.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -86,28 +86,28 @@ export function IngredientsTab({ ingredients }: Props) {
 
       {/* 성분 목록 */}
       <div className="flex flex-col gap-0">
-        {filtered.map((ing, i) => (
+        {filtered.map((ingredient, index) => (
           <div
-            key={`${ing.name}-${i}`}
+            key={`${ingredient.name}-${index}`}
             className="flex items-center justify-between py-2.5"
             style={{
               borderBottom:
-                i < filtered.length - 1 ? "1px solid #F0F0F0" : "none",
+                index < filtered.length - 1 ? "1px solid #F0F0F0" : "none",
             }}
           >
-            <span style={INGRED_NAME_STYLE}>{ing.name}</span>
-            {ing.ewgScore !== undefined && (
+            <span style={INGRED_NAME_STYLE}>{ingredient.name}</span>
+            {ingredient.ewgScore !== undefined && (
               <div className="flex items-center gap-1.5 shrink-0">
                 <div
                   style={{
                     ...EWG_DOT_BASE,
-                    backgroundColor: ewgColor(ing.ewgScore),
+                    backgroundColor: ewgColor(ingredient.ewgScore),
                   }}
                 />
                 <span
-                  style={{ ...EWG_SCORE_STYLE, color: ewgColor(ing.ewgScore) }}
+                  style={{ ...EWG_SCORE_STYLE, color: ewgColor(ingredient.ewgScore) }}
                 >
-                  {ing.ewgScore ?? "?"} {ewgLabel(ing.ewgScore)}
+                  {ingredient.ewgScore ?? "?"} {ewgLabel(ingredient.ewgScore)}
                 </span>
               </div>
             )}

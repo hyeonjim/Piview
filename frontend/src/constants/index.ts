@@ -16,7 +16,7 @@ export * from "./skinTypes";
 export * from "./skinTypeInfo";
 export * from "./routineSteps"; // ROUTINE_STEPS, MYPAGE_ROUTINE_STEPS, RoutineStepKey, INITIAL_ROUTINE
 export * from "./routineEvaluation";
-export * from "./quiz";
+export * from "./survey";
 export * from "./skinTestOptions";
 export * from "./insights";
 export * from "./userSettings";

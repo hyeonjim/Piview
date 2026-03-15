@@ -69,7 +69,7 @@ export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   // ⚠️ API 연동 시 → productService.getProduct(id) 로 교체
-  const d = getMockProductById(id);
+  const productData = getMockProductById(id);
 
   const [owned, setOwned] = useState(false);
   const [routineAdded, setRoutineAdded] = useState(false);
@@ -80,7 +80,7 @@ export default function ProductDetailPage() {
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { toastMsg, showToast } = useToast();
+  const { toastMessage, showToast } = useToast();
 
   const handleScroll = useCallback(() => {
     if (scrollRef.current) setShowScrollTop(scrollRef.current.scrollTop > 300);
@@ -93,18 +93,18 @@ export default function ProductDetailPage() {
   const handleAddRoutine = () => {
     if (routineAdded) return;
     setRoutineAdded(true);
-    showToast(`✓ ${d.name} 루틴에 추가됨!`);
+    showToast(`✓ ${productData.name} 루틴에 추가됨!`);
   };
 
-  const { total, safe, caution, danger, unknown, safePercent } = d.ewg;
-  const allergenList = d.ingredientsKr.filter((name) =>
-    isAllergenIngredient(name),
+  const { total, safe, caution, danger, unknown, safePercent } = productData.ewg;
+  const allergenList = productData.ingredientsKr.filter((ingredientName) =>
+    isAllergenIngredient(ingredientName),
   );
-  const purposeScores = Object.entries(d.purposeScores);
-  const skinTypeScores = Object.entries(d.skinTypeScores);
+  const purposeScores = Object.entries(productData.purposeScores);
+  const skinTypeScores = Object.entries(productData.skinTypeScores);
 
   // 매칭 점수
-  const score = d.matchScore;
+  const score = productData.matchScore;
   const matchColor =
     score >= 90
       ? "var(--color-brand)"
@@ -132,7 +132,7 @@ export default function ProductDetailPage() {
 
   return (
     <div className="flex flex-col min-h-full relative bg-bg-beige">
-      <Toast msg={toastMsg} />
+      <Toast msg={toastMessage} />
 
       {/* 헤더 */}
       <div className="sticky top-0 z-20 flex items-center px-4 h-14 bg-bg-beige">
@@ -152,7 +152,7 @@ export default function ProductDetailPage() {
       >
         {/* 이미지 */}
         <div className="mx-5 mb-4 flex items-center justify-center h-[240px] rounded-[20px] bg-[#EDEAE2]">
-          <span className="text-[80px]">{d.emoji ?? "🧴"}</span>
+          <span className="text-[80px]">{productData.emoji ?? "🧴"}</span>
         </div>
 
         {/* 제품 기본 정보 */}
@@ -160,20 +160,20 @@ export default function ProductDetailPage() {
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="flex-1 min-w-0">
               <p className="text-base text-text-muted font-medium mb-0.5">
-                {d.brand}
+                {productData.brand}
               </p>
               <h1 className="text-[19px] font-semibold text-text-primary leading-[1.35]">
-                {d.name}
+                {productData.name}
               </h1>
             </div>
-            {(d.skinType1 || d.skinType2) && (
+            {(productData.skinType1 || productData.skinType2) && (
               <div className="flex flex-col gap-1 shrink-0">
-                {[d.skinType1, d.skinType2].filter(Boolean).map((t) => (
+                {[productData.skinType1, productData.skinType2].filter(Boolean).map((skinType) => (
                   <span
-                    key={t}
+                    key={skinType}
                     className="text-xs px-2 py-[2px] rounded-[6px] bg-brand-bg text-brand font-semibold"
                   >
-                    {t}
+                    {skinType}
                   </span>
                 ))}
               </div>
@@ -181,7 +181,7 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="flex flex-wrap gap-1 mb-3">
-            {d.tags.map((tag) => (
+            {productData.tags.map((tag) => (
               <span
                 key={tag}
                 className="text-xs px-[9px] py-[2px] rounded-xl bg-bg-chip text-text-hint border border-border-warm"
@@ -191,12 +191,12 @@ export default function ProductDetailPage() {
             ))}
           </div>
 
-          {d.price && (
+          {productData.price && (
             <p className="text-base font-normal text-text-primary">
-              ₩{d.price.toLocaleString()} /
-              {d.volume && (
+              ₩{productData.price.toLocaleString()} /
+              {productData.volume && (
                 <span className="text-base text-text-hint font-normal ml-1.5">
-                  {d.volume}
+                  {productData.volume}
                 </span>
               )}
             </p>
@@ -223,7 +223,7 @@ export default function ProductDetailPage() {
               )}
             </button>
             <button
-              onClick={() => setOwned((p) => !p)}
+              onClick={() => setOwned((prev) => !prev)}
               className={`flex items-center justify-center gap-1.5 h-[42px] px-4 rounded-xl cursor-pointer transition-all active:scale-[0.98] text-sm font-semibold border ${
                 owned
                   ? "border-brand-light bg-brand-bg text-brand"
@@ -390,9 +390,9 @@ export default function ProductDetailPage() {
         </div>
 
         {/* 주의 성분 + 알레르기 카드 */}
-        {(d.cautionIngredients.length > 0 || allergenList.length > 0) && (
+        {(productData.cautionIngredients.length > 0 || allergenList.length > 0) && (
           <div className="mx-5 p-4 rounded-2xl mb-3 bg-[#FFF8F0] border border-[#FFE0B2]">
-            {d.cautionIngredients.length > 0 && (
+            {productData.cautionIngredients.length > 0 && (
               <>
                 <div className="flex items-center gap-2 mb-2">
                   <AlertTriangle size={14} color="#E65100" />
@@ -401,13 +401,13 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {d.cautionIngredients.map((ing) => (
+                  {productData.cautionIngredients.map((ingredient) => (
                     <span
-                      key={ing}
+                      key={ingredient}
                       className="text-xs px-[10px] py-[3px] rounded-[6px] font-medium"
                       style={CAUTION_CHIP_STYLE}
                     >
-                      {ing}
+                      {ingredient}
                     </span>
                   ))}
                 </div>
@@ -417,7 +417,7 @@ export default function ProductDetailPage() {
             {allergenList.length > 0 && (
               <div
                 className={
-                  d.cautionIngredients.length > 0
+                  productData.cautionIngredients.length > 0
                     ? "mt-3 pt-3 border-t border-dashed border-[#FFCC80]"
                     : ""
                 }
@@ -490,13 +490,13 @@ export default function ProductDetailPage() {
           {/* 전성분 분석 */}
           {activeTab === "ingredients" && (
             <div className="rounded-2xl bg-white overflow-hidden">
-              {d.description && (
+              {productData.description && (
                 <div className="p-4 border-b border-[#F5F5F5]">
                   <p className="text-xs font-semibold text-text-sub mb-1.5">
                     제품 설명
                   </p>
                   <p className="text-xs text-text-primary leading-[1.6]">
-                    {d.description}
+                    {productData.description}
                   </p>
                 </div>
               )}
@@ -504,7 +504,7 @@ export default function ProductDetailPage() {
               <div className="p-4 border-b border-[#F5F5F5]">
                 <button
                   className="flex items-center justify-between w-full bg-transparent border-none cursor-pointer p-0"
-                  onClick={() => setIngredOpen((p) => !p)}
+                  onClick={() => setIngredOpen((prev) => !prev)}
                 >
                   <span className="text-xs font-semibold text-text-sub">
                     전성분
@@ -528,21 +528,21 @@ export default function ProductDetailPage() {
                     WebkitBoxOrient: "vertical" as const,
                   }}
                 >
-                  {d.ingredientsKr.join(", ")}
+                  {productData.ingredientsKr.join(", ")}
                 </p>
               </div>
 
               <div>
-                {d.ingredientDetails.map((ing, idx) => {
-                  const ewg = getEwgColor(ing.ewgGrade);
-                  const isAllergen = isAllergenIngredient(ing.name);
+                {productData.ingredientDetails.map((ingredient, index) => {
+                  const ewg = getEwgColor(ingredient.ewgGrade);
+                  const isAllergen = isAllergenIngredient(ingredient.name);
                   return (
                     <div
-                      key={ing.name}
+                      key={ingredient.name}
                       className="flex items-start gap-3 px-4 py-3"
                       style={{
                         borderBottom:
-                          idx < d.ingredientDetails.length - 1
+                          index < productData.ingredientDetails.length - 1
                             ? INGRED_DIVIDER
                             : "none",
                       }}
@@ -553,21 +553,21 @@ export default function ProductDetailPage() {
                           className="text-[10px] font-bold mt-0.5"
                           style={{ color: ewg.text }}
                         >
-                          {ing.ewgGrade != null ? ing.ewgGrade : "?"}
+                          {ingredient.ewgGrade != null ? ingredient.ewgGrade : "?"}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-text-primary m-0 leading-[1.3]">
-                          {ing.name}
+                          {ingredient.name}
                         </p>
-                        {ing.nameEn && (
+                        {ingredient.nameEn && (
                           <p className="text-xs text-text-muted my-0.5">
-                            {ing.nameEn}
+                            {ingredient.nameEn}
                           </p>
                         )}
-                        {ing.funcs && ing.funcs.length > 0 && (
+                        {ingredient.funcs && ingredient.funcs.length > 0 && (
                           <p className="text-xs text-text-hint leading-[1.5]">
-                            {ing.funcs.join(", ")}
+                            {ingredient.funcs.join(", ")}
                           </p>
                         )}
                       </div>
@@ -582,16 +582,16 @@ export default function ProductDetailPage() {
           {/* 목적별 점수 */}
           {activeTab === "purpose" && (
             <div className="rounded-2xl bg-white p-4 flex flex-col gap-4">
-              {purposeScores.map(([label, sc]) => (
+              {purposeScores.map(([label, score]) => (
                 <div key={label}>
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs text-text-primary">{label}</span>
-                    <span className="text-xs font-bold text-brand">{sc}</span>
+                    <span className="text-xs font-bold text-brand">{score}</span>
                   </div>
                   <div className="h-1.5 rounded-[3px] bg-[#F0EDE8] overflow-hidden">
                     <div
                       className="h-full rounded-[3px] bg-brand transition-[width] duration-[600ms] ease-in-out"
-                      style={{ width: `${sc}%` }}
+                      style={{ width: `${score}%` }}
                     />
                   </div>
                 </div>
@@ -606,23 +606,23 @@ export default function ProductDetailPage() {
           {/* 피부타입별 */}
           {activeTab === "skintype" && (
             <div className="rounded-2xl bg-white p-4 flex flex-col gap-4">
-              {skinTypeScores.map(([label, sc]) => (
+              {skinTypeScores.map(([label, score]) => (
                 <div key={label}>
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-text-primary">{label}</span>
-                      {label === d.skinType1 && (
+                      {label === productData.skinType1 && (
                         <span className="text-[10px] px-2 py-[1px] rounded-[20px] bg-brand text-white font-semibold">
                           내 피부
                         </span>
                       )}
                     </div>
-                    <span className="text-xs font-bold text-brand">{sc}</span>
+                    <span className="text-xs font-bold text-brand">{score}</span>
                   </div>
                   <div className="h-1.5 rounded-[3px] bg-[#F0EDE8] overflow-hidden">
                     <div
                       className="h-full rounded-[3px] bg-brand transition-[width] duration-[600ms] ease-in-out"
-                      style={{ width: `${sc}%` }}
+                      style={{ width: `${score}%` }}
                     />
                   </div>
                 </div>

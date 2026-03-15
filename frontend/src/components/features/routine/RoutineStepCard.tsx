@@ -102,7 +102,6 @@ export function RoutineStepCard({
   stepNumber,
   stepLabel,
   stepIcon,
-  category,
   product,
   isFirst = false,
   onRemove,

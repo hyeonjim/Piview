@@ -17,14 +17,14 @@ const INITIAL_WISHED = ["s1", "s3", "s5"];
 export default function LikesPage() {
   // useLike 훅으로 찜 상태 관리 — API 연동 시 훅 내부만 수정
   const { toggleLike, isLiked } = useLike(INITIAL_WISHED);
-  const { toastMsg } = useToast();
+  const { toastMessage } = useToast();
 
   // ⚠️ API 연동 시 → likesService.getWishedProducts() 로 교체
   const wishlistedProducts = MOCK_SEARCH_PRODUCTS.filter((p) => isLiked(p.id));
 
   return (
     <div className="flex flex-col min-h-full bg-white pb-28">
-      <Toast msg={toastMsg} />
+      <Toast msg={toastMessage} />
 
       {/* 헤더 */}
       <div className="px-6 pt-5 pb-3" style={{ background: HEADER_BG }}>

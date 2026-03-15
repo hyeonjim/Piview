@@ -1,36 +1,36 @@
 /**
- * quiz.ts
- * 피부 진단 퀴즈 질문 및 선택지 전체 정의
+ * survey.ts
+ * 피부 진단 설문 질문 및 선택지 전체 정의
  * → 앱 내 고정 콘텐츠. DB 교체 대상 아님.
  *
  * 사용처:
- *   - src/app/(onboarding)/skin-test/quiz/page.tsx → 모든 quiz 상수
+ *   - src/app/(onboarding)/skin-test/quiz/page.tsx → 모든 survey 상수
  */
 
-export interface QuizOption {
+export interface SurveyOption {
   icon:  string;
   text:  string;
   value: string;
 }
 
-export interface QuizQuestion {
+export interface SurveyQuestion {
   id:       number;
   question: string;
-  options:  QuizOption[];
+  options:  SurveyOption[];
 }
 
 /** 성별 질문 (id: -1, 가장 먼저 출력) */
-export const GENDER_QUESTION: QuizQuestion = {
+export const GENDER_QUESTION: SurveyQuestion = {
   id: -1,
   question: "성별을\n알려주세요",
   options: [
-    { icon: "👩", text: "여성", value: "female" },
-    { icon: "👨", text: "남성", value: "male"   },
+    { icon: "👩", text: "여성", value: "women" },
+    { icon: "👨", text: "남성", value: "men"   },
   ],
 };
 
 /** 공통 질문 (성별 무관) */
-export const COMMON_QUESTIONS: QuizQuestion[] = [
+export const COMMON_QUESTIONS: SurveyQuestion[] = [
   {
     id: 0,
     question: "연령대를\n알려주세요",
@@ -64,7 +64,7 @@ export const COMMON_QUESTIONS: QuizQuestion[] = [
 ];
 
 /** 여성 전용 질문 */
-export const FEMALE_QUESTIONS: QuizQuestion[] = [
+export const WOMEN_QUESTIONS: SurveyQuestion[] = [
   {
     id: 3,
     question: "생리 전후\n피부 변화는?",
@@ -98,7 +98,7 @@ export const FEMALE_QUESTIONS: QuizQuestion[] = [
 ];
 
 /** 남성 전용 질문 */
-export const MALE_QUESTIONS: QuizQuestion[] = [
+export const MEN_QUESTIONS: SurveyQuestion[] = [
   {
     id: 3,
     question: "면도 후\n피부 상태는?",
@@ -132,7 +132,7 @@ export const MALE_QUESTIONS: QuizQuestion[] = [
 ];
 
 /** 알레르기 질문 (마지막, id: 6) */
-export const ALLERGY_QUESTION: QuizQuestion = {
+export const ALLERGY_QUESTION: SurveyQuestion = {
   id: 6,
   question: "주의하는 성분이\n있나요?",
   options: [
@@ -143,7 +143,7 @@ export const ALLERGY_QUESTION: QuizQuestion = {
   ],
 };
 
-/** 퀴즈 id → 피부타입 매핑 (세안 후 피부 상태 질문 기준) */
+/** 설문 id → 피부타입 매핑 (세안 후 피부 상태 질문 기준) */
 export const SKIN_TYPE_MAP: Record<string, string> = {
   dry:         "dry",
   combination: "combination",

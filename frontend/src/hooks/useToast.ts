@@ -5,9 +5,9 @@
  * search, recommend, routine 등 여러 페이지에서 공용.
  *
  * 사용법:
- *   const { toastMsg, showToast } = useToast();
+ *   const { toastMessage, showToast } = useToast();
  *   showToast("루틴에 추가됐어요!");
- *   <Toast msg={toastMsg} />
+ *   <Toast msg={toastMessage} />
  */
 
 import { useState, useCallback } from "react";
@@ -18,15 +18,15 @@ interface UseToastOptions {
 }
 
 export function useToast({ duration = 2200 }: UseToastOptions = {}) {
-  const [toastMsg, setToastMsg] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
 
   const showToast = useCallback(
-    (msg: string) => {
-      setToastMsg(msg);
-      setTimeout(() => setToastMsg(""), duration);
+    (message: string) => {
+      setToastMessage(message);
+      setTimeout(() => setToastMessage(""), duration);
     },
     [duration]
   );
 
-  return { toastMsg, showToast };
+  return { toastMessage, showToast };
 }

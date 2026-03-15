@@ -327,7 +327,7 @@ export default function PhotoAnalysisPage() {
 
   /* ── AI 분석 시작 → skin-test/select로 이동 (TODO: 실제 AI 분석 연동) ── */
   const handleAnalysisStart = () => {
-    router.push("/skin-test/select");
+    router.push("/mypage");
   };
 
   return (

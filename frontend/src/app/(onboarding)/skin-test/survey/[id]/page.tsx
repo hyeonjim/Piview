@@ -35,8 +35,8 @@ import { useRouter } from "next/navigation";
 import {
   GENDER_QUESTION,
   COMMON_QUESTIONS,
-  FEMALE_QUESTIONS,
-  MALE_QUESTIONS,
+  WOMEN_QUESTIONS,
+  MEN_QUESTIONS,
   ALLERGY_QUESTION,
   SKIN_TYPE_MAP,
 } from "@/constants";
@@ -74,33 +74,33 @@ export default function SurveyPage({
   const questionNumber = parseInt(id, 10); // 1-based URL 파라미터
 
   const router = useRouter();
-  const { gender, answers, setAnswer, setGender, resetSurvey } = useSurveyStore();
+  const [gender, setGender] = useState<"women" | "men">("women");
+  const [currentQ, setCurrentQ] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
 
-  const question = getQuestionByNumber(questionNumber, gender);
-  const isInvalid = !question || questionNumber < 1 || questionNumber > TOTAL_QUESTIONS;
-
-  // 유효하지 않은 번호면 첫 질문으로 이동 (렌더 중 직접 호출 금지 → useEffect 사용)
-  useEffect(() => {
-    if (isInvalid) router.replace("/skin-test/survey/1");
-  }, [isInvalid, router]);
-
-  // isInvalid 이후에 null 반환 → TypeScript가 question을 non-null로 추론 불가
-  // 명시적 null 가드로 narrowing 보장
-  if (!question || isInvalid) return null;
-
+  const genderQuestions = gender === "men" ? MEN_QUESTIONS : WOMEN_QUESTIONS;
+  const questions = [
+    GENDER_QUESTION,
+    ...COMMON_QUESTIONS,
+    ...genderQuestions,
+    ALLERGY_QUESTION,
+  ];
+  const question = questions[currentQ];
   const selectedAnswer = answers[question.id];
   const progress = (questionNumber / TOTAL_QUESTIONS) * 100;
   const isLast = questionNumber === TOTAL_QUESTIONS;
   const isAllergy = question.id === 6;
   const isGender = question.id === -1;
 
-  /** 답변 선택 — 성별 질문은 store.gender도 함께 업데이트 */
-  const selectAnswer = (value: string) => {
-    setAnswer(question.id, value);
-    if (isGender && (value === "male" || value === "female")) {
-      setGender(value as "female" | "male");
-    }
-  };
+  const selectAnswer = useCallback(
+    (value: string) => {
+      setAnswers((prev) => ({ ...prev, [question.id]: value }));
+      if (question.id === -1 && (value === "men" || value === "women")) {
+        setGender(value as "women" | "men");
+      }
+    },
+    [question.id],
+  );
 
   /** 다음 질문 또는 결과 페이지로 이동 */
   const goNext = () => {
@@ -142,7 +142,7 @@ export default function SurveyPage({
         <p className="text-text-muted" style={CATEGORY_TEXT_STYLE}>
           {isGender
             ? "맞춤 진단 시작"
-            : gender === "male"
+            : gender === "men"
               ? "남성 맞춤 진단"
               : "여성 맞춤 진단"}
         </p>
