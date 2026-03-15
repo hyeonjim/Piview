@@ -57,8 +57,12 @@ public class RoutineController {
 
   // 루틴 상세정보 조회
   @GetMapping("/{routineId}")
-  public ResponseEntity<RoutineResponse> getRoutineDetails(@PathVariable Long routineId) {
-    RoutineResponse response = routineService.getRoutineDetails(routineId);
+  public ResponseEntity<RoutineResponse> getRoutineDetails(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @PathVariable Long routineId) {
+
+    Long userId = userPrincipal.getId();
+    RoutineResponse response = routineService.getRoutineDetails(userId, routineId);
     return ResponseEntity.ok(response);
   }
 

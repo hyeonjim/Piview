@@ -50,9 +50,13 @@ public class RoutineService {
   }
 
   // 루틴 상세 조회
-  public RoutineResponse getRoutineDetails(Long routineId) {
+  public RoutineResponse getRoutineDetails(Long userId, Long routineId) {
     MyRoutine routine = routineRepository.findById(routineId)
         .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
+
+    if (!routine.getUserId().equals(userId)) {
+      throw new IllegalArgumentException("본인의 루틴만 조회할 수 있습니다.");
+    }
 
     // 단계(RoutineColumn)별로 데이터를 그룹핑
     Map<RoutineColumn, List<RoutineDetail>> groupedDetails = routine.getDetails().stream()
@@ -65,7 +69,7 @@ public class RoutineService {
               .sorted(Comparator.comparing(RoutineDetail::getStepOrder)) // 순서대로 정렬
               .map(detail -> new RoutineProductDto(
                   detail.getId(),
-                  detail.getProductId().getProductId(),
+                  detail.getProduct().getProductId(),
                   detail.getStepOrder()
               ))
               .toList();
