@@ -108,23 +108,12 @@ services:
     build:
       context: ./backend
     environment:
+      # 딱 이거 하나만 남기면 돼! (application-dev.yml을 읽으라는 뜻)
       - SPRING_PROFILES_ACTIVE=dev
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/piview_dev?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
-
-      - REDIS_HOST=develop-redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=${DEV_REDIS_PASSWORD}
-
-      - APP_AUTH_TOKEN_SECRET=${APP_AUTH_TOKEN_SECRET}
-      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
-      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_CLIENT_SECRET=${KAKAO_CLIENT_SECRET}
-      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_REDIRECT_URI=${KAKAO_REDIRECT_URI}
-      - APP_OAUTH2_SUCCESS_REDIRECT_URI=${OAUTH2_SUCCESS_URI}
-      - APP_OAUTH2_FAILURE_REDIRECT_URI=${OAUTH2_FAILURE_URI}
-
+      - SPRING_CONFIG_LOCATION=file:/app/application-dev.yml
+    volumes:
+      # 💡 EC2에 있는 yml 파일을 컨테이너 안으로 배달!
+      - ./application-dev.yml:/app/application-dev.yml
     networks:
       - app-network
 
