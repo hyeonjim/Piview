@@ -81,7 +81,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         String defaultTargetUrl = (serverPort == 8080)
                 ? "http://localhost:3000/oauth2/redirect"  // 로컬 프론트엔드 개발 서버 - 테스트용
-                : "https://cosmetics-domain.com/oauth2/redirect"; // 운영 서버 (실제 도메인으로 변경 필요)
+                : "https://j14e101.p.ssafy.io/oauth2/redirect"; // 운영 서버
 
         return redirectUri.orElse(defaultTargetUrl);
     }
