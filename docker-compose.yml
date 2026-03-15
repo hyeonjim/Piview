@@ -146,6 +146,7 @@ services:
       context: ./backend
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_CONFIG_LOCATION=file:/app/application-prod.yml
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/piview_prod?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
       - REDIS_HOST=prod-redis
       - REDIS_PORT=6379
