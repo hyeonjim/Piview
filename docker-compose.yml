@@ -151,6 +151,10 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${PROD_REDIS_PASSWORD}
 
+    volumes:
+      # 💡 EC2에 있는 yml 파일을 컨테이너 안으로 배달!
+      - ./application-prod.yml:/app/application-prod.yml
+
     networks:
       - app-network
 
