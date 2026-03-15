@@ -15,33 +15,71 @@ volumes:
 
 services:
   # ==========================================
-  # 1. 인프라 코어 (웹 서버, DB, CI/CD)
+  # 🗄️ 통합 데이터베이스 (MySQL 1개)
+  # ==========================================
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    env_file:
+      - .env
+    environment:
+#      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - TZ=Asia/Seoul
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 방금 만든 init.sql을 연결해서 컨테이너 생성 시 DB 3개 자동 생성!
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+
+  # ==========================================
+  # ⚡ 환경별 Redis (포트 충돌 방지)
+  # ==========================================
+  develop-redis:
+    image: redis:alpine
+    container_name: develop-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${DEV_REDIS_PASSWORD}
+    networks:
+      - app-network
+
+  back-dev-redis:
+    image: redis:alpine
+    container_name: back-dev-redis
+    ports:
+      - "6380:6379" # 로컬에서 접속할 때는 6380 포트 사용
+    command: redis-server --requirepass ${BACK_DEV_REDIS_PASSWORD}
+    networks:
+      - app-network
+
+  prod-redis:
+    image: redis:alpine
+    container_name: prod-redis
+    ports:
+      - "6381:6379" # 로컬에서 접속할 때는 6381 포트 사용
+    command: redis-server --requirepass ${PROD_REDIS_PASSWORD}
+    networks:
+      - app-network
+
+  # ==========================================
+  # 인프라 코어 (웹 서버, DB, CI/CD)
   # ==========================================
   nginx:
     image: nginx:alpine
     container_name: nginx
     ports:
       - "80:80"
-      # - "443:443"
+      - "443:443"   # HTTPS (Prod용)
+      - "3000:3000"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - /etc/letsencrypt:/etc/letsencrypt
     depends_on:
       - dev-frontend
       - prod-frontend
-    networks:
-      - app-network
-
-  mysql-db:
-    image: mysql:8.0
-    container_name: mysql-db
-    environment:
-      - MYSQL_ROOT_PASSWORD=rootpassword
-      - MYSQL_DATABASE=piview_dev  # 일단 Dev용 DB만 자동 생성. Prod용은 나중에 접속해서 추가!
-      - TZ=Asia/Seoul
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql
     networks:
       - app-network
 
@@ -72,8 +110,12 @@ services:
     build:
       context: ./backend
     environment:
+      # 딱 이거 하나만 남기면 돼! (application-dev.yml을 읽으라는 뜻)
       - SPRING_PROFILES_ACTIVE=dev
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/piview_dev?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      - SPRING_CONFIG_LOCATION=file:/app/application-dev.yml
+    volumes:
+      # 💡 EC2에 있는 yml 파일을 컨테이너 안으로 배달!
+      - ./application-dev.yml:/app/application-dev.yml
     networks:
       - app-network
 
@@ -103,6 +145,10 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/piview_prod?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      - REDIS_HOST=prod-redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${PROD_REDIS_PASSWORD}
+
     networks:
       - app-network
 

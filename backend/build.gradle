@@ -68,3 +68,11 @@ tasks.withType(Checkstyle).configureEach {
         html.required = true
     }
 }
+
+bootJar {
+    archiveFileName = 'app.jar'
+}
+
+jar {
+    enabled = false
+}
