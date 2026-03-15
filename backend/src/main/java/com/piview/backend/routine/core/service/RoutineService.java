@@ -1,8 +1,6 @@
 package com.piview.backend.routine.core.service;
 
-import com.piview.backend.routine.core.dto.RoutineProductDto;
-import com.piview.backend.routine.core.dto.RoutineResponse;
-import com.piview.backend.routine.core.dto.RoutineStepGroupDto;
+import com.piview.backend.routine.core.dto.*;
 import com.piview.backend.routine.core.entity.MyRoutine;
 import com.piview.backend.routine.core.entity.RoutineColumn;
 import com.piview.backend.routine.core.entity.RoutineDetail;
@@ -78,5 +76,32 @@ public class RoutineService {
         .toList();
 
     return new RoutineResponse(routine.getId(), routine.getTitle(), routine.isMain(), stepGroups);
+  }
+
+  // 루틴 순서 변경
+  @Transactional
+  public void updateRoutineOrders(Long userId, Long routineId, RoutineOrderUpdateRequest request) {
+    // 1. 해당 루틴이 본인 소유가 맞는지 검증
+    MyRoutine routine = routineRepository.findById(routineId)
+        .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
+
+    if (!routine.getUserId().equals(userId)) {
+      throw new IllegalArgumentException("본인의 루틴만 수정할 수 있습니다.");
+    }
+
+    // 2. 요청받은 ID 목록을 Map으로 변환하여 매칭 속도 향상 (routineDetailId -> stepOrder)
+    Map<Long, Integer> orderMap = request.updatedOrders().stream()
+        .collect(Collectors.toMap(
+            RoutineDetailOrderDto::routineDetailId,
+            RoutineDetailOrderDto::stepOrder
+        ));
+
+    // 3. 루틴에 속한 상세 항목들을 순회하며 순서 업데이트 (더티 체킹 발생)
+    routine.getDetails().forEach(detail -> {
+      Integer newOrder = orderMap.get(detail.getId());
+      if (newOrder != null) {
+        detail.updateStepOrder(newOrder); // 엔티티에 만들어둔 비즈니스 메서드 호출
+      }
+    });
   }
 }

@@ -1,6 +1,7 @@
 package com.piview.backend.routine.core.controller;
 
 import com.piview.backend.global.security.UserPrincipal;
+import com.piview.backend.routine.core.dto.RoutineOrderUpdateRequest;
 import com.piview.backend.routine.core.dto.RoutineResponse;
 import com.piview.backend.routine.core.service.RoutineService;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,17 @@ public class RoutineController {
   }
 
   // 루틴 수정(순서 및 이름 변경)
+  @PatchMapping("/{routineId}/order")
+  public ResponseEntity<Void> updateRoutineOrder(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @PathVariable Long routineId,
+      @RequestBody RoutineOrderUpdateRequest request) {
+
+    Long userId = userPrincipal.getId();
+    routineService.updateRoutineOrders(userId, routineId, request);
+
+    return ResponseEntity.ok().build();
+  }
 
   // 메인 루틴으로 설정
   @PatchMapping("/{routineId}/main")
