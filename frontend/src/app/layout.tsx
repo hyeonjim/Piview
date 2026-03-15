@@ -2,12 +2,30 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 
-// CDN 대신 로컬 woff2 파일로 제공 — 렌더링 블로킹 제거
+// 실제 사용 weight만 서브셋으로 로드 — 2MB → ~1MB
+// public/fonts/ 에 아래 4개 파일 필요:
+//   Pretendard-Regular.subset.woff2
+//   Pretendard-Medium.subset.woff2
+//   Pretendard-SemiBold.subset.woff2
+//   Pretendard-Bold.subset.woff2
 const pretendard = localFont({
-  src: "../../public/fonts/PretendardVariable.woff2",
-  variable: "--font-pretendard",
+  src: [
+    {
+      path: "../../public/fonts/Pretendard-Regular.subset.woff2",
+      weight: "400",
+    },
+    {
+      path: "../../public/fonts/Pretendard-Medium.subset.woff2",
+      weight: "500",
+    },
+    {
+      path: "../../public/fonts/Pretendard-SemiBold.subset.woff2",
+      weight: "600",
+    },
+    { path: "../../public/fonts/Pretendard-Bold.subset.woff2", weight: "700" },
+  ],
   display: "swap",
-  weight: "45 920", // Variable 폰트 weight 범위
+  variable: "--font-pretendard",
 });
 
 export const metadata: Metadata = {
