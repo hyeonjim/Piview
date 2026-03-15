@@ -113,6 +113,8 @@ services:
       # 딱 이거 하나만 남기면 돼! (application-dev.yml을 읽으라는 뜻)
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_CONFIG_LOCATION=file:/app/application-dev.yml
+      - DEV_REDIS_PASSWORD=${DEV_REDIS_PASSWORD}
+
     volumes:
       # 💡 EC2에 있는 yml 파일을 컨테이너 안으로 배달!
       - ./application-dev.yml:/app/application-dev.yml
