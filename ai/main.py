@@ -14,7 +14,8 @@ SkinLens FastAPI 서버
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import skin_type, ocr
+
+from api.routers import ocr, skin_type
 
 app = FastAPI(
     title="SkinLens API",
