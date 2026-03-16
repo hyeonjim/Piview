@@ -2,7 +2,6 @@ package com.piview.backend.routine.core.service;
 
 import com.piview.backend.product.catalog.repository.ProductSearchRepository;
 import com.piview.backend.product.entity.Product;
-import com.piview.backend.product.catalog.repository.ProductRepository;
 import com.piview.backend.routine.core.dto.*;
 import com.piview.backend.routine.core.entity.MyRoutine;
 import com.piview.backend.routine.core.entity.RoutineColumn;

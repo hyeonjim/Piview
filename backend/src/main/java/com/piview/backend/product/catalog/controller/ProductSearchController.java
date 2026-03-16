@@ -1,12 +1,14 @@
 package com.piview.backend.product.catalog.controller;
 
-import com.piview.backend.global.security.UserPrincipal;
-import com.piview.backend.product.catalog.dto.ProductSearchPageResponseDto;
-import com.piview.backend.product.catalog.service.ProductSearchService;
+
+import com.piview.backend.product.catalog.dto.ProductPageResponse;
+import com.piview.backend.product.catalog.dto.ProductSearchCondition;
+import com.piview.backend.product.catalog.service.ProductCatalogService;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
+
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,21 +18,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/products")
 public class ProductSearchController {
-  private final ProductSearchService productSearchService;
 
+  private final ProductCatalogService productCatalogService;
+
+  @Deprecated(forRemoval = false)
   @GetMapping("/search")
-  public ResponseEntity<ProductSearchPageResponseDto> searchProducts(
+  public ResponseEntity<ProductPageResponse> searchProducts(
       @RequestParam("keyword") String keyword,
-      @RequestParam(value = "page", defaultValue = "0") int page,
-      @AuthenticationPrincipal UserPrincipal userPrincipal) {
+      @RequestParam(value = "page", defaultValue = "0") int page) {
 
-    Long userId = (userPrincipal != null) ? userPrincipal.getId() : null;
+    ProductSearchCondition condition = ProductSearchCondition.builder()
+            .q(keyword)
+            .page(page)
+            .size(10)
+            .build();
 
-    // 페이지 번호와 함께 10개씩 가져오도록 사이즈 고정
-    PageRequest pageRequest = PageRequest.of(page, 10);
-
-    ProductSearchPageResponseDto response = productSearchService.searchProducts(keyword, pageRequest, userId);
-
+    ProductPageResponse response = productCatalogService.searchProducts(condition);
     return ResponseEntity.ok(response);
   }
 }

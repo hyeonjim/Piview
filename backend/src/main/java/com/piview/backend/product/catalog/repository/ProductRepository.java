@@ -36,9 +36,11 @@ public class ProductRepository {
      *      setMaxResults(size + 1): size+1개 조회 → hasNext 판단 (COUNT 쿼리 불필요)
      */
     public List<Product> findByConditions(
-            String name, String brand,
-            Long categoryId, Integer bigCategoryId,
+            String q,
+            Integer bigCategoryId, Long categoryId,
             String skinType, List<Long> tagIds,
+            List<Long> brandIds,
+            Integer minPrice, Integer maxPrice,
             int page, int size) {
 
         StringBuilder jpql = new StringBuilder(
@@ -51,12 +53,9 @@ public class ProductRepository {
         );
 
         List<String> conditions = new ArrayList<>();
-        if (name != null && !name.isBlank()) {
-            conditions.add("p.name LIKE :name");
-        }
 
-        if (brand != null && !brand.isBlank()) {
-            conditions.add("b.brandName LIKE :brand");
+        if (q != null && !q.isBlank()) {
+            conditions.add("(p.name LIKE :q OR b.brandName LIKE :q)");
         }
 
         if (categoryId != null) {
@@ -66,12 +65,24 @@ public class ProductRepository {
         }
 
         if (skinType != null && !skinType.isBlank()) {
-            conditions.add("(ss.topSkinType = :skinType or ss.top2SkinType = :skinType)");
+            conditions.add("(ss.topSkinType = :skinType OR ss.top2SkinType = :skinType)");
         }
 
         if (tagIds != null && !tagIds.isEmpty()) {
             conditions.add("(SELECT COUNT(DISTINCT pts.tag.tagId) FROM ProductTagScore pts " +
                     " WHERE pts.product = p AND pts.tag.tagId IN :tagIds AND pts.isTagged = true) = :tagCount");
+        }
+
+        if (brandIds != null && !brandIds.isEmpty()) {
+            conditions.add("b.brandId IN :brandIds");
+        }
+
+        if (minPrice != null) {
+            conditions.add("p.price >= :minPrice");
+        }
+
+        if (maxPrice != null) {
+            conditions.add("p.price <= :maxPrice");
         }
 
         if (!conditions.isEmpty()) {
@@ -82,12 +93,8 @@ public class ProductRepository {
 
         TypedQuery<Product> query = em.createQuery(jpql.toString(), Product.class);
 
-        if (name != null && !name.isBlank()) {
-            query.setParameter("name", "%" + name + "%");
-        }
-
-        if (brand != null && !brand.isBlank()) {
-            query.setParameter("brand", "%" + brand + "%");
+        if (q != null && !q.isBlank()) {
+            query.setParameter("q", "%" + q + "%");
         }
 
         if (categoryId != null) {
@@ -97,12 +104,26 @@ public class ProductRepository {
         }
 
         if (skinType != null && !skinType.isBlank()) {
-            query.setParameter("skinType", SkinTypeEnum.valueOf(skinType));
+            query.setParameter("skinType", SkinTypeEnum.valueOf(skinType.toUpperCase()));
         }
 
         if (tagIds != null && !tagIds.isEmpty()) {
-            query.setParameter("tagIds", tagIds);
-            query.setParameter("tagCount", (long) tagIds.size());
+            List<Long> distinctTagIds = tagIds.stream().distinct().toList();
+            query.setParameter("tagIds", distinctTagIds);
+            query.setParameter("tagCount", (long) distinctTagIds.size());
+        }
+
+        if (brandIds != null && !brandIds.isEmpty()) {
+            List<Long> distinctBrandIds = brandIds.stream().distinct().toList();
+            query.setParameter("brandIds", distinctBrandIds);
+        }
+
+        if (minPrice != null) {
+            query.setParameter("minPrice", minPrice);
+        }
+
+        if (maxPrice != null) {
+            query.setParameter("maxPrice", maxPrice);
         }
 
         // 페이지네이션: size+1개 조회로 hasNext 판단 (COUNT 쿼리 불필요)

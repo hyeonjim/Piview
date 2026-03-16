@@ -2,6 +2,7 @@ package com.piview.backend.product.catalog.controller;
 
 import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.product.catalog.dto.ProductPageResponse;
+import com.piview.backend.product.catalog.dto.ProductSearchCondition;
 import com.piview.backend.product.catalog.service.ProductCatalogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -18,30 +20,35 @@ public class ProductCatalogController {
 
     private final ProductCatalogService productCatalogService;
 
-    /**
-     * 제품 목록 조회 (동적 필터 + 페이지네이션)
-     *
-     * GET /api/products?page=0&size=10
-     * GET /api/products?bigCategoryId=1&page=0&size=10
-     * GET /api/products?bigCategoryId=1&categoryId=3&page=0&size=10
-     * GET /api/products?name=선크림&skinType=dry&page=1&size=10
-     * GET /api/products?tagIds=1,2,3&page=0&size=10
-     */
     @GetMapping
     public ApiResponse<ProductPageResponse> searchProducts(
-            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String q,
             @RequestParam(required = false) Integer bigCategoryId,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String brand,
+            @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String skinType,
             @RequestParam(required = false) List<Long> tagIds,
+            @RequestParam(required = false) List<Long> brandIds,
+            @RequestParam(required = false) Integer minPrice,
+            @RequestParam(required = false) Integer maxPrice,
             @RequestParam(required = false, defaultValue = "0")  int page,
-            @RequestParam(required = false, defaultValue = "10") int size) {
+            @RequestParam(required = false, defaultValue = "10") int size, Principal principal) {
 
         size = Math.min(size, 50);  // 최대 50개 방어 처리
 
-        ProductPageResponse result = productCatalogService.searchProducts(
-                name, brand, categoryId, bigCategoryId, skinType, tagIds, page, size);
+        ProductSearchCondition condition = ProductSearchCondition.builder()
+                .q(q)
+                .bigCategoryId(bigCategoryId)
+                .categoryId(categoryId)
+                .skinType(skinType)
+                .tagIds(tagIds)
+                .brandIds(brandIds)
+                .minPrice(minPrice)
+                .maxPrice(maxPrice)
+                .page(page)
+                .size(size)
+                .build();
+
+        ProductPageResponse result = productCatalogService.searchProducts(condition);
 
         return ApiResponse.success(result);
     }
