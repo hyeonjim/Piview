@@ -1,38 +1,74 @@
 /**
  * services/client.ts
- * axios 인스턴스 설정 + 토큰 재발급 인터셉터
+ * axios 인스턴스 설정 + 토큰 인터셉터
  *
- * - withCredentials: true → httpOnly 쿠키 자동 전송 (별도 토큰 헤더 불필요)
- * - 401 응답 시 refreshToken으로 자동 재발급 후 원래 요청 재시도
+ * - 요청 인터셉터: Zustand에서 accessToken 꺼내 Authorization 헤더에 주입
+ * - 응답 인터셉터: 401 시 refreshToken(httpOnly 쿠키)으로 재발급 후 원래 요청 재시도
+ * - _retry 플래그로 refresh 무한루프 방지
  */
 
-import axios from "axios";
+import axios, { type InternalAxiosRequestConfig } from "axios";
 import { useUserStore } from "@/stores/useUserStore";
 import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
+
+// _retry 플래그 타입 확장 (TypeScript 에러 방지)
+interface RetryableRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
 const client = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
   timeout: 10000,
   headers: { "Content-Type": "application/json" },
-  // httpOnly 쿠키를 모든 요청에 자동 포함 → 인터셉터로 토큰 주입 불필요
+  // refreshToken(httpOnly 쿠키) 자동 전송용
   withCredentials: true,
+});
+
+// ── 요청 인터셉터: accessToken → Authorization 헤더 주입 ───────────────────
+client.interceptors.request.use((config) => {
+  const accessToken = useUserStore.getState().accessToken;
+  if (accessToken) {
+    config.headers["Authorization"] = `Bearer ${accessToken}`;
+  }
+  return config;
 });
 
 // ── 응답 인터셉터: accessToken 만료(401) 처리 ──────────────────────────────
 client.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const originalRequest = error.config as RetryableRequestConfig;
+
     // 401 이외의 에러는 그대로 전달
     if (error.response?.status !== 401) {
       return Promise.reject(error);
     }
 
+    // _retry 플래그가 이미 있으면 refresh도 실패한 것 → 무한루프 방지
+    if (originalRequest._retry) {
+      useUserStore.getState().clearUser();
+      useLocalRoutineStore.getState().clearRoutine();
+      localStorage.removeItem("piview-routine");
+      window.location.href = "/splash";
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
     try {
-      // refreshToken도 httpOnly 쿠키에 있으므로 withCredentials로 자동 전송
+      // refreshToken은 httpOnly 쿠키 → withCredentials로 자동 전송
+      // 응답으로 새 accessToken이 일반 쿠키로 내려옴
       await client.post("/api/v1/auth/refresh");
 
-      // 원래 요청 재시도 (새로 발급된 accessToken 쿠키가 자동 적용됨)
-      return client(error.config);
+      // 새로 발급된 accessToken 쿠키에서 꺼내 Zustand에 저장 후 쿠키 삭제
+      const newAccessToken = getCookieAndClear("accessToken");
+      if (newAccessToken) {
+        useUserStore.getState().setAccessToken(newAccessToken);
+        originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+      }
+
+      // 원래 요청 재시도
+      return client(originalRequest);
     } catch {
       // refresh도 실패 → 세션 만료, 로그아웃 처리
       useUserStore.getState().clearUser();
@@ -44,4 +80,23 @@ client.interceptors.response.use(
   },
 );
 
+/**
+ * 쿠키에서 값을 꺼내고 즉시 삭제하는 헬퍼
+ * accessToken은 일반 쿠키(httpOnly: false)라 JS로 접근 가능
+ */
+function getCookieAndClear(cookieName: string): string | null {
+  const match = document.cookie.match(
+    new RegExp("(?:^|; )" + cookieName + "=([^;]*)"),
+  );
+  if (!match) return null;
+
+  const value = decodeURIComponent(match[1]);
+
+  // 보안을 위해 즉시 삭제 (Max-Age=0)
+  document.cookie = `${cookieName}=; Max-Age=0; path=/`;
+
+  return value;
+}
+
+export { getCookieAndClear };
 export default client;
