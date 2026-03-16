@@ -5,6 +5,7 @@ import com.piview.backend.global.security.JwtAuthenticationFilter;
 import com.piview.backend.global.security.handler.OAuth2FailureHandler;
 import com.piview.backend.global.security.handler.OAuth2SuccessHandler;
 import com.piview.backend.global.security.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -55,6 +56,7 @@ public class SecurityConfig {
                         .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/favicon.ico").permitAll()
                         .requestMatchers("/oauth2/**", "/login/**").permitAll()
                         .requestMatchers("/api/v1/auth/**", "/api/v1/oauth2/**").permitAll()
+                        .requestMatchers("/api/v1/auth/refresh").permitAll()
                         .requestMatchers("/api/v1/ocr/**").permitAll()
 
                         .anyRequest().authenticated()
@@ -74,6 +76,12 @@ public class SecurityConfig {
                         // 성공/실패 - 핸들러 등록
                         .successHandler(oAuth2SuccessHandler)
                         .failureHandler(oAuth2FailureHandler)
+                )
+
+                .exceptionHandling(exception -> exception
+                            .authenticationEntryPoint((request, response, authException) -> {
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                            })
                 );
 
         // 7. JWT 문지기 필터
