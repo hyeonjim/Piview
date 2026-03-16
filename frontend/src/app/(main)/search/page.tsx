@@ -115,7 +115,7 @@ export default function SearchPage() {
   };
 
   return (
-    <div style={{ minHeight: "100%", backgroundColor: "#F5F2EC" }}>
+    <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
       <Toast msg={toastMessage} />
 
       {/* 비교 모달 — 2개 선택 완료 후 표시 */}
@@ -143,7 +143,7 @@ export default function SearchPage() {
           </h1>
 
           {/* 검색바 + 필터 버튼 한 줄 */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-5">
             <div className="flex-1">
               <SearchBar
                 value={searchQuery}
@@ -157,10 +157,10 @@ export default function SearchPage() {
               onClick={() => setShowFilter(true)}
               className="flex items-center gap-1.5 cursor-pointer border transition-all active:scale-[0.96] shrink-0"
               style={{
-                height: "44px",
+                height: "38px",
                 padding: "0 12px",
                 borderRadius: "10px",
-                fontSize: "12px",
+                fontSize: "14px",
                 fontWeight: 500,
                 borderColor: filterCount > 0 ? "#A69D92" : "#E2DDD8",
                 backgroundColor: filterCount > 0 ? "#A69D92" : "#FFFFFF",
@@ -269,7 +269,7 @@ export default function SearchPage() {
       )}
 
       {/* ── 제품 그리드 ─────────────────────────────────── */}
-      <div style={{ padding: "12px 16px 24px" }}>
+      <div style={{ padding: "16px 20px 24px" }}>
         {filteredProducts.length === 0 ? (
           <div style={{ backgroundColor: "#FFFFFF", borderRadius: "12px", border: "1px solid #E2DDD8", marginTop: "8px" }}>
             <EmptyState
@@ -279,7 +279,7 @@ export default function SearchPage() {
             />
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
             {paginatedProducts.map((product) => (
               <ProductCard
                 key={product.id}

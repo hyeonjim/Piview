@@ -28,7 +28,7 @@ const ICON_MAP = {
 export default function HomePage() {
   const greeting = getGreeting();
   const nickname  = "User";
-  const { routine } = useLocalRoutineStore();
+  const { routine, isMainRoutine } = useLocalRoutineStore();
 
   useEffect(() => { useLocalRoutineStore.persist.rehydrate(); }, []);
 
@@ -40,10 +40,11 @@ export default function HomePage() {
     product: NonNullable<(typeof routine)[string]>;
   }[];
 
-  const hasRoutine = mainRoutineItems.length > 0;
+  // isMainRoutine이 off면 홈에서 루틴 미표시
+  const hasRoutine = isMainRoutine && mainRoutineItems.length > 0;
 
   return (
-    <div style={{ minHeight: "100%", backgroundColor: "#F5F2EC" }}>
+    <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
 
       {/* ── 상단 헤더 — 연한 베이지 배경 ──────────────────────── */}
       <div
@@ -157,7 +158,7 @@ export default function HomePage() {
             <div className="flex items-center gap-2">
               <Leaf size={14} style={{ color: "#A69D92" }} />
               <span style={{ fontSize: "14px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.2px", fontFamily: "var(--font-pretendard), sans-serif" }}>
-                나의 루틴
+                나의 메인루틴
               </span>
             </div>
             {hasRoutine ? (

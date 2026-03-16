@@ -6,11 +6,11 @@ import { Home, Search, Sparkles, Heart, User } from "lucide-react";
 
 // 홈을 중간(index 2)에 배치한 탭 순서
 const TABS = [
-  { id: "search",    href: "/search",    icon: Search,   label: "전체" },
-  { id: "recommend", href: "/recommend", icon: Sparkles, label: "추천" },
-  { id: "home",      href: "/home",      icon: Home,     label: "홈"   },
-  { id: "likes",     href: "/likes",     icon: Heart,    label: "찜"   },
-  { id: "mypage",    href: "/mypage",    icon: User,     label: "마이" },
+  { id: "search",    href: "/search",    icon: Search},
+  { id: "recommend", href: "/recommend", icon: Sparkles},
+  { id: "home",      href: "/home",      icon: Home},
+  { id: "likes",     href: "/likes",     icon: Heart },
+  { id: "mypage",    href: "/mypage",    icon: User},
 ] as const;
 
 export default function BottomNav() {
@@ -50,12 +50,11 @@ export default function BottomNav() {
                 key={tab.id}
                 onClick={() => router.push(tab.href)}
                 className="flex flex-1 flex-col items-center justify-center h-full cursor-pointer border-none bg-transparent"
-                aria-label={tab.label}
               >
                 <div
                   style={{
-                    width: "48px",
-                    height: "48px",
+                    width: "40px",
+                    height: "40px",
                     borderRadius: "50%",
                     backgroundColor: isActive ? "#5A504A" : "#EAE5DF",
                     display: "flex",
@@ -88,7 +87,6 @@ export default function BottomNav() {
               onClick={() => router.push(tab.href)}
               className="flex flex-1 flex-col items-center justify-center h-full cursor-pointer border-none bg-transparent"
               style={{ transition: "opacity 0.15s" }}
-              aria-label={tab.label}
             >
               <Icon
                 size={20}
@@ -109,7 +107,6 @@ export default function BottomNav() {
                   marginTop: "2px",
                 }}
               >
-                {tab.label}
               </span>
               {/* 활성 표시 — 하단 선 (베이지 테마 accent) */}
               {isActive && (

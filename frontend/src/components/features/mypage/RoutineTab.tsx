@@ -45,7 +45,7 @@ import {
   getScoreBarColor,
 } from "@/constants/routineEvaluation";
 import { MYPAGE_ROUTINE_STEPS } from "@/constants/routineSteps";
-import type { LocalProduct } from "@/stores/useLocalRoutineStore";
+import { useLocalRoutineStore, type LocalProduct } from "@/stores/useLocalRoutineStore";
 
 interface RoutineTabProps {
   routine: Record<string, LocalProduct | null>;
@@ -58,6 +58,9 @@ export default function RoutineTab({
   onOpenModal,
   onRemove,
 }: RoutineTabProps) {
+  // 홈화면 메인 루틴 on/off
+  const { isMainRoutine, toggleMainRoutine } = useLocalRoutineStore();
+
   // 추천 이유 펼침 상태 — key: step.code
   const [openReason, setOpenReason] = useState<Record<string, boolean>>({});
   const toggleReason = (code: string) =>
@@ -99,9 +102,16 @@ export default function RoutineTab({
         <div>
           <div className="flex items-center gap-2.5">
             <p className="text-base font-bold text-text-primary">내 루틴</p>
-            {/* ⚠️ API 연동 시 저장된 루틴명으로 교체 */}
-            <button className="flex items-center gap-0.5 text-m text-text-muted bg-transparent border-none cursor-pointer">
-              ☆ 메인
+            {/* ⚠️ API 연동 시 서버 루틴 메인 설정 API로 교체 */}
+            <button
+              onClick={toggleMainRoutine}
+              className={`flex items-center gap-1 px-2 py-1 rounded-full border text-[12px] font-semibold cursor-pointer transition-all active:scale-95 ${
+                isMainRoutine
+                  ? "bg-amber-200 border-amber-200 text-[#8a827a]"
+                  : "bg-transparent border-[#D9D5D0] text-[#B8A99A]"
+              }`}
+            >
+              {isMainRoutine ? "★" : "☆"} 메인
             </button>
           </div>
           <p className="text-xs text-text-muted mt-0.5">
@@ -118,7 +128,7 @@ export default function RoutineTab({
             className="flex items-center gap-1 font-medium border border-border text-text-secondary cursor-pointer bg-transparent"
             style={ROUTINE_HEADER_BTN_STYLE}
           >
-            <RotateCcw size={11} /> 초기화
+            <RotateCcw size={12} /> 초기화
           </button>
           {/* OCR */}
           <button
@@ -143,7 +153,7 @@ export default function RoutineTab({
         return (
           <div
             key={step.code}
-            className="rounded-2xl px-4 py-3 transition-all"
+            className="rounded-2xl px-4 py-3 transition-all mt-3"
             style={{
               /* 채워진 카드는 흰 배경, 빈 카드는 베이지 배경 */
               backgroundColor: filled ? "#FFFFFF" : "var(--color-warm-bg)",
