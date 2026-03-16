@@ -14,7 +14,7 @@ import EmptyState from "@/components/common/EmptyState";
 import SearchBar from "@/components/common/SearchBar";
 import { useToast } from "@/hooks";
 import { useLike } from "@/hooks/useLike";
-import { SlidersHorizontal, Search, X } from "lucide-react";
+import { SlidersHorizontal, Search } from "lucide-react";
 
 // 2열 그리드: 페이지당 12개 (짝수)
 const PAGE_SIZE = 12;
@@ -35,7 +35,7 @@ export default function SearchPage() {
   const [filter, setFilter]             = useState<FilterState>(DEFAULT_FILTER);
 
   const { toggleLike, isLiked } = useLike();
-  const { toastMessage, showToast } = useToast();
+  const { toastMessage } = useToast();
 
   const filterCount =
     (filter.filterSkin ? 1 : 0) +
@@ -72,11 +72,11 @@ export default function SearchPage() {
   const handleSubSelect  = (sub: string | null)  => { setSelectedSub(sub);   setPage(1); };
 
   return (
-    <div style={{ minHeight: "100%", backgroundColor: "#FAFAF8" }}>
+    <div style={{ minHeight: "100%", backgroundColor: "#F5F2EC" }}>
       <Toast msg={toastMessage} />
 
       {/* ── 상단 헤더 ────────────────────────────────────── */}
-      <div style={{ backgroundColor: "#FFFFFF", borderBottom: "1px solid #EDEBE8", paddingTop: "56px" }}>
+      <div style={{ backgroundColor: "#F5F2EC", borderBottom: "1px solid #E2DDD8", paddingTop: "56px" }}>
         {/* 타이틀 행 */}
         <div className="flex items-end justify-between" style={{ padding: "16px 16px 12px" }}>
           <div>
@@ -86,7 +86,7 @@ export default function SearchPage() {
                 margin: 0,
                 fontSize: "10px",
                 fontWeight: 400,
-                color: "#B0A99F",
+                color: "#BFB6AA",
                 letterSpacing: "0.14em",
                 textTransform: "uppercase",
                 fontFamily: "var(--font-cormorant), serif",
@@ -101,7 +101,7 @@ export default function SearchPage() {
                 margin: "3px 0 0",
                 fontSize: "22px",
                 fontWeight: 700,
-                color: "#1C1C1E",
+                color: "#2A2118",
                 letterSpacing: "-0.4px",
                 lineHeight: 1.2,
                 fontFamily: "var(--font-pretendard), sans-serif",
@@ -110,13 +110,13 @@ export default function SearchPage() {
               전체 제품
             </h1>
             {filtered.length > 0 && (
-              <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#B0A99F", fontFamily: "var(--font-pretendard), sans-serif" }}>
+              <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#BFB6AA", fontFamily: "var(--font-pretendard), sans-serif" }}>
                 {filtered.length.toLocaleString()}개
               </p>
             )}
           </div>
 
-          {/* 필터 버튼 */}
+          {/* 필터 버튼 — 활성 시 베이지-5 accent */}
           <button
             onClick={() => setShowFilter(true)}
             className="flex items-center gap-1.5 cursor-pointer border transition-all active:scale-[0.96]"
@@ -127,8 +127,8 @@ export default function SearchPage() {
               fontSize: "12px",
               fontWeight: 500,
               fontFamily: "var(--font-pretendard), sans-serif",
-              borderColor: filterCount > 0 ? "#1C1C1E" : "#E8E4DF",
-              backgroundColor: filterCount > 0 ? "#1C1C1E" : "#FFFFFF",
+              borderColor: filterCount > 0 ? "#A69D92" : "#E2DDD8",
+              backgroundColor: filterCount > 0 ? "#A69D92" : "#FFFFFF",
               color: filterCount > 0 ? "#FFFFFF" : "#8A8278",
             }}
           >
@@ -167,13 +167,14 @@ export default function SearchPage() {
       />
 
       {/* ── 제품 그리드 ─────────────────────────────────── */}
-      <div style={{ padding: "16px 14px 24px" }}>
+      <div style={{ padding: "16px 16px 24px" }}>
         {filtered.length === 0 ? (
-          <div style={{ backgroundColor: "#FFFFFF", borderRadius: "12px", border: "1px solid #EDEBE8", marginTop: "8px" }}>
+          <div style={{ backgroundColor: "#FFFFFF", borderRadius: "12px", border: "1px solid #E2DDD8", marginTop: "8px" }}>
             <EmptyState icon={Search} title="해당하는 제품이 없어요" description="검색어나 필터를 바꿔보세요" />
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+          /* 카드 간격 20px — 넓은 여백으로 쾌적한 레이아웃 */
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
             {paginated.map((product) => (
               <ProductCard
                 key={product.id}

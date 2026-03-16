@@ -3,8 +3,9 @@
 // ── 스타일 상수 ──────────────────────────────────────────────────────
 const OWNED_PRODUCT_CARD_STYLE = {
   borderRadius: "14px",
-  border: "1px solid #E2E1DC",
-  backgroundColor: "var(--color-warm-bg)",
+  /* 베이지 팔레트 — Beige-2 보더 */
+  border: "1px solid #D9D5D0",
+  backgroundColor: "#FFFFFF",
 };
 const AVOID_PRODUCT_CARD_STYLE = {
   borderRadius: "14px",

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Cormorant_Garamond } from "next/font/google";
+import { Noto_Serif_KR } from "next/font/google";
 import { Providers } from "@/lib/providers";
 import "./globals.css";
 
@@ -16,14 +16,13 @@ const pretendard = localFont({
   variable: "--font-pretendard",
 });
 
-// ── Cormorant Garamond — 럭셔리 세리프 디스플레이 폰트 ──────────────
-// 에디토리얼 헤딩, 섹션 타이틀, 브랜드 강조에 사용
-const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
+// ── Noto Serif KR — 한국어 세리프 디스플레이 폰트 ──────────────────
+// 에디토리얼 헤딩, 섹션 타이틀, 브랜드 강조에 사용 (Cormorant 대체)
+const notoSerifKR = Noto_Serif_KR({
   weight: ["300", "400", "500", "600", "700"],
-  style: ["normal", "italic"],
-  variable: "--font-cormorant",
+  variable: "--font-cormorant", // 기존 변수명 유지 — 다른 파일 수정 불필요
   display: "swap",
+  preload: false, // 한국어 폰트는 용량이 크므로 preload 비활성화
 });
 
 export const metadata: Metadata = {
@@ -33,9 +32,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className={`${pretendard.variable} ${cormorant.variable}`}>
+    <html lang="ko" className={`${pretendard.variable} ${notoSerifKR.variable}`}>
       <body>
-        <div className="min-h-screen" style={{ backgroundColor: "#EFEFEB" }}>
+        <div className="min-h-screen" style={{ backgroundColor: "#F2EFE9" }}>
           <div
             className="mx-auto min-h-screen bg-white flex flex-col relative w-full"
             style={{

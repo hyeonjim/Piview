@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, Plus, Check, Package, GitCompareArrows } from "lucide-react";
+import { Heart, Plus, Check, ShoppingBag, Scale } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -13,7 +13,7 @@ import {
 } from "@/constants/categoryColors";
 
 // ── 스타일 상수 ──────────────────────────────────────────────────────
-const MODAL_THUMB_STYLE = { width: 60, height: 60, backgroundColor: "#F8F6F0" };
+const MODAL_THUMB_STYLE = { width: 60, height: 60, backgroundColor: "#F5F2EC" };
 
 interface ProductCardProps {
   id: number | string;
@@ -139,22 +139,22 @@ export default function ProductCard({
         style={{
           backgroundColor: "#FFFFFF",
           borderRadius: "10px",
-          border: "1px solid #F0EDE8",
+          border: "1px solid #E2DDD8",
           // 세련된 그림자 — 가볍고 선명
           boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04)",
         }}
       >
         <Link href={`/product/${id}`} className="no-underline flex flex-col">
-          {/* 이미지 — 정사각형 */}
+          {/* 이미지 — 가로:세로 3:2 (기존 1:1의 2/3 높이) */}
           <div
             className="relative w-full"
-            style={{ aspectRatio: "1/1", backgroundColor: "#F7F4F0" }}
+            style={{ aspectRatio: "3/2", backgroundColor: "#F5F2EC" }}
           >
             {imageUrl ? (
               <Image src={imageUrl} alt={name} fill className="object-cover" />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
-                <span style={{ fontSize: "36px" }}>{emoji || "🧴"}</span>
+                <span style={{ fontSize: "24px" }}>{emoji || "🧴"}</span>
               </div>
             )}
 
@@ -186,8 +186,9 @@ export default function ProductCard({
               <div
                 className="absolute top-2 left-2"
                 style={{
-                  backgroundColor: "#1C1C1E",
-                  color: "#FFFFFF",
+                  /* 베이지 팔레트 — 검정 대신 따뜻한 다크 브라운 */
+                  backgroundColor: "#3D3028",
+                  color: "#F2EFE9",
                   fontSize: "9px",
                   fontWeight: 600,
                   padding: "3px 7px",
@@ -217,7 +218,7 @@ export default function ProductCard({
                 margin: 0,
                 fontSize: "10px",
                 fontWeight: 500,
-                color: "#B0A99F",
+                color: "#BFB6AA",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
                 fontFamily: "var(--font-pretendard), sans-serif",
@@ -232,7 +233,7 @@ export default function ProductCard({
                 margin: "3px 0 0",
                 fontSize: "13px",
                 fontWeight: 500,
-                color: "#1C1C1E",
+                color: "#2A2118",
                 lineHeight: 1.4,
                 // 2줄 말줄임
                 display: "-webkit-box",
@@ -274,14 +275,14 @@ export default function ProductCard({
           style={{
             backgroundColor: "#FFFFFF",
             borderRadius: "10px",
-            border: "1px solid #F0EDE8",
+            border: "1px solid #E2DDD8",
             height: "88px",
             boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
           }}
         >
           <div
             className="relative shrink-0 h-full"
-            style={{ width: "88px", backgroundColor: "#F7F4F0" }}
+            style={{ width: "88px", backgroundColor: "#F5F2EC" }}
           >
             {imageUrl ? (
               <Image src={imageUrl} alt={name} fill className="object-cover" />
@@ -292,10 +293,10 @@ export default function ProductCard({
             )}
           </div>
           <div className="flex-1 px-3 py-2 min-w-0">
-            <p style={{ margin: 0, fontSize: "10px", color: "#B0A99F", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+            <p style={{ margin: 0, fontSize: "10px", color: "#BFB6AA", textTransform: "uppercase", letterSpacing: "0.07em" }}>
               {brand}
             </p>
-            <p style={{ margin: "3px 0 0", fontSize: "13px", fontWeight: 500, color: "#1C1C1E", lineHeight: 1.4 }}>
+            <p style={{ margin: "3px 0 0", fontSize: "13px", fontWeight: 500, color: "#2A2118", lineHeight: 1.4 }}>
               {name}
             </p>
             <EWGIndicator safe={ewgSafe} caution={ewgCaution} danger={ewgDanger} className="mt-1.5" />
@@ -321,8 +322,8 @@ export default function ProductCard({
         style={{
           borderRadius: "10px",
           padding: "12px",
-          border: `1px solid ${actions?.inRoutine ? "#C8D0A8" : "#EDEBE8"}`,
-          backgroundColor: actions?.inRoutine ? "#F5F7EE" : "#FFFFFF",
+          border: `1px solid ${actions?.inRoutine ? "#D9D5D0" : "#EDEBE8"}`,
+          backgroundColor: actions?.inRoutine ? "#F2EFE9" : "#FFFFFF",
         }}
       >
         {rankingIndex !== undefined && showRanking && (
@@ -346,7 +347,7 @@ export default function ProductCard({
                 width: 60,
                 height: 60,
                 borderRadius: "8px",
-                backgroundColor: "#F7F4F0",
+                backgroundColor: "#F5F2EC",
               }}
             >
               {emoji ? (
@@ -360,7 +361,7 @@ export default function ProductCard({
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap" style={{ marginBottom: "2px" }}>
-                <span style={{ fontSize: "10px", color: "#B0A99F", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                <span style={{ fontSize: "10px", color: "#BFB6AA", textTransform: "uppercase", letterSpacing: "0.07em" }}>
                   {brand}
                 </span>
                 {categoryColor && (
@@ -369,12 +370,12 @@ export default function ProductCard({
                   </span>
                 )}
                 {(isRecommended || reason) && (
-                  <span style={{ fontSize: "10px", padding: "1px 6px", borderRadius: "3px", backgroundColor: "#1C1C1E", color: "#FFFFFF", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                  <span style={{ fontSize: "10px", padding: "1px 6px", borderRadius: "3px", backgroundColor: "#3D3028", color: "#F2EFE9", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
                     PICK
                   </span>
                 )}
               </div>
-              <p style={{ margin: 0, fontSize: "13px", fontWeight: 500, color: "#1C1C1E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <p style={{ margin: 0, fontSize: "13px", fontWeight: 500, color: "#2A2118", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {name}
               </p>
               <div className="flex flex-wrap" style={{ gap: "3px", marginTop: "5px" }}>
@@ -397,8 +398,9 @@ export default function ProductCard({
                 fontSize: "12px",
                 fontWeight: 600,
                 ...(actions.inRoutine
-                  ? { backgroundColor: "#F0F2E8", color: "#8A9468" }
-                  : { backgroundColor: "#1C1C1E", color: "#FFFFFF" }),
+                  ? { /* 루틴추가됨/보유중 상태 — 베이지 팔레트 */
+                  backgroundColor: "#F2EFE9", color: "#A69D92" }
+                  : { backgroundColor: "#3D3028", color: "#F2EFE9" }),
               }}
             >
               {actions.inRoutine ? <><Check size={11} /> 추가됨</> : <><Plus size={11} /> 루틴추가</>}
@@ -433,7 +435,7 @@ export default function ProductCard({
       style={{
         backgroundColor: "#FFFFFF",
         borderRadius: "10px",
-        border: "1px solid #F0EDE8",
+        border: "1px solid #E2DDD8",
         boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04)",
       }}
     >
@@ -444,19 +446,20 @@ export default function ProductCard({
           </div>
         )}
 
-        <div className="relative" style={{ height: "160px", backgroundColor: "#F7F4F0" }}>
+        {/* 이미지 — 기존 160px의 2/3인 108px */}
+        <div className="relative" style={{ height: "108px", backgroundColor: "#F5F2EC" }}>
           {imageUrl ? (
             <Image src={imageUrl} alt={name} fill className="object-cover" />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
-              <span style={{ fontSize: "44px" }}>{emoji || "🧴"}</span>
+              <span style={{ fontSize: "30px" }}>{emoji || "🧴"}</span>
             </div>
           )}
         </div>
 
         <div style={{ padding: "12px 14px 14px" }}>
           <div className="flex items-center gap-1.5 flex-wrap" style={{ marginBottom: "4px" }}>
-            <span style={{ fontSize: "10px", color: "#B0A99F", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            <span style={{ fontSize: "10px", color: "#BFB6AA", textTransform: "uppercase", letterSpacing: "0.08em" }}>
               {brand}
             </span>
             {categoryColor && (
@@ -465,13 +468,13 @@ export default function ProductCard({
               </span>
             )}
             {(isRecommended || reason) && (
-              <span style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "3px", backgroundColor: "#1C1C1E", color: "#FFFFFF", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              <span style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "3px", backgroundColor: "#3D3028", color: "#F2EFE9", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 PICK
               </span>
             )}
           </div>
 
-          <p style={{ margin: 0, fontSize: "14px", fontWeight: 500, color: "#1C1C1E", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          <p style={{ margin: 0, fontSize: "14px", fontWeight: 500, color: "#2A2118", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
             {name}
           </p>
 
@@ -487,7 +490,7 @@ export default function ProductCard({
       </Link>
 
       {reason && (
-        <p style={{ fontSize: "13px", color: "#8A9468", margin: 0, padding: "0 14px 8px", lineHeight: 1.55 }}>
+        <p style={{ fontSize: "13px", color: "#A69D92", margin: 0, padding: "0 14px 8px", lineHeight: 1.55 }}>
           {reason}
         </p>
       )}
@@ -506,8 +509,9 @@ export default function ProductCard({
                 fontWeight: 600,
                 minWidth: "80px",
                 ...(actions.inRoutine
-                  ? { backgroundColor: "#F0F2E8", color: "#8A9468" }
-                  : { backgroundColor: "#1C1C1E", color: "#FFFFFF" }),
+                  ? { /* 루틴추가됨/보유중 상태 — 베이지 팔레트 */
+                  backgroundColor: "#F2EFE9", color: "#A69D92" }
+                  : { backgroundColor: "#3D3028", color: "#F2EFE9" }),
               }}
             >
               {actions.inRoutine ? <><Check size={11} /> 추가됨</> : <><Plus size={11} /> 루틴추가</>}
@@ -523,12 +527,12 @@ export default function ProductCard({
                 borderRadius: "6px",
                 fontSize: "12px",
                 fontWeight: 500,
-                border: `1px solid ${actions.isOwned ? "#C8D0A8" : "#E8E4DF"}`,
-                backgroundColor: actions.isOwned ? "#F5F7EE" : "#FFFFFF",
-                color: actions.isOwned ? "#8A9468" : "#8A8278",
+                border: `1px solid ${actions.isOwned ? "#D9D5D0" : "#E8E4DF"}`,
+                backgroundColor: actions.isOwned ? "#F2EFE9" : "#FFFFFF",
+                color: actions.isOwned ? "#A69D92" : "#8A8278",
               }}
             >
-              <Package size={11} /> {actions.isOwned ? "보유중" : "보유추가"}
+              <ShoppingBag size={11} /> {actions.isOwned ? "보유중" : "보유추가"}
             </button>
           )}
           {actions.onToggleLike && !onLike && (
@@ -558,7 +562,7 @@ export default function ProductCard({
                 backgroundColor: "#FFFFFF",
               }}
             >
-              <GitCompareArrows size={15} style={{ color: "#C4BEB7" }} />
+              <Scale size={15} style={{ color: "#C4BEB7" }} />
             </button>
           )}
         </div>

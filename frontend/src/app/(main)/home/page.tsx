@@ -43,13 +43,13 @@ export default function HomePage() {
   const hasRoutine = mainRoutineItems.length > 0;
 
   return (
-    <div style={{ minHeight: "100%", backgroundColor: "#FAFAF8" }}>
+    <div style={{ minHeight: "100%", backgroundColor: "#F5F2EC" }}>
 
-      {/* ── 상단 헤더 — 화이트 ──────────────────────────── */}
+      {/* ── 상단 헤더 — 연한 베이지 배경 ──────────────────────── */}
       <div
         style={{
-          backgroundColor: "#FFFFFF",
-          borderBottom: "1px solid #EDEBE8",
+          backgroundColor: "#F5F2EC",
+          borderBottom: "1px solid #E2DDD8",
           paddingTop: "56px",
           paddingBottom: "20px",
           paddingLeft: "20px",
@@ -96,15 +96,15 @@ export default function HomePage() {
           <div
             className="relative overflow-hidden flex items-center justify-between"
             style={{
-              // 고급스러운 어두운 그라디언트
-              background: "linear-gradient(135deg, #2C2C2C 0%, #3D3D3D 50%, #1C1C1E 100%)",
+              /* 연한 베이지 그라디언트 — 밝고 따뜻한 톤 */
+              background: "linear-gradient(135deg, #BFB6AA 0%, #A69D92 100%)",
               borderRadius: "12px",
               padding: "20px",
             }}
           >
             {/* 배경 텍스처 원 */}
-            <div style={{ position: "absolute", top: "-20px", right: "10px", width: "80px", height: "80px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.04)" }} />
-            <div style={{ position: "absolute", bottom: "-15px", right: "60px", width: "56px", height: "56px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.03)" }} />
+            <div style={{ position: "absolute", top: "-20px", right: "10px", width: "80px", height: "80px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.12)" }} />
+            <div style={{ position: "absolute", bottom: "-15px", right: "60px", width: "56px", height: "56px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.08)" }} />
 
             <div style={{ position: "relative", zIndex: 1 }}>
               {/* 뱃지 */}
@@ -114,26 +114,26 @@ export default function HomePage() {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
-                  backgroundColor: "rgba(255,255,255,0.1)",
+                  backgroundColor: "rgba(255,255,255,0.2)",
                   borderRadius: "4px",
                   padding: "4px 8px",
                   marginBottom: "10px",
                 }}
               >
-                <Sparkles size={11} style={{ color: "#D4B896" }} />
-                <span style={{ fontSize: "9px", fontWeight: 600, color: "#D4B896", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "var(--font-pretendard), sans-serif" }}>
+                <Sparkles size={11} style={{ color: "#FFFFFF" }} />
+                <span style={{ fontSize: "9px", fontWeight: 600, color: "#FFFFFF", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "var(--font-pretendard), sans-serif" }}>
                   AI SKIN ANALYSIS
                 </span>
               </div>
               <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#FFFFFF", lineHeight: 1.35, fontFamily: "var(--font-pretendard), sans-serif" }}>
                 나만의 피부 타입을<br />분석해보세요
               </p>
-              <p style={{ margin: "6px 0 0", fontSize: "12px", color: "rgba(255,255,255,0.5)", fontFamily: "var(--font-pretendard), sans-serif" }}>
+              <p style={{ margin: "6px 0 0", fontSize: "12px", color: "rgba(255,255,255,0.7)", fontFamily: "var(--font-pretendard), sans-serif" }}>
                 맞춤 루틴을 추천받을 수 있어요
               </p>
             </div>
 
-            <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "36px", height: "36px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.1)", flexShrink: 0 }}>
+            <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "36px", height: "36px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.2)", flexShrink: 0 }}>
               <ArrowRight size={17} style={{ color: "#FFFFFF" }} />
             </div>
           </div>
@@ -146,7 +146,7 @@ export default function HomePage() {
           style={{
             backgroundColor: "#FFFFFF",
             borderRadius: "12px",
-            border: "1px solid #EDEBE8",
+            border: "1px solid #E2DDD8",
             overflow: "hidden",
           }}
         >
@@ -155,22 +155,22 @@ export default function HomePage() {
             className="flex items-center justify-between"
             style={{
               padding: "14px 16px",
-              borderBottom: "1px solid #F4F2EF",
+              borderBottom: "1px solid #EDE9E3",
             }}
           >
             <div className="flex items-center gap-2">
-              <Leaf size={14} style={{ color: "#8A9468" }} />
-              <span style={{ fontSize: "14px", fontWeight: 700, color: "#1C1C1E", letterSpacing: "-0.2px", fontFamily: "var(--font-pretendard), sans-serif" }}>
+              <Leaf size={14} style={{ color: "#A69D92" }} />
+              <span style={{ fontSize: "14px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.2px", fontFamily: "var(--font-pretendard), sans-serif" }}>
                 나의 루틴
               </span>
             </div>
             {hasRoutine ? (
-              <span style={{ fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "12px", backgroundColor: "#F4F6EE", color: "#8A9468", fontFamily: "var(--font-pretendard), sans-serif" }}>
+              <span style={{ fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "12px", backgroundColor: "#F2EFE9", color: "#A69D92", fontFamily: "var(--font-pretendard), sans-serif" }}>
                 {mainRoutineItems.length}단계
               </span>
             ) : (
               <Link href="/mypage">
-                <span className="flex items-center gap-0.5" style={{ fontSize: "12px", color: "#8A9468", fontFamily: "var(--font-pretendard), sans-serif" }}>
+                <span className="flex items-center gap-0.5" style={{ fontSize: "12px", color: "#A69D92", fontFamily: "var(--font-pretendard), sans-serif" }}>
                   설정하기 <ChevronRight size={12} />
                 </span>
               </Link>
@@ -187,30 +187,30 @@ export default function HomePage() {
                   style={{
                     paddingTop: "12px",
                     paddingBottom: "12px",
-                    borderBottom: index < mainRoutineItems.length - 1 ? "1px solid #F4F2EF" : "none",
+                    borderBottom: index < mainRoutineItems.length - 1 ? "1px solid #EDE9E3" : "none",
                   }}
                 >
-                  <span style={{ fontSize: "10px", fontWeight: 700, color: "#C4BEB7", width: "16px", flexShrink: 0, fontFamily: "var(--font-cormorant), serif" }}>
+                  <span style={{ fontSize: "10px", fontWeight: 700, color: "#BFB6AA", width: "16px", flexShrink: 0, fontFamily: "var(--font-cormorant), serif" }}>
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <span style={{ fontSize: "20px", width: "28px", textAlign: "center", flexShrink: 0 }}>{product.emoji}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: "10px", color: "#8A9468", fontWeight: 500, letterSpacing: "0.03em", fontFamily: "var(--font-pretendard), sans-serif" }}>
+                    <p style={{ margin: 0, fontSize: "10px", color: "#A69D92", fontWeight: 500, letterSpacing: "0.03em", fontFamily: "var(--font-pretendard), sans-serif" }}>
                       {step.label}
                     </p>
-                    <p style={{ margin: "1px 0 0", fontSize: "13px", fontWeight: 600, color: "#1C1C1E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "var(--font-pretendard), sans-serif" }}>
+                    <p style={{ margin: "1px 0 0", fontSize: "13px", fontWeight: 600, color: "#2A2118", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "var(--font-pretendard), sans-serif" }}>
                       {product.name}
                     </p>
-                    <p style={{ margin: 0, fontSize: "11px", color: "#B0A99F", textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: "var(--font-pretendard), sans-serif" }}>
+                    <p style={{ margin: 0, fontSize: "11px", color: "#BFB6AA", textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: "var(--font-pretendard), sans-serif" }}>
                       {product.brand}
                     </p>
                   </div>
                   {product.matchScore > 0 && (
                     <div style={{ flexShrink: 0, textAlign: "center" }}>
-                      <span style={{ fontSize: "13px", fontWeight: 700, color: "#8A9468", display: "block", fontFamily: "var(--font-cormorant), serif" }}>
+                      <span style={{ fontSize: "13px", fontWeight: 700, color: "#A69D92", display: "block", fontFamily: "var(--font-cormorant), serif" }}>
                         {product.matchScore}
                       </span>
-                      <span style={{ fontSize: "8px", color: "#C4BEB7", letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "var(--font-pretendard), sans-serif" }}>
+                      <span style={{ fontSize: "8px", color: "#BFB6AA", letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "var(--font-pretendard), sans-serif" }}>
                         score
                       </span>
                     </div>
@@ -221,10 +221,10 @@ export default function HomePage() {
           ) : (
             <div className="flex flex-col items-center justify-center" style={{ padding: "32px 20px" }}>
               <Star size={28} style={{ color: "#D9D5D0", marginBottom: "10px" }} />
-              <p style={{ margin: 0, fontSize: "14px", fontWeight: 500, color: "#A8A39D", textAlign: "center", fontFamily: "var(--font-pretendard), sans-serif" }}>
+              <p style={{ margin: 0, fontSize: "14px", fontWeight: 500, color: "#A69D92", textAlign: "center", fontFamily: "var(--font-pretendard), sans-serif" }}>
                 아직 루틴이 없어요
               </p>
-              <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#C4BEB7", textAlign: "center", lineHeight: 1.5, fontFamily: "var(--font-pretendard), sans-serif" }}>
+              <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#BFB6AA", textAlign: "center", lineHeight: 1.5, fontFamily: "var(--font-pretendard), sans-serif" }}>
                 마이페이지에서 루틴을 설정해보세요
               </p>
               <Link href="/mypage">
@@ -234,8 +234,9 @@ export default function HomePage() {
                     marginTop: "14px",
                     padding: "8px 18px",
                     borderRadius: "6px",
-                    backgroundColor: "#1C1C1E",
-                    color: "#FFFFFF",
+                    /* 따뜻한 다크 브라운 — 베이지 테마와 조화 */
+                    backgroundColor: "#3D3028",
+                    color: "#F2EFE9",
                     fontSize: "12px",
                     fontWeight: 600,
                     fontFamily: "var(--font-pretendard), sans-serif",
@@ -253,10 +254,10 @@ export default function HomePage() {
       <div style={{ padding: "20px 16px 24px" }}>
         {/* 섹션 타이틀 */}
         <div className="flex items-baseline gap-2" style={{ marginBottom: "12px" }}>
-          <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#1C1C1E", letterSpacing: "-0.3px", fontFamily: "var(--font-pretendard), sans-serif" }}>
+          <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.3px", fontFamily: "var(--font-pretendard), sans-serif" }}>
             Skincare Tips
           </h2>
-          <span style={{ fontSize: "12px", color: "#B0A99F", fontFamily: "var(--font-cormorant), serif", fontStyle: "italic" }}>
+          <span style={{ fontSize: "12px", color: "#A69D92", fontFamily: "var(--font-cormorant), serif", fontStyle: "italic" }}>
             알아두면 좋은 이야기
           </span>
         </div>
@@ -269,7 +270,7 @@ export default function HomePage() {
               style={{
                 backgroundColor: "#FFFFFF",
                 borderRadius: "10px",
-                border: "1px solid #EDEBE8",
+                border: "1px solid #E2DDD8",
                 padding: "14px",
               }}
             >
@@ -279,16 +280,16 @@ export default function HomePage() {
                   width: "36px",
                   height: "36px",
                   borderRadius: "8px",
-                  backgroundColor: "#F4F6EE",
+                  backgroundColor: "#F2EFE9",
                 }}
               >
                 {ICON_MAP[item.iconName](15)}
               </div>
               <div>
-                <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#1C1C1E", fontFamily: "var(--font-pretendard), sans-serif" }}>
+                <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#2A2118", fontFamily: "var(--font-pretendard), sans-serif" }}>
                   {item.label}
                 </p>
-                <p style={{ margin: "3px 0 0", fontSize: "12px", color: "#A8A39D", lineHeight: 1.6, fontFamily: "var(--font-pretendard), sans-serif" }}>
+                <p style={{ margin: "3px 0 0", fontSize: "12px", color: "#A69D92", lineHeight: 1.6, fontFamily: "var(--font-pretendard), sans-serif" }}>
                   {item.desc}
                 </p>
               </div>

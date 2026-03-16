@@ -187,8 +187,9 @@ export default function SettingsPage() {
               href="/skin-test/photo"
               className="flex items-center gap-3 w-full p-4 cursor-pointer transition-all duration-200 active:scale-[0.98] bg-white border border-border rounded-card"
             >
-              <div className="flex items-center justify-center shrink-0 w-11 h-11 rounded-[14px] bg-[#E8F5E9]">
-                <Camera size={22} color="#4CAF50" />
+              {/* 카메라 아이콘 — 베이지 팔레트 적용 */}
+              <div className="flex items-center justify-center shrink-0 w-11 h-11 rounded-[14px] bg-brand-bg">
+                <Camera size={22} className="text-brand" />
               </div>
               <div className="flex flex-col items-start">
                 <span className="text-sm font-semibold text-text-primary">

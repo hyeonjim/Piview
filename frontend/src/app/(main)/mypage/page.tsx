@@ -3,11 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Settings, Leaf, Package } from "lucide-react";
+import { Settings, Leaf, ShoppingBag, Sparkles, LogOut } from "lucide-react";
 import { Toast } from "@/components/common/Toast";
 import { useToast } from "@/hooks";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import Button from "@/components/common/Button";
 import RoutineTab from "@/components/features/mypage/RoutineTab";
 import RoutineAddModal from "@/components/features/mypage/RoutineAddModal";
 import OwnedTab from "@/components/features/mypage/OwnedTab";
@@ -83,73 +81,207 @@ export default function MyPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-bg-base">
-      {/* 프로필 */}
-      <div className="px-5 pt-5 pb-4 bg-bg-card">
-        <div className="flex items-center gap-3">
-          <Avatar className="w-14 h-14 bg-bg-surface border border-border">
-            <AvatarFallback className="text-text-muted font-semibold text-lg bg-bg-surface">
-              F
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-base font-bold text-text-primary">User</p>
-            <p className="text-xs text-text-muted mt-0.5">
-              피부 타입을 진단해보세요
-            </p>
-          </div>
-          <Link
-            href="/mypage/settings"
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-border"
-          >
-            <Settings size={16} className="text-text-muted" />
+    <div style={{ minHeight: "100%", backgroundColor: "#F5F2EC" }}>
+
+      {/* ── 프로필 헤더 — 연한 베이지 그라디언트 배경 ── */}
+      <div
+        style={{
+          background: "linear-gradient(160deg, #EDE8E0 0%, #F5F2EC 100%)",
+          padding: "52px 20px 20px",
+          position: "relative",
+          borderBottom: "1px solid #E2DDD8",
+        }}
+      >
+        {/* 상단 액션 버튼들 */}
+        <div
+          style={{
+            position: "absolute",
+            top: "16px",
+            right: "20px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <Link href="/mypage/settings">
+            <button
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "34px",
+                height: "34px",
+                borderRadius: "50%",
+                backgroundColor: "rgba(166,157,146,0.12)",
+                border: "1px solid rgba(166,157,146,0.2)",
+                cursor: "pointer",
+              }}
+              aria-label="설정"
+            >
+              <Settings size={15} style={{ color: "#8C8277" }} />
+            </button>
           </Link>
           {/* 로그아웃 버튼 — ⚠️ API 연동 시 authService.logout() 활성화 */}
           <button
             onClick={handleLogout}
-            className="text-xs text-text-muted border-none bg-transparent cursor-pointer px-2 py-1"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              fontSize: "12px",
+              color: "#BFB6AA",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "4px 2px",
+              fontFamily: "var(--font-pretendard), sans-serif",
+            }}
           >
+            <LogOut size={13} />
             로그아웃
           </button>
         </div>
 
-        <Button
-          variant="primary"
-          fullWidth
-          size="md"
-          className="mt-4"
-          onClick={() => router.push("/skin-test")}
-        >
-          피부 진단 시작하기
-        </Button>
-
-        {/* 탭 전환 */}
-        <div className="flex mt-3 bg-bg-surface rounded-xl p-1">
-          {(["routine", "owned"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                tab === t
-                  ? "bg-bg-card text-text-primary shadow-sm"
-                  : "text-text-muted"
-              }`}
+        {/* 아바타 + 정보 */}
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          {/* 아바타 */}
+          <div
+            style={{
+              width: "64px",
+              height: "64px",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #D9D5D0 0%, #BFB6AA 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: "3px solid #F2EFE9",
+              boxShadow: "0 2px 12px rgba(166,157,146,0.25)",
+              flexShrink: 0,
+            }}
+          >
+            <span
+              style={{
+                fontSize: "22px",
+                fontWeight: 700,
+                color: "#FFFFFF",
+                fontFamily: "var(--font-pretendard), sans-serif",
+              }}
             >
-              {t === "routine" ? (
-                <>
-                  <Leaf size={14} /> 내 루틴
-                </>
-              ) : (
-                <>
-                  <Package size={14} /> 보유제품
-                </>
-              )}
-            </button>
-          ))}
+              U
+            </span>
+          </div>
+
+          {/* 유저 정보 */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* ⚠️ API 연동 시 useUserStore에서 실제 이름으로 교체 */}
+            <p
+              style={{
+                margin: 0,
+                fontSize: "20px",
+                fontWeight: 700,
+                color: "#2A2118",
+                letterSpacing: "-0.3px",
+                fontFamily: "var(--font-pretendard), sans-serif",
+              }}
+            >
+              User님
+            </p>
+            <p
+              style={{
+                margin: "3px 0 0",
+                fontSize: "13px",
+                color: "#A69D92",
+                fontFamily: "var(--font-pretendard), sans-serif",
+              }}
+            >
+              피부 타입을 진단해보세요
+            </p>
+          </div>
         </div>
+
+
+        {/* 피부 진단 CTA 버튼 */}
+        <button
+          onClick={() => router.push("/skin-test")}
+          style={{
+            marginTop: "14px",
+            width: "100%",
+            height: "44px",
+            borderRadius: "12px",
+            background: "linear-gradient(135deg, #A69D92 0%, #BFB6AA 100%)",
+            color: "#FFFFFF",
+            fontSize: "14px",
+            fontWeight: 600,
+            border: "none",
+            cursor: "pointer",
+            letterSpacing: "-0.2px",
+            fontFamily: "var(--font-pretendard), sans-serif",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
+            boxShadow: "0 2px 12px rgba(166,157,146,0.3)",
+            transition: "opacity 0.15s",
+          }}
+        >
+          <Sparkles size={15} />
+          피부 진단 시작하기
+        </button>
       </div>
 
-      {/* 루틴 탭 */}
+      {/* ── 탭 스위처 — 언더라인 스타일 ── */}
+      <div
+        style={{
+          backgroundColor: "#F5F2EC",
+          padding: "0 20px",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          borderBottom: "1px solid #E2DDD8",
+          display: "flex",
+          gap: "0",
+        }}
+      >
+        {(["routine", "owned"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            style={{
+              flex: 1,
+              paddingTop: "12px",
+              paddingBottom: "11px",
+              fontSize: "14px",
+              fontWeight: tab === t ? 600 : 400,
+              color: tab === t ? "#2A2118" : "#BFB6AA",
+              background: "none",
+              border: "none",
+              borderBottom: tab === t ? "2px solid #A69D92" : "2px solid transparent",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              transition: "all 0.15s",
+              fontFamily: "var(--font-pretendard), sans-serif",
+              marginBottom: "-1px", // 하단 보더와 겹침
+            }}
+          >
+            {t === "routine" ? (
+              <>
+                <Leaf size={14} />
+                내 루틴
+              </>
+            ) : (
+              <>
+                <ShoppingBag size={14} />
+                보유제품
+              </>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* ── 탭 콘텐츠 ── */}
       {tab === "routine" && (
         <RoutineTab
           routine={routine}
@@ -157,8 +289,6 @@ export default function MyPage() {
           onRemove={handleRemoveFromRoutine}
         />
       )}
-
-      {/* 보유제품 탭 */}
       {tab === "owned" && (
         <OwnedTab
           routine={routine}

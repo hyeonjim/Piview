@@ -2,7 +2,8 @@
 
 // ── 스타일 상수 ──────────────────────────────────────────────────────
 const ROUTINE_CARD_BORDER_EMPTY = "var(--color-border-subtle)";
-const ROUTINE_CARD_BORDER_FILLED = "#E8EDD6";
+/* 베이지 팔레트 — 채워진 카드 보더를 Beige-3로 교체 */
+const ROUTINE_CARD_BORDER_FILLED = "#D9D1C7";
 const SCORE_RING_TRACK_COLOR = "var(--color-border-subtle)";
 const SCORE_RING_SIZE = { width: 56, height: 56 };
 const ROUTINE_STEP_CODE_STYLE = {
@@ -141,7 +142,8 @@ export default function RoutineTab({
             key={step.code}
             className="rounded-2xl px-4 py-3 transition-all"
             style={{
-              backgroundColor: filled ? "#FFFDF8" : "var(--color-warm-bg)",
+              /* 채워진 카드는 흰 배경, 빈 카드는 베이지 배경 */
+              backgroundColor: filled ? "#FFFFFF" : "var(--color-warm-bg)",
               border: `1px solid ${filled ? ROUTINE_CARD_BORDER_FILLED : ROUTINE_CARD_BORDER_EMPTY}`,
             }}
           >

@@ -2,14 +2,14 @@
 
 import React from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { House, Search, Sparkles, Heart, CircleUser } from "lucide-react";
+import { Home, Search, Sparkles, Heart, User } from "lucide-react";
 
 const TABS = [
-  { id: "home",      href: "/home",      icon: House,      label: "홈"   },
-  { id: "search",    href: "/search",    icon: Search,     label: "전체" },
-  { id: "recommend", href: "/recommend", icon: Sparkles,   label: "추천" },
-  { id: "likes",     href: "/likes",     icon: Heart,      label: "찜"   },
-  { id: "mypage",    href: "/mypage",    icon: CircleUser, label: "마이" },
+  { id: "home",      href: "/home",      icon: Home,     label: "홈"   },
+  { id: "search",    href: "/search",    icon: Search,   label: "전체" },
+  { id: "recommend", href: "/recommend", icon: Sparkles, label: "추천" },
+  { id: "likes",     href: "/likes",     icon: Heart,    label: "찜"   },
+  { id: "mypage",    href: "/mypage",    icon: User,     label: "마이" },
 ] as const;
 
 export default function BottomNav() {
@@ -34,8 +34,8 @@ export default function BottomNav() {
         style={{
           maxWidth: "500px",
           height: "56px",
-          backgroundColor: "#FFFFFF",
-          borderTop: "1px solid #E8E4DF",
+          backgroundColor: "#FDFCFB",
+          borderTop: "1px solid #E2DDD8",
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
       >
@@ -55,15 +55,15 @@ export default function BottomNav() {
                 size={20}
                 strokeWidth={isActive ? 2 : 1.4}
                 style={{
-                  color: isActive ? "#2C2C2C" : "#C4BEB7",
-                  fill: tab.id === "likes" && isActive ? "#2C2C2C" : "none",
+                  color: isActive ? "#5A504A" : "#C4BEB7",
+                  fill: tab.id === "likes" && isActive ? "#5A504A" : "none",
                   transition: "color 0.15s",
                 }}
               />
               <span
                 className="text-[9px] tracking-[0.5px] uppercase"
                 style={{
-                  color: isActive ? "#2C2C2C" : "#C4BEB7",
+                  color: isActive ? "#5A504A" : "#C4BEB7",
                   fontFamily: "var(--font-pretendard), sans-serif",
                   fontWeight: isActive ? 600 : 400,
                   letterSpacing: "0.08em",
@@ -71,14 +71,14 @@ export default function BottomNav() {
               >
                 {tab.label}
               </span>
-              {/* 활성 표시 — 하단 선 */}
+              {/* 활성 표시 — 하단 선 (베이지 테마 accent) */}
               {isActive && (
                 <div
                   className="absolute bottom-0"
                   style={{
                     width: "20px",
                     height: "2px",
-                    backgroundColor: "#2C2C2C",
+                    backgroundColor: "#A69D92",
                   }}
                 />
               )}

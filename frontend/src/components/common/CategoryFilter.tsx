@@ -53,12 +53,13 @@ export function CategoryFilter({
                 padding: "0 14px",
                 fontSize: "13px",
                 fontWeight: isActive ? 600 : 400,
-                color: isActive ? "#1C1C1E" : "#A8A39D",
+                // 활성 시 검정 대신 웜 브라운 계열
+                color: isActive ? "#6B5445" : "#A8A39D",
                 fontFamily: "var(--font-pretendard), sans-serif",
                 letterSpacing: "0.01em",
                 transition: "color 0.15s",
-                // 활성 하단 선
-                borderBottom: isActive ? "2px solid #1C1C1E" : "2px solid transparent",
+                // 활성 하단 선 — 웜 브라운
+                borderBottom: isActive ? "2px solid #6B5445" : "2px solid transparent",
                 marginBottom: "-1px",
               }}
             >
@@ -68,14 +69,14 @@ export function CategoryFilter({
         })}
       </div>
 
-      {/* 소분류 — 횡스크롤 pill */}
+      {/* 소분류 — flex-wrap pill (다음줄로 넘어가게) */}
       {selectedMain && MAIN_CATEGORIES[selectedMain] && (
         <div
-          className="flex gap-2 overflow-x-auto"
+          className="flex flex-wrap gap-2"
           style={{
             padding: "10px 16px",
-            scrollbarWidth: "none",
-            backgroundColor: "#FAFAF8",
+            // 연한 베이지 배경
+            backgroundColor: "#F5F1EB",
             borderBottom: "1px solid #EDEBE8",
           }}
         >
@@ -86,25 +87,27 @@ export function CategoryFilter({
               <button
                 key={sub}
                 onClick={() => onSubSelect(isActive ? null : sub)}
-                className="shrink-0 cursor-pointer border transition-all"
+                className="cursor-pointer border transition-all"
                 style={{
                   height: "30px",
                   padding: "0 12px",
-                  borderRadius: "4px",
+                  borderRadius: "20px",
                   fontSize: "12px",
                   fontWeight: isActive ? 600 : 400,
                   fontFamily: "var(--font-pretendard), sans-serif",
                   letterSpacing: "0.01em",
                   ...(isActive
                     ? {
-                        backgroundColor: "#1C1C1E",
+                        // 활성 시 검정 대신 웜 모카 브라운
+                        backgroundColor: "#9B7D6A",
                         color: "#FFFFFF",
-                        borderColor: "#1C1C1E",
+                        borderColor: "#9B7D6A",
                       }
                     : {
                         backgroundColor: catColor ? catColor.chip : "#F2EFE9",
                         color: catColor ? catColor.accent : "#8A8278",
-                        borderColor: "transparent",
+                        // 비활성 테두리를 카테고리 컬러로
+                        borderColor: catColor ? catColor.border : "#E2DDD8",
                       }),
                 }}
               >

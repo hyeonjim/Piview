@@ -63,18 +63,18 @@ export default function RecommendPage() {
   const handleSubSelect  = (s: string | null) => { setSelectedSub(s);  setPage(1); };
 
   return (
-    <div style={{ minHeight: "100%", backgroundColor: "#FAFAF8" }}>
+    <div style={{ minHeight: "100%", backgroundColor: "#F5F2EC" }}>
       <Toast msg={toastMessage} />
 
       {/* ── 상단 헤더 ────────────────────────────────────── */}
-      <div style={{ backgroundColor: "#FFFFFF", borderBottom: "1px solid #EDEBE8", paddingTop: "56px" }}>
+      <div style={{ backgroundColor: "#F5F2EC", borderBottom: "1px solid #E2DDD8", paddingTop: "56px" }}>
         <div className="flex items-end justify-between" style={{ padding: "16px 16px 12px" }}>
           <div>
             <p
               style={{
                 margin: 0,
                 fontSize: "10px",
-                color: "#B0A99F",
+                color: "#BFB6AA",
                 letterSpacing: "0.14em",
                 textTransform: "uppercase",
                 fontFamily: "var(--font-cormorant), serif",
@@ -88,7 +88,7 @@ export default function RecommendPage() {
                 margin: "3px 0 0",
                 fontSize: "22px",
                 fontWeight: 700,
-                color: "#1C1C1E",
+                color: "#2A2118",
                 letterSpacing: "-0.4px",
                 lineHeight: 1.2,
                 fontFamily: "var(--font-pretendard), sans-serif",
@@ -96,11 +96,12 @@ export default function RecommendPage() {
             >
               맞춤 추천
             </h1>
-            <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#B0A99F" }}>
+            <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#BFB6AA" }}>
               내 피부 타입에 맞는 제품
             </p>
           </div>
 
+          {/* 필터 버튼 — 활성 시 베이지-5 accent */}
           <button
             onClick={() => setShowFilter(true)}
             className="flex items-center gap-1.5 cursor-pointer border transition-all active:scale-[0.96]"
@@ -110,8 +111,8 @@ export default function RecommendPage() {
               borderRadius: "6px",
               fontSize: "12px",
               fontWeight: 500,
-              borderColor: filterCount > 0 ? "#1C1C1E" : "#E8E4DF",
-              backgroundColor: filterCount > 0 ? "#1C1C1E" : "#FFFFFF",
+              borderColor: filterCount > 0 ? "#A69D92" : "#E2DDD8",
+              backgroundColor: filterCount > 0 ? "#A69D92" : "#FFFFFF",
               color: filterCount > 0 ? "#FFFFFF" : "#8A8278",
             }}
           >
@@ -139,13 +140,13 @@ export default function RecommendPage() {
       />
 
       {/* ── 제품 그리드 ─────────────────────────────────── */}
-      <div style={{ padding: "16px 14px 24px" }}>
+      <div style={{ padding: "16px 16px 24px" }}>
         {filtered.length === 0 ? (
-          <div style={{ backgroundColor: "#FFFFFF", borderRadius: "12px", border: "1px solid #EDEBE8", marginTop: "8px" }}>
+          <div style={{ backgroundColor: "#FFFFFF", borderRadius: "12px", border: "1px solid #E2DDD8", marginTop: "8px" }}>
             <EmptyState icon={Search} title="해당하는 제품이 없어요" description="검색어나 필터를 바꿔보세요" />
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
             {paginated.map((product) => (
               <ProductCard
                 key={product.id}
