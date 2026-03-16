@@ -30,35 +30,37 @@ const CHECK_CIRCLE_STYLE = {
 const PREV_BTN_STYLE = { fontSize: "15px" };
 const NEXT_BTN_BASE = { borderRadius: "20px", fontSize: "15px" };
 
-import { use, useEffect } from "react";
+// ── fix: useState, useCallback import 추가 ──────────────────────────
+import { use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   GENDER_QUESTION,
   COMMON_QUESTIONS,
+  // ── fix: MALE_QUESTIONS/FEMALE_QUESTIONS → 실제 export명으로 교체 ──
   WOMEN_QUESTIONS,
   MEN_QUESTIONS,
   ALLERGY_QUESTION,
   SKIN_TYPE_MAP,
 } from "@/constants";
+// ── fix: useSurveyStore 실제 사용으로 교체 (로컬 state 제거) ─────────
 import { useSurveyStore } from "@/stores/useSurveyStore";
 
 /** 전체 질문 수 (성별 1 + 공통 3 + 성별 맞춤 3 + 알레르기 1) */
 const TOTAL_QUESTIONS = 8;
 
 /**
- * 질문 번호(1~8)로 QuizQuestion 반환
- * 5~7번은 선택된 성별에 따라 다른 질문을 반환
+ * 질문 번호(1~8)와 성별로 해당 SurveyQuestion 반환
+ * ── fix: 이전에는 선언만 하고 호출하지 않아 currentQ 항상 0이었음
+ *        이제 컴포넌트에서 직접 호출해 질문을 결정
  */
-function getQuestionByNumber(
-  number: number,
-  gender: "female" | "male",
-) {
+function getQuestionByNumber(number: number, gender: "women" | "men") {
   if (number === 1) return GENDER_QUESTION;
   if (number === 2) return COMMON_QUESTIONS[0]; // 연령대
   if (number === 3) return COMMON_QUESTIONS[1]; // 세안 후 피부
   if (number === 4) return COMMON_QUESTIONS[2]; // 제품 반응
   if (number >= 5 && number <= 7) {
-    const genderQuestions = gender === "male" ? MALE_QUESTIONS : FEMALE_QUESTIONS;
+    // ── fix: MALE/FEMALE_QUESTIONS → MEN/WOMEN_QUESTIONS ──
+    const genderQuestions = gender === "men" ? MEN_QUESTIONS : WOMEN_QUESTIONS;
     return genderQuestions[number - 5];
   }
   if (number === 8) return ALLERGY_QUESTION;
@@ -74,32 +76,38 @@ export default function SurveyPage({
   const questionNumber = parseInt(id, 10); // 1-based URL 파라미터
 
   const router = useRouter();
-  const [gender, setGender] = useState<"women" | "men">("women");
-  const [currentQ, setCurrentQ] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
 
-  const genderQuestions = gender === "men" ? MEN_QUESTIONS : WOMEN_QUESTIONS;
-  const questions = [
-    GENDER_QUESTION,
-    ...COMMON_QUESTIONS,
-    ...genderQuestions,
-    ALLERGY_QUESTION,
-  ];
-  const question = questions[currentQ];
+  // ── fix: 로컬 state 제거 → useSurveyStore로 통합
+  //        페이지 전환(이전/다음) 시 답변·성별 유지됨
+  const { gender, answers, setGender, setAnswer, resetSurvey } =
+    useSurveyStore();
+
+  // ── fix: getQuestionByNumber 실제 호출 — URL id + store gender 기반
+  const question = getQuestionByNumber(questionNumber, gender);
+
+  // 잘못된 URL id 진입 시 안전하게 처리
+  if (!question) {
+    router.replace("/skin-test/survey/1");
+    return null;
+  }
+
   const selectedAnswer = answers[question.id];
   const progress = (questionNumber / TOTAL_QUESTIONS) * 100;
   const isLast = questionNumber === TOTAL_QUESTIONS;
   const isAllergy = question.id === 6;
   const isGender = question.id === -1;
 
+  // ── fix: store의 setAnswer/setGender 사용
   const selectAnswer = useCallback(
     (value: string) => {
-      setAnswers((prev) => ({ ...prev, [question.id]: value }));
-      if (question.id === -1 && (value === "men" || value === "women")) {
-        setGender(value as "women" | "men");
+      setAnswer(question.id, value);
+      // 성별 선택 시 store에 gender 저장
+      // store gender 타입이 "women"|"men"으로 통일되어 변환 불필요
+      if (question.id === -1 && (value === "women" || value === "men")) {
+        setGender(value);
       }
     },
-    [question.id],
+    [question.id, setAnswer, setGender],
   );
 
   /** 다음 질문 또는 결과 페이지로 이동 */
@@ -107,9 +115,22 @@ export default function SurveyPage({
     if (!selectedAnswer) return;
     if (isLast) {
       // 세안 후 피부 상태(question id: 1) 기준으로 피부 타입 결정
-      const skinType = SKIN_TYPE_MAP[answers[1]] || "combination";
+      // ⚠️ API 연동 시 BE/AI 분석 결과로 교체
+      const skinType = SKIN_TYPE_MAP[answers[1]] ?? "combination";
+
+      // ── fix: result에 concerns(고민), age(연령대) 파라미터도 함께 전달 ──
+      //        이전에는 type만 넘겨 result 페이지 고민·연령대 항상 기본값 표시됨
+      const concern = answers[5] ?? ""; // 피부 고민 (5번 질문)
+      const ageGroup = answers[0] ?? ""; // 연령대 (0번 질문)
+      const allergy = answers[6] ?? ""; // 주의 성분 (6번 질문)
+
+      const queryParams = new URLSearchParams({ type: skinType });
+      if (concern) queryParams.set("concerns", concern);
+      if (ageGroup) queryParams.set("age", ageGroup);
+      if (allergy && allergy !== "none") queryParams.set("allergies", allergy);
+
       resetSurvey(); // 설문 완료 후 스토어 초기화
-      router.push(`/skin-test/result?type=${skinType}`);
+      router.push(`/skin-test/result?${queryParams.toString()}`);
     } else {
       router.push(`/skin-test/survey/${questionNumber + 1}`);
     }
