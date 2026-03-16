@@ -1,5 +1,10 @@
 "use client";
 
+import { useSearchParams, useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { X, Lightbulb, ArrowRight } from "lucide-react";
+import { SKIN_TYPE_INFO, DEFAULT_SKIN_TYPE } from "@/constants";
+
 // ── 스타일 상수 ──────────────────────────────────────────────────────
 const TYPE_ICON_STYLE = {
   width: "64px",
@@ -42,11 +47,6 @@ const INSIGHT_CARD_STYLE = {
 };
 const INSIGHT_TITLE = { fontSize: "14px", fontWeight: 700, color: "#1565C0" };
 const INSIGHT_TEXT_STYLE = { fontSize: "14px", lineHeight: 1.7 };
-
-import { useSearchParams, useRouter } from "next/navigation";
-import { Suspense } from "react";
-import { X, Lightbulb, ArrowRight } from "lucide-react";
-import { SKIN_TYPE_INFO, DEFAULT_SKIN_TYPE } from "@/constants";
 
 function ResultContent() {
   const router = useRouter();

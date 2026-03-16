@@ -1,8 +1,5 @@
 "use client";
 
-// ── 스타일 상수 ──────────────────────────────────────────────────────
-const HEADER_BG = "linear-gradient(135deg, #FFF0F0 0%, #FFFFFF 100%)";
-
 import { Heart } from "lucide-react";
 import { Toast } from "@/components/common/Toast";
 import { useToast } from "@/hooks";
@@ -69,3 +66,7 @@ export default function LikesPage() {
     </div>
   );
 }
+
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const HEADER_BG =
+  "linear-gradient(135deg, var(--color-bg-like) 0%, #FFFFFF 100%)";

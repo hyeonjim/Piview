@@ -10,14 +10,6 @@
  */
 "use client";
 
-// ── 스타일 상수 ──────────────────────────────────────────────────────
-const RANGE_INPUT_BASE: React.CSSProperties = {
-  top: 6,
-  height: 20,
-  appearance: "none",
-  background: "transparent",
-};
-
 import React, { useEffect } from "react";
 import { X, RotateCcw } from "lucide-react";
 import { getGroupKey, GROUP_ORDER } from "@/utils/chosung";
@@ -25,6 +17,14 @@ import {
   SKIN_FUNCTIONS,
   SKIN_TYPE_LABELS_FOR_FILTER,
 } from "@/constants/categoryColors";
+
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const RANGE_INPUT_BASE: React.CSSProperties = {
+  top: 6,
+  height: 20,
+  appearance: "none",
+  background: "transparent",
+};
 
 const PRICE_MAX = 1_000_000;
 
@@ -151,7 +151,9 @@ export function FilterModal({
                     active={filterFns.has(functionName)}
                     onClick={() => {
                       const newSet = new Set(filterFns);
-                      newSet.has(functionName) ? newSet.delete(functionName) : newSet.add(functionName);
+                      newSet.has(functionName)
+                        ? newSet.delete(functionName)
+                        : newSet.add(functionName);
                       onChange({ filterFns: newSet });
                     }}
                   />
@@ -195,7 +197,9 @@ export function FilterModal({
                         key={brand}
                         onClick={() => {
                           const newSet = new Set(filterBrands);
-                          newSet.has(brand) ? newSet.delete(brand) : newSet.add(brand);
+                          newSet.has(brand)
+                            ? newSet.delete(brand)
+                            : newSet.add(brand);
                           onChange({ filterBrands: newSet });
                         }}
                         className={`h-[30px] px-3 rounded-[15px] cursor-pointer text-xs border transition-all ${

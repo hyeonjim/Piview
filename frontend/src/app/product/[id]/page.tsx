@@ -1,20 +1,5 @@
 "use client";
 
-// ── 스타일 상수 ──────────────────────────────────────────────────────
-const MATCH_RING_SIZE = { width: 64, height: 64 };
-const EWG_BAR_CONTAINER = { height: 8, gap: 2 };
-const EWG_BAR_RADIUS = 4;
-const EWG_UNKNOWN_COLOR = "#E0E0E0";
-const CAUTION_CHIP_STYLE = { backgroundColor: "#FFF3E0", color: "#BF360C" };
-const ALLERGEN_CHIP_STYLE = { backgroundColor: "#FFEBEE", color: "#B71C1C" };
-const INGRED_DIVIDER = "1px solid #F5F5F5";
-const RANGE_INPUT_BASE: React.CSSProperties = {
-  top: 6,
-  height: 20,
-  appearance: "none",
-  background: "transparent",
-};
-
 import React, { useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -31,6 +16,21 @@ import { useToast } from "@/hooks";
 import { getMockProductById } from "@/constants/_mock/product";
 import { getEwgColor } from "@/constants/categoryColors";
 import { isAllergenIngredient } from "@/constants/allergens";
+
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const MATCH_RING_SIZE = { width: 64, height: 64 };
+const EWG_BAR_CONTAINER = { height: 8, gap: 2 };
+const EWG_BAR_RADIUS = 4;
+const EWG_UNKNOWN_COLOR = "#E0E0E0";
+const CAUTION_CHIP_STYLE = { backgroundColor: "#FFF3E0", color: "#BF360C" };
+const ALLERGEN_CHIP_STYLE = { backgroundColor: "#FFEBEE", color: "#B71C1C" };
+const INGRED_DIVIDER = "1px solid #F5F5F5";
+const RANGE_INPUT_BASE: React.CSSProperties = {
+  top: 6,
+  height: 20,
+  appearance: "none",
+  background: "transparent",
+};
 
 // ── 알레르기 방패 아이콘 ────────────────────────────────────────────
 function AllergenIcon() {
@@ -96,7 +96,8 @@ export default function ProductDetailPage() {
     showToast(`✓ ${productData.name} 루틴에 추가됨!`);
   };
 
-  const { total, safe, caution, danger, unknown, safePercent } = productData.ewg;
+  const { total, safe, caution, danger, unknown, safePercent } =
+    productData.ewg;
   const allergenList = productData.ingredientsKr.filter((ingredientName) =>
     isAllergenIngredient(ingredientName),
   );
@@ -111,7 +112,7 @@ export default function ProductDetailPage() {
       : score >= 80
         ? "#5E6E48"
         : score >= 70
-          ? "#8A7B64"
+          ? "var(--color-text-warm)"
           : "#AFAFAF";
   const matchLabel =
     score >= 90
@@ -168,14 +169,16 @@ export default function ProductDetailPage() {
             </div>
             {(productData.skinType1 || productData.skinType2) && (
               <div className="flex flex-col gap-1 shrink-0">
-                {[productData.skinType1, productData.skinType2].filter(Boolean).map((skinType) => (
-                  <span
-                    key={skinType}
-                    className="text-xs px-2 py-[2px] rounded-[6px] bg-brand-bg text-brand font-semibold"
-                  >
-                    {skinType}
-                  </span>
-                ))}
+                {[productData.skinType1, productData.skinType2]
+                  .filter(Boolean)
+                  .map((skinType) => (
+                    <span
+                      key={skinType}
+                      className="text-xs px-2 py-[2px] rounded-[6px] bg-brand-bg text-brand font-semibold"
+                    >
+                      {skinType}
+                    </span>
+                  ))}
               </div>
             )}
           </div>
@@ -285,7 +288,7 @@ export default function ProductDetailPage() {
                   {score}점
                 </span>
               </div>
-              <p className="text-xs text-[#8A7B64] leading-[1.5]">
+              <p className="text-xs text-[var(--color-text-warm)] leading-[1.5]">
                 {matchDesc}
               </p>
               <p className="text-xs text-text-muted mt-0.5">나와의 매칭 점수</p>
@@ -390,7 +393,8 @@ export default function ProductDetailPage() {
         </div>
 
         {/* 주의 성분 + 알레르기 카드 */}
-        {(productData.cautionIngredients.length > 0 || allergenList.length > 0) && (
+        {(productData.cautionIngredients.length > 0 ||
+          allergenList.length > 0) && (
           <div className="mx-5 p-4 rounded-2xl mb-3 bg-[#FFF8F0] border border-[#FFE0B2]">
             {productData.cautionIngredients.length > 0 && (
               <>
@@ -553,7 +557,9 @@ export default function ProductDetailPage() {
                           className="text-[10px] font-bold mt-0.5"
                           style={{ color: ewg.text }}
                         >
-                          {ingredient.ewgGrade != null ? ingredient.ewgGrade : "?"}
+                          {ingredient.ewgGrade != null
+                            ? ingredient.ewgGrade
+                            : "?"}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
@@ -586,9 +592,11 @@ export default function ProductDetailPage() {
                 <div key={label}>
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs text-text-primary">{label}</span>
-                    <span className="text-xs font-bold text-brand">{score}</span>
+                    <span className="text-xs font-bold text-brand">
+                      {score}
+                    </span>
                   </div>
-                  <div className="h-1.5 rounded-[3px] bg-[#F0EDE8] overflow-hidden">
+                  <div className="h-1.5 rounded-[3px] bg-[var(--color-bg-muted-warm)] overflow-hidden">
                     <div
                       className="h-full rounded-[3px] bg-brand transition-[width] duration-[600ms] ease-in-out"
                       style={{ width: `${score}%` }}
@@ -617,9 +625,11 @@ export default function ProductDetailPage() {
                         </span>
                       )}
                     </div>
-                    <span className="text-xs font-bold text-brand">{score}</span>
+                    <span className="text-xs font-bold text-brand">
+                      {score}
+                    </span>
                   </div>
-                  <div className="h-1.5 rounded-[3px] bg-[#F0EDE8] overflow-hidden">
+                  <div className="h-1.5 rounded-[3px] bg-[var(--color-bg-muted-warm)] overflow-hidden">
                     <div
                       className="h-full rounded-[3px] bg-brand transition-[width] duration-[600ms] ease-in-out"
                       style={{ width: `${score}%` }}

@@ -1,5 +1,10 @@
 "use client";
 
+import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { SKIN_TEST_OPTIONS } from "@/constants";
+
 // ── 스타일 상수 ──────────────────────────────────────────────────────
 const STEP_INDICATOR_STYLE = { fontSize: "15px" };
 const TITLE_STYLE = { fontSize: "24px", lineHeight: 1.4 };
@@ -18,11 +23,6 @@ const NEXT_BTN_BASE = {
 };
 const SKIP_BTN_STYLE = { fontSize: "14px", padding: "8px 0" };
 const BOTTOM_SPACER = { height: "120px" };
-
-import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { SKIN_TEST_OPTIONS } from "@/constants";
 
 export default function SkinTestPage() {
   const router = useRouter();

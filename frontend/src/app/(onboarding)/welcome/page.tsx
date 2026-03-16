@@ -1,5 +1,9 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { WELCOME_SLIDES } from "@/constants/_mock/welcomeSlides";
+
 // ── 스타일 상수 ──────────────────────────────────────────────────────
 const BRAND_TEXT_STYLE = {
   fontFamily: "'Raleway', sans-serif",
@@ -31,10 +35,6 @@ const DESC_STYLE = {
   whiteSpace: "pre-line" as const,
   letterSpacing: "0.2px",
 };
-
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { WELCOME_SLIDES } from "@/constants/_mock/welcomeSlides";
 
 const OVERLAY =
   "linear-gradient(to top, rgba(30,27,36,0.92) 0%, rgba(30,27,36,0.5) 40%, rgba(30,27,36,0.1) 65%, transparent 100%)";
@@ -235,7 +235,12 @@ export default function WelcomePage() {
           }}
         >
           {/* 카카오 말풍선 아이콘 */}
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="rgba(0,0,0,0.85)">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="rgba(0,0,0,0.85)"
+          >
             <path d="M12 3C6.477 3 2 6.477 2 11c0 2.897 1.553 5.453 3.926 7.07L4.9 21.5a.5.5 0 0 0 .7.55l4.13-2.32A11.3 11.3 0 0 0 12 20c5.523 0 10-3.477 10-8S17.523 3 12 3z" />
           </svg>
           카카오로 시작하기
@@ -263,7 +268,16 @@ export default function WelcomePage() {
           }}
         >
           {/* 방패 아이콘 */}
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5A5248" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#5A5248"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
           관리자로 바로 시작
@@ -280,11 +294,15 @@ export default function WelcomePage() {
           }}
         >
           로그인 시{" "}
-          <span style={{ textDecoration: "underline", textUnderlineOffset: "2px" }}>
+          <span
+            style={{ textDecoration: "underline", textUnderlineOffset: "2px" }}
+          >
             서비스 이용약관
           </span>{" "}
           및{" "}
-          <span style={{ textDecoration: "underline", textUnderlineOffset: "2px" }}>
+          <span
+            style={{ textDecoration: "underline", textUnderlineOffset: "2px" }}
+          >
             개인정보처리방침
           </span>
           에 동의합니다.

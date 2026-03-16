@@ -9,11 +9,11 @@
 import { FilterState } from "@/components/common/FilterModal";
 
 export const DEFAULT_FILTER: FilterState = {
-  filterSkin:    null,
-  filterFns:     new Set(),
+  filterSkin: null,
+  filterFns: new Set(),
   filterChosung: null,
-  filterBrands:  new Set(),
-  priceRange:    [0, 1_000_000],
+  filterBrands: new Set(),
+  priceRange: [0, 1_000_000],
 };
 
 export const PRICE_MAX = 1_000_000;

@@ -1,1 +1,5 @@
 export { ProfileCard } from "./ProfileCard";
+export { default as RoutineTab } from "./RoutineTab";
+export { default as RoutineAddModal } from "./RoutineAddModal";
+export { default as OwnedTab } from "./OwnedTab";
+export { default as AvoidProductModal } from "./AvoidProductModal";

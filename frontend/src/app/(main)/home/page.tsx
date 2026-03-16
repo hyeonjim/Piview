@@ -1,8 +1,5 @@
 "use client";
 
-// ── 스타일 상수 ──────────────────────────────────────────────────────
-const ROUTINE_DIVIDER = "1px solid rgba(0,0,0,0.05)";
-
 import { useEffect } from "react";
 import {
   Sparkles,
@@ -18,6 +15,9 @@ import Link from "next/link";
 import { SKINCARE_INSIGHTS } from "@/constants";
 import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
 import { ROUTINE_STEPS, type RoutineStep } from "@/constants/routineSteps";
+
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const ROUTINE_DIVIDER = "1px solid rgba(0,0,0,0.05)";
 
 function getGreeting(): { text: string; icon: React.ReactNode } {
   const h = new Date().getHours();
