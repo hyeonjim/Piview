@@ -7,6 +7,8 @@ import com.piview.backend.global.config.AppProperties;
 import com.piview.backend.global.security.TokenProvider;
 import com.piview.backend.global.security.UserPrincipal;
 import com.piview.backend.global.util.CookieUtil;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +34,9 @@ public class AuthController {
 
   // 토큰 재발급 API
   @PostMapping("/refresh")
-  public ResponseEntity<?> refreshToken(@CookieValue(value = "refreshToken", required = false) String refreshToken,
+  public ResponseEntity<?> refreshToken(
+      @Parameter(description = "리프레시 토큰값 (앞뒤 따옴표 없이 쌩 텍스트만)", in = ParameterIn.COOKIE, name = "refreshToken")
+      @CookieValue(value = "refreshToken", required = false) String refreshToken,
       HttpServletResponse response) {
 
     // 쿠키가 아예 안 넘어왔을 때 방어

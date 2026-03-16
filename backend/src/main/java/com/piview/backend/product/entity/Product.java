@@ -36,6 +36,9 @@ public class Product {
     @Column(name = "ingredients", columnDefinition = "TEXT")
     private String ingredients;     // 원본 전성분 문자열 (보관용)
 
+    @Column(name = "volume")
+    private String volume;
+
     @Column(name = "price")
     private Integer price;
 

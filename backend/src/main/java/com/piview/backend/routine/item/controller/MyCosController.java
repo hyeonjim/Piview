@@ -27,11 +27,6 @@ public class MyCosController {
 
     @Operation(summary = "보유제품 목록 조회", description = "로그인한 사용자가 보유한 화장품 목록을 조회합니다. (피부 타입 1, 2순위 포함)")
 
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "조회 성공"),
-        @ApiResponse(responseCode = "401", description = "인증 실패 (로그인 필요)"),
-        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
-    })
     @GetMapping
     public ResponseEntity<List<MyCosResponseDto>> getMyCosList(
         @Parameter(hidden = true)
