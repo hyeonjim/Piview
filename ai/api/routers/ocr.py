@@ -14,48 +14,40 @@ POST /ocr/extract-text  ← 성분표 사진 → EasyOCR 추출 + Gemini 정제
 
 import json
 import os
+import time
 from pathlib import Path
 
 import numpy as np
 import cv2
 import easyocr
-import google.generativeai as genai
+from dotenv import load_dotenv
 from fastapi import APIRouter, File, UploadFile, HTTPException
+from google import genai
+from google.genai import types
 
 router = APIRouter()
-
-
-def load_env_file(env_path: Path) -> None:
-    if not env_path.exists():
-        return
-
-    for line in env_path.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#") or "=" not in stripped:
-            continue
-
-        key, value = stripped.split("=", 1)
-        os.environ.setdefault(key.strip(), value.strip())
 
 # ── EasyOCR + Gemini 초기화 (서버 시작 시 한 번만) ──
 print("⏳ EasyOCR 로딩 중...")
 reader = easyocr.Reader(['ko', 'en'], gpu=False)
 print("✅ EasyOCR 로딩 완료")
 
-load_env_file(Path(__file__).resolve().parents[2] / ".env")
+# ai/.env 파일을 먼저 읽어 로컬 개발과 서버 실행 방식을 통일합니다.
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
+# OCR은 Gemini를 쓰므로 서버 시작 시점에 키 유무를 바로 검증합니다.
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 if not gemini_api_key:
     raise RuntimeError("GEMINI_API_KEY is not set")
 
-genai.configure(api_key=gemini_api_key)
-gemini = genai.GenerativeModel('gemini-2.5-flash')
+gemini_client = genai.Client(api_key=gemini_api_key)
 
 
 # ── 엔드포인트 ────────────────────────────────────
 @router.post("/extract-text")
 async def extract_product_name(file: UploadFile = File(...)):
     """성분표 사진 업로드 → EasyOCR 추출 + Gemini 정제 → 한글 키워드 배열 반환"""
+    start_time = time.perf_counter()
     try:
         # 1. 인메모리 이미지 디코딩
         contents = await file.read()
@@ -67,6 +59,8 @@ async def extract_product_name(file: UploadFile = File(...)):
 
         # 2. EasyOCR 텍스트 추출 (좌표 포함)
         results   = reader.readtext(img_cv, detail=1)
+        easyocr_done = time.perf_counter()
+        print(f"⏱️ OCR EasyOCR 소요: {easyocr_done - start_time:.2f}초")
         raw_texts = []
 
         for (bbox, text, prob) in results:
@@ -75,7 +69,7 @@ async def extract_product_name(file: UploadFile = File(...)):
                 raw_texts.append({"text": text, "height": round(float(height), 2)})
 
         # 3. 글자 높이 순 정렬 → 상위 7개
-        # Packaging front text is usually larger than ingredient or noise text, so height is a cheap first filter.
+        # 패키지 전면의 제품명은 대체로 크게 찍히므로, 높이 순 정렬로 노이즈를 1차 제거합니다.
         raw_texts.sort(key=lambda x: x['height'], reverse=True)
         top_words = [item["text"] for item in raw_texts[:7]]
         print(f"👀 OCR 원본: {top_words}")
@@ -95,13 +89,16 @@ async def extract_product_name(file: UploadFile = File(...)):
         올바른 응답 예시: ["닥터지", "레드 블레미쉬", "클리어 수딩 크림"]
         """
 
-        response = gemini.generate_content(
-            prompt,
-            generation_config=genai.GenerationConfig(
+        response = gemini_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                temperature=0.1
-            )
+                temperature=0.1,
+            ),
         )
+        gemini_done = time.perf_counter()
+        print(f"⏱️ OCR Gemini 소요: {gemini_done - easyocr_done:.2f}초")
 
         # 5. 마크다운 찌꺼기 제거 후 파싱
         response_text = response.text.strip()
@@ -130,3 +127,6 @@ async def extract_product_name(file: UploadFile = File(...)):
     except Exception as e:
         print(f"❌ OCR 서버 에러: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        total_time = time.perf_counter() - start_time
+        print(f"⏱️ OCR 전체 소요: {total_time:.2f}초")

@@ -6,5 +6,6 @@ torchvision
 pillow
 easyocr
 opencv-python
-google-generativeai
+google-genai
 pydantic
+python-dotenv
