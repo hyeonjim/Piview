@@ -4,6 +4,11 @@ import com.piview.backend.global.security.UserPrincipal;
 import com.piview.backend.routine.item.dto.MyCosCreateRequestDto;
 import com.piview.backend.routine.item.dto.MyCosResponseDto;
 import com.piview.backend.routine.item.service.MyCosService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "보유제품 (MyCos) API", description = "내 보유제품 관리 및 조회 API")
 @RestController
 @RequestMapping("/my-cos")
 @RequiredArgsConstructor
@@ -19,11 +25,17 @@ public class MyCosController {
 
     private final MyCosService myCosService;
 
+    @Operation(summary = "보유제품 목록 조회", description = "로그인한 사용자가 보유한 화장품 목록을 조회합니다. (피부 타입 1, 2순위 포함)")
+
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "401", description = "인증 실패 (로그인 필요)"),
+        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     @GetMapping
     public ResponseEntity<List<MyCosResponseDto>> getMyCosList(
-            // UserPrincipal을 주입
-            @AuthenticationPrincipal UserPrincipal userPrincipal
-    ) {
+        @Parameter(hidden = true)
+        @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
         Long userId = userPrincipal.getId();
 
@@ -35,8 +47,7 @@ public class MyCosController {
     @PostMapping
     public ResponseEntity<Long> saveMyCos(
         @AuthenticationPrincipal UserPrincipal userPrincipal,
-        @RequestBody MyCosCreateRequestDto requestDto
-    ) {
+        @RequestBody MyCosCreateRequestDto requestDto) {
         Long userId = userPrincipal.getId();
 
         // 저장 후 생성된 MyCos 테이블의 ID를 반환
@@ -49,8 +60,7 @@ public class MyCosController {
     @DeleteMapping("/{myCosId}")
     public ResponseEntity<String> deleteMyCos(
         @PathVariable("myCosId") Long myCosId,
-        @AuthenticationPrincipal UserPrincipal userPrincipal
-    ) {
+        @AuthenticationPrincipal UserPrincipal userPrincipal) {
         // 서비스로 로그인한 유저 ID와 삭제할 제품 ID를 함께 넘기기
         myCosService.deleteMyCos(userPrincipal.getId(), myCosId);
 
