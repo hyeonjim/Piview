@@ -140,7 +140,7 @@ function RoutineButton({
     <button
       onClick={onAdd}
       disabled={inRoutine}
-      className={`flex items-center justify-center gap-1 h-8 rounded-[6px] text-xs font-semibold border-none cursor-pointer transition-all active:scale-[0.97] ${
+      className={`flex items-center justify-center gap-1 h-6 rounded-[6px] text-xs font-semibold border-none cursor-pointer transition-all active:scale-[0.97] ${
         inRoutine ? "bg-[#F2EFE9] text-[#A69D92]" : "bg-[#3D3028] text-[#F2EFE9]"
       } ${className}`}
     >
@@ -269,28 +269,28 @@ export default function ProductCard({
             <RoutineButton
               inRoutine={inRoutine}
               onAdd={(event) => handleAction(event, onAddRoutine)}
-              className="flex-1 text-[11px] h-7"
+              className="flex-1 text-[10px] h-7"
             />
             {/* 보유추가 버튼 */}
             <button
               onClick={(event) => handleAction(event, onToggleOwned)}
-              className="flex items-center justify-center h-7 w-7 rounded-[6px] cursor-pointer transition-all active:scale-[0.97] shrink-0"
+              className="flex items-center justify-center h-7 w-9 rounded-[6px] cursor-pointer transition-all active:scale-[0.97] shrink-0"
               style={{
                 border: `1px solid ${isOwned ? "#D9D5D0" : "#E8E4DF"}`,
                 backgroundColor: isOwned ? "#F2EFE9" : "#FFFFFF",
               }}
               title={isOwned ? "보유 중" : "보유추가"}
             >
-              <ShoppingBag size={12} style={{ color: isOwned ? "#A69D92" : "#C4BEB7" }} />
+              <ShoppingBag size={14} style={{ color: isOwned ? "#A69D92" : "#C4BEB7" }} />
             </button>
             {/* 비교 버튼 */}
             <button
               onClick={(event) => handleAction(event, onToggleCompare)}
-              className="flex items-center justify-center h-7 w-7 rounded-[6px] cursor-pointer transition-all active:scale-[0.97] shrink-0"
+              className="flex items-center justify-center h-7 w-9 rounded-[6px] cursor-pointer transition-all active:scale-[0.97] shrink-0"
               style={compareButtonStyle}
               title={isInCompare ? "비교 선택됨" : "비교하기"}
             >
-              <Scale size={12} />
+              <Scale size={14} />
             </button>
           </div>
         )}

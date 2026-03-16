@@ -15,6 +15,7 @@ import SearchBar from "@/components/common/SearchBar";
 import CompareModal, { type CompareProduct } from "@/components/common/CompareModal";
 import { useToast } from "@/hooks";
 import { useCompare } from "@/hooks/useCompare";
+import { useOwnedStore } from "@/stores/useOwnedStore";
 import { SlidersHorizontal, Search, Scale } from "lucide-react";
 
 // 2열 그리드: 페이지당 12개 (짝수)
@@ -35,8 +36,8 @@ export default function SearchPage() {
   const [filter, setFilter]             = useState<FilterState>(DEFAULT_FILTER);
   // 제품별 루틴추가 상태 — ⚠️ API 연동 시 서버 상태로 교체
   const [routineMap, setRoutineMap]     = useState<Record<string, boolean>>({});
-  // 제품별 보유 상태 — ⚠️ API 연동 시 서버 상태로 교체
-  const [ownedMap, setOwnedMap]         = useState<Record<string, boolean>>({});
+  // 보유 상태 — 전역 store로 마이페이지와 공유
+  const { toggleOwned, isOwned } = useOwnedStore();
 
   const { toastMessage } = useToast();
 
@@ -102,9 +103,6 @@ export default function SearchPage() {
     setRoutineMap((prev) => ({ ...prev, [productId]: true }));
   };
 
-  const handleToggleOwned = (productId: string) => {
-    setOwnedMap((prev) => ({ ...prev, [productId]: !prev[productId] }));
-  };
 
   /** 비교 토글 — 2개 선택 완료 시 모달 자동 오픈 */
   const handleToggleCompare = (product: CompareProduct) => {
@@ -130,10 +128,10 @@ export default function SearchPage() {
 
       {/* ── 상단 헤더 ────────────────────────────────────── */}
       <div style={{ backgroundColor: "#F5F2EC", borderBottom: "1px solid #E2DDD8", paddingTop: "5px" }}>
-        <div className="flex items-end justify-between" style={{ padding: "16px 16px 12px" }}>
+        <div style={{ padding: "16px 16px 12px" }}>
           <h1
             style={{
-              margin: "3px 0 0",
+              margin: "3px 0 12px",
               fontSize: "22px",
               fontWeight: 700,
               color: "#2A2118",
@@ -144,48 +142,50 @@ export default function SearchPage() {
             전체 제품
           </h1>
 
-          {/* 필터 버튼 */}
-          <button
-            onClick={() => setShowFilter(true)}
-            className="flex items-center gap-1.5 cursor-pointer border transition-all active:scale-[0.96]"
-            style={{
-              height: "34px",
-              padding: "0 12px",
-              borderRadius: "6px",
-              fontSize: "12px",
-              fontWeight: 500,
-              borderColor: filterCount > 0 ? "#A69D92" : "#E2DDD8",
-              backgroundColor: filterCount > 0 ? "#A69D92" : "#FFFFFF",
-              color: filterCount > 0 ? "#FFFFFF" : "#8A8278",
-            }}
-          >
-            <SlidersHorizontal size={13} />
-            필터
-            {filterCount > 0 && (
-              <span style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "16px",
-                height: "16px",
-                borderRadius: "50%",
-                backgroundColor: "rgba(255,255,255,0.25)",
-                fontSize: "10px",
-                fontWeight: 700,
-              }}>
-                {filterCount}
-              </span>
-            )}
-          </button>
-        </div>
+          {/* 검색바 + 필터 버튼 한 줄 */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <SearchBar
+                value={searchQuery}
+                onChange={handleSearchChange}
+                placeholder="제품명, 브랜드 검색..."
+              />
+            </div>
 
-        {/* 검색바 */}
-        <div style={{ padding: "0 16px 12px" }}>
-          <SearchBar
-            value={searchQuery}
-            onChange={handleSearchChange}
-            placeholder="제품명, 브랜드 검색..."
-          />
+            {/* 필터 버튼 — 검색바 오른쪽 끝 */}
+            <button
+              onClick={() => setShowFilter(true)}
+              className="flex items-center gap-1.5 cursor-pointer border transition-all active:scale-[0.96] shrink-0"
+              style={{
+                height: "44px",
+                padding: "0 12px",
+                borderRadius: "10px",
+                fontSize: "12px",
+                fontWeight: 500,
+                borderColor: filterCount > 0 ? "#A69D92" : "#E2DDD8",
+                backgroundColor: filterCount > 0 ? "#A69D92" : "#FFFFFF",
+                color: filterCount > 0 ? "#FFFFFF" : "#8A8278",
+              }}
+            >
+              <SlidersHorizontal size={13} />
+              필터
+              {filterCount > 0 && (
+                <span style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "16px",
+                  height: "16px",
+                  borderRadius: "50%",
+                  backgroundColor: "rgba(255,255,255,0.25)",
+                  fontSize: "10px",
+                  fontWeight: 700,
+                }}>
+                  {filterCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -294,8 +294,8 @@ export default function SearchPage() {
                 showActions={true}
                 inRoutine={routineMap[product.id] ?? false}
                 onAddRoutine={() => handleAddRoutine(product.id)}
-                isOwned={ownedMap[product.id] ?? false}
-                onToggleOwned={() => handleToggleOwned(product.id)}
+                isOwned={isOwned(product.id)}
+                onToggleOwned={() => toggleOwned(product)}
                 isInCompare={compareItems.some((item) => item.id === product.id)}
                 onToggleCompare={() =>
                   handleToggleCompare({

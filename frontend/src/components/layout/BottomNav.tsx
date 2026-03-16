@@ -4,10 +4,11 @@ import React from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Home, Search, Sparkles, Heart, User } from "lucide-react";
 
+// 홈을 중간(index 2)에 배치한 탭 순서
 const TABS = [
-  { id: "home",      href: "/home",      icon: Home,     label: "홈"   },
   { id: "search",    href: "/search",    icon: Search,   label: "전체" },
   { id: "recommend", href: "/recommend", icon: Sparkles, label: "추천" },
+  { id: "home",      href: "/home",      icon: Home,     label: "홈"   },
   { id: "likes",     href: "/likes",     icon: Heart,    label: "찜"   },
   { id: "mypage",    href: "/mypage",    icon: User,     label: "마이" },
 ] as const;
@@ -26,11 +27,9 @@ export default function BottomNav() {
   const activeTab = getActiveTab();
 
   return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 z-50 flex justify-center"
-    >
+    <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-center">
       <div
-        className="w-full flex items-center"
+        className="w-full flex items-center relative"
         style={{
           maxWidth: "500px",
           height: "56px",
@@ -40,9 +39,49 @@ export default function BottomNav() {
         }}
       >
         {TABS.map((tab) => {
-          const isActive = activeTab === tab.id;
-          const Icon     = tab.icon;
+          const isActive  = activeTab === tab.id;
+          const isHome    = tab.id === "home";
+          const Icon      = tab.icon;
 
+          // 홈 버튼 — 원형, 중앙 배치
+          if (isHome) {
+            return (
+              <button
+                key={tab.id}
+                onClick={() => router.push(tab.href)}
+                className="flex flex-1 flex-col items-center justify-center h-full cursor-pointer border-none bg-transparent"
+                aria-label={tab.label}
+              >
+                <div
+                  style={{
+                    width: "48px",
+                    height: "48px",
+                    borderRadius: "50%",
+                    backgroundColor: isActive ? "#5A504A" : "#EAE5DF",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: isActive
+                      ? "0 2px 8px rgba(90,80,74,0.30)"
+                      : "0 1px 4px rgba(90,80,74,0.12)",
+                    transition: "background-color 0.15s, box-shadow 0.15s",
+                    marginBottom: "2px",
+                  }}
+                >
+                  <Icon
+                    size={22}
+                    strokeWidth={isActive ? 2 : 1.6}
+                    style={{
+                      color: isActive ? "#FDFCFB" : "#8C847C",
+                      transition: "color 0.15s",
+                    }}
+                  />
+                </div>
+              </button>
+            );
+          }
+
+          // 일반 탭 버튼
           return (
             <button
               key={tab.id}
@@ -61,12 +100,13 @@ export default function BottomNav() {
                 }}
               />
               <span
-                className="text-[9px] tracking-[0.5px] uppercase"
+                className="text-[9px]"
                 style={{
                   color: isActive ? "#5A504A" : "#C4BEB7",
                   fontFamily: "var(--font-pretendard), sans-serif",
                   fontWeight: isActive ? 600 : 400,
                   letterSpacing: "0.08em",
+                  marginTop: "2px",
                 }}
               >
                 {tab.label}

@@ -118,6 +118,7 @@ export function FilterModal({ open, onClose, state, onChange, onReset, resultCou
                       key={st}
                       label={st}
                       active={isActive}
+                      variant="skin"
                       onClick={() => onChange({ filterSkin: st === "전체" ? null : filterSkin === st ? null : st })}
                     />
                   );
@@ -135,6 +136,7 @@ export function FilterModal({ open, onClose, state, onChange, onReset, resultCou
                     key={fn}
                     label={fn}
                     active={filterFns.has(fn)}
+                    variant="concern"
                     onClick={() => {
                       const newSet = new Set(filterFns);
                       newSet.has(fn) ? newSet.delete(fn) : newSet.add(fn);
@@ -149,6 +151,7 @@ export function FilterModal({ open, onClose, state, onChange, onReset, resultCou
 
             {/* 브랜드 */}
             <FilterSection title="브랜드">
+              {/* 초성 탭 — 클릭하면 해당 초성 브랜드만 필터링 */}
               <div className="flex flex-wrap" style={{ gap: "6px", marginBottom: "10px" }}>
                 {groupKeys.map((key) => {
                   const isActive = filterChosung === key;
@@ -159,13 +162,14 @@ export function FilterModal({ open, onClose, state, onChange, onReset, resultCou
                       style={{
                         width: "40px", height: "30px",
                         borderRadius: "6px",
-                        border: `1px solid ${isActive ? "#1C1C1E" : "#EDEBE8"}`,
-                        backgroundColor: isActive ? "#1C1C1E" : "#FAFAF8",
+                        border: `1px solid ${isActive ? "#5A504A" : "#D9D5D0"}`,
+                        backgroundColor: isActive ? "#5A504A" : "#F5F2EC",
                         color: isActive ? "#FFFFFF" : "#8A8278",
                         fontSize: "12px",
                         fontWeight: isActive ? 700 : 400,
                         cursor: "pointer",
                         fontFamily: "var(--font-pretendard), sans-serif",
+                        transition: "all 0.15s",
                       }}
                     >
                       {key}
@@ -173,39 +177,41 @@ export function FilterModal({ open, onClose, state, onChange, onReset, resultCou
                   );
                 })}
               </div>
-              {filterChosung && grouped[filterChosung] && (
-                <div className="flex flex-wrap" style={{ gap: "6px", paddingTop: "10px", borderTop: "1px solid #F4F2EF" }}>
-                  {grouped[filterChosung].map((brand) => {
-                    const isActive = filterBrands.has(brand);
-                    return (
-                      <button
-                        key={brand}
-                        onClick={() => {
-                          const newSet = new Set(filterBrands);
-                          newSet.has(brand)
-                            ? newSet.delete(brand)
-                            : newSet.add(brand);
-                          onChange({ filterBrands: newSet });
-                        }}
-                        style={{
-                          height: "30px",
-                          padding: "0 12px",
-                          borderRadius: "6px",
-                          border: `1px solid ${isActive ? "#1C1C1E" : "#EDEBE8"}`,
-                          backgroundColor: isActive ? "#1C1C1E" : "#FAFAF8",
-                          color: isActive ? "#FFFFFF" : "#8A8278",
-                          fontSize: "12px",
-                          fontWeight: isActive ? 600 : 400,
-                          cursor: "pointer",
-                          fontFamily: "var(--font-pretendard), sans-serif",
-                        }}
-                      >
-                        {brand}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+
+              {/* 브랜드 목록 — 초성 미선택 시 전체, 선택 시 해당 초성만 표시 */}
+              <div className="flex flex-wrap" style={{ gap: "6px", paddingTop: "10px", borderTop: "1px solid #F4F2EF" }}>
+                {(filterChosung && grouped[filterChosung]
+                  ? grouped[filterChosung]
+                  : availableBrands
+                ).map((brand) => {
+                  const isActive = filterBrands.has(brand);
+                  return (
+                    <button
+                      key={brand}
+                      onClick={() => {
+                        const newSet = new Set(filterBrands);
+                        newSet.has(brand) ? newSet.delete(brand) : newSet.add(brand);
+                        onChange({ filterBrands: newSet });
+                      }}
+                      style={{
+                        height: "30px",
+                        padding: "0 12px",
+                        borderRadius: "6px",
+                        border: `1px solid ${isActive ? "#5A504A" : "#EDEBE8"}`,
+                        backgroundColor: isActive ? "#5A504A" : "#FAFAF8",
+                        color: isActive ? "#FFFFFF" : "#8A8278",
+                        fontSize: "12px",
+                        fontWeight: isActive ? 600 : 400,
+                        cursor: "pointer",
+                        fontFamily: "var(--font-pretendard), sans-serif",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {brand}
+                    </button>
+                  );
+                })}
+              </div>
             </FilterSection>
 
             <div style={{ height: "1px", backgroundColor: "#F4F2EF" }} />
@@ -305,7 +311,28 @@ function FilterSection({ title, rightLabel, children }: { title: string; rightLa
   );
 }
 
-function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+// variant별 활성 색상 팔레트
+const CHIP_ACTIVE_STYLE: Record<string, { bg: string; border: string; color: string }> = {
+  // 피부타입 — 따뜻한 테라코타 계열
+  skin:    { bg: "#F5EDE8", border: "#D4A090", color: "#9B6A54" },
+  // 피부고민 — 뮤트 세이지 계열
+  concern: { bg: "#E4EAE0", border: "#A0B898", color: "#5A7850" },
+  // 기본(브랜드 등) — 다크 브라운
+  default: { bg: "#5A504A", border: "#5A504A", color: "#FFFFFF" },
+};
+
+function FilterChip({
+  label,
+  active,
+  onClick,
+  variant = "default",
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  variant?: "default" | "skin" | "concern";
+}) {
+  const activeStyle = CHIP_ACTIVE_STYLE[variant];
   return (
     <button
       onClick={onClick}
@@ -313,9 +340,9 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
         height: "32px",
         padding: "0 14px",
         borderRadius: "6px",
-        border: `1px solid ${active ? "#1C1C1E" : "#EDEBE8"}`,
-        backgroundColor: active ? "#1C1C1E" : "#FAFAF8",
-        color: active ? "#FFFFFF" : "#8A8278",
+        border: `1px solid ${active ? activeStyle.border : "#EDEBE8"}`,
+        backgroundColor: active ? activeStyle.bg : "#FAFAF8",
+        color: active ? activeStyle.color : "#8A8278",
         fontSize: "12px",
         fontWeight: active ? 600 : 400,
         cursor: "pointer",
