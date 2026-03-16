@@ -47,7 +47,7 @@ export default function BottomNav() {
             <button
               key={tab.id}
               onClick={() => router.push(tab.href)}
-              className="flex flex-1 flex-col items-center justify-center h-full gap-[2px] cursor-pointer border-none bg-transparent"
+              className="flex flex-1 flex-col items-center justify-center h-full cursor-pointer border-none bg-transparent"
               style={{ transition: "opacity 0.15s" }}
               aria-label={tab.label}
             >

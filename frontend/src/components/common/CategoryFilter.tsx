@@ -40,11 +40,14 @@ export function CategoryFilter({
               key={main}
               onClick={() => {
                 if (isActive) {
+                  // 같은 대분류 재클릭 → 선택 해제
                   onMainSelect(null);
                   onSubSelect(null);
                 } else {
+                  // 새 대분류 선택 → 첫 번째 소분류 자동 선택
                   onMainSelect(main);
-                  onSubSelect(null);
+                  const firstSubCategory = MAIN_CATEGORIES[main]?.[0] ?? null;
+                  onSubSelect(firstSubCategory);
                 }
               }}
               className="shrink-0 cursor-pointer border-none bg-transparent relative"

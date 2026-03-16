@@ -45,7 +45,11 @@ export function FilterModal({ open, onClose, state, onChange, onReset, resultCou
     if (!grouped[key]) grouped[key] = [];
     grouped[key].push(brand);
   });
-  const groupKeys = GROUP_ORDER.filter((k) => grouped[k]);
+  // ㄱ~ㅎ 중 브랜드가 있는 키만 표시 + 기타(숫자·영문 등) 마지막에 추가
+  const groupKeys = [
+    ...GROUP_ORDER.filter((key) => grouped[key]),
+    ...(grouped["기타"] ? ["기타"] : []),
+  ];
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -209,7 +213,11 @@ export function FilterModal({ open, onClose, state, onChange, onReset, resultCou
             {/* 가격 */}
             <FilterSection
               title="가격"
-              rightLabel={`${priceRange[0].toLocaleString()}원 ~ ${priceRange[1] === PRICE_MAX ? "전체" : priceRange[1].toLocaleString() + "원"}`}
+              rightLabel={
+                priceRange[0] === 0 && priceRange[1] === PRICE_MAX
+                  ? "전체"
+                  : `${priceRange[0] === 0 ? "0원" : priceRange[0].toLocaleString() + "원"} ~ ${priceRange[1] === PRICE_MAX ? "제한없음" : priceRange[1].toLocaleString() + "원"}`
+              }
             >
               <div style={{ position: "relative", height: "36px", paddingTop: "14px" }}>
                 <div style={{ position: "absolute", top: "14px", left: 0, right: 0, height: "2px", borderRadius: "1px", backgroundColor: "#EDEBE8" }} />

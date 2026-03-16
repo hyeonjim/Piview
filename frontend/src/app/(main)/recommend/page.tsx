@@ -67,22 +67,9 @@ export default function RecommendPage() {
       <Toast msg={toastMessage} />
 
       {/* ── 상단 헤더 ────────────────────────────────────── */}
-      <div style={{ backgroundColor: "#F5F2EC", borderBottom: "1px solid #E2DDD8", paddingTop: "56px" }}>
-        <div className="flex items-end justify-between" style={{ padding: "16px 16px 12px" }}>
+      <div style={{ backgroundColor: "#F5F2EC", borderBottom: "1px solid #E2DDD8", paddingTop: "15px" }}>
+        <div className="flex items-end justify-between" style={{ padding: "16px" }}>
           <div>
-            <p
-              style={{
-                margin: 0,
-                fontSize: "10px",
-                color: "#BFB6AA",
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                fontFamily: "var(--font-cormorant), serif",
-                fontStyle: "italic",
-              }}
-            >
-              Curated For You
-            </p>
             <h1
               style={{
                 margin: "3px 0 0",

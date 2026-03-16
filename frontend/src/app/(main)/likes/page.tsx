@@ -14,10 +14,7 @@ export default function LikesPage() {
   return (
     <div style={{ minHeight: "100%", backgroundColor: "#F5F2EC" }}>
       {/* 헤더 */}
-      <div style={{ backgroundColor: "#F5F2EC", borderBottom: "1px solid #E2DDD8", padding: "56px 20px 16px" }}>
-        <p style={{ margin: 0, fontSize: "10px", color: "#BFB6AA", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "var(--font-cormorant), serif", fontStyle: "italic" }}>
-          My Favorites
-        </p>
+      <div style={{ backgroundColor: "#F5F2EC", padding: "15px 20px 16px" }}>
         <h1 style={{ margin: "3px 0 0", fontSize: "22px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.4px", fontFamily: "var(--font-pretendard), sans-serif" }}>
           찜한 제품
         </h1>

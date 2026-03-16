@@ -18,35 +18,38 @@ import { getEwgColor } from "@/constants/categoryColors";
 import { isAllergenIngredient } from "@/constants/allergens";
 
 // ── 스타일 상수 ──────────────────────────────────────────────────────
-const MATCH_RING_SIZE = { width: 64, height: 64 };
 const EWG_BAR_CONTAINER = { height: 8, gap: 2 };
 const EWG_BAR_RADIUS = 4;
 const EWG_UNKNOWN_COLOR = "#E0E0E0";
 const CAUTION_CHIP_STYLE = { backgroundColor: "#FFF3E0", color: "#BF360C" };
 const ALLERGEN_CHIP_STYLE = { backgroundColor: "#FFEBEE", color: "#B71C1C" };
 const INGRED_DIVIDER = "1px solid #F5F5F5";
-const RANGE_INPUT_BASE: React.CSSProperties = {
-  top: 6,
-  height: 20,
-  appearance: "none",
-  background: "transparent",
-};
 
-// ── 알레르기 방패 아이콘 ────────────────────────────────────────────
+// ── 알레르기 아이콘 — 따뜻한 베이지 테마에 어울리는 잎+경고 스타일 ──
 function AllergenIcon() {
   return (
-    <div className="flex items-center justify-center shrink-0 self-center w-7 h-7 rounded-lg bg-[rgba(229,57,53,0.08)]">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <div
+      className="flex items-center justify-center shrink-0 self-center"
+      style={{
+        width: "28px",
+        height: "28px",
+        borderRadius: "8px",
+        backgroundColor: "rgba(230, 81, 0, 0.08)",
+      }}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        {/* 잎 모양 몸통 */}
         <path
-          d="M12 2L3 6v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V6l-9-4z"
-          fill="#E53935"
+          d="M12 2C7 2 3 7 3 12c0 3.5 2 6.5 5 8l1-3c-1.5-1-2.5-2.8-2.5-5 0-3.3 2.5-6 5.5-6s5.5 2.7 5.5 6c0 2.2-1 4-2.5 5l1 3c3-1.5 5-4.5 5-8 0-5-4-10-9-10z"
+          fill="#E65100"
           fillOpacity="0.18"
-          stroke="#D32F2F"
-          strokeWidth="1.5"
+          stroke="#E65100"
+          strokeWidth="1.2"
           strokeLinejoin="round"
         />
-        <rect x="11" y="7.5" width="2" height="6" rx="1" fill="#D32F2F" />
-        <circle cx="12" cy="16" r="1.2" fill="#D32F2F" />
+        {/* 경고 느낌표 */}
+        <rect x="11" y="8" width="2" height="5" rx="1" fill="#E65100" />
+        <circle cx="12" cy="16" r="1.1" fill="#E65100" />
       </svg>
     </div>
   );
@@ -104,39 +107,12 @@ export default function ProductDetailPage() {
   const purposeScores = Object.entries(productData.purposeScores);
   const skinTypeScores = Object.entries(productData.skinTypeScores);
 
-  // 매칭 점수
-  const score = productData.matchScore;
-  const matchColor =
-    score >= 90
-      ? "var(--color-brand)"
-      : score >= 80
-        ? "#5E6E48"
-        : score >= 70
-          ? "var(--color-text-warm)"
-          : "#AFAFAF";
-  const matchLabel =
-    score >= 90
-      ? "완벽한 매칭"
-      : score >= 80
-        ? "높은 매칭"
-        : score >= 70
-          ? "좋은 매칭"
-          : "보통 매칭";
-  const matchDesc =
-    score >= 90
-      ? "내 피부 타입과 최적의 조합이에요"
-      : score >= 80
-        ? "내 피부에 잘 맞는 제품이에요"
-        : score >= 70
-          ? "피부 타입과 어느 정도 맞아요"
-          : "다른 제품도 비교해보세요";
-
   return (
     <div className="flex flex-col min-h-full relative bg-bg-beige">
       <Toast msg={toastMessage} />
 
       {/* 헤더 */}
-      <div className="sticky top-0 z-20 flex items-center px-4 h-14 bg-bg-beige">
+      <div className="sticky top-0 z-20 flex items-center px-4 h-9 bg-bg-beige">
         <button
           onClick={() => router.back()}
           className="w-9 h-9 flex items-center justify-center rounded-full bg-white/70 border-none cursor-pointer"
@@ -158,44 +134,53 @@ export default function ProductDetailPage() {
 
         {/* 제품 기본 정보 */}
         <div className="mx-5 rounded-2xl bg-white p-4 mb-3">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <div className="flex-1 min-w-0">
-              <p className="text-base text-text-muted font-medium mb-0.5">
-                {productData.brand}
-              </p>
-              <h1 className="text-[19px] font-semibold text-text-primary leading-[1.35]">
-                {productData.name}
-              </h1>
-            </div>
-            {(productData.skinType1 || productData.skinType2) && (
-              <div className="flex flex-col gap-1 shrink-0">
-                {[productData.skinType1, productData.skinType2]
-                  .filter(Boolean)
-                  .map((skinType) => (
+          {/* 브랜드 + 제품명 */}
+          <p className="text-base text-text-muted font-medium mb-0.5">
+            {productData.brand}
+          </p>
+          <h1 className="text-[19px] font-semibold text-text-primary leading-[1.35] mb-3">
+            {productData.name}
+          </h1>
+
+          {/* 피부타입 태그 (1행) + 피부기능 태그 (2행) — 2줄 나란히 */}
+          {(productData.skinType1 ||
+            productData.skinType2 ||
+            productData.tags.length > 0) && (
+            <div className="flex flex-col gap-1.5 mb-3">
+              {/* 1행: 피부타입 태그 */}
+              {(productData.skinType1 || productData.skinType2) && (
+                <div className="flex flex-wrap gap-1.5">
+                  {[productData.skinType1, productData.skinType2]
+                    .filter(Boolean)
+                    .map((skinType) => (
+                      <span
+                        key={skinType}
+                        className="text-xs px-2 py-[2px] rounded-[6px] bg-brand-bg text-brand font-semibold"
+                      >
+                        {skinType}
+                      </span>
+                    ))}
+                </div>
+              )}
+              {/* 2행: 피부기능 태그 */}
+              {productData.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {productData.tags.map((tag) => (
                     <span
-                      key={skinType}
-                      className="text-xs px-2 py-[2px] rounded-[6px] bg-brand-bg text-brand font-semibold"
+                      key={tag}
+                      className="text-xs px-[9px] py-[2px] rounded-xl bg-bg-chip text-text-hint border border-border-warm"
                     >
-                      {skinType}
+                      {tag}
                     </span>
                   ))}
-              </div>
-            )}
-          </div>
+                </div>
+              )}
+            </div>
+          )}
 
-          <div className="flex flex-wrap gap-1 mb-3">
-            {productData.tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-xs px-[9px] py-[2px] rounded-xl bg-bg-chip text-text-hint border border-border-warm"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-
+          {/* 가격 */}
           {productData.price && (
-            <p className="text-base font-normal text-text-primary">
+            <p className="text-base font-normal text-text-primary mb-3">
               ₩{productData.price.toLocaleString()} /
               {productData.volume && (
                 <span className="text-base text-text-hint font-normal ml-1.5">
@@ -205,11 +190,12 @@ export default function ProductDetailPage() {
             </p>
           )}
 
-          <div className="flex gap-2 mt-3">
+          {/* 액션 버튼 — 작게 구현 */}
+          <div className="flex gap-2">
             <button
               onClick={handleAddRoutine}
               disabled={routineAdded}
-              className={`flex-1 flex items-center justify-center gap-1.5 h-[42px] rounded-xl border-none cursor-pointer transition-all active:scale-[0.98] text-sm font-bold ${
+              className={`flex-1 flex items-center justify-center gap-1.5 h-[34px] rounded-xl border-none cursor-pointer transition-all active:scale-[0.98] text-xs font-bold ${
                 routineAdded
                   ? "bg-[#F0F0F0] text-text-muted"
                   : "bg-brand text-white"
@@ -217,82 +203,24 @@ export default function ProductDetailPage() {
             >
               {routineAdded ? (
                 <>
-                  <Check size={15} /> 루틴추가됨
+                  <Check size={12} /> 루틴추가됨
                 </>
               ) : (
                 <>
-                  <Plus size={15} /> 루틴추가
+                  <Plus size={12} /> 루틴추가
                 </>
               )}
             </button>
             <button
               onClick={() => setOwned((prev) => !prev)}
-              className={`flex items-center justify-center gap-1.5 h-[42px] px-4 rounded-xl cursor-pointer transition-all active:scale-[0.98] text-sm font-semibold border ${
+              className={`flex items-center justify-center gap-1.5 h-[34px] px-3 rounded-xl cursor-pointer transition-all active:scale-[0.98] text-xs font-semibold border ${
                 owned
                   ? "border-brand-light bg-brand-bg text-brand"
                   : "border-border-warm bg-white text-text-hint"
               }`}
             >
-              <Package size={15} /> {owned ? "보유 중" : "보유추가"}
+              <Package size={12} /> {owned ? "보유 중" : "보유추가"}
             </button>
-          </div>
-        </div>
-
-        {/* 매칭 점수 링 */}
-        <div className="mx-5 rounded-2xl px-5 py-4 mb-3 bg-brand-bg">
-          <div className="flex items-center gap-4">
-            <div
-              className="relative shrink-0 flex items-center justify-center"
-              style={MATCH_RING_SIZE}
-            >
-              <svg width="64" height="64" className="absolute">
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="26"
-                  fill="none"
-                  stroke="#E8E4DC"
-                  strokeWidth="5"
-                />
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="26"
-                  fill="none"
-                  stroke={matchColor}
-                  strokeWidth="5"
-                  strokeDasharray={`${(score / 100) * 163.4} 163.4`}
-                  strokeLinecap="round"
-                  transform="rotate(-90 32 32)"
-                />
-              </svg>
-              <span
-                className="relative z-[1] text-[15px] font-bold"
-                style={{ color: matchColor }}
-              >
-                {score}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <span
-                  className="text-xs font-bold"
-                  style={{ color: matchColor }}
-                >
-                  {matchLabel}
-                </span>
-                <span
-                  className="text-xs px-[7px] py-[1px] rounded-[20px] text-white font-semibold"
-                  style={{ backgroundColor: matchColor }}
-                >
-                  {score}점
-                </span>
-              </div>
-              <p className="text-xs text-[var(--color-text-warm)] leading-[1.5]">
-                {matchDesc}
-              </p>
-              <p className="text-xs text-text-muted mt-0.5">나와의 매칭 점수</p>
-            </div>
           </div>
         </div>
 
@@ -380,13 +308,13 @@ export default function ProductDetailPage() {
                 count: unknown,
                 color: "#BDBDBD",
               },
-            ].map((g) => (
-              <div key={g.sub}>
-                <p className="text-xs text-text-sub mb-0.5">• {g.label}</p>
-                <p className="text-lg font-bold m-0" style={{ color: g.color }}>
-                  {g.count}
+            ].map((grade) => (
+              <div key={grade.sub}>
+                <p className="text-xs text-text-sub mb-0.5">• {grade.label}</p>
+                <p className="text-lg font-bold m-0" style={{ color: grade.color }}>
+                  {grade.count}
                 </p>
-                <p className="text-[10px] text-text-muted mt-0.5">{g.sub}</p>
+                <p className="text-[10px] text-text-muted mt-0.5">{grade.sub}</p>
               </div>
             ))}
           </div>
@@ -427,24 +355,18 @@ export default function ProductDetailPage() {
                 }
               >
                 <div className="flex items-center gap-2 mb-2">
+                  {/* 알레르기 경고 아이콘 — 잎+느낌표 스타일 */}
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                     <path
-                      d="M12 2L3 6v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V6l-9-4z"
-                      fill="#D32F2F"
+                      d="M12 2C7 2 3 7 3 12c0 3.5 2 6.5 5 8l1-3c-1.5-1-2.5-2.8-2.5-5 0-3.3 2.5-6 5.5-6s5.5 2.7 5.5 6c0 2.2-1 4-2.5 5l1 3c3-1.5 5-4.5 5-8 0-5-4-10-9-10z"
+                      fill="#C62828"
                       fillOpacity="0.2"
-                      stroke="#D32F2F"
-                      strokeWidth="1.5"
+                      stroke="#C62828"
+                      strokeWidth="1.2"
                       strokeLinejoin="round"
                     />
-                    <rect
-                      x="11"
-                      y="7.5"
-                      width="2"
-                      height="6"
-                      rx="1"
-                      fill="#D32F2F"
-                    />
-                    <circle cx="12" cy="16" r="1.2" fill="#D32F2F" />
+                    <rect x="11" y="8" width="2" height="5" rx="1" fill="#C62828" />
+                    <circle cx="12" cy="16" r="1.1" fill="#C62828" />
                   </svg>
                   <span className="text-sm font-semibold text-[#C62828]">
                     알레르기 유발 성분

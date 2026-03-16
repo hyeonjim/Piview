@@ -49,15 +49,14 @@ export default function HomePage() {
       <div
         style={{
           backgroundColor: "#F5F2EC",
-          borderBottom: "1px solid #E2DDD8",
-          paddingTop: "56px",
+          paddingTop: "15px",
           paddingBottom: "20px",
           paddingLeft: "20px",
           paddingRight: "20px",
         }}
       >
         {/* 인사말 */}
-        <div className="flex items-center gap-1.5" style={{ marginBottom: "6px" }}>
+        <div className="flex items-center gap-1.5">
           {greeting.icon}
           <span
             style={{
@@ -127,9 +126,6 @@ export default function HomePage() {
               </div>
               <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#FFFFFF", lineHeight: 1.35, fontFamily: "var(--font-pretendard), sans-serif" }}>
                 나만의 피부 타입을<br />분석해보세요
-              </p>
-              <p style={{ margin: "6px 0 0", fontSize: "12px", color: "rgba(255,255,255,0.7)", fontFamily: "var(--font-pretendard), sans-serif" }}>
-                맞춤 루틴을 추천받을 수 있어요
               </p>
             </div>
 
@@ -205,16 +201,6 @@ export default function HomePage() {
                       {product.brand}
                     </p>
                   </div>
-                  {product.matchScore > 0 && (
-                    <div style={{ flexShrink: 0, textAlign: "center" }}>
-                      <span style={{ fontSize: "13px", fontWeight: 700, color: "#A69D92", display: "block", fontFamily: "var(--font-cormorant), serif" }}>
-                        {product.matchScore}
-                      </span>
-                      <span style={{ fontSize: "8px", color: "#BFB6AA", letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "var(--font-pretendard), sans-serif" }}>
-                        score
-                      </span>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -257,9 +243,6 @@ export default function HomePage() {
           <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.3px", fontFamily: "var(--font-pretendard), sans-serif" }}>
             Skincare Tips
           </h2>
-          <span style={{ fontSize: "12px", color: "#A69D92", fontFamily: "var(--font-cormorant), serif", fontStyle: "italic" }}>
-            알아두면 좋은 이야기
-          </span>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
