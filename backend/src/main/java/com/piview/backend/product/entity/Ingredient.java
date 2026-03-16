@@ -16,10 +16,10 @@ public class Ingredient {
     @Column(name = "ingredient_id")
     private Long ingredientId;
 
-    @Column(name = "name_en", nullable = false)
+    @Column(name = "name_en", nullable = false, length = 2000)
     private String nameEn;
 
-    @Column(name = "name_ko")
+    @Column(name = "name_ko", length = 500)
     private String nameKo;
 
     @Column(name = "ewg_score_min")

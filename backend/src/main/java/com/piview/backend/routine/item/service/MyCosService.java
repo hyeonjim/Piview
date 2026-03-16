@@ -4,7 +4,7 @@ import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.product.catalog.repository.ProductSearchRepository;
 import com.piview.backend.product.entity.Product;
-import com.piview.backend.product.repository.ProductRepository;
+import com.piview.backend.product.catalog.repository.ProductRepository;
 import com.piview.backend.routine.item.dto.MyCosCreateRequestDto;
 import com.piview.backend.routine.item.dto.MyCosResponseDto;
 import com.piview.backend.routine.item.entity.MyCos;
