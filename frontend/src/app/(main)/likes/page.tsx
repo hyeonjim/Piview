@@ -13,7 +13,7 @@ export default function LikesPage() {
   const likedProducts = MOCK_SEARCH_PRODUCTS.filter((p) => likedIds.has(p.id));
 
   return (
-    <div style={{ minHeight: "100%", backgroundColor: "#F5F2EC" }}>
+    <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
       {/* 헤더 */}
       <div style={{ backgroundColor: "#F5F2EC", padding: "15px 20px 16px" }}>
         <h1 style={{ margin: "3px 0 0", fontSize: "22px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.4px", fontFamily: "var(--font-pretendard), sans-serif" }}>

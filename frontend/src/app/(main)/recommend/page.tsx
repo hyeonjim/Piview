@@ -95,7 +95,7 @@ export default function RecommendPage() {
   };
 
   return (
-    <div style={{ minHeight: "100%", backgroundColor: "#F5F2EC" }}>
+    <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
       <Toast msg={toastMessage} />
 
       {/* 비교 모달 — 2개 선택 완료 후 표시 */}
@@ -123,7 +123,7 @@ export default function RecommendPage() {
           </h1>
 
           {/* 검색바 + 필터 버튼 한 줄 */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-5">
             <div className="flex-1">
               <SearchBar value={searchQuery} onChange={handleSearchChange} placeholder="제품명, 브랜드 검색..." />
             </div>
@@ -133,10 +133,10 @@ export default function RecommendPage() {
               onClick={() => setShowFilter(true)}
               className="flex items-center gap-1.5 cursor-pointer border transition-all active:scale-[0.96] shrink-0"
               style={{
-                height: "44px",
+                height: "38px",
                 padding: "0 12px",
                 borderRadius: "10px",
-                fontSize: "12px",
+                fontSize: "14px",
                 fontWeight: 500,
                 borderColor: filterCount > 0 ? "#A69D92" : "#E2DDD8",
                 backgroundColor: filterCount > 0 ? "#A69D92" : "#FFFFFF",
@@ -230,7 +230,7 @@ export default function RecommendPage() {
             <EmptyState icon={Search} title="해당하는 제품이 없어요" description="검색어나 필터를 바꿔보세요" />
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
             {paginated.map((product) => (
               <ProductCard
                 key={product.id}

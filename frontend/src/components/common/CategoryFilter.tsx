@@ -54,7 +54,7 @@ export function CategoryFilter({
               style={{
                 height: "44px",
                 padding: "0 14px",
-                fontSize: "13px",
+                fontSize: "16px",
                 fontWeight: isActive ? 600 : 400,
                 // 활성 시 검정 대신 웜 브라운 계열
                 color: isActive ? "#6B5445" : "#A8A39D",
@@ -95,8 +95,8 @@ export function CategoryFilter({
                   height: "30px",
                   padding: "0 12px",
                   borderRadius: "20px",
-                  fontSize: "12px",
-                  fontWeight: isActive ? 600 : 400,
+                  fontSize: "13px",
+                  fontWeight: isActive ? 400 : 400,
                   fontFamily: "var(--font-pretendard), sans-serif",
                   letterSpacing: "0.01em",
                   ...(isActive

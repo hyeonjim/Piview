@@ -89,7 +89,7 @@ export default function MyPage() {
   };
 
   return (
-    <div style={{ minHeight: "100%", backgroundColor: "#F5F2EC" }}>
+    <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
 
       {/* ── 프로필 헤더 — 연한 베이지 그라디언트 배경 ── */}
       <div
@@ -131,19 +131,62 @@ export default function MyPage() {
 
           {/* 유저 정보 */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            {/* ⚠️ API 연동 시 useUserStore에서 실제 이름으로 교체 */}
-            <p
-              style={{
-                margin: 0,
-                fontSize: "20px",
-                fontWeight: 700,
-                color: "#2A2118",
-                letterSpacing: "-0.3px",
-                fontFamily: "var(--font-pretendard), sans-serif",
-              }}
-            >
-              User님
-            </p>
+            {/* User님 + 액션 버튼 한 줄 */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              {/* ⚠️ API 연동 시 useUserStore에서 실제 이름으로 교체 */}
+              <p
+                style={{
+                  fontSize: "20px",
+                  fontWeight: 700,
+                  color: "#2A2118",
+                  letterSpacing: "-0.3px",
+                  fontFamily: "var(--font-pretendard), sans-serif",
+                }}
+              >
+                User님
+              </p>
+
+              {/* 액션 버튼들 — 설정 / 로그아웃 */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                <Link href="/mypage/settings">
+                  <button
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "34px",
+                      height: "34px",
+                      borderRadius: "50%",
+                      backgroundColor: "rgba(166,157,146,0.12)",
+                      border: "1px solid rgba(166,157,146,0.2)",
+                      cursor: "pointer",
+                    }}
+                    aria-label="설정"
+                  >
+                    <Settings size={15} style={{ color: "#8C8277" }} />
+                  </button>
+                </Link>
+                {/* 로그아웃 버튼 — ⚠️ API 연동 시 authService.logout() 활성화 */}
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    fontSize: "12px",
+                    color: "#BFB6AA",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "4px 2px",
+                    fontFamily: "var(--font-pretendard), sans-serif",
+                  }}
+                >
+                  <LogOut size={13} />
+                  로그아웃
+                </button>
+              </div>
+            </div>
             {/* 피부 설정 미완료 시 안내 문구, 완료 시 태그 표시 */}
             {!hasSkinProfile ? (
               <p
@@ -157,11 +200,11 @@ export default function MyPage() {
                 피부 타입을 진단해보세요
               </p>
             ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "6px" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "16px" }}>
                 {/* 피부타입 태그 */}
                 <span
                   style={{
-                    fontSize: "11px",
+                    fontSize: "14px",
                     padding: "2px 8px",
                     borderRadius: "20px",
                     backgroundColor: "#E8E3DC",
@@ -177,7 +220,7 @@ export default function MyPage() {
                   <span
                     key={concern}
                     style={{
-                      fontSize: "11px",
+                      fontSize: "14px",
                       padding: "2px 8px",
                       borderRadius: "20px",
                       backgroundColor: "#EEF0E8",
@@ -193,7 +236,7 @@ export default function MyPage() {
                   <span
                     key={item.avoidContent}
                     style={{
-                      fontSize: "11px",
+                      fontSize: "14px",
                       padding: "2px 8px",
                       borderRadius: "20px",
                       backgroundColor: "#F5EDE8",
@@ -206,47 +249,6 @@ export default function MyPage() {
                 ))}
               </div>
             )}
-          </div>
-
-          {/* 액션 버튼들 — 설정 / 로그아웃 */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-            <Link href="/mypage/settings">
-              <button
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "34px",
-                  height: "34px",
-                  borderRadius: "50%",
-                  backgroundColor: "rgba(166,157,146,0.12)",
-                  border: "1px solid rgba(166,157,146,0.2)",
-                  cursor: "pointer",
-                }}
-                aria-label="설정"
-              >
-                <Settings size={15} style={{ color: "#8C8277" }} />
-              </button>
-            </Link>
-            {/* 로그아웃 버튼 — ⚠️ API 연동 시 authService.logout() 활성화 */}
-            <button
-              onClick={handleLogout}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                fontSize: "12px",
-                color: "#BFB6AA",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: "4px 2px",
-                fontFamily: "var(--font-pretendard), sans-serif",
-              }}
-            >
-              <LogOut size={13} />
-              로그아웃
-            </button>
           </div>
         </div>
 
@@ -305,7 +307,7 @@ export default function MyPage() {
               flex: 1,
               paddingTop: "12px",
               paddingBottom: "11px",
-              fontSize: "14px",
+              fontSize: "16px",
               fontWeight: tab === t ? 600 : 400,
               color: tab === t ? "#2A2118" : "#BFB6AA",
               background: "none",

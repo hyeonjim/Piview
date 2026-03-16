@@ -24,7 +24,7 @@ import { isAllergenIngredient } from "@/constants/allergens";
 function AllergenIcon() {
   return (
     <div className="flex items-center justify-center shrink-0 self-center size-6 rounded-full bg-red-50">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="10" fill="#EF4444" />
         <rect x="11" y="6.5" width="2" height="7" rx="1" fill="white" />
         <circle cx="12" cy="17" r="1.3" fill="white" />
@@ -132,8 +132,8 @@ export default function ProductDetailPage() {
           {/* 브랜드·제품명 + 내루틴 비교하기 버튼 */}
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="flex-1 min-w-0">
-              <p className="text-base text-text-muted font-medium mb-0.5">{productData.brand}</p>
-              <h1 className="text-[19px] font-semibold text-text-primary leading-[1.35]">{productData.name}</h1>
+              <p className="text-[16px] text-text-muted font-medium mb-0.5">{productData.brand}</p>
+              <h1 className="text-[20px] font-semibold text-text-primary leading-[1.35]">{productData.name}</h1>
             </div>
 
             {/* 내루틴 비교하기 버튼 */}
@@ -145,20 +145,19 @@ export default function ProductDetailPage() {
                   : "border-border bg-white text-text-hint"
               }`}
             >
-              <Scale size={11} />
               내루틴 비교하기
             </button>
           </div>
 
           {/* 피부타입 태그 (1행) + 피부기능 태그 (2행) */}
           {(productData.skinType1 || productData.skinType2 || productData.tags.length > 0) && (
-            <div className="flex flex-col gap-1.5 mb-3">
+            <div className="flex flex-col gap-1.5 mb-7">
               {(productData.skinType1 || productData.skinType2) && (
                 <div className="flex flex-wrap gap-1.5">
                   {[productData.skinType1, productData.skinType2]
                     .filter(Boolean)
                     .map((skinType) => (
-                      <span key={skinType} className="text-xs px-2 py-0.5 rounded-[6px] bg-brand-bg text-brand font-semibold">
+                      <span key={skinType} className="text-[14px] px-2 py-0.5 rounded-[6px] bg-brand-bg text-brand">
                         {skinType}
                       </span>
                     ))}
@@ -176,35 +175,37 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* 가격·용량 */}
-          {productData.price && (
-            <p className="text-base font-normal text-text-primary mb-3">
-              ₩{productData.price.toLocaleString()} /
-              {productData.volume && (
-                <span className="text-base text-text-hint font-normal ml-1.5">{productData.volume}</span>
-              )}
-            </p>
-          )}
+          {/* 가격·용량 + 액션 버튼 한 줄 */}
+          <div className="flex items-center justify-between gap-2">
+            {productData.price ? (
+              <p className="text-base font-normal text-text-primary">
+                ₩{productData.price.toLocaleString()} /
+                {productData.volume && (
+                  <span className="text-base text-text-hint font-normal ml-1.5">{productData.volume}</span>
+                )}
+              </p>
+            ) : <div />}
 
-          {/* 액션 버튼 — 루틴추가·보유추가 동일 크기 */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleAddRoutine}
-              disabled={routineAdded}
-              className={`flex-1 flex items-center justify-center gap-1.5 h-8.5 rounded-xl border-none cursor-pointer transition-all active:scale-[0.98] text-xs font-bold ${
-                routineAdded ? "bg-[#F0F0F0] text-text-muted" : "bg-brand text-white"
-              }`}
-            >
-              {routineAdded ? <><Check size={12} /> 루틴추가됨</> : <><Plus size={12} /> 루틴추가</>}
-            </button>
-            <button
-              onClick={() => setOwned((prev) => !prev)}
-              className={`flex-1 flex items-center justify-center gap-1.5 h-8.5 rounded-xl cursor-pointer transition-all active:scale-[0.98] text-xs font-semibold border ${
-                owned ? "border-brand-light bg-brand-bg text-brand" : "border-border-warm bg-white text-text-hint"
-              }`}
-            >
-              <Package size={12} /> {owned ? "보유 중" : "보유추가"}
-            </button>
+            {/* 루틴추가·보유추가 — 가격 오른쪽 끝 */}
+            <div className="flex gap-1.5 shrink-0">
+              <button
+                onClick={handleAddRoutine}
+                disabled={routineAdded}
+                className={`flex items-center justify-center gap-1 w-20 h-8 rounded-xl border-none cursor-pointer transition-all active:scale-[0.98] text-xs font-bold ${
+                  routineAdded ? "bg-[#F0F0F0] text-text-muted" : "bg-brand text-white"
+                }`}
+              >
+                {routineAdded ? <><Check size={11} /> 추가됨</> : <><Plus size={11} /> 루틴추가</>}
+              </button>
+              <button
+                onClick={() => setOwned((prev) => !prev)}
+                className={`flex items-center justify-center gap-1 w-20 h-8 rounded-xl cursor-pointer transition-all active:scale-[0.98] text-xs font-semibold border ${
+                  owned ? "border-brand-light bg-brand-bg text-brand" : "border-border-warm bg-white text-text-hint"
+                }`}
+              >
+                <Package size={11} /> {owned ? "보유 중" : "보유추가"}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -216,7 +217,7 @@ export default function ProductDetailPage() {
                 <span className="text-ewg-safe text-sm font-bold">✓</span>
               </div>
               <div>
-                <p className="text-sm font-bold text-text-primary">EWG 성분 분석</p>
+                <p className="text-[16px] font-bold text-text-primary">EWG 성분 분석</p>
                 <p className="text-xs text-text-muted">총 {total}개 성분</p>
               </div>
             </div>
@@ -227,7 +228,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* EWG 비율 바 — flex 값은 동적이라 style 유지 */}
-          <div className="flex h-2 gap-0.5 rounded-full overflow-hidden mb-3">
+          <div className="flex h-3 gap-0.5 rounded-full overflow-hidden mb-3">
             <div className="rounded bg-ewg-safe"    style={{ flex: safe }}    />
             <div className="rounded bg-ewg-caution" style={{ flex: caution }} />
             {danger > 0 && <div className="rounded bg-ewg-danger" style={{ flex: danger }} />}
@@ -246,7 +247,7 @@ export default function ProductDetailPage() {
                 <p className="text-xs text-text-sub mb-0.5">• {grade.label}</p>
                 {/* color는 동적 값이라 style 유지 */}
                 <p className="text-lg font-bold" style={{ color: grade.color }}>{grade.count}</p>
-                <p className="text-[10px] text-text-muted mt-0.5">{grade.sub}</p>
+                <p className="text-[14px] text-text-muted mt-0.5">{grade.sub}</p>
               </div>
             ))}
           </div>
@@ -263,7 +264,7 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {productData.cautionIngredients.map((ingredient) => (
-                    <span key={ingredient} className="text-xs px-2.5 py-0.75 rounded-[6px] font-medium bg-[#FFF3E0] text-[#BF360C]">
+                    <span key={ingredient} className="text-xs px-2 py-0.5 rounded-[6px] font-normal bg-[#FFF3E0] text-[#BF360C]">
                       {ingredient}
                     </span>
                   ))}
@@ -274,24 +275,12 @@ export default function ProductDetailPage() {
             {allergenList.length > 0 && (
               <div className={productData.cautionIngredients.length > 0 ? "mt-3 pt-3 border-t border-dashed border-[#FFCC80]" : ""}>
                 <div className="flex items-center gap-2 mb-2">
-                  {/* 알레르기 경고 아이콘 — 잎+느낌표 스타일 */}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M12 2C7 2 3 7 3 12c0 3.5 2 6.5 5 8l1-3c-1.5-1-2.5-2.8-2.5-5 0-3.3 2.5-6 5.5-6s5.5 2.7 5.5 6c0 2.2-1 4-2.5 5l1 3c3-1.5 5-4.5 5-8 0-5-4-10-9-10z"
-                      fill="#C62828"
-                      fillOpacity="0.2"
-                      stroke="#C62828"
-                      strokeWidth="1.2"
-                      strokeLinejoin="round"
-                    />
-                    <rect x="11" y="8" width="2" height="5" rx="1" fill="#C62828" />
-                    <circle cx="12" cy="16" r="1.1" fill="#C62828" />
-                  </svg>
+                  <AllergenIcon />
                   <span className="text-sm font-semibold text-[#C62828]">알레르기 유발 성분</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {allergenList.map((name) => (
-                    <span key={name} className="text-xs px-2.5 py-0.75 rounded-[6px] font-medium bg-[#FFEBEE] text-[#B71C1C]">
+                    <span key={name} className="text-xs px-2 py-0.5 rounded-[6px] font-normal bg-[#FFEBEE] text-[#B71C1C]">
                       {name}
                     </span>
                   ))}
@@ -302,7 +291,7 @@ export default function ProductDetailPage() {
         )}
 
         {/* 탭 바 */}
-        <div className="mx-5 mb-2">
+        <div className="mx-5 my-5">
           <div className="flex rounded-xl p-1 bg-[#EEEBE4]">
             {[
               { key: "ingredients" as const, label: "전성분 분석" },
@@ -312,7 +301,7 @@ export default function ProductDetailPage() {
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
-                className={`flex-1 h-9 rounded-[10px] border-none cursor-pointer transition-all text-xs ${
+                className={`flex-1 h-9 rounded-[10px] border-none cursor-pointer transition-all text-[16px] ${
                   activeTab === key
                     ? "bg-white text-text-primary font-bold shadow-[0_1px_4px_rgba(0,0,0,0.1)]"
                     : "bg-transparent text-text-muted font-medium"
@@ -332,7 +321,7 @@ export default function ProductDetailPage() {
             <div className="rounded-2xl bg-white overflow-hidden">
               {productData.description && (
                 <div className="p-4 border-b border-[#F5F5F5]">
-                  <p className="text-xs font-semibold text-text-sub mb-1.5">제품 설명</p>
+                  <p className=" font-semibold text-text-sub mb-1.5">제품 설명</p>
                   <p className="text-xs text-text-primary leading-[1.6]">{productData.description}</p>
                 </div>
               )}
@@ -343,7 +332,7 @@ export default function ProductDetailPage() {
                   className="flex items-center justify-between w-full bg-transparent border-none cursor-pointer p-0"
                   onClick={() => setIsIngredientListOpen((prev) => !prev)}
                 >
-                  <span className="text-xs font-semibold text-text-sub">전성분</span>
+                  <span className="font-semibold text-text-sub">전성분</span>
                   <div className="flex items-center gap-1 text-xs text-text-muted">
                     {isIngredientListOpen ? "접기" : "펼치기"}
                     {isIngredientListOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -402,8 +391,8 @@ export default function ProductDetailPage() {
               {purposeScores.map(([label, score]) => (
                 <div key={label}>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-text-primary">{label}</span>
-                    <span className="text-xs font-bold text-brand">{score}</span>
+                    <span className=" text-text-primary">{label}</span>
+                    <span className="font-bold text-brand">{score}</span>
                   </div>
                   <div className="h-1.5 rounded-[3px] bg-bg-muted-warm overflow-hidden">
                     {/* width는 동적 값이라 style 유지 */}
@@ -424,12 +413,12 @@ export default function ProductDetailPage() {
                 <div key={label}>
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-text-primary">{label}</span>
+                      <span className=" text-text-primary">{label}</span>
                       {label === productData.skinType1 && (
                         <span className="text-[10px] px-2 py-[1px] rounded-[20px] bg-brand text-white font-semibold">내 피부</span>
                       )}
                     </div>
-                    <span className="text-xs font-bold text-brand">{score}</span>
+                    <span className=" font-bold text-brand">{score}</span>
                   </div>
                   <div className="h-1.5 rounded-[3px] bg-bg-muted-warm overflow-hidden">
                     <div className="h-full rounded-[3px] bg-brand transition-[width] duration-600 ease-in-out" style={{ width: `${score}%` }} />

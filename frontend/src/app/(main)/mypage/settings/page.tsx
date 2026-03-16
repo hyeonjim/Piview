@@ -102,7 +102,7 @@ export default function SettingsPage() {
         {/* 피부타입 */}
         <div className="mt-5">
           <SectionTitle icon="🧴" title="나의 피부타입" />
-          <p className="text-xs text-text-muted mb-3">하나를 선택해주세요</p>
+          <p className="text-xs text-text-muted mb-5">하나를 선택해주세요</p>
           <div className="flex flex-wrap gap-2">
             {SETTINGS_SKIN_TYPES.map((st) => {
               const isActive = skinType === st.id;
@@ -128,7 +128,7 @@ export default function SettingsPage() {
         {/* 피부고민 */}
         <div>
           <SectionTitle icon="💭" title="피부 고민" />
-          <p className="text-xs text-text-muted mb-3">
+          <p className="text-xs text-text-muted mb-5">
             해당하는 고민을 모두 선택해주세요
           </p>
           <div className="flex flex-wrap gap-2">
@@ -157,7 +157,7 @@ export default function SettingsPage() {
         {/* 알러지 */}
         <div>
           <SectionTitle icon="⚠️" title="알러지 / 기피 성분" />
-          <p className="text-xs text-text-muted mb-3">
+          <p className="text-xs text-text-muted mb-5">
             피하고 싶은 성분을 선택해주세요
           </p>
           <div className="flex flex-wrap gap-2">
@@ -186,7 +186,7 @@ export default function SettingsPage() {
         {/* 재진단 */}
         <div>
           <SectionTitle icon="🔄" title="피부 진단 다시하기" />
-          <p className="text-xs text-text-muted mb-4">
+          <p className="text-xs text-text-muted mb-5">
             AI 사진 분석으로 피부 상태를 다시 진단할 수 있어요
           </p>
           <Link
@@ -209,10 +209,10 @@ export default function SettingsPage() {
         </div>
 
         {/* 저장 버튼 */}
-        <div className="mt-6 mb-10 flex justify-center">
+        <div className="m-6 flex justify-center">
           <button
             onClick={handleSave}
-            className="w-[200px] h-11 rounded-button bg-brand text-white font-semibold text-[15px] border-none cursor-pointer shadow-[0_4px_16px_rgba(162,170,123,0.2)] transition-all active:scale-[0.98]"
+            className="w-[200px] h-11 rounded-button bg-brand text-white font-semibold text-[16px] border-none cursor-pointer shadow-[0_4px_16px_rgba(162,170,123,0.2)] transition-all active:scale-[0.98]"
           >
             저장하기
           </button>
