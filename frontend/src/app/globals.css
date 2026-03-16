@@ -42,6 +42,15 @@
   --color-border-warm: #e8e0d0;
   --color-border-dash: #d4d0c8;
 
+  /* 추가 토큰 — 컴포넌트 공통 하드코딩값 추출 */
+  --color-bg-muted-warm: #f0ede8; /* 배지 bg, 점수링 트랙, X버튼 bg */
+  --color-text-warm: #8a7b64; /* 카테고리 accent, 설명 텍스트 */
+  --color-text-stone: #a09080; /* 검색 아이콘, muted stone */
+  --color-border-subtle: #e2e1dc; /* 카드 border */
+  --color-chip-base: #f7f6f1; /* 칩 inactive bg */
+  --color-bg-like: #fff0f0; /* 찜 / 피해야 할 제품 연빨간 bg */
+  --color-danger: #ef4444; /* 피해야 할 제품 아이콘 */
+
   /* EWG */
   --color-ewg-safe: #6b9e6b;
   --color-ewg-safe-bg: #e8f5e9;

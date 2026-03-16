@@ -1,5 +1,16 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Search } from "lucide-react";
+import {
+  AGE_GROUPS,
+  GENDER_OPTIONS,
+  SKIN_TYPES,
+  SKIN_CONCERNS,
+  ALLERGIES,
+} from "@/constants";
+
 // ── 스타일 상수 ──────────────────────────────────────────────────────
 const BACK_BTN_TEXT = { fontSize: "15px" };
 const PAGE_TITLE_STYLE = {
@@ -41,17 +52,6 @@ const CONFIRM_BTN_BASE = {
   fontSize: "15px",
 };
 const SKIN_TYPE_TEXT_BASE = { fontSize: "15px", lineHeight: 1.4 };
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Search } from "lucide-react";
-import {
-  AGE_GROUPS,
-  GENDER_OPTIONS,
-  SKIN_TYPES,
-  SKIN_CONCERNS,
-  ALLERGIES,
-} from "@/constants";
 
 export default function SelectPage() {
   const router = useRouter();

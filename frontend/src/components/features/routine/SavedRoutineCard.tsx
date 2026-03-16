@@ -46,7 +46,7 @@ const DELETE_BTN_STYLE = {
   height: "30px",
   borderRadius: "8px",
   border: "none",
-  backgroundColor: "#F0EDE8",
+  backgroundColor: "var(--color-bg-muted-warm)",
 };
 
 import { Trash2, RotateCcw } from "lucide-react";

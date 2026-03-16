@@ -1,9 +1,6 @@
 // src/components/common/ProductCard.tsx
 "use client";
 
-// ── 스타일 상수 ──────────────────────────────────────────────────────
-const MODAL_THUMB_STYLE = { width: 60, height: 60, backgroundColor: "#F8F6F0" };
-
 import { Heart, Plus, Check, Package, GitCompareArrows } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,6 +12,9 @@ import {
   SKIN_FUNCTION_COLORS,
   SKIN_TYPE_TAG_COLORS,
 } from "@/constants/categoryColors";
+
+// ── 스타일 상수 ──────────────────────────────────────────────────────
+const MODAL_THUMB_STYLE = { width: 60, height: 60, backgroundColor: "#F8F6F0" };
 
 interface ProductCardProps {
   // 기존 props
@@ -230,7 +230,7 @@ export default function ProductCard({
                 <div className="flex flex-wrap gap-1 mt-1">
                   {skinTypes.map((skinType) => {
                     const skinTypeColor = SKIN_TYPE_TAG_COLORS[skinType] ?? {
-                      bg: "#F0EDE8",
+                      bg: "var(--color-bg-muted-warm)",
                       text: "#7A7060",
                     };
                     return (
@@ -375,7 +375,7 @@ export default function ProductCard({
             <div className="flex flex-wrap gap-1 mt-0.5">
               {skinTypes.map((skinType) => {
                 const skinTypeColor = SKIN_TYPE_TAG_COLORS[skinType] ?? {
-                  bg: "#F0EDE8",
+                  bg: "var(--color-bg-muted-warm)",
                   text: "#7A7060",
                 };
                 return (

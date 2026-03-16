@@ -4,7 +4,8 @@ import { useState, useMemo } from "react";
 import { MOCK_SEARCH_PRODUCTS } from "@/constants/_mock/searchProducts";
 import { MAIN_CATEGORIES, BRANDS } from "@/constants/productCategories";
 import { DEFAULT_FILTER } from "@/constants/filterDefaults";
-import { FilterModal, FilterState } from "@/components/common/FilterModal";
+import { FilterModal } from "@/components/common/FilterModal";
+import { FilterState } from "@/components/common/FilterModal";
 import { CategoryFilter } from "@/components/common/CategoryFilter";
 import ProductCard from "@/components/common/ProductCard";
 import { Pagination } from "@/components/common/Pagination";
@@ -57,19 +58,25 @@ export default function SearchPage() {
       const searchKeyword = searchQuery.toLowerCase();
       list = list.filter(
         (product) =>
-          product.name.toLowerCase().includes(searchKeyword) || product.brand.toLowerCase().includes(searchKeyword),
+          product.name.toLowerCase().includes(searchKeyword) ||
+          product.brand.toLowerCase().includes(searchKeyword),
       );
     }
-    if (selectedSub) list = list.filter((product) => product.category === selectedSub);
+    if (selectedSub)
+      list = list.filter((product) => product.category === selectedSub);
     else if (selectedMain)
       list = list.filter((product) =>
         (MAIN_CATEGORIES[selectedMain] ?? []).includes(product.category),
       );
     if (filter.filterSkin)
-      list = list.filter((product) => product.skinTypes.includes(filter.filterSkin!));
+      list = list.filter((product) =>
+        product.skinTypes.includes(filter.filterSkin!),
+      );
     if (filter.filterFns.size > 0)
       list = list.filter((product) =>
-        [...filter.filterFns].some((effect) => product.effects.includes(effect)),
+        [...filter.filterFns].some((effect) =>
+          product.effects.includes(effect),
+        ),
       );
     if (filter.filterBrands.size > 0)
       list = list.filter((product) => filter.filterBrands.has(product.brand));
@@ -143,9 +150,11 @@ export default function SearchPage() {
               effects={product.effects}
               actions={{
                 onAddRoutine: () =>
-                  !routineAdded.has(product.id) && addToRoutine(product.id, product.name),
+                  !routineAdded.has(product.id) &&
+                  addToRoutine(product.id, product.name),
                 inRoutine: routineAdded.has(product.id),
-                onToggleOwned: () => setOwned((prev) => toggleSet(prev, product.id)),
+                onToggleOwned: () =>
+                  setOwned((prev) => toggleSet(prev, product.id)),
                 isOwned: owned.has(product.id),
                 onToggleLike: () => toggleLike(product.id),
                 isLiked: isLiked(product.id),

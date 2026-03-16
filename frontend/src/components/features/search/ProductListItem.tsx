@@ -9,6 +9,32 @@
 
 "use client";
 
+import { Plus, Package, GitCompareArrows, Heart } from "lucide-react";
+import Link from "next/link";
+import {
+  CATEGORY_COLORS,
+  SKIN_FUNCTION_COLORS,
+  SKIN_TYPE_TAG_COLORS,
+} from "@/constants/categoryColors";
+import { formatPrice } from "@/utils/format";
+
+export interface ProductListItemData {
+  id: string | number;
+  brand: string;
+  name: string;
+  category: string;
+  skinType1?: string;
+  skinType2?: string;
+  concerns: Record<string, boolean>;
+  price: number;
+  volume: string;
+  rating: number;
+  reviews: number;
+  emoji: string;
+  imageUrl?: string;
+  matchScore: number;
+}
+
 // ── 스타일 상수 ──────────────────────────────────────────────────────
 const LIST_ITEM_LINK_STYLE = { textDecoration: "none" };
 const THUMB_BASE_STYLE = {
@@ -67,32 +93,6 @@ const WISH_BTN_STYLE = {
   border: "none",
 };
 
-import { Plus, Package, GitCompareArrows, Heart } from "lucide-react";
-import Link from "next/link";
-import {
-  CATEGORY_COLORS,
-  SKIN_FUNCTION_COLORS,
-  SKIN_TYPE_TAG_COLORS,
-} from "@/constants/categoryColors";
-import { formatPrice } from "@/utils/format";
-
-export interface ProductListItemData {
-  id: string | number;
-  brand: string;
-  name: string;
-  category: string;
-  skinType1?: string;
-  skinType2?: string;
-  concerns: Record<string, boolean>;
-  price: number;
-  volume: string;
-  rating: number;
-  reviews: number;
-  emoji: string;
-  imageUrl?: string;
-  matchScore: number;
-}
-
 interface Props {
   product: ProductListItemData;
   isLiked: boolean;
@@ -141,7 +141,11 @@ export function ProductListItem({
           }}
         >
           {product.imageUrl ? (
-            <img src={product.imageUrl} alt={product.name} style={THUMB_IMG_STYLE} />
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              style={THUMB_IMG_STYLE}
+            />
           ) : (
             product.emoji
           )}
@@ -171,25 +175,27 @@ export function ProductListItem({
 
           {/* 태그 */}
           <div className="flex flex-wrap gap-1 mt-1.5">
-            {[product.skinType1, product.skinType2].filter(Boolean).map((skinType) => {
-              const skinTypeColor = SKIN_TYPE_TAG_COLORS[skinType!] ?? {
-                bg: "#F0EDE8",
-                text: "#7A7060",
-              };
-              return (
-                <span
-                  key={skinType}
-                  style={{
-                    ...TAG_BADGE_BASE,
-                    backgroundColor: skinTypeColor.bg,
-                    color: skinTypeColor.text,
-                    fontWeight: 600,
-                  }}
-                >
-                  {skinType}
-                </span>
-              );
-            })}
+            {[product.skinType1, product.skinType2]
+              .filter(Boolean)
+              .map((skinType) => {
+                const skinTypeColor = SKIN_TYPE_TAG_COLORS[skinType!] ?? {
+                  bg: "var(--color-bg-muted-warm)",
+                  text: "#7A7060",
+                };
+                return (
+                  <span
+                    key={skinType}
+                    style={{
+                      ...TAG_BADGE_BASE,
+                      backgroundColor: skinTypeColor.bg,
+                      color: skinTypeColor.text,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {skinType}
+                  </span>
+                );
+              })}
             {activeConcerns.slice(0, 3).map((concernName) => {
               const concernColor = SKIN_FUNCTION_COLORS[concernName];
               return (
@@ -198,7 +204,7 @@ export function ProductListItem({
                   style={{
                     ...TAG_BADGE_BASE,
                     backgroundColor: concernColor?.chip ?? "#F8F6F0",
-                    color: concernColor?.accent ?? "#8A7B64",
+                    color: concernColor?.accent ?? "var(--color-text-warm)",
                     fontWeight: 500,
                   }}
                 >
@@ -244,7 +250,7 @@ export function ProductListItem({
             padding: "0 12px",
             borderRadius: "8px",
             border: "none",
-            backgroundColor: isLiked ? "#FFF0F0" : "#F5F5F5",
+            backgroundColor: isLiked ? "var(--color-bg-like)" : "#F5F5F5",
             color: isLiked ? "#E57373" : "#9E9E9E",
             fontSize: "11px",
             fontWeight: 500,

@@ -1,5 +1,10 @@
 "use client";
 
+import React from "react";
+
+import { useRouter, usePathname } from "next/navigation";
+import { Home, Search, Sparkles, Heart, User } from "lucide-react";
+
 // ── 스타일 상수 ──────────────────────────────────────────────────────
 const NAV_WRAPPER_STYLE: React.CSSProperties = {
   position: "fixed",
@@ -14,7 +19,6 @@ const NAV_WRAPPER_STYLE: React.CSSProperties = {
   justifyContent: "center",
   padding: "0 24px",
 };
-
 const NAV_CONTAINER_STYLE: React.CSSProperties = {
   width: "100%",
   maxWidth: "380px",
@@ -29,23 +33,16 @@ const NAV_CONTAINER_STYLE: React.CSSProperties = {
   padding: "0 24px",
   pointerEvents: "auto",
 };
-
 const NAV_CENTER_BTN_BASE: React.CSSProperties = {
   width: "48px",
   height: "48px",
   borderRadius: "50%",
 };
-
 const NAV_BTN_BASE: React.CSSProperties = {
   width: "40px",
   height: "40px",
   borderRadius: "50%",
 };
-
-import React from "react";
-
-import { useRouter, usePathname } from "next/navigation";
-import { Home, Search, Sparkles, Heart, User } from "lucide-react";
 
 const TABS = [
   { id: "search", href: "/search", icon: Search, isCenter: false },

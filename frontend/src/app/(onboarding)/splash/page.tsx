@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
 // ── 스타일 상수 ──────────────────────────────────────────────────────
 const SPLASH_BG = "linear-gradient(160deg, #D4C8BC 4.5%, #ECEADE 50%)";
 const RING_INNER_STYLE = {
@@ -27,9 +30,6 @@ const BRAND_TITLE_STYLE = {
   fontSize: "32px",
 };
 const DOT_BASE_STYLE = { width: "4px", height: "4px" };
-
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function SplashPage() {
   const router = useRouter();

@@ -1,5 +1,9 @@
 "use client";
 
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, SwitchCamera, ImagePlus } from "lucide-react";
+
 // ── 스타일 상수 ──────────────────────────────────────────────────────
 const CAMERA_Z_INDEX = { zIndex: 1 };
 const DARK_BG_STYLE = {
@@ -98,10 +102,6 @@ const RETRY_BTN_STYLE = {
   fontSize: "13px",
   fontWeight: 500,
 };
-
-import { useState, useRef, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, SwitchCamera, ImagePlus } from "lucide-react";
 
 /* ── 얼굴 가이드 SVG 오버레이 ── */
 function FaceOverlay({ scanning }: { scanning: boolean }) {
