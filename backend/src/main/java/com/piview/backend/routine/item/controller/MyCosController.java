@@ -1,9 +1,11 @@
 package com.piview.backend.routine.item.controller;
 
 import com.piview.backend.global.security.UserPrincipal;
+import com.piview.backend.routine.item.dto.MyCosCreateRequestDto;
 import com.piview.backend.routine.item.dto.MyCosResponseDto;
 import com.piview.backend.routine.item.service.MyCosService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -28,5 +30,30 @@ public class MyCosController {
         // 해당 유저의 리스트만 조회
         List<MyCosResponseDto> response = myCosService.getMyCosList(userId);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping
+    public ResponseEntity<Long> saveMyCos(
+        @AuthenticationPrincipal UserPrincipal userPrincipal,
+        @RequestBody MyCosCreateRequestDto requestDto
+    ) {
+        Long userId = userPrincipal.getId();
+
+        // 저장 후 생성된 MyCos 테이블의 ID를 반환
+        Long savedMyCosId = myCosService.saveMyCos(userId, requestDto);
+
+        // 데이터가 성공적으로 생성되었으므로 201 CREATED 상태 코드 반환
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedMyCosId);
+    }
+
+    @DeleteMapping("/{myCosId}")
+    public ResponseEntity<String> deleteMyCos(
+        @PathVariable("myCosId") Long myCosId,
+        @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        // 서비스로 로그인한 유저 ID와 삭제할 제품 ID를 함께 넘기기
+        myCosService.deleteMyCos(userPrincipal.getId(), myCosId);
+
+        return ResponseEntity.ok("제품이 성공적으로 삭제되었습니다.");
     }
 }

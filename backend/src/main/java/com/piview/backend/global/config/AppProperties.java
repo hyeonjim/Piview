@@ -26,6 +26,7 @@ public class AppProperties {
         private int oauth2CookieExpireSeconds;  // 프론트 전달용 임시 쿠키 수명
 
         private boolean cookieSecure;
+        private String cookieSameSite;
     }
 
     @Getter
