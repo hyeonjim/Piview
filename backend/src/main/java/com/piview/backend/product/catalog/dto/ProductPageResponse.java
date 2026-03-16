@@ -1,4 +1,4 @@
-package com.piview.backend.product.dto;
+package com.piview.backend.product.catalog.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

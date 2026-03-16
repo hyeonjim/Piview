@@ -1,8 +1,8 @@
-package com.piview.backend.product.controller;
+package com.piview.backend.product.catalog.controller;
 
 import com.piview.backend.global.exception.ApiResponse;
-import com.piview.backend.product.dto.ProductPageResponse;
-import com.piview.backend.product.service.ProductService;
+import com.piview.backend.product.catalog.dto.ProductPageResponse;
+import com.piview.backend.product.catalog.service.ProductCatalogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,9 +14,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/products")
 @RequiredArgsConstructor
-public class ProductController {
+public class ProductCatalogController {
 
-    private final ProductService productService;
+    private final ProductCatalogService productCatalogService;
 
     /**
      * 제품 목록 조회 (동적 필터 + 페이지네이션)
@@ -40,7 +40,7 @@ public class ProductController {
 
         size = Math.min(size, 50);  // 최대 50개 방어 처리
 
-        ProductPageResponse result = productService.searchProducts(
+        ProductPageResponse result = productCatalogService.searchProducts(
                 name, brand, categoryId, bigCategoryId, skinType, tagIds, page, size);
 
         return ApiResponse.success(result);

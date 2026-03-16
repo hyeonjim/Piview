@@ -1,4 +1,4 @@
-package com.piview.backend.product.repository;
+package com.piview.backend.product.catalog.repository;
 
 import com.piview.backend.product.entity.ProductIngredient;
 import jakarta.persistence.EntityManager;
