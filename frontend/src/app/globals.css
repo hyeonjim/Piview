@@ -1,3 +1,194 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ── 디자인 토큰 (피그마 ThemeContext 원본값) ── */
+@theme {
+  --max-width-app: 500px;
+
+  /* Primary — Beige-5 (#A69D92) */
+  --color-brand: #a69d92;
+  --color-brand-light: #bfb6aa;
+  --color-brand-dark: #8c8277;
+  --color-brand-bg: #f2efe9;
+  --color-brand-pale: #f7f5f1;
+
+  /* Warm — Beige 팔레트로 통일 */
+  --color-warm: #a69d92;
+  --color-warm-bg: #f2efe9;
+  --color-warm-beige: #bfb6aa;
+  --color-warm-amber: #c4b5a0;
+
+  /* 배경 — Beige-1 (#F2EFE9) */
+  --color-bg-base: #f2efe9;
+  --color-bg-surface: #ece8e2;
+  --color-bg-card: #ffffff;
+  --color-bg-beige: #f2efe9;
+  --color-bg-chip: #ece8e2;
+
+  /* 텍스트 */
+  --color-text-primary: #2a2118;
+  --color-text-secondary: #7a7268;
+  --color-text-sub: #6e6358;
+  --color-text-muted: #a69d92;
+  --color-text-hint: #8c8277;
+  --color-text-faint: #bfb6aa;
+  --color-text-disabled: #d9d5d0;
+
+  /* 보더 — Beige 팔레트 */
+  --color-border: #e2ddd8;
+  --color-border-warm: #d9d1c7;
+  --color-border-dash: #d9d5d0;
+
+  /* 추가 토큰 — 컴포넌트 공통 하드코딩값 추출 */
+  --color-bg-muted-warm: #e8e3dd; /* 배지 bg, 점수링 트랙, X버튼 bg */
+  --color-text-warm: #8c7e6e; /* 카테고리 accent, 설명 텍스트 */
+  --color-text-stone: #a09080; /* 검색 아이콘, muted stone */
+  --color-border-subtle: #ddd9d3; /* 카드 border */
+  --color-chip-base: #f2efe9; /* 칩 inactive bg */
+  --color-bg-like: #fff0f0; /* 찜 / 피해야 할 제품 연빨간 bg */
+  --color-danger: #ef4444; /* 피해야 할 제품 아이콘 */
+
+  /* EWG */
+  --color-ewg-safe: #6b9e6b;
+  --color-ewg-safe-bg: #e8f5e9;
+  --color-ewg-caution: #d4a84b;
+  --color-ewg-caution-bg: #fff8e1;
+  --color-ewg-danger: #d94f3d;
+  --color-ewg-danger-bg: #ffebee;
+
+  /* 반경 — 피그마 원본 */
+  --radius-card: 16px;
+  --radius-button: 32px;
+  --radius-chip: 30px;
+  --radius-badge: 30px;
+  --radius-modal: 20px;
+  --radius-icon: 12px;
+  --radius-xs: 4px;
+
+  /* 그림자 */
+  --shadow-card: 0px 5px 16px 0px rgba(166, 157, 146, 0.15);
+  --shadow-nav: 0 8px 32px rgba(166, 157, 146, 0.08);
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.06);
+
+  /* 높이 */
+  --height-header: 56px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: #ffffff;
+  --foreground: #2a2118;
+  --card: #ffffff;
+  --card-foreground: #2a2118;
+  --popover: #ffffff;
+  --popover-foreground: #2a2118;
+  --primary: #a69d92;
+  --primary-foreground: #ffffff;
+  --secondary: #f2efe9;
+  --secondary-foreground: #2a2118;
+  --muted: #ece8e2;
+  --muted-foreground: #a69d92;
+  --accent: #f2efe9;
+  --accent-foreground: #2a2118;
+  --destructive: #d94f3d;
+  --border: #e2ddd8;
+  --input: #e2ddd8;
+  --ring: #a69d92;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    /* next/font/local이 주입하는 CSS 변수 사용 */
+    font-family:
+      var(--font-pretendard),
+      -apple-system,
+      BlinkMacSystemFont,
+      system-ui,
+      sans-serif;
+    font-size: 16px;
+  }
+
+  body {
+    /* Beige-1 (#F2EFE9) 기반 배경 */
+    background-color: #f2efe9;
+    color: #2a2118;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* 모바일(767px 이하)에서도 베이지 배경 유지 */
+  @media (max-width: 767px) {
+    body {
+      background-color: #f2efe9;
+    }
+  }
+
+  /* 스크롤바 숨기기 */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  /* BottomNav 높이 보정용 유틸 클래스 */
+  /* (main)/layout.tsx 의 <main className="pb-nav"> 에서 사용 */
+  .pb-nav {
+    padding-bottom: 92px; /* BottomNav 60px + bottom 16px + 여백 16px */
+  }
+
+  /* 피그마 MobileFrame: 13px 미만 폰트 강제 최소화 방지 */
+  .text-xs {
+    font-size: 13px !important;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.5px;
+  }
+  h2 {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: -0.3px;
+  }
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  p {
+    line-height: 1.6;
+  }
+
+  button {
+    font-family: inherit;
+  }
+  input {
+    font-family: inherit;
+  }
+}
