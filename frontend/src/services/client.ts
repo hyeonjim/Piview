@@ -11,7 +11,7 @@ import { useUserStore } from "@/stores/useUserStore";
 import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
 
 const client = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://j14e101.p.ssafy.io:3000/api/v1",
   timeout: 10000,
   headers: { "Content-Type": "application/json" },
   // httpOnly 쿠키를 모든 요청에 자동 포함 → 인터셉터로 토큰 주입 불필요
