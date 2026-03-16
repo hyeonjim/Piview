@@ -33,7 +33,6 @@ const STEP_CATEGORY_CHIPS: Record<string, string[]> = {
 import { useState, useMemo } from "react";
 import { X, Search, Package, Heart, GitCompare } from "lucide-react";
 import {
-  CATEGORY_COLORS,
   SKIN_FUNCTION_COLORS,
   SKIN_TYPE_TAG_COLORS,
 } from "@/constants/categoryColors";

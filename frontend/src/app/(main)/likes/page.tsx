@@ -1,72 +1,70 @@
 "use client";
 
 import { Heart } from "lucide-react";
-import { Toast } from "@/components/common/Toast";
-import { useToast } from "@/hooks";
-import ProductCard from "@/components/common/ProductCard";
-import EmptyState from "@/components/common/EmptyState";
 import { useLike } from "@/hooks/useLike";
+import ProductCard from "@/components/common/ProductCard";
 import { MOCK_SEARCH_PRODUCTS } from "@/constants/_mock/searchProducts";
 
-// 초기 찜 목록 — ⚠️ API 연동 시 유저 찜 목록 API로 교체
-const INITIAL_WISHED = ["s1", "s3", "s5"];
-
 export default function LikesPage() {
-  // useLike 훅으로 찜 상태 관리 — API 연동 시 훅 내부만 수정
-  const { toggleLike, isLiked } = useLike(INITIAL_WISHED);
-  const { toastMessage } = useToast();
+  // likeList만 사용 — ProductCard 내부에서 useLikeStore로 찜 상태를 직접 관리함
+  const { likeList: likedIds } = useLike();
 
-  // ⚠️ API 연동 시 → likesService.getWishedProducts() 로 교체
-  const wishlistedProducts = MOCK_SEARCH_PRODUCTS.filter((p) => isLiked(p.id));
+  // ⚠️ API 연동 시 서버 fetch로 교체
+  const likedProducts = MOCK_SEARCH_PRODUCTS.filter((p) => likedIds.has(p.id));
 
   return (
-    <div className="flex flex-col min-h-full bg-white pb-28">
-      <Toast msg={toastMessage} />
-
+    <div style={{ minHeight: "100%", backgroundColor: "#F5F2EC" }}>
       {/* 헤더 */}
-      <div className="px-6 pt-5 pb-3" style={{ background: HEADER_BG }}>
-        <div className="flex items-center gap-2">
-          <Heart size={18} color="#E57373" fill="#E57373" />
-          <h1 className="text-xl font-semibold text-text-primary m-0">
-            찜 목록
-          </h1>
-        </div>
-        <p className="text-xs text-text-hint mt-1">
-          {wishlistedProducts.length}개의 제품을 찜했어요
-        </p>
+      <div style={{ backgroundColor: "#F5F2EC", padding: "15px 20px 16px" }}>
+        <h1 style={{ margin: "3px 0 0", fontSize: "22px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.4px", fontFamily: "var(--font-pretendard), sans-serif" }}>
+          찜한 제품
+        </h1>
+        {likedProducts.length > 0 && (
+          <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#BFB6AA", fontFamily: "var(--font-pretendard), sans-serif" }}>
+            {likedProducts.length}개 저장됨
+          </p>
+        )}
       </div>
 
-      {/* 빈 상태 */}
-      {wishlistedProducts.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center">
-          <EmptyState
-            icon={Heart}
-            title="아직 찜한 제품이 없어요"
-            description={"제품의 하트 버튼을 눌러\n관심 제품을 저장해보세요"}
-          />
-        </div>
-      ) : (
-        <div className="px-6 grid grid-cols-2 gap-3 mt-1">
-          {wishlistedProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              id={product.id}
-              name={product.name}
-              brand={product.brand}
-              emoji={product.emoji}
-              category={product.category}
-              skinTypes={product.skinTypes}
-              effects={product.effects}
-              liked={isLiked(product.id)}
-              onLike={() => toggleLike(product.id)}
-            />
-          ))}
-        </div>
-      )}
+      <div style={{ padding: "16px 16px 24px" }}>
+        {likedProducts.length === 0 ? (
+          <div
+            className="flex flex-col items-center justify-center"
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: "12px",
+              border: "1px solid #E2DDD8",
+              padding: "48px 20px",
+              marginTop: "8px",
+            }}
+          >
+            <Heart size={32} style={{ color: "#D9D5D0", marginBottom: "12px" }} />
+            <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#A69D92", fontFamily: "var(--font-pretendard), sans-serif" }}>
+              찜한 제품이 없어요
+            </p>
+            <p style={{ margin: "6px 0 0", fontSize: "12px", color: "#BFB6AA", textAlign: "center", fontFamily: "var(--font-pretendard), sans-serif" }}>
+              마음에 드는 제품을 찜해보세요
+            </p>
+          </div>
+        ) : (
+          /* 카드 간격 14px */
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+            {likedProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                id={product.id}
+                brand={product.brand}
+                name={product.name}
+                category={product.category}
+                emoji={product.emoji}
+                skinTypes={product.skinTypes}
+                effects={product.effects}
+                layout="grid"
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
-// ── 스타일 상수 ──────────────────────────────────────────────────────
-const HEADER_BG =
-  "linear-gradient(135deg, var(--color-bg-like) 0%, #FFFFFF 100%)";
