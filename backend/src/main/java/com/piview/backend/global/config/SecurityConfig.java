@@ -49,6 +49,7 @@ public class SecurityConfig {
 
                 // 5. URL별 권한 설정
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/").permitAll()
                         // 누구나 접근 가능한 URL (헬스 체크, 정적 리소스, 인증 관련)
                         .requestMatchers("/health", "/error").permitAll()
                         .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/favicon.ico").permitAll()
