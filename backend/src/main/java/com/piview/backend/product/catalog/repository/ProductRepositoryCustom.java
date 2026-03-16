@@ -5,6 +5,6 @@ import com.piview.backend.product.entity.Product;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 
-public interface ProductSearchRepositoryCustom {
+public interface ProductRepositoryCustom {
   Slice<Product> search(ProductSearchCondition condition, Pageable pageable);
 }

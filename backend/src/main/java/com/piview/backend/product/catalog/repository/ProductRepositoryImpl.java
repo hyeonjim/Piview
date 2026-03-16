@@ -24,7 +24,7 @@ import static com.piview.backend.product.entity.QProductTagScore.productTagScore
 
 @Repository
 @RequiredArgsConstructor
-public class ProductSearchRepositoryImpl implements ProductSearchRepositoryCustom {
+public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
   private final JPAQueryFactory queryFactory;
 
@@ -83,13 +83,12 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepositoryCusto
     return bigCategory.bigCategoryId.eq(bigCategoryId);
   }
 
-  private BooleanExpression skinTypeEq(String skinType) {
-    if (skinType == null || skinType.isBlank() || "전체".equals(skinType)) {
+  private BooleanExpression skinTypeEq(SkinTypeEnum skinType) {
+    if (skinType == null) {
       return null;
     }
-    SkinTypeEnum type = SkinTypeEnum.valueOf(skinType.toLowerCase());
-    return productSkinScore.topSkinType.eq(type)
-            .or(productSkinScore.top2SkinType.eq(type));
+    return productSkinScore.topSkinType.eq(skinType)
+            .or(productSkinScore.top2SkinType.eq(skinType));
   }
 
   private BooleanExpression hasAllTags(List<Long> tagIds) {

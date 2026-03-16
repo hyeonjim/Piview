@@ -1,16 +1,18 @@
 package com.piview.backend.product.catalog.controller;
 
 import com.piview.backend.global.exception.ApiResponse;
+import com.piview.backend.global.exception.CustomException;
+import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.product.catalog.dto.ProductPageResponse;
 import com.piview.backend.product.catalog.dto.ProductSearchCondition;
 import com.piview.backend.product.catalog.service.ProductCatalogService;
+import com.piview.backend.product.entity.SkinTypeEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -31,7 +33,7 @@ public class ProductCatalogController {
             @RequestParam(required = false) Integer minPrice,
             @RequestParam(required = false) Integer maxPrice,
             @RequestParam(required = false, defaultValue = "0")  int page,
-            @RequestParam(required = false, defaultValue = "10") int size, Principal principal) {
+            @RequestParam(required = false, defaultValue = "10") int size) {
 
         size = Math.min(size, 50);  // 최대 50개 방어 처리
 
@@ -39,7 +41,7 @@ public class ProductCatalogController {
                 .q(q)
                 .bigCategoryId(bigCategoryId)
                 .categoryId(categoryId)
-                .skinType(skinType)
+                .skinType(parseSkinType(skinType))
                 .tagIds(tagIds)
                 .brandIds(brandIds)
                 .minPrice(minPrice)
@@ -51,5 +53,16 @@ public class ProductCatalogController {
         ProductPageResponse result = productCatalogService.searchProducts(condition);
 
         return ApiResponse.success(result);
+    }
+
+    private SkinTypeEnum parseSkinType(String skinType) {
+        if (skinType == null || skinType.isBlank() || "전체".equals(skinType)) {
+            return null;
+        }
+        try {
+            return SkinTypeEnum.valueOf(skinType.trim().toLowerCase());
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
     }
 }

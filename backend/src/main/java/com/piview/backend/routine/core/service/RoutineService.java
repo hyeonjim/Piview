@@ -1,6 +1,6 @@
 package com.piview.backend.routine.core.service;
 
-import com.piview.backend.product.catalog.repository.ProductSearchRepository;
+import com.piview.backend.product.catalog.repository.ProductRepository;
 import com.piview.backend.product.entity.Product;
 import com.piview.backend.routine.core.dto.*;
 import com.piview.backend.routine.core.entity.MyRoutine;
@@ -24,7 +24,7 @@ public class RoutineService {
 
   private final RoutineRepository routineRepository;
   private final RoutineColumnRepository routineColumnRepository;
-  private final ProductSearchRepository productSearchRepository;
+  private final ProductRepository productRepository;
 
   private final RedisDraftService redisDraftService;
 
@@ -53,7 +53,7 @@ public class RoutineService {
       RoutineColumn column = routineColumnRepository.findById(item.columnId())
           .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 루틴 단계입니다."));
 
-      Product product = productSearchRepository.findById(item.productId())
+      Product product = productRepository.findById(item.productId())
           .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
 
       RoutineDetail detail = RoutineDetail.builder()

@@ -1,5 +1,6 @@
 package com.piview.backend.product.catalog.dto;
 
+import com.piview.backend.product.entity.SkinTypeEnum;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,7 +14,8 @@ public class ProductSearchCondition {
 
     private Integer bigCategoryId;
     private Long categoryId;
-    private String skinType;
+//    private String skinType;
+    private SkinTypeEnum skinType;
     private List<Long> tagIds;
     private List<Long> brandIds;
     private Integer minPrice;
