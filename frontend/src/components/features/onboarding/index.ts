@@ -1,0 +1,1 @@
+export { SkinTypeChip } from "./SkinTypeChip";
