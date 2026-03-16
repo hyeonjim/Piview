@@ -10,26 +10,40 @@ interface PaginationProps {
 
 export function Pagination({ page, totalPages, onChange }: PaginationProps) {
   if (totalPages <= 1) return null;
-
   return (
-    <div className="flex items-center justify-center gap-1 py-4 pb-6">
+    <div className="flex items-center justify-center gap-1" style={{ padding: "16px 0 20px" }}>
       <button
         onClick={() => onChange(Math.max(1, page - 1))}
         disabled={page === 1}
-        className="flex items-center justify-center w-8 h-8 rounded-full bg-bg-chip cursor-pointer border-none transition-all active:scale-[0.92] disabled:opacity-30 disabled:cursor-default"
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          width: "32px", height: "32px",
+          borderRadius: "6px",
+          border: "1px solid #EDEBE8",
+          backgroundColor: "#FFFFFF",
+          cursor: "pointer",
+          opacity: page === 1 ? 0.3 : 1,
+        }}
       >
-        <ChevronLeft size={16} className="text-text-sub" />
+        <ChevronLeft size={14} style={{ color: "#8A8278" }} />
       </button>
 
       {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
         <button
           key={n}
           onClick={() => onChange(n)}
-          className={`flex items-center justify-center w-8 h-8 rounded-full border-none cursor-pointer transition-all text-xs ${
-            page === n
-              ? "bg-brand text-white font-bold"
-              : "bg-bg-chip text-text-sub font-normal"
-          }`}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: "32px", height: "32px",
+            borderRadius: "6px",
+            border: `1px solid ${page === n ? "#1C1C1E" : "#EDEBE8"}`,
+            backgroundColor: page === n ? "#1C1C1E" : "#FFFFFF",
+            color: page === n ? "#FFFFFF" : "#8A8278",
+            fontSize: "12px",
+            fontWeight: page === n ? 700 : 400,
+            cursor: "pointer",
+            fontFamily: "var(--font-pretendard), sans-serif",
+          }}
         >
           {n}
         </button>
@@ -38,9 +52,17 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
       <button
         onClick={() => onChange(Math.min(totalPages, page + 1))}
         disabled={page === totalPages}
-        className="flex items-center justify-center w-8 h-8 rounded-full bg-bg-chip cursor-pointer border-none transition-all active:scale-[0.92] disabled:opacity-30 disabled:cursor-default"
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          width: "32px", height: "32px",
+          borderRadius: "6px",
+          border: "1px solid #EDEBE8",
+          backgroundColor: "#FFFFFF",
+          cursor: "pointer",
+          opacity: page === totalPages ? 0.3 : 1,
+        }}
       >
-        <ChevronRight size={16} className="text-text-sub" />
+        <ChevronRight size={14} style={{ color: "#8A8278" }} />
       </button>
     </div>
   );

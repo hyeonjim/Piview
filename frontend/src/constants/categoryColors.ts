@@ -130,20 +130,21 @@ export const CATEGORY_COLORS: Record<
   },
 };
 
+/* 피부 기능 태그 — 베이지 팔레트와 조화되는 웜 뮤트 계열 */
 export const SKIN_FUNCTION_COLORS: Record<
   string,
   { accent: string; chip: string }
 > = {
-  아토피: { accent: "#7B6E8A", chip: "#EDE8F2" },
-  여드름: { accent: "#8A6E6E", chip: "#F2E8E8" },
-  미백: { accent: "#8A8460", chip: "#F2F0E0" },
-  색소침착: { accent: "#7A6F5C", chip: "#EAE5DA" },
-  안티에이징: { accent: "#6E7A5A", chip: "#E4EAD8" },
-  피지: { accent: "#6E8A7A", chip: "#E0F0E8" },
-  블랙헤드: { accent: "#5A6E78", chip: "#DCE4EA" },
-  수분: { accent: "#5A7A8A", chip: "#D8E8F0" },
-  영양: { accent: "#8A7A5A", chip: "#F0E8D8" },
-  진정: { accent: "#4A6B52", chip: "#DDE8DF" },
+  아토피: { accent: "#8A7A6E", chip: "#EEE8E4" }, // 웜 타우프
+  여드름: { accent: "#8A6A6A", chip: "#F2E8E8" }, // 더스티 로즈
+  미백: { accent: "#8A8460", chip: "#F2F0E0" },   // 웜 올리브 (유지)
+  색소침착: { accent: "#7A6F5C", chip: "#EAE5DA" }, // 타우프 (이미 베이지 계열)
+  안티에이징: { accent: "#7A7458", chip: "#ECEADA" }, // 웜 샌드
+  피지: { accent: "#7A8A78", chip: "#E4EEE2" },   // 뮤트 세이지
+  블랙헤드: { accent: "#7A7872", chip: "#E8E6E2" }, // 웜 그레이
+  수분: { accent: "#7A8A8A", chip: "#E2ECEC" },   // 뮤트 틸 (베이지와 조화)
+  영양: { accent: "#8A7A5A", chip: "#F0E8D8" },   // 웜 카라멜 (유지)
+  진정: { accent: "#7A8A72", chip: "#E4EAE0" },   // 뮤트 그린
 };
 
 export const SKIN_FUNCTIONS = [
@@ -159,15 +160,16 @@ export const SKIN_FUNCTIONS = [
   "진정",
 ] as const;
 
+/* 피부 타입 태그 — 베이지 팔레트에 어울리는 웜톤 계열 */
 export const SKIN_TYPE_TAG_COLORS: Record<
   string,
   { bg: string; text: string }
 > = {
-  건성: { bg: "#E8F0F8", text: "#3A6B9F" }, // 피그마 미포착 — 기존 유지
-  지성: { bg: "#FBF4EA", text: "#B17835" }, // 피그마 실측: 앰버 계열
-  복합성: { bg: "#F3E8F9", text: "#7B3FA0" }, // 피그마 미포착 — 기존 유지
-  수부지: { bg: "#EDEAFD", text: "#6942B7" }, // 피그마 실측: 라벤더/퍼플
-  모든피부: { bg: "#E8F4EC", text: "#3D7A52" }, // 피그마 미포착 — 기존 유지
+  건성: { bg: "#F5EDE8", text: "#9B6A54" }, // 따뜻한 테라코타
+  지성: { bg: "#F7F2E2", text: "#9A7C45" }, // 웜 골든
+  복합성: { bg: "#F2EDEA", text: "#8A6E60" }, // 웜 타우프
+  수부지: { bg: "#F5EAEC", text: "#9B606A" }, // 더스티 로즈
+  모든피부: { bg: "#EEF0E8", text: "#6E7A60" }, // 웜 세이지
 };
 
 export const SKIN_TYPE_LABELS_FOR_FILTER = [

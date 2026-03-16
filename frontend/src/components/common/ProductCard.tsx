@@ -1,7 +1,6 @@
-// src/components/common/ProductCard.tsx
 "use client";
 
-import { Heart, Plus, Check, Package, GitCompareArrows } from "lucide-react";
+import { Heart, Plus, Check, ShoppingBag, Scale } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -14,10 +13,9 @@ import {
 } from "@/constants/categoryColors";
 
 // ── 스타일 상수 ──────────────────────────────────────────────────────
-const MODAL_THUMB_STYLE = { width: 60, height: 60, backgroundColor: "#F8F6F0" };
+const MODAL_THUMB_STYLE = { width: 60, height: 60, backgroundColor: "#F5F2EC" };
 
 interface ProductCardProps {
-  // 기존 props
   id: number | string;
   name: string;
   brand: string;
@@ -27,24 +25,15 @@ interface ProductCardProps {
   ewgDanger?: number;
   liked?: boolean;
   onLike?: (id: number | string) => void;
-  layout?: "vertical" | "horizontal";
-
-  // 새로운 props
+  layout?: "vertical" | "horizontal" | "grid";
   category?: string;
-  categoryShort?: string;
   emoji?: string;
   skinTypes?: string[];
   effects?: string[];
-
-  // 추천 관련
   reason?: string;
   isRecommended?: boolean;
-
-  // 랭킹 표시 (아이콘만, 텍스트 없음)
   rankingIndex?: number;
   showRanking?: boolean;
-
-  // 액션 버튼
   actions?: {
     onAddRoutine?: () => void;
     inRoutine?: boolean;
@@ -55,11 +44,50 @@ interface ProductCardProps {
     showCompare?: boolean;
     onCompare?: () => void;
   };
-
-  // 디스플레이 옵션
   variant?: "default" | "modal";
   showDetailButton?: boolean;
   onDetailClick?: () => void;
+}
+
+// ── 공용 태그 컴포넌트 ──────────────────────────────────────────────
+function SkinTypeTag({ label }: { label: string }) {
+  const color = SKIN_TYPE_TAG_COLORS[label] ?? { bg: "#F0EDE8", text: "#7A7060" };
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        backgroundColor: color.bg,
+        color: color.text,
+        fontSize: "10px",
+        fontWeight: 600,
+        padding: "2px 6px",
+        borderRadius: "3px",
+        letterSpacing: "0.02em",
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
+function EffectTag({ label }: { label: string }) {
+  const color = SKIN_FUNCTION_COLORS[label];
+  if (!color) return null;
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        backgroundColor: color.chip,
+        color: color.accent,
+        fontSize: "10px",
+        fontWeight: 500,
+        padding: "2px 6px",
+        borderRadius: "3px",
+      }}
+    >
+      {label}
+    </span>
+  );
 }
 
 export default function ProductCard({
@@ -91,17 +119,11 @@ export default function ProductCard({
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsLiked((p) => !p);
+    setIsLiked((prev) => !prev);
     onLike?.(id);
   };
 
-  const handleWishToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    actions?.onToggleLike?.();
-  };
-
-  const handleActionClick = (e: React.MouseEvent, callback?: () => void) => {
+  const handleAction = (e: React.MouseEvent, callback?: () => void) => {
     e.preventDefault();
     e.stopPropagation();
     callback?.();
@@ -109,42 +131,183 @@ export default function ProductCard({
 
   const categoryColor = category ? CATEGORY_COLORS[category] : undefined;
 
-  // horizontal 레이아웃 (기존 유지)
-  if (layout === "horizontal") {
+  // ── 1. GRID — 2열 제품 카드 ────────────────────────────────────────
+  if (layout === "grid") {
     return (
-      <Link href={`/product/${id}`}>
-        <div className="flex items-center bg-bg-card border border-border rounded-card shadow-card overflow-hidden h-[88px]">
-          {/* 이미지 */}
-          <div className="relative w-[88px] h-full shrink-0 bg-bg-surface">
+      <div
+        className="relative flex flex-col overflow-hidden"
+        style={{
+          backgroundColor: "#FFFFFF",
+          borderRadius: "10px",
+          border: "1px solid #E2DDD8",
+          // 세련된 그림자 — 가볍고 선명
+          boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04)",
+        }}
+      >
+        <Link href={`/product/${id}`} className="no-underline flex flex-col">
+          {/* 이미지 — 가로:세로 3:2 (기존 1:1의 2/3 높이) */}
+          <div
+            className="relative w-full"
+            style={{ aspectRatio: "3/2", backgroundColor: "#F5F2EC" }}
+          >
             {imageUrl ? (
               <Image src={imageUrl} alt={name} fill className="object-cover" />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-2xl">{emoji || "🧴"}</span>
+                <span style={{ fontSize: "24px" }}>{emoji || "🧴"}</span>
+              </div>
+            )}
+
+            {/* 좋아요 버튼 */}
+            <button
+              onClick={handleLike}
+              className="absolute top-2 right-2 flex items-center justify-center cursor-pointer border-none"
+              style={{
+                width: "28px",
+                height: "28px",
+                borderRadius: "50%",
+                backgroundColor: "rgba(255,255,255,0.92)",
+                backdropFilter: "blur(4px)",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+              }}
+            >
+              <Heart
+                size={13}
+                style={{
+                  color: isLiked ? "#E8715A" : "#C4BEB7",
+                  fill: isLiked ? "#E8715A" : "none",
+                  transition: "all 0.15s",
+                }}
+              />
+            </button>
+
+            {/* 추천 배지 */}
+            {(isRecommended || reason) && (
+              <div
+                className="absolute top-2 left-2"
+                style={{
+                  /* 베이지 팔레트 — 검정 대신 따뜻한 다크 브라운 */
+                  backgroundColor: "#3D3028",
+                  color: "#F2EFE9",
+                  fontSize: "9px",
+                  fontWeight: 600,
+                  padding: "3px 7px",
+                  borderRadius: "3px",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  fontFamily: "var(--font-pretendard), sans-serif",
+                }}
+              >
+                PICK
+              </div>
+            )}
+
+            {/* 랭킹 */}
+            {rankingIndex !== undefined && showRanking && (
+              <div className="absolute top-2 left-2" style={{ fontSize: "16px" }}>
+                {["🥇", "🥈", "🥉"][rankingIndex] ?? "✦"}
               </div>
             )}
           </div>
-          {/* 텍스트 */}
-          <div className="flex-1 px-3 py-2 min-w-0">
-            <p className="text-xs text-text-muted truncate">{brand}</p>
-            <p className="text-sm font-medium text-text-primary mt-0.5 line-clamp-2 leading-snug">
+
+          {/* 텍스트 영역 */}
+          <div style={{ padding: "10px 12px 12px" }}>
+            {/* 브랜드 */}
+            <p
+              style={{
+                margin: 0,
+                fontSize: "10px",
+                fontWeight: 500,
+                color: "#BFB6AA",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                fontFamily: "var(--font-pretendard), sans-serif",
+              }}
+            >
+              {brand}
+            </p>
+
+            {/* 제품명 */}
+            <p
+              style={{
+                margin: "3px 0 0",
+                fontSize: "13px",
+                fontWeight: 500,
+                color: "#2A2118",
+                lineHeight: 1.4,
+                // 2줄 말줄임
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                fontFamily: "var(--font-pretendard), sans-serif",
+              }}
+            >
               {name}
             </p>
-            <EWGIndicator
-              safe={ewgSafe}
-              caution={ewgCaution}
-              danger={ewgDanger}
-              className="mt-1.5"
-            />
+
+            {/* 태그 */}
+            {(skinTypes.length > 0 || effects.length > 0) && (
+              <div
+                className="flex flex-wrap"
+                style={{ gap: "3px", marginTop: "6px" }}
+              >
+                {skinTypes.slice(0, 1).map((st) => (
+                  <SkinTypeTag key={st} label={st} />
+                ))}
+                {effects.slice(0, 1).map((ef) => (
+                  <EffectTag key={ef} label={ef} />
+                ))}
+              </div>
+            )}
           </div>
-          {/* 좋아요 */}
+        </Link>
+      </div>
+    );
+  }
+
+  // ── 2. HORIZONTAL ─────────────────────────────────────────────────
+  if (layout === "horizontal") {
+    return (
+      <Link href={`/product/${id}`}>
+        <div
+          className="flex items-center overflow-hidden"
+          style={{
+            backgroundColor: "#FFFFFF",
+            borderRadius: "10px",
+            border: "1px solid #E2DDD8",
+            height: "88px",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+          }}
+        >
+          <div
+            className="relative shrink-0 h-full"
+            style={{ width: "88px", backgroundColor: "#F5F2EC" }}
+          >
+            {imageUrl ? (
+              <Image src={imageUrl} alt={name} fill className="object-cover" />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span style={{ fontSize: "28px" }}>{emoji || "🧴"}</span>
+              </div>
+            )}
+          </div>
+          <div className="flex-1 px-3 py-2 min-w-0">
+            <p style={{ margin: 0, fontSize: "10px", color: "#BFB6AA", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+              {brand}
+            </p>
+            <p style={{ margin: "3px 0 0", fontSize: "13px", fontWeight: 500, color: "#2A2118", lineHeight: 1.4 }}>
+              {name}
+            </p>
+            <EWGIndicator safe={ewgSafe} caution={ewgCaution} danger={ewgDanger} className="mt-1.5" />
+          </div>
           <button onClick={handleLike} className="p-3 shrink-0">
             <Heart
-              size={18}
-              className={cn(
-                "transition-colors",
-                isLiked ? "fill-red-400 text-red-400" : "text-text-muted",
-              )}
+              size={17}
+              style={{
+                color: isLiked ? "#E8715A" : "#C4BEB7",
+                fill: isLiked ? "#E8715A" : "none",
+              }}
             />
           </button>
         </div>
@@ -152,27 +315,25 @@ export default function ProductCard({
     );
   }
 
-  // modal variant 레이아웃
+  // ── 3. MODAL VARIANT ──────────────────────────────────────────────
   if (variant === "modal") {
     return (
       <div
-        className="rounded-[14px] p-3 border"
         style={{
-          backgroundColor: actions?.inRoutine
-            ? "var(--color-brand-bg)"
-            : "white",
-          borderColor: actions?.inRoutine
-            ? "var(--color-brand-light)"
-            : "#E8E0D0",
+          borderRadius: "10px",
+          padding: "12px",
+          border: `1px solid ${actions?.inRoutine ? "#D9D5D0" : "#EDEBE8"}`,
+          backgroundColor: actions?.inRoutine ? "#F2EFE9" : "#FFFFFF",
         }}
       >
-        {/* 랭킹 배지 (아이콘만, 숫자 텍스트 없음) */}
         {rankingIndex !== undefined && showRanking && (
           <div
-            className={cn(
-              "inline-flex items-center justify-center mb-2 px-2 py-[2px] rounded-lg text-[11px] font-bold text-white",
-              rankingIndex < 3 ? "bg-brand" : "bg-[#B0A890]",
-            )}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              marginBottom: "8px",
+              fontSize: "14px",
+            }}
           >
             {["🥇", "🥈", "🥉"][rankingIndex] ?? "✦"}
           </div>
@@ -180,127 +341,84 @@ export default function ProductCard({
 
         <Link href={`/product/${id}`} className="no-underline">
           <div className="flex items-center gap-3">
-            {/* 썸네일 */}
             <div
-              className="shrink-0 flex items-center justify-center rounded-xl"
-              style={MODAL_THUMB_STYLE}
+              className="shrink-0 flex items-center justify-center"
+              style={{
+                width: 60,
+                height: 60,
+                borderRadius: "8px",
+                backgroundColor: "#F5F2EC",
+              }}
             >
               {emoji ? (
-                <span className="text-[28px]">{emoji}</span>
+                <span style={{ fontSize: "26px" }}>{emoji}</span>
               ) : imageUrl ? (
-                <Image
-                  src={imageUrl}
-                  alt={name}
-                  width={60}
-                  height={60}
-                  className="object-cover rounded-xl"
-                />
+                <Image src={imageUrl} alt={name} width={60} height={60} className="object-cover rounded-lg" />
               ) : (
-                <span className="text-xl">🧴</span>
+                <span style={{ fontSize: "22px" }}>🧴</span>
               )}
             </div>
 
-            {/* 정보 */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                <span className="text-xs text-text-muted">{brand}</span>
+              <div className="flex items-center gap-1.5 flex-wrap" style={{ marginBottom: "2px" }}>
+                <span style={{ fontSize: "10px", color: "#BFB6AA", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                  {brand}
+                </span>
                 {categoryColor && (
-                  <span
-                    className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-medium"
-                    style={{
-                      backgroundColor: categoryColor.chip,
-                      color: categoryColor.accent,
-                    }}
-                  >
+                  <span style={{ fontSize: "10px", padding: "1px 6px", borderRadius: "3px", backgroundColor: categoryColor.chip, color: categoryColor.accent, fontWeight: 500 }}>
                     {category}
                   </span>
                 )}
                 {(isRecommended || reason) && (
-                  <span className="text-[10px] px-1.5 py-[1px] rounded-[4px] bg-brand-bg text-brand font-semibold">
-                    추천
+                  <span style={{ fontSize: "10px", padding: "1px 6px", borderRadius: "3px", backgroundColor: "#3D3028", color: "#F2EFE9", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                    PICK
                   </span>
                 )}
               </div>
-              <p className="truncate text-sm font-semibold text-[#2A2A2A]">
+              <p style={{ margin: 0, fontSize: "13px", fontWeight: 500, color: "#2A2118", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {name}
               </p>
-
-              {/* 피부 타입 태그 */}
-              {skinTypes.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {skinTypes.map((skinType) => {
-                    const skinTypeColor = SKIN_TYPE_TAG_COLORS[skinType] ?? {
-                      bg: "var(--color-bg-muted-warm)",
-                      text: "#7A7060",
-                    };
-                    return (
-                      <span
-                        key={skinType}
-                        className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-semibold"
-                        style={{
-                          backgroundColor: skinTypeColor.bg,
-                          color: skinTypeColor.text,
-                        }}
-                      >
-                        {skinType}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* 기능 태그 */}
-              {effects.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {effects.slice(0, 3).map((effect) => {
-                    const effectColor = SKIN_FUNCTION_COLORS[effect];
-                    return effectColor ? (
-                      <span
-                        key={effect}
-                        className="text-[10px] px-[5px] py-[1px] rounded-[4px] font-medium"
-                        style={{
-                          backgroundColor: effectColor.chip,
-                          color: effectColor.accent,
-                        }}
-                      >
-                        {effect}
-                      </span>
-                    ) : null;
-                  })}
-                </div>
-              )}
+              <div className="flex flex-wrap" style={{ gap: "3px", marginTop: "5px" }}>
+                {skinTypes.map((st) => <SkinTypeTag key={st} label={st} />)}
+                {effects.slice(0, 3).map((ef) => <EffectTag key={ef} label={ef} />)}
+              </div>
             </div>
           </div>
         </Link>
 
-        {/* 액션 버튼 */}
-        <div className="flex gap-2 mt-2.5">
+        <div className="flex gap-2" style={{ marginTop: "10px" }}>
           {actions?.onAddRoutine && (
             <button
-              onClick={(e) => handleActionClick(e, actions.onAddRoutine)}
+              onClick={(e) => handleAction(e, actions.onAddRoutine)}
               disabled={actions.inRoutine}
-              className={cn(
-                "flex items-center justify-center gap-1 flex-1 h-8 rounded-[40px] border-none cursor-pointer transition-all active:scale-[0.97] text-xs font-bold",
-                actions.inRoutine
-                  ? "bg-brand-bg text-brand"
-                  : "bg-brand text-white",
-              )}
+              className="flex items-center justify-center gap-1 flex-1 cursor-pointer border-none transition-all active:scale-[0.97]"
+              style={{
+                height: "32px",
+                borderRadius: "6px",
+                fontSize: "12px",
+                fontWeight: 600,
+                ...(actions.inRoutine
+                  ? { /* 루틴추가됨/보유중 상태 — 베이지 팔레트 */
+                  backgroundColor: "#F2EFE9", color: "#A69D92" }
+                  : { backgroundColor: "#3D3028", color: "#F2EFE9" }),
+              }}
             >
-              {actions.inRoutine ? (
-                <>
-                  <Check size={11} /> 루틴추가됨
-                </>
-              ) : (
-                <>
-                  <Plus size={11} /> 루틴추가
-                </>
-              )}
+              {actions.inRoutine ? <><Check size={11} /> 추가됨</> : <><Plus size={11} /> 루틴추가</>}
             </button>
           )}
           {showDetailButton && (
             <button
-              onClick={(e) => handleActionClick(e, onDetailClick)}
-              className="flex items-center justify-center h-8 px-3 rounded-[40px] border border-border-warm bg-white text-xs text-text-muted font-medium cursor-pointer active:scale-[0.97]"
+              onClick={(e) => handleAction(e, onDetailClick)}
+              className="flex items-center justify-center cursor-pointer border active:scale-[0.97]"
+              style={{
+                height: "32px",
+                padding: "0 12px",
+                borderRadius: "6px",
+                fontSize: "12px",
+                color: "#8A8278",
+                backgroundColor: "#FFFFFF",
+                borderColor: "#E8E4DF",
+              }}
             >
               상세보기
             </button>
@@ -310,194 +428,141 @@ export default function ProductCard({
     );
   }
 
-  // vertical 레이아웃 (확장됨)
+  // ── 4. VERTICAL — 기본값 ──────────────────────────────────────────
   return (
-    <div className="relative bg-bg-card rounded-card shadow-card overflow-hidden flex flex-col w-full">
+    <div
+      className="relative flex flex-col overflow-hidden w-full"
+      style={{
+        backgroundColor: "#FFFFFF",
+        borderRadius: "10px",
+        border: "1px solid #E2DDD8",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04)",
+      }}
+    >
       <Link href={`/product/${id}`} className="no-underline">
-        {/* 랭킹 배지 (아이콘만) */}
         {rankingIndex !== undefined && showRanking && (
-          <div
-            className={cn(
-              "absolute top-2 right-2 z-10 flex items-center justify-center px-2 py-[2px] rounded-lg text-[11px] font-bold text-white",
-              rankingIndex < 3 ? "bg-brand" : "bg-[#B0A890]",
-            )}
-          >
+          <div className="absolute top-2 right-2 z-10" style={{ fontSize: "16px" }}>
             {["🥇", "🥈", "🥉"][rankingIndex] ?? "✦"}
           </div>
         )}
 
-        {/* 이미지 */}
-        <div className="relative h-[160px] bg-bg-surface">
+        {/* 이미지 — 기존 160px의 2/3인 108px */}
+        <div className="relative" style={{ height: "108px", backgroundColor: "#F5F2EC" }}>
           {imageUrl ? (
             <Image src={imageUrl} alt={name} fill className="object-cover" />
-          ) : emoji ? (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-[40px]">{emoji}</span>
-            </div>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-16 h-16 rounded-full bg-brand-pale flex items-center justify-center">
-                <span className="text-3xl">🧴</span>
-              </div>
+              <span style={{ fontSize: "30px" }}>{emoji || "🧴"}</span>
             </div>
           )}
         </div>
 
-        {/* 텍스트 */}
-        <div className="p-3 flex flex-col gap-1 flex-1">
-          {/* 브랜드 & 카테고리 배지 */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs text-text-muted font-medium">{brand}</span>
+        <div style={{ padding: "12px 14px 14px" }}>
+          <div className="flex items-center gap-1.5 flex-wrap" style={{ marginBottom: "4px" }}>
+            <span style={{ fontSize: "10px", color: "#BFB6AA", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              {brand}
+            </span>
             {categoryColor && (
-              <span
-                className="text-xs px-[7px] py-[1px] rounded-[4px] font-medium"
-                style={{
-                  backgroundColor: categoryColor.chip,
-                  color: categoryColor.accent,
-                }}
-              >
+              <span style={{ fontSize: "10px", padding: "1px 6px", borderRadius: "3px", backgroundColor: categoryColor.chip, color: categoryColor.accent }}>
                 {category}
               </span>
             )}
             {(isRecommended || reason) && (
-              <span className="text-xs px-[7px] py-[1px] rounded-[4px] bg-brand-bg text-brand font-semibold">
-                추천
+              <span style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "3px", backgroundColor: "#3D3028", color: "#F2EFE9", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                PICK
               </span>
             )}
           </div>
 
-          <p className="text-sm font-medium text-text-primary leading-snug line-clamp-2">
+          <p style={{ margin: 0, fontSize: "14px", fontWeight: 500, color: "#2A2118", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
             {name}
           </p>
 
-          {/* 피부 타입 태그 */}
-          {skinTypes.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-0.5">
-              {skinTypes.map((skinType) => {
-                const skinTypeColor = SKIN_TYPE_TAG_COLORS[skinType] ?? {
-                  bg: "var(--color-bg-muted-warm)",
-                  text: "#7A7060",
-                };
-                return (
-                  <span
-                    key={skinType}
-                    className="text-xs px-[7px] py-[1px] rounded-[4px] font-semibold tracking-[0.2px]"
-                    style={{
-                      backgroundColor: skinTypeColor.bg,
-                      color: skinTypeColor.text,
-                    }}
-                  >
-                    {skinType}
-                  </span>
-                );
-              })}
-            </div>
-          )}
+          <div className="flex flex-wrap" style={{ gap: "3px", marginTop: "7px" }}>
+            {skinTypes.map((st) => <SkinTypeTag key={st} label={st} />)}
+            {effects.slice(0, 3).map((ef) => <EffectTag key={ef} label={ef} />)}
+          </div>
 
-          {/* 기능 태그 */}
-          {effects.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-0.5">
-              {effects.slice(0, 4).map((effect) => {
-                const effectColor = SKIN_FUNCTION_COLORS[effect];
-                return effectColor ? (
-                  <span
-                    key={effect}
-                    className="text-xs px-[7px] py-[1px] rounded-[4px] font-medium"
-                    style={{
-                      backgroundColor: effectColor.chip,
-                      color: effectColor.accent,
-                    }}
-                  >
-                    {effect}
-                  </span>
-                ) : null;
-              })}
-            </div>
-          )}
-
-          {/* EWG Indicator */}
           {(ewgSafe > 0 || ewgCaution > 0 || ewgDanger > 0) && (
-            <EWGIndicator
-              safe={ewgSafe}
-              caution={ewgCaution}
-              danger={ewgDanger}
-              className="mt-1"
-            />
+            <EWGIndicator safe={ewgSafe} caution={ewgCaution} danger={ewgDanger} className="mt-2" />
           )}
         </div>
       </Link>
 
-      {/* 추천 이유 (Link 밖에 배치) */}
       {reason && (
-        <p className="text-[15px] text-brand mt-2 px-3 leading-[1.55] break-keep">
+        <p style={{ fontSize: "13px", color: "#A69D92", margin: 0, padding: "0 14px 8px", lineHeight: 1.55 }}>
           {reason}
         </p>
       )}
 
-      {/* 액션 버튼 */}
       {actions && (
-        <div className="flex gap-1.5 mt-2.5 px-3 pb-3 flex-wrap">
+        <div className="flex gap-1.5 flex-wrap" style={{ padding: "0 12px 12px" }}>
           {actions.onAddRoutine && (
             <button
-              onClick={(e) => handleActionClick(e, actions.onAddRoutine)}
+              onClick={(e) => handleAction(e, actions.onAddRoutine)}
               disabled={actions.inRoutine}
-              className={cn(
-                "flex items-center justify-center gap-1 flex-1 min-w-[80px] h-8 rounded-[40px] border-none cursor-pointer transition-all active:scale-[0.97] text-[15px] font-bold",
-                actions.inRoutine
-                  ? "bg-brand-bg text-brand"
-                  : "bg-brand text-white",
-              )}
+              className="flex items-center justify-center gap-1 flex-1 cursor-pointer border-none transition-all active:scale-[0.97]"
+              style={{
+                height: "32px",
+                borderRadius: "6px",
+                fontSize: "12px",
+                fontWeight: 600,
+                minWidth: "80px",
+                ...(actions.inRoutine
+                  ? { /* 루틴추가됨/보유중 상태 — 베이지 팔레트 */
+                  backgroundColor: "#F2EFE9", color: "#A69D92" }
+                  : { backgroundColor: "#3D3028", color: "#F2EFE9" }),
+              }}
             >
-              {actions.inRoutine ? (
-                <>
-                  <Check size={11} /> 루틴추가됨
-                </>
-              ) : (
-                <>
-                  <Plus size={11} /> 루틴추가
-                </>
-              )}
+              {actions.inRoutine ? <><Check size={11} /> 추가됨</> : <><Plus size={11} /> 루틴추가</>}
             </button>
           )}
-
           {actions.onToggleOwned && (
             <button
-              onClick={(e) => handleActionClick(e, actions.onToggleOwned)}
-              className={cn(
-                "flex items-center justify-center gap-1 h-8 px-[10px] rounded-[40px] cursor-pointer transition-all active:scale-[0.97] text-[15px] font-semibold border",
-                actions.isOwned
-                  ? "border-brand-light bg-brand-bg text-brand"
-                  : "border-border-warm bg-white text-text-muted",
-              )}
+              onClick={(e) => handleAction(e, actions.onToggleOwned)}
+              className="flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.97]"
+              style={{
+                height: "32px",
+                padding: "0 10px",
+                borderRadius: "6px",
+                fontSize: "12px",
+                fontWeight: 500,
+                border: `1px solid ${actions.isOwned ? "#D9D5D0" : "#E8E4DF"}`,
+                backgroundColor: actions.isOwned ? "#F2EFE9" : "#FFFFFF",
+                color: actions.isOwned ? "#A69D92" : "#8A8278",
+              }}
             >
-              <Package size={11} /> {actions.isOwned ? "보유 중" : "보유추가"}
+              <ShoppingBag size={11} /> {actions.isOwned ? "보유중" : "보유추가"}
             </button>
           )}
-
           {actions.onToggleLike && !onLike && (
             <button
-              onClick={(e) => handleActionClick(e, actions.onToggleLike)}
-              className={cn(
-                "flex items-center justify-center h-8 px-[10px] rounded-[40px] cursor-pointer transition-all active:scale-[0.97] border",
-                actions.isLiked
-                  ? "border-[#FFCDD2] bg-[#FFF0F3]"
-                  : "border-border-warm bg-white",
-              )}
+              onClick={(e) => handleAction(e, actions.onToggleLike)}
+              className="flex items-center justify-center cursor-pointer transition-all active:scale-[0.97]"
+              style={{
+                height: "32px",
+                padding: "0 10px",
+                borderRadius: "6px",
+                border: `1px solid ${actions.isLiked ? "#F5C5BB" : "#E8E4DF"}`,
+                backgroundColor: actions.isLiked ? "#FEF2EF" : "#FFFFFF",
+              }}
             >
-              <Heart
-                size={16}
-                color={actions.isLiked ? "#E57373" : "var(--color-text-muted)"}
-                fill={actions.isLiked ? "#E57373" : "none"}
-              />
+              <Heart size={15} style={{ color: actions.isLiked ? "#E8715A" : "#C4BEB7", fill: actions.isLiked ? "#E8715A" : "none" }} />
             </button>
           )}
-
           {actions.showCompare && actions.onCompare && (
             <button
-              onClick={(e) => handleActionClick(e, actions.onCompare)}
-              className="flex items-center justify-center h-8 px-[10px] rounded-[40px] border border-border-warm bg-white cursor-pointer transition-all active:scale-[0.97]"
+              onClick={(e) => handleAction(e, actions.onCompare)}
+              className="flex items-center justify-center cursor-pointer transition-all active:scale-[0.97]"
+              style={{
+                height: "32px",
+                padding: "0 10px",
+                borderRadius: "6px",
+                border: "1px solid #E8E4DF",
+                backgroundColor: "#FFFFFF",
+              }}
             >
-              <GitCompareArrows size={16} className="text-text-muted" />
+              <Scale size={15} style={{ color: "#C4BEB7" }} />
             </button>
           )}
         </div>
