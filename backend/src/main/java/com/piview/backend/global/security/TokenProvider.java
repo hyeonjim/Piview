@@ -62,6 +62,25 @@ public class TokenProvider {
                 .compact();
     }
 
+    // 개발 테스트 전용 2주짜리 access token 발급
+    public String createDevAccessToken(Long userId, String email, String role) {
+        Date now = new Date();
+
+        // 2주 : 밀리초(ms)로 계산: 1000ms * 60초 * 60분 * 24시간 * 14일
+        long TWO_WEEKS = 1000L * 60 * 60 * 24 * 14;
+        Date validity = new Date(now.getTime() + TWO_WEEKS);
+
+        return Jwts.builder()
+            // 본인 프로젝트에서 subject나 claim에 넣는 값(email, id 등)에 맞게 세팅해 주세요!
+            .subject(email)
+            .claim(USER_ID_KEY, userId)
+            .claim(AUTHORITIES_KEY, role)
+            .issuedAt(now)
+            .expiration(validity)
+            .signWith(key)
+            .compact();
+    }
+
     // 리프레시 토큰 생성
     public String createRefreshToken(Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
