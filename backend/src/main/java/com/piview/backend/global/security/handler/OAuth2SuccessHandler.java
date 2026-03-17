@@ -7,20 +7,17 @@ import com.piview.backend.global.security.UserPrincipal;
 import com.piview.backend.global.security.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.piview.backend.global.util.CookieUtil;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Optional;
-
-import static com.piview.backend.global.security.oauth2.HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME;
 
 @Slf4j
 @Component
@@ -32,6 +29,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
     private final AppProperties appProperties;
     private final CookieUtil cookieUtil;
+
+    @Value("${app.frontend.redirect-uri}")
+    private String frontendRedirectUri;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -58,7 +58,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         cookieUtil.addTempCookieForFront(response, "accessToken", accessToken, tempCookieExpireSeconds);
 
         // properties에서 리다이렉트할 URL 가져오기
-        String targetUrl = determineTargetUrl(request);
+        String targetUrl = frontendRedirectUri + "?token=" + accessToken;
 
         if (response.isCommitted()) {
             log.debug("응답이 이미 커밋되었습니다. {} 로 리다이렉트 할 수 없습니다.", targetUrl);
@@ -70,20 +70,6 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         // 7. 최종 리다이렉트 실행
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
-    }
-
-    protected String determineTargetUrl(HttpServletRequest request) {
-        // 프론트엔드에서 로그인 요청 시 보냈던 redirect_uri 쿠키 찾기
-        Optional<String> redirectUri = CookieUtil.getCookie(request, REDIRECT_URI_PARAM_COOKIE_NAME)
-                .map(Cookie::getValue);
-
-        int serverPort = request.getServerPort();
-
-        String defaultTargetUrl = (serverPort == 8080)
-                ? "http://localhost:3000/oauth2/redirect"  // 로컬 프론트엔드 개발 서버 - 테스트용
-                : "https://j14e101.p.ssafy.io/oauth2/redirect"; // 운영 서버
-
-        return redirectUri.orElse(defaultTargetUrl);
     }
 
     protected void clearAuthenticationAttributes(HttpServletRequest request, HttpServletResponse response) {
