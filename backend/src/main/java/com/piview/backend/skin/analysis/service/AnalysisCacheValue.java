@@ -1,0 +1,48 @@
+package com.piview.backend.skin.analysis.service;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.piview.backend.skin.analysis.entity.SkinAnalysisStatus;
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+class AnalysisCacheValue {
+
+    private String analysisId;
+    private Long userId;
+    private SkinAnalysisStatus status;
+    private JsonNode result;
+    private String errorMessage;
+
+    // 분석 시작 직후 상태
+    static AnalysisCacheValue pending(String analysisId, Long userId) {
+        return AnalysisCacheValue.builder()
+                .analysisId(analysisId)
+                .userId(userId)
+                .status(SkinAnalysisStatus.PENDING)
+                .build();
+    }
+
+    // FastAPI 응답을 받은 뒤 저장하는 완료 상태
+    static AnalysisCacheValue completed(String analysisId, Long userId, JsonNode result) {
+        return AnalysisCacheValue.builder()
+                .analysisId(analysisId)
+                .userId(userId)
+                .status(SkinAnalysisStatus.COMPLETED)
+                .result(result)
+                .build();
+    }
+
+    // 타임아웃이나 예외가 발생했을 때 저장하는 실패 상태
+    static AnalysisCacheValue failed(String analysisId, Long userId, String errorMessage) {
+        return AnalysisCacheValue.builder()
+                .analysisId(analysisId)
+                .userId(userId)
+                .status(SkinAnalysisStatus.FAILED)
+                .errorMessage(errorMessage)
+                .build();
+    }
+}
