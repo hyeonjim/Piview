@@ -1,5 +1,6 @@
 package com.piview.backend.routine.core.service;
 
+import com.piview.backend.product.catalog.dto.ProductSummaryResponse;
 import com.piview.backend.product.catalog.repository.ProductRepository;
 import com.piview.backend.product.entity.Product;
 import com.piview.backend.routine.core.dto.*;
@@ -110,8 +111,8 @@ public class RoutineService {
               .sorted(Comparator.comparing(RoutineDetail::getStepOrder)) // 순서대로 정렬
               .map(detail -> new RoutineProductDto(
                   detail.getId(),
-                  detail.getProduct().getProductId(),
-                  detail.getStepOrder()
+                  detail.getStepOrder(),
+                  ProductSummaryResponse.from(detail.getProduct())
               ))
               .toList();
 

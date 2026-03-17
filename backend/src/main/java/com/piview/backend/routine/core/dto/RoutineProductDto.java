@@ -1,7 +1,9 @@
 package com.piview.backend.routine.core.dto;
 
+import com.piview.backend.product.catalog.dto.ProductSummaryResponse;
+
 public record RoutineProductDto(
     Long routineDetailId,
-    Long productId,
-    Integer stepOrder
+    Integer stepOrder,
+    ProductSummaryResponse product
 ) {}
