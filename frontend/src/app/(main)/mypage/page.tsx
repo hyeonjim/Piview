@@ -45,7 +45,7 @@ export default function MyPage() {
     }
   };
 
-  const { routine, setStepProduct } = useLocalRoutineStore();
+  const { routine, addStepProduct, removeStepProduct } = useLocalRoutineStore();
 
   // 페이지 마운트 시 localStorage에서 루틴 복구
   useEffect(() => {
@@ -66,12 +66,15 @@ export default function MyPage() {
   const { toastMessage, showToast } = useToast();
 
   const handleAddToRoutine = (product: LocalProduct) => {
-    setStepProduct(openStep!, product);
+    // ⚠️ API 연동 시 서버 루틴 추가 API로 교체
+    addStepProduct(openStep!, product);
     showToast(`✓ ${product.name} 루틴에 추가됨!`);
     setOpenStep(null);
   };
 
-  const handleRemoveFromRoutine = (code: string) => setStepProduct(code, null);
+  // productId 추가: 같은 스텝 내 특정 제품만 제거
+  const handleRemoveFromRoutine = (code: string, productId: string) =>
+    removeStepProduct(code, productId);
 
   // 보유제품 — 전역 store로 검색/추천 페이지와 공유
   const { ownedProducts, removeOwned } = useOwnedStore();
@@ -325,12 +328,10 @@ export default function MyPage() {
           >
             {t === "routine" ? (
               <>
-                <Leaf size={14} />
                 내 루틴
               </>
             ) : (
               <>
-                <ShoppingBag size={14} />
                 보유제품
               </>
             )}

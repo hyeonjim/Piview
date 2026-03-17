@@ -338,6 +338,9 @@ export default function RecommendPage() {
                     emoji: product.emoji,
                     skinTypes: product.skinTypes,
                     effects: product.effects,
+                    ewgSafe: product.ewgSafe,
+                    ewgCaution: product.ewgCaution,
+                    ewgDanger: product.ewgDanger,
                   })
                 }
               />

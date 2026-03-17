@@ -65,6 +65,10 @@ interface ProductCardProps {
   isInCompare?: boolean;
   /** 비교 토글 콜백 */
   onToggleCompare?: () => void;
+  /** 좋아요 버튼 표시 여부 — false 시 heart 버튼 숨김 (기본값 true) */
+  showLike?: boolean;
+  /** EWG 지표 표시 여부 — false 시 피부타입·기능 태그로 대체 (기본값 true, horizontal 전용) */
+  showEwg?: boolean;
 }
 
 // ── 피부타입 태그 — 색상이 동적(상수 맵)이므로 색상만 inline style 유지
@@ -279,6 +283,8 @@ export default function ProductCard({
   isOwned,
   isInCompare = false,
   onToggleCompare = () => {},
+  showLike = true,
+  showEwg = true,
 }: ProductCardProps) {
   // 전역 찜 스토어 사용 — 페이지 간 상태 공유
   const { isLiked: getIsLiked, toggleLike } = useLikeStore();
@@ -326,21 +332,23 @@ export default function ProductCard({
               </div>
             )}
 
-            {/* 좋아요 버튼 */}
-            <button
-              onClick={handleLike}
-              className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full border-none cursor-pointer backdrop-blur-xs"
-              style={{
-                backgroundColor: "rgba(255,255,255,0.92)",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-              }}
-            >
-              <Heart
-                size={16}
-                className="transition-all duration-150"
-                style={heartStyle}
-              />
-            </button>
+            {/* 좋아요 버튼 — showLike=false 시 숨김 */}
+            {showLike && (
+              <button
+                onClick={handleLike}
+                className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full border-none cursor-pointer backdrop-blur-xs"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.92)",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                }}
+              >
+                <Heart
+                  size={16}
+                  className="transition-all duration-150"
+                  style={heartStyle}
+                />
+              </button>
+            )}
 
             {showPickBadge && (
               <div className="absolute top-2 left-2">
@@ -412,20 +420,36 @@ export default function ProductCard({
             <p className="mt-0.75 m-0 text-[13px] font-medium text-[#2A2118] leading-[1.4]">
               {name}
             </p>
-            <EWGIndicator
-              safe={ewgSafe}
-              caution={ewgCaution}
-              danger={ewgDanger}
-              className="mt-1.5"
-            />
+            {showEwg ? (
+              // EWG 지표 표시 (기본값)
+              <EWGIndicator
+                safe={ewgSafe}
+                caution={ewgCaution}
+                danger={ewgDanger}
+                className="mt-1.5"
+              />
+            ) : (
+              // 피부타입·기능 태그로 대체
+              <div className="flex flex-wrap gap-1 mt-1">
+                {skinTypes.slice(0, 1).map((skinType) => (
+                  <SkinTypeTag key={skinType} label={skinType} />
+                ))}
+                {effects.slice(0, 2).map((effect) => (
+                  <EffectTag key={effect} label={effect} />
+                ))}
+              </div>
+            )}
           </div>
 
-          <button
-            onClick={handleLike}
-            className="p-3 shrink-0 bg-transparent border-none cursor-pointer"
-          >
-            <Heart size={17} style={heartStyle} />
-          </button>
+          {/* 좋아요 버튼 — showLike=false 시 숨김 */}
+          {showLike && (
+            <button
+              onClick={handleLike}
+              className="p-3 shrink-0 bg-transparent border-none cursor-pointer"
+            >
+              <Heart size={17} style={heartStyle} />
+            </button>
+          )}
         </div>
       </Link>
     );

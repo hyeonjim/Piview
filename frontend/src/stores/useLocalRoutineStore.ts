@@ -28,15 +28,18 @@ export interface LocalProduct {
   matchScore: number;
 }
 
-// 루틴 스텝 코드 → 제품 매핑
-export type LocalRoutineMap = Record<string, LocalProduct | null>;
+// 루틴 스텝 코드 → 제품 배열 매핑 (스텝당 여러 제품 허용)
+export type LocalRoutineMap = Record<string, LocalProduct[]>;
 
 interface LocalRoutineStore {
   routine: LocalRoutineMap;
   // 홈화면 "나의 루틴" 표시 여부 — true면 홈에 노출
   isMainRoutine: boolean;
   setRoutine: (routine: LocalRoutineMap) => void;
-  setStepProduct: (code: string, product: LocalProduct | null) => void;
+  // 스텝 배열에 제품 추가 — 같은 스텝에 여러 제품 허용
+  addStepProduct: (code: string, product: LocalProduct) => void;
+  // 스텝 배열에서 특정 id 제품 제거
+  removeStepProduct: (code: string, productId: string) => void;
   clearRoutine: () => void;
   toggleMainRoutine: () => void;
 }
@@ -49,8 +52,23 @@ export const useLocalRoutineStore = create<LocalRoutineStore>()(
 
       setRoutine: (routine) => set({ routine }),
 
-      setStepProduct: (code, product) =>
-        set((state) => ({ routine: { ...state.routine, [code]: product } })),
+      addStepProduct: (code, product) =>
+        set((state) => ({
+          routine: {
+            ...state.routine,
+            [code]: [...(state.routine[code] ?? []), product],
+          },
+        })),
+
+      removeStepProduct: (code, productId) =>
+        set((state) => ({
+          routine: {
+            ...state.routine,
+            [code]: (state.routine[code] ?? []).filter(
+              (product) => product.id !== productId,
+            ),
+          },
+        })),
 
       clearRoutine: () => set({ routine: INITIAL_ROUTINE as LocalRoutineMap }),
 
