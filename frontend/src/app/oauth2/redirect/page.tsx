@@ -3,11 +3,10 @@
  * 카카오 OAuth 콜백 처리 페이지
  *
  * 플로우:
- * 1. 백엔드가 이 URL로 리다이렉트
- * 2. document.cookie에서 accessToken(일반 쿠키) 꺼내기
- * 3. Zustand에 저장 후 쿠키 즉시 삭제 (보안)
- * 4. getMe()로 유저 정보 fetch → store 저장
- * 5. 신규 유저 → /skin-test, 기존 유저 → /home
+ * 1. 백엔드가 이 URL로 리다이렉트 (?token=xxx)
+ * 2. URL 쿼리 파라미터에서 accessToken 꺼내기
+ * 3. Zustand에 저장
+ * 4. /home으로 이동
  *
  * ⚠️ Route Group 밖에 위치해야 함 (백엔드 리다이렉트 URL 고정)
  */
@@ -16,9 +15,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authService } from "@/services/auth";
 import { useUserStore } from "@/stores/useUserStore";
-import { getCookieAndClear } from "@/services/client";
 
 export default function OAuthCallbackPage() {
   const router = useRouter();
@@ -26,11 +23,12 @@ export default function OAuthCallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // 1. 백엔드가 심어준 accessToken 일반 쿠키에서 꺼내기
-        const accessToken = getCookieAndClear("accessToken");
+        // 1. URL 쿼리 파라미터에서 token 꺼내기 (?token=xxx)
+        const params = new URLSearchParams(window.location.search);
+        const accessToken = params.get("token");
 
         if (!accessToken) {
-          // accessToken이 없으면 인증 실패
+          // token이 없으면 인증 실패
           router.replace("/welcome");
           return;
         }
@@ -38,16 +36,16 @@ export default function OAuthCallbackPage() {
         // 2. Zustand에 저장 (이후 모든 API 요청 헤더에 자동 주입됨)
         useUserStore.getState().setAccessToken(accessToken);
 
-        // 3. 유저 정보 fetch (client.ts 인터셉터가 Authorization 헤더 자동 주입)
-        const user = await authService.getMe();
-        useUserStore.getState().setUser(user);
-
-        // 4. 신규 유저 (피부타입 미설정) → skin-test, 기존 유저 → home
-        if (!user.mySkinType) {
-          router.replace("/skin-test");
-        } else {
-          router.replace("/home");
-        }
+        // 3. ⚠️ /users/me API 연동 전까지 바로 home으로 이동
+        // TODO: API 연동 시 아래 주석 해제 후 router.replace("/home") 제거
+        // const user = await authService.getMe();
+        // useUserStore.getState().setUser(user);
+        // if (!user.mySkinType) {
+        //   router.replace("/skin-test");
+        // } else {
+        //   router.replace("/home");
+        // }
+        router.replace("/home");
       } catch {
         // 인증 실패 → welcome 페이지로 복귀
         router.replace("/welcome");

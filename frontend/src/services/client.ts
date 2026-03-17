@@ -44,6 +44,15 @@ client.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // refresh 요청 자체가 401이면 무한루프 방지 — 바로 로그아웃
+    if (originalRequest.url?.includes("/auth/refresh")) {
+      useUserStore.getState().clearUser();
+      useLocalRoutineStore.getState().clearRoutine();
+      localStorage.removeItem("piview-routine");
+      window.location.href = "/splash";
+      return Promise.reject(error);
+    }
+
     // _retry 플래그가 이미 있으면 refresh도 실패한 것 → 무한루프 방지
     if (originalRequest._retry) {
       useUserStore.getState().clearUser();
@@ -58,7 +67,7 @@ client.interceptors.response.use(
     try {
       // refreshToken은 httpOnly 쿠키 → withCredentials로 자동 전송
       // 응답으로 새 accessToken이 일반 쿠키로 내려옴
-      await client.post("/api/v1/auth/refresh");
+      await client.post("/auth/refresh");
 
       // 새로 발급된 accessToken 쿠키에서 꺼내 Zustand에 저장 후 쿠키 삭제
       const newAccessToken = getCookieAndClear("accessToken");

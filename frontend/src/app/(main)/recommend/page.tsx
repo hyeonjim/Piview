@@ -12,7 +12,9 @@ import { Pagination } from "@/components/common/Pagination";
 import { Toast } from "@/components/common/Toast";
 import EmptyState from "@/components/common/EmptyState";
 import SearchBar from "@/components/common/SearchBar";
-import CompareModal, { type CompareProduct } from "@/components/common/CompareModal";
+import CompareModal, {
+  type CompareProduct,
+} from "@/components/common/CompareModal";
 import { useToast, useCompare } from "@/hooks";
 import { MOCK_RECOMMEND } from "@/constants/_mock/recommend";
 
@@ -21,16 +23,16 @@ const PAGE_SIZE = 12;
 export default function RecommendPage() {
   // 초기값: 스킨케어 대분류 + 스킨/토너 소분류 고정
   const [selectedMain, setSelectedMain] = useState<string | null>("스킨케어");
-  const [selectedSub, setSelectedSub]   = useState<string | null>("스킨/토너");
-  const [searchQuery, setSearchQuery]   = useState("");
-  const [page, setPage]                 = useState(1);
-  const [showFilter, setShowFilter]     = useState(false);
-  const [filter, setFilter]             = useState<FilterState>(DEFAULT_FILTER);
+  const [selectedSub, setSelectedSub] = useState<string | null>("스킨/토너");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [showFilter, setShowFilter] = useState(false);
+  const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER);
 
   // 제품별 루틴추가 상태 — ⚠️ API 연동 시 서버 상태로 교체
   const [routineMap, setRoutineMap] = useState<Record<string, boolean>>({});
   // 제품별 보유 상태 — ⚠️ API 연동 시 서버 상태로 교체
-  const [ownedMap, setOwnedMap]     = useState<Record<string, boolean>>({});
+  const [ownedMap, setOwnedMap] = useState<Record<string, boolean>>({});
 
   const { toastMessage } = useToast();
 
@@ -56,26 +58,44 @@ export default function RecommendPage() {
     if (searchQuery.trim()) {
       const keyword = searchQuery.toLowerCase();
       list = list.filter(
-        (p) => p.name.toLowerCase().includes(keyword) || p.brand.toLowerCase().includes(keyword),
+        (p) =>
+          p.name.toLowerCase().includes(keyword) ||
+          p.brand.toLowerCase().includes(keyword),
       );
     }
     if (selectedSub) {
       list = list.filter((p) => p.category === selectedSub);
     } else if (selectedMain) {
-      list = list.filter((p) => (MAIN_CATEGORIES[selectedMain] ?? []).includes(p.category));
+      list = list.filter((p) =>
+        (MAIN_CATEGORIES[selectedMain] ?? []).includes(p.category),
+      );
     }
-    if (filter.filterSkin) list = list.filter((p) => p.skinTypes.includes(filter.filterSkin!));
-    if (filter.filterFns.size > 0) list = list.filter((p) => [...filter.filterFns].some((e) => p.effects.includes(e)));
-    if (filter.filterBrands.size > 0) list = list.filter((p) => filter.filterBrands.has(p.brand));
+    if (filter.filterSkin)
+      list = list.filter((p) => p.skinTypes.includes(filter.filterSkin!));
+    if (filter.filterFns.size > 0)
+      list = list.filter((p) =>
+        [...filter.filterFns].some((e) => p.effects.includes(e)),
+      );
+    if (filter.filterBrands.size > 0)
+      list = list.filter((p) => filter.filterBrands.has(p.brand));
     return [...list].sort((a, b) => b.matchScore - a.matchScore);
   }, [selectedMain, selectedSub, searchQuery, filter]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const handleSearchChange = (v: string) => { setSearchQuery(v); setPage(1); };
-  const handleMainSelect = (m: string | null) => { setSelectedMain(m); setPage(1); };
-  const handleSubSelect  = (s: string | null) => { setSelectedSub(s);  setPage(1); };
+  const handleSearchChange = (v: string) => {
+    setSearchQuery(v);
+    setPage(1);
+  };
+  const handleMainSelect = (m: string | null) => {
+    setSelectedMain(m);
+    setPage(1);
+  };
+  const handleSubSelect = (s: string | null) => {
+    setSelectedSub(s);
+    setPage(1);
+  };
 
   const handleAddRoutine = (productId: string) => {
     setRoutineMap((prev) => ({ ...prev, [productId]: true }));
@@ -87,7 +107,9 @@ export default function RecommendPage() {
 
   /** 비교 토글 — 2개 선택 완료 시 모달 자동 오픈 */
   const handleToggleCompare = (product: CompareProduct) => {
-    const isAlreadySelected = compareItems.some((item) => item.id === product.id);
+    const isAlreadySelected = compareItems.some(
+      (item) => item.id === product.id,
+    );
     toggleCompare(product);
     if (!isAlreadySelected && compareItems.length === 1) {
       openCompare();
@@ -107,7 +129,13 @@ export default function RecommendPage() {
       )}
 
       {/* ── 상단 헤더 ────────────────────────────────────── */}
-      <div style={{ backgroundColor: "#F5F2EC", borderBottom: "1px solid #E2DDD8", paddingTop: "5px" }}>
+      <div
+        style={{
+          backgroundColor: "#F5F2EC",
+          borderBottom: "1px solid #E2DDD8",
+          paddingTop: "5px",
+        }}
+      >
         <div style={{ padding: "16px 16px 12px" }}>
           <h1
             style={{
@@ -125,7 +153,11 @@ export default function RecommendPage() {
           {/* 검색바 + 필터 버튼 한 줄 */}
           <div className="flex items-center gap-5">
             <div className="flex-1">
-              <SearchBar value={searchQuery} onChange={handleSearchChange} placeholder="제품명, 브랜드 검색..." />
+              <SearchBar
+                value={searchQuery}
+                onChange={handleSearchChange}
+                placeholder="제품명, 브랜드 검색..."
+              />
             </div>
 
             {/* 필터 버튼 — 검색바 오른쪽 끝 */}
@@ -146,17 +178,19 @@ export default function RecommendPage() {
               <SlidersHorizontal size={13} />
               필터
               {filterCount > 0 && (
-                <span style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "16px",
-                  height: "16px",
-                  borderRadius: "50%",
-                  backgroundColor: "rgba(255,255,255,0.25)",
-                  fontSize: "10px",
-                  fontWeight: 700,
-                }}>
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "16px",
+                    height: "16px",
+                    borderRadius: "50%",
+                    backgroundColor: "rgba(255,255,255,0.25)",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                  }}
+                >
                   {filterCount}
                 </span>
               )}
@@ -181,13 +215,21 @@ export default function RecommendPage() {
         >
           <div className="flex items-center gap-2">
             <Scale size={13} style={{ color: "#8A8278" }} />
-            <span style={{ fontSize: "12px", color: "#6B6258", fontWeight: 500 }}>
+            <span
+              style={{ fontSize: "12px", color: "#6B6258", fontWeight: 500 }}
+            >
               비교할 제품을 1개 더 선택하세요
             </span>
           </div>
           <button
             onClick={clearCompare}
-            style={{ fontSize: "11px", color: "#A69D92", border: "none", background: "none", cursor: "pointer" }}
+            style={{
+              fontSize: "11px",
+              color: "#A69D92",
+              border: "none",
+              background: "none",
+              cursor: "pointer",
+            }}
           >
             취소
           </button>
@@ -202,20 +244,37 @@ export default function RecommendPage() {
         >
           <div className="flex items-center gap-2">
             <Scale size={13} style={{ color: "#F2EFE9" }} />
-            <span style={{ fontSize: "12px", color: "#F2EFE9", fontWeight: 500 }}>
+            <span
+              style={{ fontSize: "12px", color: "#F2EFE9", fontWeight: 500 }}
+            >
               2개 제품 선택 완료
             </span>
           </div>
           <div className="flex gap-2">
             <button
               onClick={clearCompare}
-              style={{ fontSize: "11px", color: "#BFB6AA", border: "none", background: "none", cursor: "pointer" }}
+              style={{
+                fontSize: "11px",
+                color: "#BFB6AA",
+                border: "none",
+                background: "none",
+                cursor: "pointer",
+              }}
             >
               취소
             </button>
             <button
               onClick={openCompare}
-              style={{ fontSize: "12px", fontWeight: 700, color: "#3D3028", backgroundColor: "#F2EFE9", border: "none", borderRadius: "6px", padding: "4px 10px", cursor: "pointer" }}
+              style={{
+                fontSize: "12px",
+                fontWeight: 700,
+                color: "#3D3028",
+                backgroundColor: "#F2EFE9",
+                border: "none",
+                borderRadius: "6px",
+                padding: "4px 10px",
+                cursor: "pointer",
+              }}
             >
               비교하기
             </button>
@@ -226,15 +285,37 @@ export default function RecommendPage() {
       {/* ── 제품 그리드 ─────────────────────────────────── */}
       <div style={{ padding: "12px 16px 24px" }}>
         {filtered.length === 0 ? (
-          <div style={{ backgroundColor: "#FFFFFF", borderRadius: "12px", border: "1px solid #E2DDD8", marginTop: "8px" }}>
-            <EmptyState icon={Search} title="해당하는 제품이 없어요" description="검색어나 필터를 바꿔보세요" />
+          <div
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: "12px",
+              border: "1px solid #E2DDD8",
+              marginTop: "8px",
+            }}
+          >
+            <EmptyState
+              icon={Search}
+              title="해당하는 제품이 없어요"
+              description="검색어나 필터를 바꿔보세요"
+            />
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "24px",
+            }}
+          >
             {paginated.map((product) => (
               <ProductCard
                 key={product.id}
                 id={product.id}
+                href={
+                  product.reason
+                    ? `/product/${product.id}?reason=${encodeURIComponent(product.reason)}`
+                    : undefined
+                }
                 brand={product.brand}
                 name={product.name}
                 category={product.category}
@@ -248,7 +329,9 @@ export default function RecommendPage() {
                 onAddRoutine={() => handleAddRoutine(product.id)}
                 isOwned={ownedMap[product.id] ?? false}
                 onToggleOwned={() => handleToggleOwned(product.id)}
-                isInCompare={compareItems.some((item) => item.id === product.id)}
+                isInCompare={compareItems.some(
+                  (item) => item.id === product.id,
+                )}
                 onToggleCompare={() =>
                   handleToggleCompare({
                     id: product.id,
