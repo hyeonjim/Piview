@@ -33,19 +33,15 @@ export type LocalRoutineMap = Record<string, LocalProduct | null>;
 
 interface LocalRoutineStore {
   routine: LocalRoutineMap;
-  // 홈화면 "나의 루틴" 표시 여부 — true면 홈에 노출
-  isMainRoutine: boolean;
   setRoutine: (routine: LocalRoutineMap) => void;
   setStepProduct: (code: string, product: LocalProduct | null) => void;
   clearRoutine: () => void;
-  toggleMainRoutine: () => void;
 }
 
 export const useLocalRoutineStore = create<LocalRoutineStore>()(
   persist(
     (set) => ({
       routine: INITIAL_ROUTINE as LocalRoutineMap,
-      isMainRoutine: true,
 
       setRoutine: (routine) => set({ routine }),
 
@@ -53,9 +49,6 @@ export const useLocalRoutineStore = create<LocalRoutineStore>()(
         set((state) => ({ routine: { ...state.routine, [code]: product } })),
 
       clearRoutine: () => set({ routine: INITIAL_ROUTINE as LocalRoutineMap }),
-
-      toggleMainRoutine: () =>
-        set((state) => ({ isMainRoutine: !state.isMainRoutine })),
     }),
     {
       name: "piview-routine",
