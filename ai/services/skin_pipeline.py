@@ -6,6 +6,7 @@ from fastapi import HTTPException, UploadFile
 from PIL import Image, ImageOps
 
 from decision.skin_type_binary import build_binary_skin_response
+from inference.display_score import build_display_scores
 from inference.global_face import is_model_ready, predict_global_face_probabilities
 from inference.moisture import predict_moisture_states
 from inference.regional_face import predict_regional_axis
@@ -84,7 +85,7 @@ def _build_global_state(dry_prob: float, oily_prob: float) -> dict:
         "axis": axis,
         "dry_probability": round(dry_prob, 4),
         "oily_probability": round(oily_prob, 4),
-        "confidence": round(max(dry_prob, oily_prob), 4),
+        **build_display_scores(oily_prob, 0.5),
     }
 
 
@@ -108,12 +109,17 @@ def _build_regional_summary(forehead: dict, left_cheek: dict, right_cheek: dict)
     # 이 값은 이마와 볼에서 건성/지성 신호가 공존하는지만 빠르게 확인하기 위한 플래그입니다.
     regional_difference_exists = "dry_side" in axes and "oily_side" in axes
     forehead_oily_cheek_dry = forehead["axis"] == "oily_side" and cheek_mean_axis == "dry_side"
+    cheek_mean_dry_probability = (left_cheek["dry_probability"] + right_cheek["dry_probability"]) / 2
+    cheek_mean_oily_probability = (left_cheek["oily_probability"] + right_cheek["oily_probability"]) / 2
 
     return {
         "forehead": forehead,
         "left_cheek": left_cheek,
         "right_cheek": right_cheek,
         "cheek_mean_axis": cheek_mean_axis,
+        "cheek_mean_dry_probability": round(cheek_mean_dry_probability, 4),
+        "cheek_mean_oily_probability": round(cheek_mean_oily_probability, 4),
+        **build_display_scores(cheek_mean_oily_probability, 0.45),
         "regional_difference_exists": regional_difference_exists,
         "forehead_oily_cheek_dry": forehead_oily_cheek_dry,
     }

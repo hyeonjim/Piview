@@ -8,6 +8,8 @@ from PIL import Image
 from torchvision import transforms
 from torchvision.models import convnext_tiny, efficientnet_b2
 
+from inference.display_score import build_display_scores
+
 BASE_DIR = Path(__file__).resolve().parents[1]
 MODELS_DIR = BASE_DIR / "models"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -112,5 +114,5 @@ def predict_regional_axis(roi_name: str, image: Image.Image) -> dict:
         "axis": axis,
         "dry_probability": round(dry_prob, 4),
         "oily_probability": round(oily_prob, 4),
-        "confidence": round(max(dry_prob, oily_prob), 4),
+        **build_display_scores(oily_prob, threshold),
     }
