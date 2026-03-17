@@ -273,7 +273,7 @@ export default function RoutineAddModal({
                         </div>
                       </div>
 
-                      {/* 추천 이유 텍스트 */}
+                      {/* 전 이유 텍스트 */}
                       {/* ⚠️ API 연동 시 product.reason으로 교체 */}
                       <p className="text-xs text-text-muted mt-3 leading-relaxed">
                         복합성 피부에도 사용 가능하며, 특정 고민 해결에 도움을

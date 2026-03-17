@@ -19,8 +19,8 @@ const ROUTINE_PRODUCT_IMAGE_STYLE = {
   flexShrink: 0,
 };
 const ROUTINE_PLUS_MINUS_BTN = {
-  width: "28px",
-  height: "28px",
+  width: "22px",
+  height: "22px",
   borderRadius: "50%",
   backgroundColor: "var(--color-bg-muted-warm)",
   border: "none",
@@ -99,7 +99,8 @@ export default function RoutineTab({
     <div className="px-5 pt-4 flex flex-col gap-2 pb-24">
       {/* 헤더 */}
       <div className="flex items-start justify-between mb-1">
-        <div>
+        {/* min-w-0: 자막 텍스트가 길어도 버튼 영역을 침범하지 않도록 수축 허용 */}
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2.5">
             <p className="text-base font-bold text-text-primary">내 루틴</p>
             {/* ⚠️ API 연동 시 서버 루틴 메인 설정 API로 교체 */}
@@ -118,7 +119,8 @@ export default function RoutineTab({
             {filledCount}/6단계 완성 · 길게 눌러 순서 변경
           </p>
         </div>
-        <div className="flex gap-1.5">
+        {/* shrink-0: 버튼 3개가 항상 1줄로 유지되도록 수축 방지 */}
+        <div className="flex gap-1.5 shrink-0">
           {/* 초기화 */}
           <button
             onClick={() => {
@@ -135,14 +137,14 @@ export default function RoutineTab({
             className="flex items-center gap-1 font-medium border border-border text-text-secondary cursor-pointer bg-transparent"
             style={ROUTINE_HEADER_BTN_STYLE}
           >
-            ⇄ OCR
+            OCR
           </button>
           {/* 저장 */}
           <button
             className="flex items-center gap-1 font-medium border border-border text-text-secondary cursor-pointer bg-transparent"
             style={ROUTINE_HEADER_BTN_STYLE}
           >
-            📋 저장
+            저장
           </button>
         </div>
       </div>
