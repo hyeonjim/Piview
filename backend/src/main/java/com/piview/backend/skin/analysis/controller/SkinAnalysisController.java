@@ -3,10 +3,13 @@ package com.piview.backend.skin.analysis.controller;
 import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.global.security.UserPrincipal;
 import com.piview.backend.skin.analysis.dto.response.SkinAnalysisCaptureResponse;
+import com.piview.backend.skin.analysis.dto.response.SkinAnalysisStatusResponse;
 import com.piview.backend.skin.analysis.service.SkinAnalysisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,5 +30,14 @@ public class SkinAnalysisController {
             @RequestParam("image") MultipartFile image
     ) {
         return ApiResponse.success(skinAnalysisService.captureAnalysis(userPrincipal.getId(), image));
+    }
+
+    // analysisId 기준으로 현재 분석 상태나 완료 결과를 조회합니다.
+    @GetMapping("/{analysisId}")
+    public ApiResponse<SkinAnalysisStatusResponse> getAnalysisStatus(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable String analysisId
+    ) {
+        return ApiResponse.success(skinAnalysisService.getAnalysisStatus(userPrincipal.getId(), analysisId));
     }
 }

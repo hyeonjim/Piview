@@ -1,16 +1,18 @@
 package com.piview.backend.skin.analysis.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.piview.backend.skin.analysis.entity.SkinAnalysisStatus;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
-public class SkinAnalysisCaptureResponse {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class SkinAnalysisStatusResponse {
 
-    // 프론트가 이후 상태 조회에 사용할 비동기 작업 식별자입니다.
     private String analysisId;
-
-    // capture 직후에는 항상 PENDING으로 응답합니다.
     private SkinAnalysisStatus status;
+    private JsonNode result;
+    private String errorMessage;
 }
