@@ -3,7 +3,7 @@ import io
 import os
 
 from fastapi import HTTPException, UploadFile
-from PIL import Image
+from PIL import Image, ImageOps
 
 from decision.skin_type_binary import build_binary_skin_response
 from inference.global_face import is_model_ready, predict_global_face_probabilities
@@ -66,7 +66,7 @@ async def predict_binary_skin_type(file: UploadFile) -> dict:
         raise HTTPException(status_code=400, detail=f"지원하지 않는 파일 형식: {ext}")
 
     try:
-        image = Image.open(io.BytesIO(await file.read())).convert("RGB")
+        image = ImageOps.exif_transpose(Image.open(io.BytesIO(await file.read()))).convert("RGB")
     except Exception as exc:
         raise HTTPException(status_code=400, detail="이미지를 읽을 수 없어요.") from exc
 
@@ -119,14 +119,14 @@ def _build_regional_summary(forehead: dict, left_cheek: dict, right_cheek: dict)
     }
 
 
-async def _run_global_face_and_extract_rois(image: Image.Image) -> tuple[tuple[float, float], dict[str, Image.Image]]:
+async def _run_global_face_and_extract_rois(image: Image.Image) -> tuple[object, object]:
     # 1단계 병렬 구간:
     # - global face는 원본 이미지만 있으면 바로 실행 가능
     # - MediaPipe는 이후 모든 ROI 기반 추론의 선행 작업
     # 둘은 서로 입력 의존성이 없어서 같은 요청 안에서 동시에 시작합니다.
     global_task = asyncio.to_thread(_predict_global_face_with_context, image.copy())
     roi_task = asyncio.to_thread(_extract_face_rois_with_context, image.copy())
-    return await asyncio.gather(global_task, roi_task)
+    return await asyncio.gather(global_task, roi_task, return_exceptions=True)
 
 
 async def _run_regional_and_moisture(rois: dict[str, Image.Image]) -> tuple[dict, dict, dict, dict]:
@@ -156,7 +156,7 @@ async def extract_skin_states(file: UploadFile) -> dict:
         raise HTTPException(status_code=400, detail=f"지원하지 않는 파일 형식: {ext}")
 
     try:
-        image = Image.open(io.BytesIO(await file.read())).convert("RGB")
+        image = ImageOps.exif_transpose(Image.open(io.BytesIO(await file.read()))).convert("RGB")
     except Exception as exc:
         raise HTTPException(status_code=400, detail="이미지를 읽을 수 없어요.") from exc
 
@@ -165,26 +165,62 @@ async def extract_skin_states(file: UploadFile) -> dict:
 
     try:
         # 여기서 원본 기반 global 추론과 ROI 준비를 동시에 시작해 불필요한 대기 구간을 줄입니다.
-        (dry_prob, oily_prob), rois = await _run_global_face_and_extract_rois(image)
-    except ValueError as exc:
-        # 얼굴 미검출 같은 입력 문제는 400으로 내려 프론트가 재촬영 안내를 할 수 있게 합니다.
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except RuntimeError as exc:
-        # 모델 파일 누락, MediaPipe 자원 문제 등 서버 쪽 준비 실패는 503으로 구분합니다.
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        global_result, roi_result = await _run_global_face_and_extract_rois(image)
     except Exception as exc:
         raise HTTPException(status_code=500, detail="AI 추론 중 오류가 발생했어요.") from exc
 
+    if isinstance(global_result, Exception):
+        if isinstance(global_result, RuntimeError):
+            raise HTTPException(status_code=503, detail=str(global_result)) from global_result
+        raise HTTPException(status_code=500, detail="AI 추론 중 오류가 발생했어요.") from global_result
+
+    dry_prob, oily_prob = global_result
+
     # global face는 학습 기준과 맞추기 위해 MediaPipe crop 이전의 원본 이미지를 그대로 사용합니다.
     global_face = _build_global_state(dry_prob, oily_prob)
+
+    if isinstance(roi_result, Exception):
+        return {
+            "global_face": global_face,
+            "regional_skin_type": None,
+            "moisture": None,
+            "warnings": [
+                {
+                    "stage": "mediapipe_roi",
+                    "detail": str(roi_result),
+                }
+            ],
+        }
+
+    rois = roi_result
 
     # ROI 기반 모델들은 서로 독립이라 두 번째 병렬 구간으로 묶습니다.
     try:
         forehead_axis, left_cheek_axis, right_cheek_axis, moisture = await _run_regional_and_moisture(rois)
     except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        return {
+            "global_face": global_face,
+            "regional_skin_type": None,
+            "moisture": None,
+            "warnings": [
+                {
+                    "stage": "regional_or_moisture",
+                    "detail": str(exc),
+                }
+            ],
+        }
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="AI 추론 중 오류가 발생했어요.") from exc
+        return {
+            "global_face": global_face,
+            "regional_skin_type": None,
+            "moisture": None,
+            "warnings": [
+                {
+                    "stage": "regional_or_moisture",
+                    "detail": "AI 추론 중 오류가 발생했어요.",
+                }
+            ],
+        }
 
     # regional 응답은 원시 부위 결과 그대로와, 서비스 규칙에 바로 쓸 대표 플래그를 함께 반환합니다.
     regional_skin_type = _build_regional_summary(forehead_axis, left_cheek_axis, right_cheek_axis)
@@ -193,4 +229,5 @@ async def extract_skin_states(file: UploadFile) -> dict:
         "global_face": global_face,
         "regional_skin_type": regional_skin_type,
         "moisture": moisture,
+        "warnings": [],
     }
