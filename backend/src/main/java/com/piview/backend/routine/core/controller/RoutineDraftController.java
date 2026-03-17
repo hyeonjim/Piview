@@ -1,8 +1,10 @@
 package com.piview.backend.routine.core.controller;
 
 import com.piview.backend.global.security.UserPrincipal;
+import com.piview.backend.routine.core.dto.AddDraftItemRequest;
 import com.piview.backend.routine.core.dto.DraftItemDto;
 import com.piview.backend.routine.core.service.RedisDraftService;
+import com.piview.backend.routine.core.service.RoutineService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,6 +16,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RoutineDraftController {
   private final RedisDraftService redisDraftService;
+  private final RoutineService routineService;
+
+  // redis에 제품 추가
+  @PostMapping
+  public ResponseEntity<Void> addProductToDraft(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @RequestBody AddDraftItemRequest request) {
+
+    Long userId = userPrincipal.getId();
+    routineService.addProductToDraft(userId, request);
+
+    return ResponseEntity.ok().build();
+  }
 
   // redis에 화장품 목록 업데이트 (프론트에서 제품 추가,삭제,순서변경시 전체 리스트 덮어씌우기)
   @PutMapping
