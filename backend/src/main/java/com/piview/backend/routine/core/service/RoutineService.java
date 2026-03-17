@@ -9,6 +9,7 @@ import com.piview.backend.routine.core.entity.RoutineColumn;
 import com.piview.backend.routine.core.entity.RoutineDetail;
 import com.piview.backend.routine.core.repository.RoutineColumnRepository;
 import com.piview.backend.routine.core.repository.RoutineRepository;
+import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,52 @@ public class RoutineService {
   private final ProductRepository productRepository;
 
   private final RedisDraftService redisDraftService;
+
+  // 제품을 루틴(redis)에 추가
+  @Transactional(readOnly = true) // DB에서 Product만 조회하므로 readOnly
+  public void addProductToDraft(Long userId, AddDraftItemRequest request) {
+    // 기존 장바구니 리스트 불러오기
+    List<DraftItemDto> currentDraft = new ArrayList<>(redisDraftService.getDraftItems(userId));
+
+    // 추가할 상품 정보 DB에서 조회
+    Product product = productRepository.findById(request.productId())
+        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
+
+    // 새로운 stepOrder 계산 (현재 장바구니에 있는 stepOrder 중 가장 큰 값 + 1)
+    int nextOrder = currentDraft.stream()
+        .mapToInt(DraftItemDto::stepOrder)
+        .max()
+        .orElse(0) + 1; // 장바구니가 비어있으면 1부터 시작
+
+    // 새로운 DraftItemDto 생성 및 리스트에 추가
+    DraftItemDto newItem = new DraftItemDto(
+        request.columnId(),
+        nextOrder,
+        ProductSummaryResponse.from(product)
+    );
+    currentDraft.add(newItem);
+
+    // 업데이트된 리스트를 다시 Redis에 저장
+    redisDraftService.saveDraftItems(userId, currentDraft);
+  }
+
+  // 제품을 루틴(redis)에서 삭제
+  public void removeProductFromDraft(Long userId, Long productId) {
+    // 기존 장바구니 불러오기
+    List<DraftItemDto> currentDraft = redisDraftService.getDraftItems(userId);
+
+    if (currentDraft == null || currentDraft.isEmpty()) {
+      return; // 장바구니가 비어있으면 무시
+    }
+
+    // 삭제하려는 productId와 일치하지 않는 제품들만 남기기 (필터링)
+    List<DraftItemDto> updatedDraft = currentDraft.stream()
+        .filter(item -> !item.product().getProductId().equals(productId))
+        .toList();
+
+    // 업데이트된 리스트를 다시 Redis에 저장 (해당 제품만 쏙 빠진 채로 덮어쓰기)
+    redisDraftService.saveDraftItems(userId, updatedDraft);
+  }
 
   // 루틴 생성 및 저장
   @Transactional
