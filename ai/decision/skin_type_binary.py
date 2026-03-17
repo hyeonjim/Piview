@@ -1,3 +1,6 @@
+from inference.display_score import build_display_scores
+
+
 SKIN_INFO = {
     "건성": {
         "emoji": "💧",
@@ -43,10 +46,10 @@ def build_binary_skin_response(dry_prob: float, oily_prob: float) -> dict:
         "skin_type": skin_type,
         "emoji": info["emoji"],
         "description": info["desc"],
-        "confidence": round(main_prob, 4),
         "confidence_message": _confidence_message(main_prob, skin_type),
         "dry_probability": round(dry_prob, 4),
         "oily_probability": round(oily_prob, 4),
+        **build_display_scores(oily_prob, 0.5),
         "tips": info["tips"],
         "ingredients_good": info["ingredients_good"],
         "ingredients_bad": info["ingredients_bad"],
