@@ -37,6 +37,8 @@ interface ProductCardProps {
   /** 상세보기 버튼 표시 여부 (modal variant) */
   showDetailButton?: boolean;
   onDetailClick?: () => void;
+  /** 상세페이지 링크 override — 미지정 시 /product/{id} */
+  href?: string;
   /** 액션 버튼 영역 표시 여부 — true 일 때 루틴추가/보유추가/비교 버튼 노출 */
   showActions?: boolean;
   /** 루틴추가 콜백 */
@@ -56,7 +58,10 @@ interface ProductCardProps {
 // ── 피부타입 태그 — 색상이 동적(상수 맵)이므로 색상만 inline style 유지
 // export: CompareModal 등 공통 사용
 export function SkinTypeTag({ label }: { label: string }) {
-  const color = SKIN_TYPE_TAG_COLORS[label] ?? { bg: "#F0EDE8", text: "#7A7060" };
+  const color = SKIN_TYPE_TAG_COLORS[label] ?? {
+    bg: "#F0EDE8",
+    text: "#7A7060",
+  };
   return (
     <span
       className="inline-block mb-2 text-[12px] font-semibold px-1.5 py-0.5 rounded-[3px]"
@@ -110,7 +115,10 @@ function CategoryChip({
   return (
     <span
       className="text-[12px] px-1.5 py-[1px] rounded-[3px] font-semibold"
-      style={{ backgroundColor: categoryColor.chip, color: categoryColor.accent }}
+      style={{
+        backgroundColor: categoryColor.chip,
+        color: categoryColor.accent,
+      }}
     >
       {category}
     </span>
@@ -132,10 +140,20 @@ function RoutineButton({
       onClick={onAdd}
       disabled={inRoutine}
       className={`flex items-center justify-center gap-1 h-6 rounded-[6px] text-xs font-semibold border-none cursor-pointer transition-all active:scale-[0.97] ${
-        inRoutine ? "bg-[#F2EFE9] text-[#A69D92]" : "bg-[#3D3028] text-[#F2EFE9]"
+        inRoutine
+          ? "bg-[#F2EFE9] text-[#A69D92]"
+          : "bg-[#3D3028] text-[#F2EFE9]"
       } ${className}`}
     >
-      {inRoutine ? <><Check size={11} /> 추가됨</> : <><Plus size={11} /> 루틴추가</>}
+      {inRoutine ? (
+        <>
+          <Check size={11} /> 추가됨
+        </>
+      ) : (
+        <>
+          <Plus size={11} /> 루틴추가
+        </>
+      )}
     </button>
   );
 }
@@ -155,7 +173,9 @@ function OwnedButton({
     <button
       onClick={onToggle}
       className={`flex items-center justify-center cursor-pointer transition-all active:scale-[0.97] shrink-0 ${
-        isSmall ? "h-7 w-9 rounded-[6px]" : "gap-1 h-8 px-2.5 rounded-[6px] text-xs font-medium"
+        isSmall
+          ? "h-7 w-9 rounded-[6px]"
+          : "gap-1 h-8 px-2.5 rounded-[6px] text-xs font-medium"
       }`}
       style={{
         border: `1px solid ${isOwned ? "#D9D5D0" : "#E8E4DF"}`,
@@ -164,7 +184,10 @@ function OwnedButton({
       }}
       title={isOwned ? "보유 중" : "보유추가"}
     >
-      <ShoppingBag size={isSmall ? 14 : 11} style={{ color: isOwned ? "#A69D92" : "#C4BEB7" }} />
+      <ShoppingBag
+        size={isSmall ? 14 : 11}
+        style={{ color: isOwned ? "#A69D92" : "#C4BEB7" }}
+      />
       {!isSmall && (isOwned ? "보유중" : "보유추가")}
     </button>
   );
@@ -189,8 +212,16 @@ function CompareButton({
       }`}
       style={
         isInCompare
-          ? { border: "1px solid #A69D92", backgroundColor: "#F2EFE9", color: "#6B6258" }
-          : { border: "1px solid #E8E4DF", backgroundColor: "#FFFFFF", color: "#C4BEB7" }
+          ? {
+              border: "1px solid #A69D92",
+              backgroundColor: "#F2EFE9",
+              color: "#6B6258",
+            }
+          : {
+              border: "1px solid #E8E4DF",
+              backgroundColor: "#FFFFFF",
+              color: "#C4BEB7",
+            }
       }
       title={isInCompare ? "비교 선택됨" : "비교하기"}
     >
@@ -245,6 +276,7 @@ export default function ProductCard({
   variant = "default",
   showDetailButton = false,
   onDetailClick,
+  href,
   showActions = false,
   onAddRoutine,
   inRoutine,
@@ -256,6 +288,9 @@ export default function ProductCard({
   // 전역 찜 스토어 사용 — 페이지 간 상태 공유
   const { isLiked: getIsLiked, toggleLike } = useLikeStore();
   const isLiked = getIsLiked(id);
+
+  // 상세페이지 링크 — href prop 우선, 없으면 기본 경로
+  const productHref = href ?? `/product/${id}`;
 
   const handleLike = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -285,7 +320,7 @@ export default function ProductCard({
         className="relative flex flex-col overflow-hidden bg-white rounded-modal w-full min-w-0"
         style={{ boxShadow: CARD_SHADOW }}
       >
-        <Link href={`/product/${id}`} className="no-underline flex flex-col flex-1">
+        <Link href={productHref} className="no-underline flex flex-col flex-1">
           {/* 이미지 — 3:2 비율 */}
           <div className="relative w-full aspect-3/2 bg-[#F5F2EC]">
             {imageUrl ? (
@@ -305,7 +340,11 @@ export default function ProductCard({
                 boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
               }}
             >
-              <Heart size={16} className="transition-all duration-150" style={heartStyle} />
+              <Heart
+                size={16}
+                className="transition-all duration-150"
+                style={heartStyle}
+              />
             </button>
 
             {showPickBadge && (
@@ -340,7 +379,7 @@ export default function ProductCard({
             <RoutineButton
               inRoutine={inRoutine}
               onAdd={(event) => handleAction(event, onAddRoutine)}
-              className="flex-1 text-xs h-7"
+              className="flex-1 text-[10px] h-7"
             />
             <OwnedButton
               isOwned={isOwned}
@@ -361,8 +400,8 @@ export default function ProductCard({
   // ── 2. HORIZONTAL ─────────────────────────────────────────────────
   if (layout === "horizontal") {
     return (
-      <Link href={`/product/${id}`}>
-        <div className="flex items-center overflow-hidden min-h-22 bg-white rounded-[10px] border border-[#E2DDD8] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+      <Link href={productHref}>
+        <div className="flex items-center overflow-hidden h-22 bg-white rounded-[10px] border border-[#E2DDD8] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
           <div className="relative shrink-0 w-22 h-full bg-[#F5F2EC]">
             {imageUrl ? (
               <Image src={imageUrl} alt={name} fill className="object-cover" />
@@ -375,10 +414,15 @@ export default function ProductCard({
 
           <div className="flex-1 px-3 py-2 min-w-0">
             <BrandLabel brand={brand} />
-            <p className="mt-0.75 m-0 text-[13px] font-medium text-[#2A2118] leading-[1.4] line-clamp-2 break-keep">
+            <p className="mt-0.75 m-0 text-[13px] font-medium text-[#2A2118] leading-[1.4]">
               {name}
             </p>
-            <EWGIndicator safe={ewgSafe} caution={ewgCaution} danger={ewgDanger} className="mt-1.5" />
+            <EWGIndicator
+              safe={ewgSafe}
+              caution={ewgCaution}
+              danger={ewgDanger}
+              className="mt-1.5"
+            />
           </div>
 
           <button
@@ -403,14 +447,20 @@ export default function ProductCard({
           backgroundColor: inRoutine ? "#F2EFE9" : "#FFFFFF",
         }}
       >
-        <Link href={`/product/${id}`} className="no-underline">
+        <Link href={productHref} className="no-underline">
           <div className="flex items-center gap-3">
             {/* 썸네일 */}
             <div className="shrink-0 w-15 h-15 flex items-center justify-center rounded-lg bg-[#F5F2EC]">
               {emoji ? (
                 <span className="text-[26px]">{emoji}</span>
               ) : imageUrl ? (
-                <Image src={imageUrl} alt={name} width={60} height={60} className="object-cover rounded-lg" />
+                <Image
+                  src={imageUrl}
+                  alt={name}
+                  width={60}
+                  height={60}
+                  className="object-cover rounded-lg"
+                />
               ) : (
                 <span className="text-[22px]">🧴</span>
               )}
@@ -419,15 +469,24 @@ export default function ProductCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                 <BrandLabel brand={brand} />
-                {categoryColor && <CategoryChip category={category!} categoryColor={categoryColor} />}
+                {categoryColor && (
+                  <CategoryChip
+                    category={category!}
+                    categoryColor={categoryColor}
+                  />
+                )}
                 {showPickBadge && <PickBadge />}
               </div>
-              <p className="m-0 text-[13px] font-medium text-[#2A2118] line-clamp-2 break-keep">
+              <p className="m-0 text-[13px] font-medium text-[#2A2118] truncate">
                 {name}
               </p>
               <div className="flex flex-wrap gap-0.75 mt-1.25">
-                {skinTypes.map((skinType) => <SkinTypeTag key={skinType} label={skinType} />)}
-                {effects.slice(0, 3).map((effect) => <EffectTag key={effect} label={effect} />)}
+                {skinTypes.map((skinType) => (
+                  <SkinTypeTag key={skinType} label={skinType} />
+                ))}
+                {effects.slice(0, 3).map((effect) => (
+                  <EffectTag key={effect} label={effect} />
+                ))}
               </div>
             </div>
           </div>
@@ -463,7 +522,7 @@ export default function ProductCard({
       className="relative flex flex-col overflow-hidden w-full bg-white rounded-[10px] border border-[#E2DDD8]"
       style={{ boxShadow: CARD_SHADOW }}
     >
-      <Link href={`/product/${id}`} className="no-underline">
+      <Link href={productHref} className="no-underline">
         <div className="relative h-27 bg-[#F5F2EC]">
           {imageUrl ? (
             <Image src={imageUrl} alt={name} fill className="object-cover" />
@@ -477,7 +536,12 @@ export default function ProductCard({
         <div className="px-3.5 pt-3 pb-3.5">
           <div className="flex items-center gap-1.5 flex-wrap mb-1">
             <BrandLabel brand={brand} />
-            {categoryColor && <CategoryChip category={category!} categoryColor={categoryColor} />}
+            {categoryColor && (
+              <CategoryChip
+                category={category!}
+                categoryColor={categoryColor}
+              />
+            )}
             {showPickBadge && <PickBadge />}
           </div>
 
@@ -486,12 +550,21 @@ export default function ProductCard({
           </p>
 
           <div className="flex flex-wrap gap-0.75 mt-1.75">
-            {skinTypes.map((skinType) => <SkinTypeTag key={skinType} label={skinType} />)}
-            {effects.slice(0, 3).map((effect) => <EffectTag key={effect} label={effect} />)}
+            {skinTypes.map((skinType) => (
+              <SkinTypeTag key={skinType} label={skinType} />
+            ))}
+            {effects.slice(0, 3).map((effect) => (
+              <EffectTag key={effect} label={effect} />
+            ))}
           </div>
 
           {(ewgSafe > 0 || ewgCaution > 0 || ewgDanger > 0) && (
-            <EWGIndicator safe={ewgSafe} caution={ewgCaution} danger={ewgDanger} className="mt-2" />
+            <EWGIndicator
+              safe={ewgSafe}
+              caution={ewgCaution}
+              danger={ewgDanger}
+              className="mt-2"
+            />
           )}
         </div>
       </Link>
