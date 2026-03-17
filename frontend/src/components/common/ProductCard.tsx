@@ -340,7 +340,7 @@ export default function ProductCard({
             <RoutineButton
               inRoutine={inRoutine}
               onAdd={(event) => handleAction(event, onAddRoutine)}
-              className="flex-1 text-[10px] h-7"
+              className="flex-1 text-xs h-7"
             />
             <OwnedButton
               isOwned={isOwned}
@@ -362,7 +362,7 @@ export default function ProductCard({
   if (layout === "horizontal") {
     return (
       <Link href={`/product/${id}`}>
-        <div className="flex items-center overflow-hidden h-22 bg-white rounded-[10px] border border-[#E2DDD8] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+        <div className="flex items-center overflow-hidden min-h-22 bg-white rounded-[10px] border border-[#E2DDD8] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
           <div className="relative shrink-0 w-22 h-full bg-[#F5F2EC]">
             {imageUrl ? (
               <Image src={imageUrl} alt={name} fill className="object-cover" />
@@ -375,7 +375,7 @@ export default function ProductCard({
 
           <div className="flex-1 px-3 py-2 min-w-0">
             <BrandLabel brand={brand} />
-            <p className="mt-0.75 m-0 text-[13px] font-medium text-[#2A2118] leading-[1.4]">
+            <p className="mt-0.75 m-0 text-[13px] font-medium text-[#2A2118] leading-[1.4] line-clamp-2 break-keep">
               {name}
             </p>
             <EWGIndicator safe={ewgSafe} caution={ewgCaution} danger={ewgDanger} className="mt-1.5" />
@@ -422,7 +422,7 @@ export default function ProductCard({
                 {categoryColor && <CategoryChip category={category!} categoryColor={categoryColor} />}
                 {showPickBadge && <PickBadge />}
               </div>
-              <p className="m-0 text-[13px] font-medium text-[#2A2118] truncate">
+              <p className="m-0 text-[13px] font-medium text-[#2A2118] line-clamp-2 break-keep">
                 {name}
               </p>
               <div className="flex flex-wrap gap-0.75 mt-1.25">
