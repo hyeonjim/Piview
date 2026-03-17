@@ -51,7 +51,7 @@ import type { SearchProduct } from "@/constants/_mock/searchProducts";
 import type { LocalProduct } from "@/stores/useLocalRoutineStore";
 
 interface OwnedTabProps {
-  routine: Record<string, LocalProduct | null>;
+  routine: Record<string, LocalProduct[]>;
   ownedProducts: SearchProduct[];
   avoidProducts: SearchProduct[];
   onRemoveOwned: (id: string) => void;
@@ -119,8 +119,8 @@ export default function OwnedTab({
                       </span>
                     )}
                     {/* 루틴 등록 여부 표시 */}
-                    {Object.values(routine).some(
-                      (routineProduct) => routineProduct?.id === product.id,
+                    {Object.values(routine).flat().some(
+                      (routineProduct) => routineProduct.id === product.id,
                     ) && (
                       <span className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-medium bg-brand-bg text-brand">
                         루틴

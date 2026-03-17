@@ -5,10 +5,9 @@ import { Sparkles, ArrowRight, Leaf, Sun, Moon, Droplets, Star, ChevronRight } f
 import Link from "next/link";
 import { SKINCARE_INSIGHTS } from "@/constants";
 import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
-import { ROUTINE_STEPS, type RoutineStep } from "@/constants/routineSteps";
+import { useUserStore, selectSkinType } from "@/stores/useUserStore";
+import { ROUTINE_STEPS } from "@/constants/routineSteps";
 
-// ── 스타일 상수 ──────────────────────────────────────────────────────
-const ROUTINE_DIVIDER = "1px solid rgba(0,0,0,0.05)";
 
 function getGreeting(): { text: string; icon: React.ReactNode } {
   const hour = new Date().getHours();
@@ -29,16 +28,16 @@ export default function HomePage() {
   const greeting = getGreeting();
   const nickname  = "User";
   const { routine, isMainRoutine } = useLocalRoutineStore();
+  // 피부타입이 설정되어 있으면 AI 진단 배너 숨김
+  const skinType = useUserStore(selectSkinType);
+  const hasSkinType = skinType !== null;
 
   useEffect(() => { useLocalRoutineStore.persist.rehydrate(); }, []);
 
-  const mainRoutineItems = ROUTINE_STEPS.map((step) => ({
-    step,
-    product: routine[step.code],
-  })).filter((item) => item.product !== null) as {
-    step: RoutineStep;
-    product: NonNullable<(typeof routine)[string]>;
-  }[];
+  // 각 스텝별 제품 배열을 flat — 스텝당 여러 제품이 있을 수 있음
+  const mainRoutineItems = ROUTINE_STEPS.flatMap((step) =>
+    (routine[step.code] ?? []).map((product) => ({ step, product }))
+  );
 
   // isMainRoutine이 off면 홈에서 루틴 미표시
   const hasRoutine = isMainRoutine && mainRoutineItems.length > 0;
@@ -91,8 +90,8 @@ export default function HomePage() {
           오늘의 스킨케어 루틴을 확인하세요
         </p>
 
-        {/* ── AI 진단 배너 ───────────────────────────────── */}
-        <Link href="/skin-test" className="block" style={{ marginTop: "16px" }}>
+        {/* ── AI 진단 배너 — 피부타입 미설정 시에만 노출 ───────────────────────────────── */}
+        {!hasSkinType && <Link href="/skin-test" className="block" style={{ marginTop: "16px" }}>
           <div
             className="relative overflow-hidden flex items-center justify-between"
             style={{
@@ -134,7 +133,7 @@ export default function HomePage() {
               <ArrowRight size={17} style={{ color: "#FFFFFF" }} />
             </div>
           </div>
-        </Link>
+        </Link>}
       </div>
 
       {/* ── 나의 루틴 ────────────────────────────────────── */}

@@ -1,31 +1,8 @@
 "use client";
 
 // ── 스타일 상수 ──────────────────────────────────────────────────────
-const ROUTINE_CARD_BORDER_EMPTY = "var(--color-border-subtle)";
-/* 베이지 팔레트 — 채워진 카드 보더를 Beige-3로 교체 */
-const ROUTINE_CARD_BORDER_FILLED = "#D9D1C7";
 const SCORE_RING_TRACK_COLOR = "var(--color-border-subtle)";
 const SCORE_RING_SIZE = { width: 56, height: 56 };
-// 제품 이미지(emoji) 영역 — 80×80 (step code 배지의 2배)
-const ROUTINE_PRODUCT_IMAGE_STYLE = {
-  width: "80px",
-  height: "80px",
-  borderRadius: "16px",
-  backgroundColor: "var(--color-bg-muted-warm)",
-  fontSize: "36px",
-  display: "flex" as const,
-  alignItems: "center",
-  justifyContent: "center",
-  flexShrink: 0,
-};
-const ROUTINE_PLUS_MINUS_BTN = {
-  width: "22px",
-  height: "22px",
-  borderRadius: "50%",
-  backgroundColor: "var(--color-bg-muted-warm)",
-  border: "none",
-};
-const REASON_TEXT_STYLE = { fontSize: "13px", lineHeight: 1.6 };
 const ROUTINE_HEADER_BTN_STYLE = {
   fontSize: "12px",
   padding: "5px 10px",
@@ -33,24 +10,24 @@ const ROUTINE_HEADER_BTN_STYLE = {
   backgroundColor: "transparent",
 };
 
-import { useState, useMemo } from "react";
-import { Plus, X, ChevronDown, ChevronUp, RotateCcw } from "lucide-react";
-import {
-  CATEGORY_COLORS,
-  SKIN_FUNCTION_COLORS,
-  SKIN_TYPE_TAG_COLORS,
-} from "@/constants/categoryColors";
+import { useMemo } from "react";
+import { Plus, X, RotateCcw } from "lucide-react";
 import {
   getRoutineEvaluation,
   getScoreBarColor,
 } from "@/constants/routineEvaluation";
-import { MYPAGE_ROUTINE_STEPS } from "@/constants/routineSteps";
-import { useLocalRoutineStore, type LocalProduct } from "@/stores/useLocalRoutineStore";
+import { ROUTINE_STEPS } from "@/constants/routineSteps";
+import {
+  useLocalRoutineStore,
+  type LocalProduct,
+} from "@/stores/useLocalRoutineStore";
+import ProductCard from "@/components/common/ProductCard";
 
 interface RoutineTabProps {
-  routine: Record<string, LocalProduct | null>;
+  routine: Record<string, LocalProduct[]>;
   onOpenModal: (code: string) => void;
-  onRemove: (code: string) => void;
+  // productId 추가: 같은 스텝 내 특정 제품 제거
+  onRemove: (code: string, productId: string) => void;
 }
 
 export default function RoutineTab({
@@ -59,29 +36,32 @@ export default function RoutineTab({
   onRemove,
 }: RoutineTabProps) {
   // 홈화면 메인 루틴 on/off
-  const { isMainRoutine, toggleMainRoutine } = useLocalRoutineStore();
+  const { isMainRoutine, toggleMainRoutine, clearRoutine } =
+    useLocalRoutineStore();
 
-  // 추천 이유 펼침 상태 — key: step.code
-  const [openReason, setOpenReason] = useState<Record<string, boolean>>({});
-  const toggleReason = (code: string) =>
-    setOpenReason((prev) => ({ ...prev, [code]: !prev[code] }));
-
-  const filledProducts = useMemo(
+  // 1개 이상 제품이 있는 스텝 수 — null 방어 (localStorage 구버전 호환)
+  const filledCount = useMemo(
     () =>
       Object.values(routine).filter(
-        (product): product is LocalProduct => !!product,
-      ),
+        (products) => Array.isArray(products) && products.length > 0,
+      ).length,
     [routine],
   );
-  const filledCount = filledProducts.length;
+
+  // 루틴 전체 제품 flat 배열 (점수 계산용) — null 방어
+  const allProducts = useMemo(
+    () => Object.values(routine).flatMap((products) => products ?? []),
+    [routine],
+  );
 
   const routineScores = useMemo(
     () =>
-      filledProducts
+      allProducts
         .filter((product) => product.matchScore > 0)
         .map((product) => product.matchScore),
-    [filledProducts],
+    [allProducts],
   );
+
   const avgScore =
     routineScores.length > 0
       ? Math.round(
@@ -89,6 +69,7 @@ export default function RoutineTab({
             routineScores.length,
         )
       : 0;
+
   const evaluation = getRoutineEvaluation(avgScore, routineScores.length);
   const scoreColor = getScoreBarColor(avgScore);
   const CIRCUMFERENCE = 138;
@@ -96,10 +77,10 @@ export default function RoutineTab({
     routineScores.length > 0 ? (avgScore / 100) * CIRCUMFERENCE : 0;
 
   return (
-    <div className="px-5 pt-4 flex flex-col gap-2 pb-24">
+    <div className="px-5 pt-4 flex flex-col gap-2 pb-10">
       {/* 헤더 */}
       <div className="flex items-start justify-between mb-1">
-        {/* min-w-0: 자막 텍스트가 길어도 버튼 영역을 침범하지 않도록 수축 허용 */}
+        {/* min-w-0: 텍스트가 길어도 버튼 영역을 침범하지 않도록 수축 허용 */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2.5">
             <p className="text-base font-bold text-text-primary">내 루틴</p>
@@ -121,12 +102,9 @@ export default function RoutineTab({
         </div>
         {/* shrink-0: 버튼 3개가 항상 1줄로 유지되도록 수축 방지 */}
         <div className="flex gap-1.5 shrink-0">
-          {/* 초기화 */}
+          {/* 초기화 — ⚠️ API 연동 시 루틴 초기화 API 호출로 교체 */}
           <button
-            onClick={() => {
-              // ⚠️ API 연동 시 루틴 초기화 API 호출로 교체
-              MYPAGE_ROUTINE_STEPS.forEach((step) => onRemove(step.code));
-            }}
+            onClick={clearRoutine}
             className="flex items-center gap-1 font-medium border border-border text-text-secondary cursor-pointer bg-transparent"
             style={ROUTINE_HEADER_BTN_STYLE}
           >
@@ -149,146 +127,82 @@ export default function RoutineTab({
         </div>
       </div>
 
-      {/* 루틴 스텝 카드 목록 */}
-      {MYPAGE_ROUTINE_STEPS.map((step) => {
-        const filled = routine[step.code];
+      {/* 루틴 스텝별 섹션 */}
+      {ROUTINE_STEPS.map((step) => {
+        const products = routine[step.code] ?? [];
         return (
-          <div
-            key={step.code}
-            className="rounded-2xl px-4 py-3 transition-all mt-3"
-            style={{
-              /* 채워진 카드는 흰 배경, 빈 카드는 베이지 배경 */
-              backgroundColor: filled ? "#FFFFFF" : "var(--color-warm-bg)",
-              border: `1px solid ${filled ? ROUTINE_CARD_BORDER_FILLED : ROUTINE_CARD_BORDER_EMPTY}`,
-            }}
-          >
-            {filled ? (
-              <div className="flex flex-col">
-                {/* 카드 메인 행 */}
-                <div className="flex items-start gap-3">
-                  {/* 제품 이미지 — emoji를 80×80 크기로 표시 */}
-                  <div style={ROUTINE_PRODUCT_IMAGE_STYLE}>
-                    {filled.emoji}
-                  </div>
-
-                  {/* 제품 정보 */}
-                  <div className="flex-1 min-w-0">
-                    {/* 브랜드 + 카테고리 칩 */}
-                    <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                      <span className="text-[11px] text-text-muted">
-                        {filled.brand}
-                      </span>
-                      {CATEGORY_COLORS[filled.category] && (
-                        <span
-                          className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-medium"
-                          style={{
-                            backgroundColor:
-                              CATEGORY_COLORS[filled.category].chip,
-                            color: CATEGORY_COLORS[filled.category].accent,
-                          }}
-                        >
-                          {filled.category}
-                        </span>
-                      )}
-                    </div>
-                    {/* 제품명 */}
-                    <p className="truncate text-sm font-semibold text-text-primary">
-                      {filled.name}
-                    </p>
-                    {/* 피부타입 칩 */}
-                    {filled.skinTypes.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {filled.skinTypes.map((skinType) => {
-                          const tc = SKIN_TYPE_TAG_COLORS[skinType];
-                          return tc ? (
-                            <span
-                              key={skinType}
-                              className="text-[10px] px-[6px] py-[1px] rounded-[4px] font-medium"
-                              style={{ backgroundColor: tc.bg, color: tc.text }}
-                            >
-                              {skinType}
-                            </span>
-                          ) : null;
-                        })}
-                      </div>
-                    )}
-                    {/* 기능 칩 */}
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {filled.effects.slice(0, 3).map((fn) => {
-                        const fc = SKIN_FUNCTION_COLORS[fn];
-                        return fc ? (
-                          <span
-                            key={fn}
-                            className="text-[10px] px-[5px] py-[1px] rounded-[4px] font-medium"
-                            style={{
-                              backgroundColor: fc.chip,
-                              color: fc.accent,
-                            }}
-                          >
-                            {fn}
-                          </span>
-                        ) : null;
-                      })}
-                    </div>
-                  </div>
-
-                  {/* + - 버튼 */}
-                  <div className="flex flex-row gap-2 shrink-0">
-                    <button
-                      onClick={() => onOpenModal(step.code)}
-                      className="flex items-center justify-center cursor-pointer"
-                      style={ROUTINE_PLUS_MINUS_BTN}
-                    >
-                      <Plus size={14} className="text-text-muted" />
-                    </button>
-                    <button
-                      onClick={() => onRemove(step.code)}
-                      className="flex items-center justify-center cursor-pointer"
-                      style={ROUTINE_PLUS_MINUS_BTN}
-                    >
-                      <X size={14} className="text-text-muted" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* 추천 이유 토글 */}
-                {/* ⚠️ API 연동 시 filled.reason으로 교체 */}
-                <button
-                  onClick={() => toggleReason(step.code)}
-                  className="flex items-center gap-1 mt-2 text-text-muted bg-transparent border-none cursor-pointer self-start"
-                  style={{ fontSize: "12px" }}
-                >
-                  추천 이유
-                  {openReason[step.code] ? (
-                    <ChevronUp size={12} />
-                  ) : (
-                    <ChevronDown size={12} />
-                  )}
-                </button>
-                {openReason[step.code] && (
-                  <p className="text-text-muted mt-1" style={REASON_TEXT_STYLE}>
-                    {/* ⚠️ API 연동 시 filled.reason으로 교체 */}
-                    해당 제품의 추천 이유가 여기 표시됩니다.
-                  </p>
-                )}
+          <div key={step.code} className="mt-3">
+            {/* 스텝 섹션 헤더 — 아이콘, 라벨, + 추가 버튼 */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">{step.icon}</span>
+                <span className="text-sm font-semibold text-text-primary">
+                  {step.label}
+                </span>
               </div>
-            ) : (
-              <div className="flex items-center gap-3">
+              <button
+                onClick={() => onOpenModal(step.code)}
+                className="flex items-center gap-1 text-xs font-medium text-brand cursor-pointer border-none bg-transparent"
+              >
+                <Plus size={13} /> 추가
+              </button>
+            </div>
+
+            {products.length === 0 ? (
+              // 빈 상태 플레이스홀더
+              <div
+                className="rounded-2xl px-4 py-3 flex items-center gap-3"
+                style={{
+                  backgroundColor: "var(--color-warm-bg)",
+                  border: "1px solid var(--color-border-subtle)",
+                }}
+              >
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold text-text-muted shrink-0"
                   style={{ backgroundColor: "var(--color-bg-muted-warm)" }}
                 >
                   {step.code}
                 </div>
-                <p className="flex-1 text-sm font-medium text-text-primary">
-                  {step.label}
+                <p className="flex-1 text-sm font-medium text-text-muted">
+                  아직 추가된 제품이 없어요
                 </p>
-                <button
-                  onClick={() => onOpenModal(step.code)}
-                  className="flex items-center gap-1 text-xs font-medium text-brand cursor-pointer border-none bg-transparent"
-                >
-                  <Plus size={13} /> 추가
-                </button>
+              </div>
+            ) : (
+              // 1열 가로 목록 — ProductCard horizontal 재사용, like 버튼 숨김
+              <div className="flex flex-col gap-2">
+                {products.map((product) => (
+                  <div key={product.id} className="relative">
+                    {/* ProductCard layout="horizontal" 재사용 — EWG 숨기고 피부타입·기능 태그 표시 */}
+                    <ProductCard
+                      id={product.id}
+                      name={product.name}
+                      brand={product.brand}
+                      emoji={product.emoji}
+                      category={product.category}
+                      skinTypes={product.skinTypes}
+                      effects={product.effects}
+                      layout="horizontal"
+                      showActions={false}
+                      showLike={false}
+                      showEwg={false}
+                    />
+                    {/* 제품 제거 버튼 오버레이 — 우측 상단 */}
+                    <button
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onRemove(step.code, product.id);
+                      }}
+                      className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-full border-none cursor-pointer"
+                      style={{
+                        backgroundColor: "rgba(255,255,255,0.92)",
+                        boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                      }}
+                    >
+                      <X size={12} color="#888" />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -297,7 +211,7 @@ export default function RoutineTab({
 
       {/* 루틴 종합 점수 카드 — 항상 표시 */}
       <div
-        className="mt-2 p-4 rounded-2xl"
+        className="mt-10 p-4 rounded-2xl"
         style={{
           backgroundColor: "var(--color-warm-bg)",
           border: `1px solid ${filledCount > 0 ? scoreColor + "40" : "var(--color-border-subtle)"}`,
@@ -343,15 +257,6 @@ export default function RoutineTab({
           {/* 텍스트 */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-1">
-              <span
-                className="text-sm"
-                style={{
-                  color:
-                    filledCount > 0 ? scoreColor : "var(--color-text-muted)",
-                }}
-              >
-                ∼
-              </span>
               <span className="text-sm font-bold text-text-primary">
                 내 루틴 종합 점수
               </span>

@@ -306,6 +306,9 @@ export default function SearchPage() {
                     price: product.price,
                     skinTypes: product.skinTypes,
                     effects: product.effects,
+                    ewgSafe: product.ewgSafe,
+                    ewgCaution: product.ewgCaution,
+                    ewgDanger: product.ewgDanger,
                   })
                 }
               />

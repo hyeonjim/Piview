@@ -4,10 +4,12 @@ import { Providers } from "@/lib/providers";
 import "./globals.css";
 
 // ── Google Sans Flex — 영어 본문 폰트 (variable font) ──────────────
+// preload: false — 한국어 앱 특성상 초기 렌더링에 사용되지 않아 preload 경고 방지
 const googleSansFlex = localFont({
   src: "../../public/fonts/GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf",
   display: "swap",
   variable: "--font-english",
+  preload: false,
 });
 
 // ── RIDIBatang — 한국어 바탕 폰트 (본문 + 디스플레이 공용) ─────────

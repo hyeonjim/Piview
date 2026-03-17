@@ -33,11 +33,11 @@ export const ROUTINE_STEPS: RoutineStep[] = [
 export type RoutineStepKey = typeof ROUTINE_STEPS[number]["key"];
 
 /**
- * 루틴 스토어 초기값 — 모든 스텝을 null로 초기화
+ * 루틴 스토어 초기값 — 모든 스텝을 빈 배열로 초기화
  * ⚠️ 백엔드 연동 시 삭제
  */
 export const INITIAL_ROUTINE = Object.fromEntries(
-  ROUTINE_STEPS.map((s) => [s.code, null])
+  ROUTINE_STEPS.map((s) => [s.code, [] as never[]])
 );
 
 /**
