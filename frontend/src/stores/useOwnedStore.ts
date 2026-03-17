@@ -5,13 +5,22 @@
  */
 
 import { create } from "zustand";
-import type { SearchProduct } from "@/constants/_mock/searchProducts";
+
+// 보유 제품 최소 공통 타입 — SearchProduct/RecommendProduct 둘 다 호환
+export interface OwnedProduct {
+  id: string;
+  brand: string;
+  name: string;
+  category: string;
+  emoji?: string;
+  skinTypes?: string[];
+}
 
 interface OwnedStore {
   /** 보유 제품 목록 */
-  ownedProducts: SearchProduct[];
+  ownedProducts: OwnedProduct[];
   /** 보유 토글 — 없으면 추가, 있으면 제거 */
-  toggleOwned: (product: SearchProduct) => void;
+  toggleOwned: (product: OwnedProduct) => void;
   /** 특정 제품이 보유 상태인지 확인 */
   isOwned: (id: string) => boolean;
   /** 보유 제품 제거 */

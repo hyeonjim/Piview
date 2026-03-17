@@ -14,6 +14,18 @@ import { useLikeStore } from "@/stores/useLikeStore";
 // ── 그림자 — border 없이 입체감을 주는 자연스러운 레이어드 shadow
 const CARD_SHADOW = "0 2px 8px rgba(0,0,0,0.10), 0 8px 28px rgba(0,0,0,0.16)";
 
+// ── 비교/보유 버튼 공통 활성/비활성 스타일
+const ACTION_BUTTON_ACTIVE = {
+  border: "1px solid #A69D92",
+  backgroundColor: "#F2EFE9",
+  color: "#6B6258",
+};
+const ACTION_BUTTON_INACTIVE = {
+  border: "1px solid #E8E4DF",
+  backgroundColor: "#FFFFFF",
+  color: "#C4BEB7",
+};
+
 // ── 인터페이스 ──────────────────────────────────────────────────────
 interface ProductCardProps {
   id: number | string;
@@ -181,16 +193,11 @@ function OwnedButton({
           ? "h-7 w-9 rounded-[6px]"
           : "gap-1 h-8 px-2.5 rounded-[6px] text-xs font-medium"
       }`}
-      style={{
-        border: `1px solid ${isOwned ? "#D9D5D0" : "#E8E4DF"}`,
-        backgroundColor: isOwned ? "#F2EFE9" : "#FFFFFF",
-        color: isOwned ? "#A69D92" : "#8A8278",
-      }}
+      style={isOwned ? ACTION_BUTTON_ACTIVE : ACTION_BUTTON_INACTIVE}
       title={isOwned ? "보유 중" : "보유추가"}
     >
       <ShoppingBag
         size={isSmall ? 14 : 11}
-        style={{ color: isOwned ? "#A69D92" : "#C4BEB7" }}
       />
       {!isSmall && (isOwned ? "보유중" : "보유추가")}
     </button>
@@ -214,19 +221,7 @@ function CompareButton({
       className={`flex items-center justify-center cursor-pointer transition-all active:scale-[0.97] shrink-0 ${
         isSmall ? "h-7 w-9 rounded-[6px]" : "h-8 px-2.5 rounded-[6px]"
       }`}
-      style={
-        isInCompare
-          ? {
-              border: "1px solid #A69D92",
-              backgroundColor: "#F2EFE9",
-              color: "#6B6258",
-            }
-          : {
-              border: "1px solid #E8E4DF",
-              backgroundColor: "#FFFFFF",
-              color: "#C4BEB7",
-            }
-      }
+      style={isInCompare ? ACTION_BUTTON_ACTIVE : ACTION_BUTTON_INACTIVE}
       title={isInCompare ? "비교 선택됨" : "비교하기"}
     >
       <Scale size={isSmall ? 14 : 15} />

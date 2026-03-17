@@ -3,6 +3,26 @@
 // ── 스타일 상수 ──────────────────────────────────────────────────────
 const SCORE_RING_TRACK_COLOR = "var(--color-border-subtle)";
 const SCORE_RING_SIZE = { width: 56, height: 56 };
+// 제품 이미지(emoji) 영역 — 80×80 (step code 배지의 2배)
+const ROUTINE_PRODUCT_IMAGE_STYLE = {
+  width: "80px",
+  height: "80px",
+  borderRadius: "16px",
+  backgroundColor: "var(--color-bg-muted-warm)",
+  fontSize: "36px",
+  display: "flex" as const,
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+};
+const ROUTINE_PLUS_MINUS_BTN = {
+  width: "28px",
+  height: "28px",
+  borderRadius: "50%",
+  backgroundColor: "var(--color-bg-muted-warm)",
+  border: "none",
+};
+const REASON_TEXT_STYLE = { fontSize: "13px", lineHeight: 1.6 };
 const ROUTINE_HEADER_BTN_STYLE = {
   fontSize: "12px",
   padding: "5px 10px",
@@ -100,8 +120,7 @@ export default function RoutineTab({
             {filledCount}/6단계 완성 · 길게 눌러 순서 변경
           </p>
         </div>
-        {/* shrink-0: 버튼 3개가 항상 1줄로 유지되도록 수축 방지 */}
-        <div className="flex gap-1.5 shrink-0">
+        <div className="flex gap-1.5">
           {/* 초기화 — ⚠️ API 연동 시 루틴 초기화 API 호출로 교체 */}
           <button
             onClick={clearRoutine}
@@ -115,14 +134,14 @@ export default function RoutineTab({
             className="flex items-center gap-1 font-medium border border-border text-text-secondary cursor-pointer bg-transparent"
             style={ROUTINE_HEADER_BTN_STYLE}
           >
-            OCR
+            ⇄ OCR
           </button>
           {/* 저장 */}
           <button
             className="flex items-center gap-1 font-medium border border-border text-text-secondary cursor-pointer bg-transparent"
             style={ROUTINE_HEADER_BTN_STYLE}
           >
-            저장
+            📋 저장
           </button>
         </div>
       </div>

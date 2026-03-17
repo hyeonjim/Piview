@@ -17,6 +17,7 @@ import CompareModal, {
 } from "@/components/common/CompareModal";
 import { useToast, useCompare } from "@/hooks";
 import { MOCK_RECOMMEND } from "@/constants/_mock/recommend";
+import { useOwnedStore } from "@/stores/useOwnedStore";
 
 const PAGE_SIZE = 12;
 
@@ -31,8 +32,9 @@ export default function RecommendPage() {
 
   // 제품별 루틴추가 상태 — ⚠️ API 연동 시 서버 상태로 교체
   const [routineMap, setRoutineMap] = useState<Record<string, boolean>>({});
-  // 제품별 보유 상태 — ⚠️ API 연동 시 서버 상태로 교체
-  const [ownedMap, setOwnedMap] = useState<Record<string, boolean>>({});
+  // 보유 상태 — 전역 store로 마이페이지와 공유 (search 페이지와 동일)
+  const { toggleOwned, ownedProducts } = useOwnedStore();
+  const isOwned = (id: string) => ownedProducts.some((p) => p.id === id);
 
   const { toastMessage } = useToast();
 
@@ -99,10 +101,6 @@ export default function RecommendPage() {
 
   const handleAddRoutine = (productId: string) => {
     setRoutineMap((prev) => ({ ...prev, [productId]: true }));
-  };
-
-  const handleToggleOwned = (productId: string) => {
-    setOwnedMap((prev) => ({ ...prev, [productId]: !prev[productId] }));
   };
 
   /** 비교 토글 — 2개 선택 완료 시 모달 자동 오픈 */
@@ -327,8 +325,8 @@ export default function RecommendPage() {
                 showActions={true}
                 inRoutine={routineMap[product.id] ?? false}
                 onAddRoutine={() => handleAddRoutine(product.id)}
-                isOwned={ownedMap[product.id] ?? false}
-                onToggleOwned={() => handleToggleOwned(product.id)}
+                isOwned={isOwned(product.id)}
+                onToggleOwned={() => toggleOwned(product)}
                 isInCompare={compareItems.some(
                   (item) => item.id === product.id,
                 )}

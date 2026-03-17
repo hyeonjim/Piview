@@ -17,7 +17,7 @@ import {
 import { useUserStore, selectSkinType } from "@/stores/useUserStore";
 import { useOwnedStore } from "@/stores/useOwnedStore";
 import { authService } from "@/services/auth";
-import type { SearchProduct } from "@/constants/_mock/searchProducts";
+import type { OwnedProduct } from "@/stores/useOwnedStore";
 
 export default function MyPage() {
   const router = useRouter();
@@ -79,11 +79,11 @@ export default function MyPage() {
   // 보유제품 — 전역 store로 검색/추천 페이지와 공유
   const { ownedProducts, removeOwned } = useOwnedStore();
   // 피해야 할 제품 — ⚠️ API 연동 시 서버 상태로 교체
-  const [avoidProducts, setAvoidProducts] = useState<SearchProduct[]>([]);
+  const [avoidProducts, setAvoidProducts] = useState<OwnedProduct[]>([]);
   const [openAvoidModal, setOpenAvoidModal] = useState(false);
   const [avoidSearch, setAvoidSearch] = useState("");
 
-  const handleToggleAvoid = (product: SearchProduct) => {
+  const handleToggleAvoid = (product: OwnedProduct) => {
     setAvoidProducts((prev) =>
       prev.some((p) => p.id === product.id)
         ? prev.filter((p) => p.id !== product.id)

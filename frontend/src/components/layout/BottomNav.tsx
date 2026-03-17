@@ -27,18 +27,16 @@ export default function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-center">
-      {/* 외부 컨테이너 — safe area padding으로 Android 제스처 내비게이션 바 위로 밀어올림 */}
       <div
-        className="w-full"
+        className="w-full flex items-center relative"
         style={{
           maxWidth: "500px",
+          height: "56px",
           backgroundColor: "#FDFCFB",
           borderTop: "1px solid #E2DDD8",
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
       >
-      {/* 내부 탭바 — 항상 56px 고정 높이, 아이콘 탭 영역 보장 */}
-      <div className="w-full flex items-center relative" style={{ height: "56px" }}>
         {TABS.map((tab) => {
           const isActive  = activeTab === tab.id;
           const isHome    = tab.id === "home";
@@ -123,7 +121,6 @@ export default function BottomNav() {
             </button>
           );
         })}
-      </div>
       </div>
     </nav>
   );
