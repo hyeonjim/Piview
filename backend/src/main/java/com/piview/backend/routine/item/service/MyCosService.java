@@ -2,9 +2,8 @@ package com.piview.backend.routine.item.service;
 
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
-import com.piview.backend.product.catalog.repository.ProductSearchRepository;
-import com.piview.backend.product.entity.Product;
 import com.piview.backend.product.catalog.repository.ProductRepository;
+import com.piview.backend.product.entity.Product;
 import com.piview.backend.routine.item.dto.MyCosCreateRequestDto;
 import com.piview.backend.routine.item.dto.MyCosResponseDto;
 import com.piview.backend.routine.item.entity.MyCos;
@@ -24,7 +23,7 @@ public class MyCosService {
 
     private final MyCosRepository myCosRepository;
     private final UserRepository userRepository;
-    private final ProductSearchRepository productSearchRepository;
+    private final ProductRepository productRepository;
     // 보유 제품 조회해서 list로 반환
     public List<MyCosResponseDto> getMyCosList(Long userId) {
         // 1. 레포지토리에서 Fetch Join이 적용된 쿼리 호출
@@ -54,7 +53,7 @@ public class MyCosService {
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 상품 유효성 검사 및 엔티티 조회
-        Product product = productSearchRepository.findById(requestDto.productId())
+        Product product = productRepository.findById(requestDto.productId())
             .orElseThrow(() -> new CustomException(ErrorCode.COSMETICS_NOT_FOUND));
 
         // 중복 저장 방지: 이미 보관함에 있는 상품이면 409 에러 발생

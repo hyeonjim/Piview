@@ -1,0 +1,31 @@
+package com.piview.backend.product.catalog.dto;
+
+import com.piview.backend.product.entity.SkinTypeEnum;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.util.List;
+
+@Getter
+@Builder
+public class ProductSearchCondition {
+
+    private String q;   // 제품명, 브랜드 통합 검색
+
+    private Integer bigCategoryId;
+    private Long categoryId;
+//    private String skinType;
+    private SkinTypeEnum skinType;
+    private List<Long> tagIds;
+    private List<Long> brandIds;
+    private Integer minPrice;
+    private Integer maxPrice;
+
+    @Builder.Default
+    private int page = 0;
+
+    @Builder.Default
+    private int size = 10;
+
+
+}
