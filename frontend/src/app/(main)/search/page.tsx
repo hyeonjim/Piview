@@ -37,7 +37,8 @@ export default function SearchPage() {
   // 제품별 루틴추가 상태 — ⚠️ API 연동 시 서버 상태로 교체
   const [routineMap, setRoutineMap]     = useState<Record<string, boolean>>({});
   // 보유 상태 — 전역 store로 마이페이지와 공유
-  const { toggleOwned, isOwned } = useOwnedStore();
+  const { toggleOwned, ownedProducts } = useOwnedStore();
+  const isOwned = (id: string) => ownedProducts.some((p) => p.id === id);
 
   const { toastMessage } = useToast();
 
