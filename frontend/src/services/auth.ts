@@ -10,13 +10,14 @@ import type { User } from "@/types/user";
 export const authService = {
   /**
    * 로그인 후 유저 정보 조회
-   * ⚠️ /users/me API 미구현 — 연동 시 주석 해제
+   * /oauth/callback 페이지에서 호출
    */
-  getMe: () => client.get<User>("/users/me").then((response) => response.data),
+  getMe: () =>
+    client.get<User>("/api/v1/users/me").then((response) => response.data),
 
   /**
    * 로그아웃
    * 백엔드가 httpOnly 쿠키를 maxAge=0으로 만료 처리
    */
-  logout: () => client.post("/auth/logout"),
+  logout: () => client.post("/api/v1/auth/logout"),
 };
