@@ -52,8 +52,8 @@ import type { OwnedProduct } from "@/stores/useOwnedStore";
 
 interface OwnedTabProps {
   routine: Record<string, LocalProduct[]>;
-  ownedProducts: SearchProduct[];
-  avoidProducts: SearchProduct[];
+  ownedProducts: OwnedProduct[];
+  avoidProducts: OwnedProduct[];
   onRemoveOwned: (id: string) => void;
   onRemoveAvoid: (id: string) => void;
   onOpenAvoidModal: () => void;

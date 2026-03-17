@@ -60,7 +60,7 @@ export default function HomePage() {
           {greeting.icon}
           <span
             style={{
-              fontSize: "11px",
+              fontSize: "16px",
               fontWeight: 400,
               color: "#B0A99F",
               letterSpacing: "0.12em",
@@ -75,8 +75,9 @@ export default function HomePage() {
 
         <h1
           style={{
-            margin: 0,
-            fontSize: "26px",
+            marginTop: "10px",
+            marginBottom: "5px",
+            fontSize: "22px",
             fontWeight: 700,
             color: "#1C1C1E",
             letterSpacing: "-0.5px",
@@ -155,7 +156,6 @@ export default function HomePage() {
             }}
           >
             <div className="flex items-center gap-2">
-              <Leaf size={14} style={{ color: "#A69D92" }} />
               <span style={{ fontSize: "14px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.2px", fontFamily: "var(--font-pretendard), sans-serif" }}>
                 나의 메인루틴
               </span>
@@ -191,14 +191,11 @@ export default function HomePage() {
                   </span>
                   <span style={{ fontSize: "20px", width: "28px", textAlign: "center", flexShrink: 0 }}>{product.emoji}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: "10px", color: "#A69D92", fontWeight: 500, letterSpacing: "0.03em", fontFamily: "var(--font-pretendard), sans-serif" }}>
+                    <p style={{ margin: 0, fontSize: "12px", color: "#A69D92", fontWeight: 500, letterSpacing: "0.03em", fontFamily: "var(--font-pretendard), sans-serif" }}>
                       {step.label}
                     </p>
-                    <p style={{ margin: "1px 0 0", fontSize: "13px", fontWeight: 600, color: "#2A2118", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "var(--font-pretendard), sans-serif" }}>
+                    <p style={{ margin: "1px 0 0", fontSize: "16px", fontWeight: 600, color: "#2A2118", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "var(--font-pretendard), sans-serif" }}>
                       {product.name}
-                    </p>
-                    <p style={{ margin: 0, fontSize: "11px", color: "#BFB6AA", textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: "var(--font-pretendard), sans-serif" }}>
-                      {product.brand}
                     </p>
                   </div>
                 </div>
@@ -239,8 +236,8 @@ export default function HomePage() {
       {/* ── Skincare Tips ─────────────────────────────────── */}
       <div style={{ padding: "20px 16px 24px" }}>
         {/* 섹션 타이틀 */}
-        <div className="flex items-baseline gap-2" style={{ marginBottom: "12px" }}>
-          <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.3px", fontFamily: "var(--font-pretendard), sans-serif" }}>
+        <div className="flex items-baseline gap-2" style={{ marginBottom: "15px" }}>
+          <h2 style={{fontSize: "16px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.3px", fontFamily: "var(--font-pretendard), sans-serif" }}>
             Skincare Tips
           </h2>
         </div>
