@@ -322,6 +322,30 @@ export function getMockProductById(id: string): ProductDetailFull {
       skinType1: fromSearch.skinType1,
       skinType2: fromSearch.skinType2,
       concerns: fromSearch.concerns,
+      // ✅ searchProducts에 있는 price/ewg 그대로 유지
+      price: fromSearch.price,
+      ewg: {
+        ...MOCK_PRODUCT_DETAIL.ewg,
+        safe: fromSearch.ewgSafe,
+        caution: fromSearch.ewgCaution,
+        danger: fromSearch.ewgDanger,
+        total:
+          fromSearch.ewgSafe + fromSearch.ewgCaution + fromSearch.ewgDanger,
+        unknown: Math.max(
+          0,
+          MOCK_PRODUCT_DETAIL.ewg.total -
+            fromSearch.ewgSafe -
+            fromSearch.ewgCaution -
+            fromSearch.ewgDanger,
+        ),
+        safePercent: Math.round(
+          (fromSearch.ewgSafe /
+            (fromSearch.ewgSafe +
+              fromSearch.ewgCaution +
+              fromSearch.ewgDanger || 1)) *
+            100,
+        ),
+      },
     };
   }
 

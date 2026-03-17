@@ -26,6 +26,11 @@ export interface LocalProduct {
   skinTypes: string[];
   effects: string[];
   matchScore: number;
+  // ⚠️ API 연동 시 서버 값으로 교체
+  price?: number;
+  ewgSafe?: number;
+  ewgCaution?: number;
+  ewgDanger?: number;
 }
 
 // 루틴 스텝 코드 → 제품 배열 매핑 (스텝당 여러 제품 허용)
@@ -79,6 +84,18 @@ export const useLocalRoutineStore = create<LocalRoutineStore>()(
       name: "piview-routine",
       storage: createJSONStorage(() => localStorage),
       skipHydration: true,
-    }
-  )
+      // persist 복원 시 null로 저장된 스텝을 빈 배열로 정규화
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<LocalRoutineStore>;
+        if (!persisted.routine) return { ...currentState, ...persisted };
+        const normalizedRoutine = Object.fromEntries(
+          Object.entries(persisted.routine).map(([code, products]) => [
+            code,
+            Array.isArray(products) ? products.filter(Boolean) : [],
+          ]),
+        );
+        return { ...currentState, ...persisted, routine: normalizedRoutine };
+      },
+    },
+  ),
 );
