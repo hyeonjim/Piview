@@ -29,7 +29,10 @@ public enum ErrorCode {
 
     // 500 INTERNAL_SERVER_ERROR
     AI_TEXT_EXTRACTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AI 서버에서 텍스트 추출에 실패했습니다."),
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
+
+    // S3 업로드 오류
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드 과정에서 오류가 발생했습니다.");
 
     private final HttpStatus status;
     private final String message;
