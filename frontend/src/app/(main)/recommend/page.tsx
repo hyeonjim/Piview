@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, SlidersHorizontal, Scale } from "lucide-react";
+import { Sparkles, Search, SlidersHorizontal } from "lucide-react";
 import { MAIN_CATEGORIES, BRANDS } from "@/constants/productCategories";
 import { DEFAULT_FILTER } from "@/constants/filterDefaults";
 import { FilterModal } from "@/components/common/FilterModal";
@@ -12,42 +12,23 @@ import { Pagination } from "@/components/common/Pagination";
 import { Toast } from "@/components/common/Toast";
 import EmptyState from "@/components/common/EmptyState";
 import SearchBar from "@/components/common/SearchBar";
-import CompareModal, {
-  type CompareProduct,
-} from "@/components/common/CompareModal";
-import { useToast, useCompare } from "@/hooks";
+import { useToast } from "@/hooks";
+import { useLike } from "@/hooks/useLike";
 import { MOCK_RECOMMEND } from "@/constants/_mock/recommend";
-import { useOwnedStore } from "@/stores/useOwnedStore";
 
 const PAGE_SIZE = 12;
 
 export default function RecommendPage() {
   // 초기값: 스킨케어 대분류 + 스킨/토너 소분류 고정
   const [selectedMain, setSelectedMain] = useState<string | null>("스킨케어");
-  const [selectedSub, setSelectedSub] = useState<string | null>("스킨/토너");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(1);
-  const [showFilter, setShowFilter] = useState(false);
-  const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER);
+  const [selectedSub, setSelectedSub]   = useState<string | null>("스킨/토너");
+  const [searchQuery, setSearchQuery]   = useState("");
+  const [page, setPage]                 = useState(1);
+  const [showFilter, setShowFilter]     = useState(false);
+  const [filter, setFilter]             = useState<FilterState>(DEFAULT_FILTER);
 
-  // 제품별 루틴추가 상태 — ⚠️ API 연동 시 서버 상태로 교체
-  const [routineMap, setRoutineMap] = useState<Record<string, boolean>>({});
-  // 보유 상태 — 전역 store로 마이페이지와 공유 (search 페이지와 동일)
-  const { toggleOwned, ownedProducts } = useOwnedStore();
-  const isOwned = (id: string) => ownedProducts.some((p) => p.id === id);
-
+  const { toggleLike, isLiked } = useLike();
   const { toastMessage } = useToast();
-
-  // 비교 선택/모달 상태를 페이지 단위로 관리
-  const {
-    compareItems,
-    showCompare,
-    toggleCompare,
-    clearCompare,
-    openCompare,
-    closeCompare,
-    canCompare,
-  } = useCompare<CompareProduct>();
 
   const filterCount =
     (filter.filterSkin ? 1 : 0) +
@@ -60,140 +41,93 @@ export default function RecommendPage() {
     if (searchQuery.trim()) {
       const keyword = searchQuery.toLowerCase();
       list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(keyword) ||
-          p.brand.toLowerCase().includes(keyword),
+        (p) => p.name.toLowerCase().includes(keyword) || p.brand.toLowerCase().includes(keyword),
       );
     }
     if (selectedSub) {
       list = list.filter((p) => p.category === selectedSub);
     } else if (selectedMain) {
-      list = list.filter((p) =>
-        (MAIN_CATEGORIES[selectedMain] ?? []).includes(p.category),
-      );
+      list = list.filter((p) => (MAIN_CATEGORIES[selectedMain] ?? []).includes(p.category));
     }
-    if (filter.filterSkin)
-      list = list.filter((p) => p.skinTypes.includes(filter.filterSkin!));
-    if (filter.filterFns.size > 0)
-      list = list.filter((p) =>
-        [...filter.filterFns].some((e) => p.effects.includes(e)),
-      );
-    if (filter.filterBrands.size > 0)
-      list = list.filter((p) => filter.filterBrands.has(p.brand));
+    if (filter.filterSkin) list = list.filter((p) => p.skinTypes.includes(filter.filterSkin!));
+    if (filter.filterFns.size > 0) list = list.filter((p) => [...filter.filterFns].some((e) => p.effects.includes(e)));
+    if (filter.filterBrands.size > 0) list = list.filter((p) => filter.filterBrands.has(p.brand));
     return [...list].sort((a, b) => b.matchScore - a.matchScore);
   }, [selectedMain, selectedSub, searchQuery, filter]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const handleSearchChange = (v: string) => {
-    setSearchQuery(v);
-    setPage(1);
-  };
-  const handleMainSelect = (m: string | null) => {
-    setSelectedMain(m);
-    setPage(1);
-  };
-  const handleSubSelect = (s: string | null) => {
-    setSelectedSub(s);
-    setPage(1);
-  };
-
-  const handleAddRoutine = (productId: string) => {
-    setRoutineMap((prev) => ({ ...prev, [productId]: true }));
-  };
-
-  /** 비교 토글 — 2개 선택 완료 시 모달 자동 오픈 */
-  const handleToggleCompare = (product: CompareProduct) => {
-    const isAlreadySelected = compareItems.some(
-      (item) => item.id === product.id,
-    );
-    toggleCompare(product);
-    if (!isAlreadySelected && compareItems.length === 1) {
-      openCompare();
-    }
-  };
+  const handleSearchChange = (v: string) => { setSearchQuery(v); setPage(1); };
+  const handleMainSelect = (m: string | null) => { setSelectedMain(m); setPage(1); };
+  const handleSubSelect  = (s: string | null) => { setSelectedSub(s);  setPage(1); };
 
   return (
-    <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
+    <div style={{ minHeight: "100%", backgroundColor: "#F5F2EC" }}>
       <Toast msg={toastMessage} />
 
-      {/* 비교 모달 — 2개 선택 완료 후 표시 */}
-      {showCompare && canCompare && (
-        <CompareModal
-          compareItems={compareItems as [CompareProduct, CompareProduct]}
-          onClose={closeCompare}
-        />
-      )}
-
       {/* ── 상단 헤더 ────────────────────────────────────── */}
-      <div
-        style={{
-          backgroundColor: "#F5F2EC",
-          borderBottom: "1px solid #E2DDD8",
-          paddingTop: "5px",
-        }}
-      >
-        <div style={{ padding: "16px 16px 12px" }}>
-          <h1
-            style={{
-              margin: "3px 0 12px",
-              fontSize: "22px",
-              fontWeight: 700,
-              color: "#2A2118",
-              letterSpacing: "-0.4px",
-              lineHeight: 1.2,
-            }}
-          >
-            맞춤 추천
-          </h1>
-
-          {/* 검색바 + 필터 버튼 한 줄 */}
-          <div className="flex items-center gap-5">
-            <div className="flex-1">
-              <SearchBar
-                value={searchQuery}
-                onChange={handleSearchChange}
-                placeholder="제품명, 브랜드 검색..."
-              />
-            </div>
-
-            {/* 필터 버튼 — 검색바 오른쪽 끝 */}
-            <button
-              onClick={() => setShowFilter(true)}
-              className="flex items-center gap-1.5 cursor-pointer border transition-all active:scale-[0.96] shrink-0"
+      <div style={{ backgroundColor: "#F5F2EC", borderBottom: "1px solid #E2DDD8", paddingTop: "56px" }}>
+        <div className="flex items-end justify-between" style={{ padding: "16px 16px 12px" }}>
+          <div>
+            <p
               style={{
-                height: "38px",
-                padding: "0 12px",
-                borderRadius: "10px",
-                fontSize: "14px",
-                fontWeight: 500,
-                borderColor: filterCount > 0 ? "#A69D92" : "#E2DDD8",
-                backgroundColor: filterCount > 0 ? "#A69D92" : "#FFFFFF",
-                color: filterCount > 0 ? "#FFFFFF" : "#8A8278",
+                margin: 0,
+                fontSize: "10px",
+                color: "#BFB6AA",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                fontFamily: "var(--font-cormorant), serif",
+                fontStyle: "italic",
               }}
             >
-              <SlidersHorizontal size={13} />
-              필터
-              {filterCount > 0 && (
-                <span
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "16px",
-                    height: "16px",
-                    borderRadius: "50%",
-                    backgroundColor: "rgba(255,255,255,0.25)",
-                    fontSize: "10px",
-                    fontWeight: 700,
-                  }}
-                >
-                  {filterCount}
-                </span>
-              )}
-            </button>
+              Curated For You
+            </p>
+            <h1
+              style={{
+                margin: "3px 0 0",
+                fontSize: "22px",
+                fontWeight: 700,
+                color: "#2A2118",
+                letterSpacing: "-0.4px",
+                lineHeight: 1.2,
+                fontFamily: "var(--font-pretendard), sans-serif",
+              }}
+            >
+              맞춤 추천
+            </h1>
+            <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#BFB6AA" }}>
+              내 피부 타입에 맞는 제품
+            </p>
           </div>
+
+          {/* 필터 버튼 — 활성 시 베이지-5 accent */}
+          <button
+            onClick={() => setShowFilter(true)}
+            className="flex items-center gap-1.5 cursor-pointer border transition-all active:scale-[0.96]"
+            style={{
+              height: "34px",
+              padding: "0 12px",
+              borderRadius: "6px",
+              fontSize: "12px",
+              fontWeight: 500,
+              borderColor: filterCount > 0 ? "#A69D92" : "#E2DDD8",
+              backgroundColor: filterCount > 0 ? "#A69D92" : "#FFFFFF",
+              color: filterCount > 0 ? "#FFFFFF" : "#8A8278",
+            }}
+          >
+            <SlidersHorizontal size={13} />
+            필터
+            {filterCount > 0 && (
+              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "16px", height: "16px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.25)", fontSize: "10px", fontWeight: 700 }}>
+                {filterCount}
+              </span>
+            )}
+          </button>
+        </div>
+
+        <div style={{ padding: "0 16px 12px" }}>
+          <SearchBar value={searchQuery} onChange={handleSearchChange} placeholder="제품명, 브랜드 검색..." />
         </div>
       </div>
 
@@ -205,115 +139,18 @@ export default function RecommendPage() {
         onSubSelect={handleSubSelect}
       />
 
-      {/* ── 비교 선택 힌트 바 — 1개 선택 시 표시 ──────────── */}
-      {compareItems.length === 1 && (
-        <div
-          className="flex items-center justify-between mx-4 mt-3 px-3 py-2.5 rounded-xl"
-          style={{ backgroundColor: "#F2EFE9", border: "1px solid #D9D5D0" }}
-        >
-          <div className="flex items-center gap-2">
-            <Scale size={13} style={{ color: "#8A8278" }} />
-            <span
-              style={{ fontSize: "12px", color: "#6B6258", fontWeight: 500 }}
-            >
-              비교할 제품을 1개 더 선택하세요
-            </span>
-          </div>
-          <button
-            onClick={clearCompare}
-            style={{
-              fontSize: "11px",
-              color: "#A69D92",
-              border: "none",
-              background: "none",
-              cursor: "pointer",
-            }}
-          >
-            취소
-          </button>
-        </div>
-      )}
-
-      {/* 2개 선택 완료 시 비교하기 버튼 바 */}
-      {canCompare && (
-        <div
-          className="flex items-center justify-between mx-4 mt-3 px-3 py-2.5 rounded-xl"
-          style={{ backgroundColor: "#3D3028" }}
-        >
-          <div className="flex items-center gap-2">
-            <Scale size={13} style={{ color: "#F2EFE9" }} />
-            <span
-              style={{ fontSize: "12px", color: "#F2EFE9", fontWeight: 500 }}
-            >
-              2개 제품 선택 완료
-            </span>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={clearCompare}
-              style={{
-                fontSize: "11px",
-                color: "#BFB6AA",
-                border: "none",
-                background: "none",
-                cursor: "pointer",
-              }}
-            >
-              취소
-            </button>
-            <button
-              onClick={openCompare}
-              style={{
-                fontSize: "12px",
-                fontWeight: 700,
-                color: "#3D3028",
-                backgroundColor: "#F2EFE9",
-                border: "none",
-                borderRadius: "6px",
-                padding: "4px 10px",
-                cursor: "pointer",
-              }}
-            >
-              비교하기
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* ── 제품 그리드 ─────────────────────────────────── */}
-      <div style={{ padding: "12px 16px 24px" }}>
+      <div style={{ padding: "16px 16px 24px" }}>
         {filtered.length === 0 ? (
-          <div
-            style={{
-              backgroundColor: "#FFFFFF",
-              borderRadius: "12px",
-              border: "1px solid #E2DDD8",
-              marginTop: "8px",
-            }}
-          >
-            <EmptyState
-              icon={Search}
-              title="해당하는 제품이 없어요"
-              description="검색어나 필터를 바꿔보세요"
-            />
+          <div style={{ backgroundColor: "#FFFFFF", borderRadius: "12px", border: "1px solid #E2DDD8", marginTop: "8px" }}>
+            <EmptyState icon={Search} title="해당하는 제품이 없어요" description="검색어나 필터를 바꿔보세요" />
           </div>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "24px",
-            }}
-          >
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
             {paginated.map((product) => (
               <ProductCard
                 key={product.id}
                 id={product.id}
-                href={
-                  product.reason
-                    ? `/product/${product.id}?reason=${encodeURIComponent(product.reason)}`
-                    : undefined
-                }
                 brand={product.brand}
                 name={product.name}
                 category={product.category}
@@ -321,25 +158,9 @@ export default function RecommendPage() {
                 skinTypes={product.skinTypes}
                 effects={product.effects}
                 isRecommended={!!product.reason}
+                liked={isLiked(product.id)}
+                onLike={() => toggleLike(product.id)}
                 layout="grid"
-                showActions={true}
-                inRoutine={routineMap[product.id] ?? false}
-                onAddRoutine={() => handleAddRoutine(product.id)}
-                isOwned={isOwned(product.id)}
-                onToggleOwned={() => toggleOwned(product)}
-                isInCompare={compareItems.some(
-                  (item) => item.id === product.id,
-                )}
-                onToggleCompare={() =>
-                  handleToggleCompare({
-                    id: product.id,
-                    name: product.name,
-                    brand: product.brand,
-                    emoji: product.emoji,
-                    skinTypes: product.skinTypes,
-                    effects: product.effects,
-                  })
-                }
               />
             ))}
           </div>

@@ -3,10 +3,8 @@
  * 카카오 OAuth 콜백 처리 페이지
  *
  * 플로우:
- * 1. 백엔드가 이 URL로 리다이렉트 (?token=xxx)
- * 2. URL 쿼리 파라미터에서 accessToken 꺼내기
- * 3. Zustand에 저장
- * 4. /home으로 이동
+ * 백엔드 → 이 URL로 리다이렉트 (/oauth/callback?success=true)
+ * → 유저 정보 fetch → Zustand store 저장 → /home 이동
  *
  * ⚠️ Route Group 밖에 위치해야 함 (백엔드 리다이렉트 URL 고정)
  */
@@ -15,6 +13,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { authService } from "@/services/auth";
 import { useUserStore } from "@/stores/useUserStore";
 
 export default function OAuthCallbackPage() {
@@ -23,29 +22,16 @@ export default function OAuthCallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // 1. URL 쿼리 파라미터에서 token 꺼내기 (?token=xxx)
-        const params = new URLSearchParams(window.location.search);
-        const accessToken = params.get("token");
+        // authService.getMe()가 실제 BE 호출로 교체 완료
+        const user = await authService.getMe();
+        useUserStore.getState().setUser(user);
 
-        if (!accessToken) {
-          // token이 없으면 인증 실패
-          router.replace("/welcome");
-          return;
+        // 신규 유저 (피부타입 미설정)는 skin-test로, 기존 유저는 home으로
+        if (!user.mySkinType) {
+          router.replace("/skin-test");
+        } else {
+          router.replace("/home");
         }
-
-        // 2. Zustand에 저장 (이후 모든 API 요청 헤더에 자동 주입됨)
-        useUserStore.getState().setAccessToken(accessToken);
-
-        // 3. ⚠️ /users/me API 연동 전까지 바로 home으로 이동
-        // TODO: API 연동 시 아래 주석 해제 후 router.replace("/home") 제거
-        // const user = await authService.getMe();
-        // useUserStore.getState().setUser(user);
-        // if (!user.mySkinType) {
-        //   router.replace("/skin-test");
-        // } else {
-        //   router.replace("/home");
-        // }
-        router.replace("/home");
       } catch {
         // 인증 실패 → welcome 페이지로 복귀
         router.replace("/welcome");

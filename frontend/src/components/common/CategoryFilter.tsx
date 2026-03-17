@@ -39,19 +39,19 @@ export function CategoryFilter({
             <button
               key={main}
               onClick={() => {
-                if (!isActive) {
-                  // 새 대분류 선택 → 첫 번째 소분류 자동 선택
+                if (isActive) {
+                  onMainSelect(null);
+                  onSubSelect(null);
+                } else {
                   onMainSelect(main);
-                  const firstSubCategory = MAIN_CATEGORIES[main]?.[0] ?? null;
-                  onSubSelect(firstSubCategory);
+                  onSubSelect(null);
                 }
-                // 같은 대분류 재클릭 → 무시 (항상 선택 유지)
               }}
               className="shrink-0 cursor-pointer border-none bg-transparent relative"
               style={{
                 height: "44px",
                 padding: "0 14px",
-                fontSize: "16px",
+                fontSize: "13px",
                 fontWeight: isActive ? 600 : 400,
                 // 활성 시 검정 대신 웜 브라운 계열
                 color: isActive ? "#6B5445" : "#A8A39D",
@@ -59,9 +59,7 @@ export function CategoryFilter({
                 letterSpacing: "0.01em",
                 transition: "color 0.15s",
                 // 활성 하단 선 — 웜 브라운
-                borderBottom: isActive
-                  ? "2px solid #6B5445"
-                  : "2px solid transparent",
+                borderBottom: isActive ? "2px solid #6B5445" : "2px solid transparent",
                 marginBottom: "-1px",
               }}
             >
@@ -88,16 +86,14 @@ export function CategoryFilter({
             return (
               <button
                 key={sub}
-                onClick={() => {
-                  if (!isActive) onSubSelect(sub);
-                }}
+                onClick={() => onSubSelect(isActive ? null : sub)}
                 className="cursor-pointer border transition-all"
                 style={{
                   height: "30px",
                   padding: "0 12px",
                   borderRadius: "20px",
-                  fontSize: "13px",
-                  fontWeight: isActive ? 400 : 400,
+                  fontSize: "12px",
+                  fontWeight: isActive ? 600 : 400,
                   fontFamily: "var(--font-pretendard), sans-serif",
                   letterSpacing: "0.01em",
                   ...(isActive

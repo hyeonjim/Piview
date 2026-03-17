@@ -33,6 +33,7 @@ const STEP_CATEGORY_CHIPS: Record<string, string[]> = {
 import { useState, useMemo } from "react";
 import { X, Search, Package, Heart, GitCompare } from "lucide-react";
 import {
+  CATEGORY_COLORS,
   SKIN_FUNCTION_COLORS,
   SKIN_TYPE_TAG_COLORS,
 } from "@/constants/categoryColors";
@@ -273,7 +274,7 @@ export default function RoutineAddModal({
                         </div>
                       </div>
 
-                      {/* 전 이유 텍스트 */}
+                      {/* 추천 이유 텍스트 */}
                       {/* ⚠️ API 연동 시 product.reason으로 교체 */}
                       <p className="text-xs text-text-muted mt-3 leading-relaxed">
                         복합성 피부에도 사용 가능하며, 특정 고민 해결에 도움을
