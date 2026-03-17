@@ -42,7 +42,7 @@ public class RoutineDraftController {
     return ResponseEntity.ok().build();
   }
 
-  // redis 조회
+  // 레디스 조회
   @GetMapping
   public ResponseEntity<List<DraftItemDto>> getDraft(
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
@@ -53,7 +53,19 @@ public class RoutineDraftController {
     return ResponseEntity.ok(currentDraft);
   }
 
-  // 레디스 속 정보 삭제
+  // 레디스 속 단일제품 삭제
+  @DeleteMapping("/{productId}")
+  public ResponseEntity<Void> removeProductFromDraft(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @PathVariable Long productId) {
+
+    Long userId = userPrincipal.getId();
+    routineService.removeProductFromDraft(userId, productId);
+
+    return ResponseEntity.ok().build();
+  }
+
+  // 레디스 초기화
   @DeleteMapping
   public ResponseEntity<Void> clearDraft(
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
