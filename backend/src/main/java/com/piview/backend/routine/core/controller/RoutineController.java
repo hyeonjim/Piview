@@ -45,6 +45,7 @@ public class RoutineController {
     return ResponseEntity.ok().build();
   }
 
+  // 메인 루틴 조회
   @GetMapping("/main")
   public ResponseEntity<RoutineResponse> getMainRoutine(
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
