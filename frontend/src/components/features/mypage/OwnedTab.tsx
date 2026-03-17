@@ -47,13 +47,13 @@ import {
   CATEGORY_COLORS,
   SKIN_TYPE_TAG_COLORS,
 } from "@/constants/categoryColors";
+import type { SearchProduct } from "@/constants/_mock/searchProducts";
 import type { LocalProduct } from "@/stores/useLocalRoutineStore";
-import type { OwnedProduct } from "@/stores/useOwnedStore";
 
 interface OwnedTabProps {
   routine: Record<string, LocalProduct | null>;
-  ownedProducts: OwnedProduct[];
-  avoidProducts: OwnedProduct[];
+  ownedProducts: SearchProduct[];
+  avoidProducts: SearchProduct[];
   onRemoveOwned: (id: string) => void;
   onRemoveAvoid: (id: string) => void;
   onOpenAvoidModal: () => void;
@@ -130,9 +130,9 @@ export default function OwnedTab({
                   <p className="truncate text-sm font-semibold text-text-primary">
                     {product.name}
                   </p>
-                  {(product.skinTypes ?? []).length > 0 && (
+                  {product.skinTypes.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {(product.skinTypes ?? []).map((skinType) => {
+                      {product.skinTypes.map((skinType) => {
                         const tc = SKIN_TYPE_TAG_COLORS[skinType];
                         return tc ? (
                           <span
@@ -230,9 +230,9 @@ export default function OwnedTab({
                   <p className="truncate text-sm font-semibold text-text-primary">
                     {product.name}
                   </p>
-                  {(product.skinTypes ?? []).length > 0 && (
+                  {product.skinTypes.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {(product.skinTypes ?? []).map((skinType) => {
+                      {product.skinTypes.map((skinType) => {
                         const tc = SKIN_TYPE_TAG_COLORS[skinType];
                         return tc ? (
                           <span

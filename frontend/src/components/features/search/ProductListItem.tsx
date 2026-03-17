@@ -9,7 +9,7 @@
 
 "use client";
 
-import { Plus, GitCompareArrows, Heart } from "lucide-react";
+import { Plus, Package, GitCompareArrows, Heart } from "lucide-react";
 import Link from "next/link";
 import {
   CATEGORY_COLORS,
@@ -83,6 +83,12 @@ const TAG_BADGE_BASE = {
 const ACTION_BTN_BASE = {
   height: "30px",
   padding: "0 12px",
+  borderRadius: "8px",
+  border: "none",
+};
+const WISH_BTN_STYLE = {
+  height: "30px",
+  padding: "0 10px",
   borderRadius: "8px",
   border: "none",
 };
