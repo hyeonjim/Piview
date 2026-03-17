@@ -11,6 +11,8 @@ import lombok.Getter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 class AnalysisCacheValue {
 
+    // Redis에 저장되는 피부 분석 상태 문서입니다.
+    // PENDING이면 상태만 있고, COMPLETED면 result가 채워지며, FAILED면 errorMessage가 채워집니다.
     private String analysisId;
     private Long userId;
     private SkinAnalysisStatus status;

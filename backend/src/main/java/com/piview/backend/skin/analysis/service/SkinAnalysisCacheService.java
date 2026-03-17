@@ -22,14 +22,17 @@ public class SkinAnalysisCacheService {
     private final RedisService redisService;
     private final ObjectMapper objectMapper;
 
+    // capture 직후 상태를 먼저 저장해 두면, 프론트가 바로 status API를 호출해도 진행 중 상태를 확인할 수 있습니다.
     public void savePending(String analysisId, Long userId) {
         storeAnalysisState(AnalysisCacheValue.pending(analysisId, userId));
     }
 
+    // AI 응답 원본은 이후 surveys API에서 재사용할 예정이라 status와 함께 그대로 캐시에 보관합니다.
     public void saveCompleted(String analysisId, Long userId, JsonNode result) {
         storeAnalysisState(AnalysisCacheValue.completed(analysisId, userId, result));
     }
 
+    // 비동기 작업 실패도 같은 analysisId 문서에 덮어써서 프론트가 동일한 조회 흐름으로 실패 상태를 확인하게 합니다.
     public void saveFailed(String analysisId, Long userId, String errorMessage) {
         storeAnalysisState(AnalysisCacheValue.failed(analysisId, userId, errorMessage));
     }
@@ -57,6 +60,7 @@ public class SkinAnalysisCacheService {
         }
     }
 
+    // Redis에는 analysisId별 JSON 문서 하나만 저장하고, 상태 변화에 따라 같은 키를 계속 덮어씁니다.
     private void storeAnalysisState(AnalysisCacheValue value) {
         try {
             String payload = objectMapper.writeValueAsString(value);
@@ -66,6 +70,7 @@ public class SkinAnalysisCacheService {
         }
     }
 
+    // key 규칙은 고정 prefix + analysisId 형태로 유지해 조회 경로를 단순하게 맞춥니다.
     private String buildKey(String analysisId) {
         return ANALYSIS_KEY_PREFIX + analysisId;
     }
