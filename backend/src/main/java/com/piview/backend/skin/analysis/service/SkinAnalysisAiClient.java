@@ -18,7 +18,7 @@ public class SkinAnalysisAiClient {
     @Value("${fastapi.base-url}")
     private String fastApiBaseUrl;
 
-    // FastAPI /skin/predict 에 multipart/form-data 형태로 이미지를 전달합니다.
+    // 피부 분석은 OCR와 같은 방식으로 multipart 요청을 보내고, AI 응답 본문은 그대로 JsonNode로 받습니다.
     public JsonNode requestSkinAnalysis(byte[] imageBytes, String fileName) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", createImageResource(imageBytes, fileName));
@@ -36,7 +36,7 @@ public class SkinAnalysisAiClient {
         return response;
     }
 
-    // 디스크에 임시 저장하지 않고 메모리에서 바로 multipart 리소스를 만듭니다.
+    // 디스크에 임시 파일을 만들지 않고 메모리의 바이트 배열을 바로 업로드 리소스로 감쌉니다.
     private ByteArrayResource createImageResource(byte[] imageBytes, String fileName) {
         return new ByteArrayResource(imageBytes) {
             @Override
@@ -46,6 +46,7 @@ public class SkinAnalysisAiClient {
         };
     }
 
+    // connect timeout은 짧게, read timeout은 AI 추론 시간을 고려해 조금 더 길게 둡니다.
     private RestClient buildRestClient() {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(3000);

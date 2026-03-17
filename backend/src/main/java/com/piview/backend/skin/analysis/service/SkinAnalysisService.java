@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 @Transactional(readOnly = true)
 public class SkinAnalysisService {
 
+    // 흐름 제어만 담당하고, 실제 Redis 접근과 FastAPI 호출은 분리된 서비스에 위임합니다.
     private final SkinAnalysisCacheService skinAnalysisCacheService;
     private final SkinAnalysisAiClient skinAnalysisAiClient;
 
@@ -71,6 +72,7 @@ public class SkinAnalysisService {
         }
     }
 
+    // FAILED 응답일 때만 errorMessage가 채워지고, PENDING/COMPLETED면 null로 유지됩니다.
     private String readNullableText(JsonNode cachedState, String fieldName) {
         JsonNode node = cachedState.get(fieldName);
         return node == null || node.isNull() ? null : node.asText();
