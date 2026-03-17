@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Providers } from "@/lib/providers";
 import "./globals.css";
@@ -23,13 +23,6 @@ const ridiBatangSerif = localFont({
   display: "swap",
   variable: "--font-cormorant", // 기존 변수명 유지 — 다른 파일 수정 불필요
 });
-
-// Galaxy S24 FE safe area 활성화 — viewport-fit=cover 없으면 env(safe-area-inset-bottom)이 0px 반환
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-};
 
 export const metadata: Metadata = {
   title: "SkinFit",
