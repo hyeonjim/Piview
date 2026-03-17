@@ -1,28 +1,27 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Noto_Serif_KR } from "next/font/google";
 import { Providers } from "@/lib/providers";
 import "./globals.css";
 
-// ── Pretendard — 한국어 본문 폰트 ──────────────────────────────────
-const pretendard = localFont({
-  src: [
-    { path: "../../public/fonts/Pretendard-Regular.subset.woff2",  weight: "400" },
-    { path: "../../public/fonts/Pretendard-Medium.subset.woff2",   weight: "500" },
-    { path: "../../public/fonts/Pretendard-SemiBold.subset.woff2", weight: "600" },
-    { path: "../../public/fonts/Pretendard-Bold.subset.woff2",     weight: "700" },
-  ],
+// ── Google Sans Flex — 영어 본문 폰트 (variable font) ──────────────
+const googleSansFlex = localFont({
+  src: "../../public/fonts/GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf",
   display: "swap",
-  variable: "--font-pretendard",
+  variable: "--font-english",
 });
 
-// ── Noto Serif KR — 한국어 세리프 디스플레이 폰트 ──────────────────
-// 에디토리얼 헤딩, 섹션 타이틀, 브랜드 강조에 사용 (Cormorant 대체)
-const notoSerifKR = Noto_Serif_KR({
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-cormorant", // 기존 변수명 유지 — 다른 파일 수정 불필요
+// ── RIDIBatang — 한국어 바탕 폰트 (본문 + 디스플레이 공용) ─────────
+const ridiBatang = localFont({
+  src: "../../public/fonts/RIDIBatang.otf",
   display: "swap",
-  preload: false, // 한국어 폰트는 용량이 크므로 preload 비활성화
+  variable: "--font-pretendard", // 기존 변수명 유지 — 다른 파일 수정 불필요
+});
+
+// ── RIDIBatang (세리프 디스플레이용 별칭) ─────────────────────────
+const ridiBatangSerif = localFont({
+  src: "../../public/fonts/RIDIBatang.otf",
+  display: "swap",
+  variable: "--font-cormorant", // 기존 변수명 유지 — 다른 파일 수정 불필요
 });
 
 export const metadata: Metadata = {
@@ -32,7 +31,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className={`${pretendard.variable} ${notoSerifKR.variable}`}>
+    <html lang="ko" className={`${googleSansFlex.variable} ${ridiBatang.variable} ${ridiBatangSerif.variable}`}>
       <body>
         <div className="min-h-screen" style={{ backgroundColor: "#F2EFE9" }}>
           <div
