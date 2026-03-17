@@ -17,7 +17,7 @@ import {
 import { useUserStore, selectSkinType } from "@/stores/useUserStore";
 import { useOwnedStore } from "@/stores/useOwnedStore";
 import { authService } from "@/services/auth";
-import type { SearchProduct } from "@/constants/_mock/searchProducts";
+import type { OwnedProduct } from "@/stores/useOwnedStore";
 
 export default function MyPage() {
   const router = useRouter();
@@ -76,11 +76,11 @@ export default function MyPage() {
   // 보유제품 — 전역 store로 검색/추천 페이지와 공유
   const { ownedProducts, removeOwned } = useOwnedStore();
   // 피해야 할 제품 — ⚠️ API 연동 시 서버 상태로 교체
-  const [avoidProducts, setAvoidProducts] = useState<SearchProduct[]>([]);
+  const [avoidProducts, setAvoidProducts] = useState<OwnedProduct[]>([]);
   const [openAvoidModal, setOpenAvoidModal] = useState(false);
   const [avoidSearch, setAvoidSearch] = useState("");
 
-  const handleToggleAvoid = (product: SearchProduct) => {
+  const handleToggleAvoid = (product: OwnedProduct) => {
     setAvoidProducts((prev) =>
       prev.some((p) => p.id === product.id)
         ? prev.filter((p) => p.id !== product.id)
@@ -90,7 +90,6 @@ export default function MyPage() {
 
   return (
     <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
-
       {/* ── 프로필 헤더 — 연한 베이지 그라디언트 배경 ── */}
       <div
         style={{
@@ -132,7 +131,13 @@ export default function MyPage() {
           {/* 유저 정보 */}
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* User님 + 액션 버튼 한 줄 */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               {/* ⚠️ API 연동 시 useUserStore에서 실제 이름으로 교체 */}
               <p
                 style={{
@@ -147,7 +152,14 @@ export default function MyPage() {
               </p>
 
               {/* 액션 버튼들 — 설정 / 로그아웃 */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  flexShrink: 0,
+                }}
+              >
                 <Link href="/mypage/settings">
                   <button
                     style={{
@@ -200,7 +212,14 @@ export default function MyPage() {
                 피부 타입을 진단해보세요
               </p>
             ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "16px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "4px",
+                  marginTop: "16px",
+                }}
+              >
                 {/* 피부타입 태그 */}
                 <span
                   style={{
@@ -251,7 +270,6 @@ export default function MyPage() {
             )}
           </div>
         </div>
-
 
         {/* 피부 설정 미완료 시에만 CTA 버튼 표시 */}
         {!hasSkinProfile && (
@@ -312,7 +330,8 @@ export default function MyPage() {
               color: tab === t ? "#2A2118" : "#BFB6AA",
               background: "none",
               border: "none",
-              borderBottom: tab === t ? "2px solid #A69D92" : "2px solid transparent",
+              borderBottom:
+                tab === t ? "2px solid #A69D92" : "2px solid transparent",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
@@ -325,8 +344,7 @@ export default function MyPage() {
           >
             {t === "routine" ? (
               <>
-                <Leaf size={14} />
-                내 루틴
+                <Leaf size={14} />내 루틴
               </>
             ) : (
               <>

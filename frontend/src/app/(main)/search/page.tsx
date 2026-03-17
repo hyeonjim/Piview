@@ -12,7 +12,9 @@ import { Pagination } from "@/components/common/Pagination";
 import { Toast } from "@/components/common/Toast";
 import EmptyState from "@/components/common/EmptyState";
 import SearchBar from "@/components/common/SearchBar";
-import CompareModal, { type CompareProduct } from "@/components/common/CompareModal";
+import CompareModal, {
+  type CompareProduct,
+} from "@/components/common/CompareModal";
 import { useToast } from "@/hooks";
 import { useCompare } from "@/hooks/useCompare";
 import { useOwnedStore } from "@/stores/useOwnedStore";
@@ -29,15 +31,16 @@ const PRODUCTS = MOCK_SEARCH_PRODUCTS.map((product, index) => ({
 
 export default function SearchPage() {
   const [selectedMain, setSelectedMain] = useState<string | null>("스킨케어");
-  const [selectedSub, setSelectedSub]   = useState<string | null>("스킨/토너");
-  const [searchQuery, setSearchQuery]   = useState("");
-  const [page, setPage]                 = useState(1);
-  const [showFilter, setShowFilter]     = useState(false);
-  const [filter, setFilter]             = useState<FilterState>(DEFAULT_FILTER);
+  const [selectedSub, setSelectedSub] = useState<string | null>("스킨/토너");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [showFilter, setShowFilter] = useState(false);
+  const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER);
   // 제품별 루틴추가 상태 — ⚠️ API 연동 시 서버 상태로 교체
-  const [routineMap, setRoutineMap]     = useState<Record<string, boolean>>({});
+  const [routineMap, setRoutineMap] = useState<Record<string, boolean>>({});
   // 보유 상태 — 전역 store로 마이페이지와 공유
-  const { toggleOwned, isOwned } = useOwnedStore();
+  const { toggleOwned, ownedProducts } = useOwnedStore();
+  const isOwned = (id: string) => ownedProducts.some((p) => p.id === id);
 
   const { toastMessage } = useToast();
 
@@ -76,11 +79,15 @@ export default function SearchPage() {
       );
     }
     if (filter.filterSkin) {
-      list = list.filter((product) => product.skinTypes.includes(filter.filterSkin!));
+      list = list.filter((product) =>
+        product.skinTypes.includes(filter.filterSkin!),
+      );
     }
     if (filter.filterFns.size > 0) {
       list = list.filter((product) =>
-        [...filter.filterFns].some((effectName) => product.effects.includes(effectName)),
+        [...filter.filterFns].some((effectName) =>
+          product.effects.includes(effectName),
+        ),
       );
     }
     if (filter.filterBrands.size > 0) {
@@ -95,18 +102,28 @@ export default function SearchPage() {
     page * PAGE_SIZE,
   );
 
-  const handleSearchChange = (value: string) => { setSearchQuery(value); setPage(1); };
-  const handleMainSelect   = (main: string | null) => { setSelectedMain(main); setPage(1); };
-  const handleSubSelect    = (sub: string | null)  => { setSelectedSub(sub);   setPage(1); };
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setPage(1);
+  };
+  const handleMainSelect = (main: string | null) => {
+    setSelectedMain(main);
+    setPage(1);
+  };
+  const handleSubSelect = (sub: string | null) => {
+    setSelectedSub(sub);
+    setPage(1);
+  };
 
   const handleAddRoutine = (productId: string) => {
     setRoutineMap((prev) => ({ ...prev, [productId]: true }));
   };
 
-
   /** 비교 토글 — 2개 선택 완료 시 모달 자동 오픈 */
   const handleToggleCompare = (product: CompareProduct) => {
-    const isAlreadySelected = compareItems.some((item) => item.id === product.id);
+    const isAlreadySelected = compareItems.some(
+      (item) => item.id === product.id,
+    );
     toggleCompare(product);
     // 추가로 2개가 되는 시점에 모달 오픈
     if (!isAlreadySelected && compareItems.length === 1) {
@@ -127,7 +144,13 @@ export default function SearchPage() {
       )}
 
       {/* ── 상단 헤더 ────────────────────────────────────── */}
-      <div style={{ backgroundColor: "#F5F2EC", borderBottom: "1px solid #E2DDD8", paddingTop: "5px" }}>
+      <div
+        style={{
+          backgroundColor: "#F5F2EC",
+          borderBottom: "1px solid #E2DDD8",
+          paddingTop: "5px",
+        }}
+      >
         <div style={{ padding: "16px 16px 12px" }}>
           <h1
             style={{
@@ -170,17 +193,19 @@ export default function SearchPage() {
               <SlidersHorizontal size={13} />
               필터
               {filterCount > 0 && (
-                <span style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "16px",
-                  height: "16px",
-                  borderRadius: "50%",
-                  backgroundColor: "rgba(255,255,255,0.25)",
-                  fontSize: "10px",
-                  fontWeight: 700,
-                }}>
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "16px",
+                    height: "16px",
+                    borderRadius: "50%",
+                    backgroundColor: "rgba(255,255,255,0.25)",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                  }}
+                >
                   {filterCount}
                 </span>
               )}
@@ -205,7 +230,9 @@ export default function SearchPage() {
         >
           <div className="flex items-center gap-2">
             <Scale size={13} style={{ color: "#8A8278" }} />
-            <span style={{ fontSize: "12px", color: "#6B6258", fontWeight: 500 }}>
+            <span
+              style={{ fontSize: "12px", color: "#6B6258", fontWeight: 500 }}
+            >
               비교할 제품을 1개 더 선택하세요
             </span>
           </div>
@@ -232,7 +259,9 @@ export default function SearchPage() {
         >
           <div className="flex items-center gap-2">
             <Scale size={13} style={{ color: "#F2EFE9" }} />
-            <span style={{ fontSize: "12px", color: "#F2EFE9", fontWeight: 500 }}>
+            <span
+              style={{ fontSize: "12px", color: "#F2EFE9", fontWeight: 500 }}
+            >
               2개 제품 선택 완료
             </span>
           </div>
@@ -271,7 +300,14 @@ export default function SearchPage() {
       {/* ── 제품 그리드 ─────────────────────────────────── */}
       <div style={{ padding: "16px 20px 24px" }}>
         {filteredProducts.length === 0 ? (
-          <div style={{ backgroundColor: "#FFFFFF", borderRadius: "12px", border: "1px solid #E2DDD8", marginTop: "8px" }}>
+          <div
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: "12px",
+              border: "1px solid #E2DDD8",
+              marginTop: "8px",
+            }}
+          >
             <EmptyState
               icon={Search}
               title="해당하는 제품이 없어요"
@@ -279,7 +315,13 @@ export default function SearchPage() {
             />
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "24px",
+            }}
+          >
             {paginatedProducts.map((product) => (
               <ProductCard
                 key={product.id}
@@ -296,7 +338,9 @@ export default function SearchPage() {
                 onAddRoutine={() => handleAddRoutine(product.id)}
                 isOwned={isOwned(product.id)}
                 onToggleOwned={() => toggleOwned(product)}
-                isInCompare={compareItems.some((item) => item.id === product.id)}
+                isInCompare={compareItems.some(
+                  (item) => item.id === product.id,
+                )}
                 onToggleCompare={() =>
                   handleToggleCompare({
                     id: product.id,

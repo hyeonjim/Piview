@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Heart,
   Scale,
+  Sparkles,
 } from "lucide-react";
 import { Toast } from "@/components/common/Toast";
 import { useToast } from "@/hooks";
@@ -46,7 +47,7 @@ function EwgDropIcon({ color }: { color: string }) {
   );
 }
 
-export default function ProductDetailPage() {
+function ProductDetailInner() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -249,10 +250,13 @@ export default function ProductDetailPage() {
         {/* 추천 이유 카드 — 맞춤추천에서 진입 시에만 표시 */}
         {recommendReason && (
           <div className="mx-5 rounded-2xl bg-white p-4 mb-3">
-            <p className="text-[16px] font-bold text-text-primary mb-1.5">
-              추천 이유
-            </p>
-            <p className="text-[13px] text-text-muted leading-[1.6]">
+            <div className="flex items-center gap-2.5 mb-2">
+              <div className="size-7 rounded-full flex items-center justify-center bg-brand-bg shrink-0">
+                <Sparkles size={14} className="text-brand" />
+              </div>
+              <p className="font-semibold text-text-sub">추천 이유</p>
+            </div>
+            <p className="text-xs text-text-primary leading-[1.6] pl-[22px]">
               {recommendReason}
             </p>
           </div>
@@ -574,5 +578,16 @@ export default function ProductDetailPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams 사용으로 인해 Suspense 필요
+import { Suspense } from "react";
+
+export default function ProductDetailPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProductDetailInner />
+    </Suspense>
   );
 }
