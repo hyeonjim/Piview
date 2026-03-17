@@ -81,7 +81,8 @@ def summarize_row(row: dict[str, str]) -> dict[str, object]:
 
     rois = extract_face_rois(image)
 
-    dry_prob, oily_prob = predict_global_face_probabilities(rois["whole_face"])
+    # global face는 실제 채택된 학습/평가 조건과 맞추기 위해 원본 이미지를 그대로 넣습니다.
+    dry_prob, oily_prob = predict_global_face_probabilities(image)
     global_axis = "dry_side" if dry_prob >= oily_prob else "oily_side"
 
     forehead_axis = predict_regional_axis("forehead", rois["forehead"])

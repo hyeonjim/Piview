@@ -10,6 +10,7 @@ from torchvision.models import efficientnet_b0
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 MODELS_DIR = BASE_DIR / "models"
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def _create_b0_regressor() -> nn.Module:
@@ -40,7 +41,8 @@ def _load_model(model_path: Path, factory, image_size: int):
 
     # 수분 모델은 회귀값 하나를 내는 구조라 분류기와 헤드 구성이 다릅니다.
     model = factory()
-    model.load_state_dict(torch.load(model_path, map_location="cpu"))
+    model.load_state_dict(torch.load(model_path, map_location=DEVICE))
+    model.to(DEVICE)
     model.eval()
     return {
         "model": model,
@@ -58,7 +60,8 @@ def _predict_single(bundle: dict | None, image: Image.Image, error_message: str)
     model = bundle["model"]
     transform = bundle["transform"]
     with torch.no_grad():
-        value = model(transform(image).unsqueeze(0)).squeeze().item()
+        inputs = transform(image).unsqueeze(0).to(DEVICE)
+        value = model(inputs).squeeze().detach().cpu().item()
     return round(float(value), 4)
 
 

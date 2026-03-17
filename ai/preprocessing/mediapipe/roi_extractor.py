@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from pathlib import Path
 
 import mediapipe as mp
@@ -11,9 +12,13 @@ LEFT_EYE_OUTER = 33
 RIGHT_EYE_OUTER = 263
 LEFT_EYE_UPPER = 159
 RIGHT_EYE_UPPER = 386
+LEFT_EYE_LOWER = 145
+RIGHT_EYE_LOWER = 374
 NOSE_TIP = 1
 UPPER_LIP = 13
 LOWER_LIP = 14
+LEFT_MOUTH = 61
+RIGHT_MOUTH = 291
 FOREHEAD_TOP = 10
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -35,10 +40,82 @@ class Box:
             y2=max(1, min(self.y2, height)),
         )
 
+    def normalize(self, width: int, height: int, min_size: int = 8) -> "Box":
+        # 랜드마크가 비정상적으로 튀어도 crop 좌표가 뒤집히지 않도록 최소 크기를 보장합니다.
+        box = self.clamp(width, height)
+        x1, y1, x2, y2 = box.x1, box.y1, box.x2, box.y2
+
+        if x2 <= x1:
+            center_x = max(0, min(int((x1 + x2) / 2), width - 1))
+            half = max(1, min_size // 2)
+            x1 = max(0, center_x - half)
+            x2 = min(width, x1 + min_size)
+            if x2 <= x1:
+                x2 = min(width, x1 + 1)
+
+        if y2 <= y1:
+            center_y = max(0, min(int((y1 + y2) / 2), height - 1))
+            half = max(1, min_size // 2)
+            y1 = max(0, center_y - half)
+            y2 = min(height, y1 + min_size)
+            if y2 <= y1:
+                y2 = min(height, y1 + 1)
+
+        return Box(x1=x1, y1=y1, x2=x2, y2=y2).clamp(width, height)
+
+
+@dataclass
+class NormalizedLandmark:
+    x: float
+    y: float
+
 
 def _to_point(landmarks, index: int, width: int, height: int) -> tuple[int, int]:
     landmark = landmarks[index]
     return int(landmark.x * width), int(landmark.y * height)
+
+
+def _rotate_point(x: float, y: float, center_x: float, center_y: float, angle_rad: float) -> tuple[float, float]:
+    shifted_x = x - center_x
+    shifted_y = y - center_y
+    cos_a = math.cos(angle_rad)
+    sin_a = math.sin(angle_rad)
+    rotated_x = shifted_x * cos_a - shifted_y * sin_a
+    rotated_y = shifted_x * sin_a + shifted_y * cos_a
+    return rotated_x + center_x, rotated_y + center_y
+
+
+def _align_face_landmarks(landmarks, width: int, height: int) -> tuple[list[NormalizedLandmark], float, tuple[float, float]]:
+    left_eye_x, left_eye_y = _to_point(landmarks, LEFT_EYE_OUTER, width, height)
+    right_eye_x, right_eye_y = _to_point(landmarks, RIGHT_EYE_OUTER, width, height)
+    roll_deg = math.degrees(math.atan2(right_eye_y - left_eye_y, right_eye_x - left_eye_x))
+
+    all_x = [landmark.x * width for landmark in landmarks]
+    all_y = [landmark.y * height for landmark in landmarks]
+    face_center = ((min(all_x) + max(all_x)) / 2.0, (min(all_y) + max(all_y)) / 2.0)
+
+    rotate_deg = -roll_deg
+    rotate_rad = math.radians(rotate_deg)
+    aligned_landmarks = []
+    for landmark in landmarks:
+        point_x = landmark.x * width
+        point_y = landmark.y * height
+        rotated_x, rotated_y = _rotate_point(point_x, point_y, face_center[0], face_center[1], rotate_rad)
+        aligned_landmarks.append(
+            NormalizedLandmark(
+                x=rotated_x / width,
+                y=rotated_y / height,
+            )
+        )
+
+    return aligned_landmarks, rotate_deg, face_center
+
+
+def _rotate_landmarks_180(landmarks: list[NormalizedLandmark]) -> list[NormalizedLandmark]:
+    return [
+        NormalizedLandmark(x=1.0 - landmark.x, y=1.0 - landmark.y)
+        for landmark in landmarks
+    ]
 
 
 def _compute_rois(landmarks, width: int, height: int) -> dict[str, Box]:
@@ -50,29 +127,34 @@ def _compute_rois(landmarks, width: int, height: int) -> dict[str, Box]:
     face_h = face_bottom - face_top
 
     face_margin_x = int(face_w * 0.05)
-    face_margin_y = int(face_h * 0.05)
+    face_margin_top_y = int(face_h * 0.05)
+    face_margin_bottom_y = int(face_h * 0.12)
     # 전역 얼굴 분류기는 너무 타이트한 박스보다 얼굴 윤곽이 조금 포함된 입력이 더 안정적입니다.
     whole_face = Box(
         x1=face_left - face_margin_x,
-        y1=face_top - face_margin_y,
+        y1=face_top - face_margin_top_y,
         x2=face_right + face_margin_x,
-        y2=face_bottom + face_margin_y,
-    ).clamp(width, height)
+        y2=face_bottom + face_margin_bottom_y,
+    ).normalize(width, height, min_size=32)
 
     left_eye_upper_y = _to_point(landmarks, LEFT_EYE_UPPER, width, height)[1]
     right_eye_upper_y = _to_point(landmarks, RIGHT_EYE_UPPER, width, height)[1]
-    nose_x, _ = _to_point(landmarks, NOSE_TIP, width, height)
+    left_eye_lower_y = _to_point(landmarks, LEFT_EYE_LOWER, width, height)[1]
+    right_eye_lower_y = _to_point(landmarks, RIGHT_EYE_LOWER, width, height)[1]
+    nose_x, nose_y = _to_point(landmarks, NOSE_TIP, width, height)
     upper_lip_y = _to_point(landmarks, UPPER_LIP, width, height)[1]
     lower_lip_y = _to_point(landmarks, LOWER_LIP, width, height)[1]
     forehead_x, forehead_top_y = _to_point(landmarks, FOREHEAD_TOP, width, height)
 
     eye_line_y = int((left_eye_upper_y + right_eye_upper_y) / 2)
+    eye_lower_line_y = int((left_eye_lower_y + right_eye_lower_y) / 2)
     mouth_line_y = int((upper_lip_y + lower_lip_y) / 2)
-    # 볼 영역은 눈선과 입선 사이에 두어 머리카락, 턱 배경이 덜 섞이게 합니다.
-    cheek_top_y = int(eye_line_y + face_h * 0.08)
-    cheek_bottom_y = int(mouth_line_y + face_h * 0.03)
-    inner_gap = int(face_w * 0.10)
-    outer_margin = int(face_w * 0.10)
+    # old moisture crop과 가장 비슷한 분포는 코 기준 좌우 대칭 박스였습니다.
+    # eye line 영향은 최소화하고, 코 옆 광대 영역을 중심으로 잡습니다.
+    cheek_top_y = int(max(eye_lower_line_y + face_h * 0.02, nose_y - face_h * 0.12))
+    cheek_bottom_y = int(mouth_line_y + face_h * 0.02)
+    inner_gap = int(face_w * 0.12)
+    outer_width = int(face_w * 0.38)
 
     forehead_half_w = int(face_w * 0.20)
     forehead_bottom_y = int(eye_line_y - face_h * 0.05)
@@ -81,21 +163,21 @@ def _compute_rois(landmarks, width: int, height: int) -> dict[str, Box]:
         y1=forehead_top_y + int(face_h * 0.03),
         x2=forehead_x + forehead_half_w,
         y2=forehead_bottom_y,
-    ).clamp(width, height)
+    ).normalize(width, height, min_size=24)
 
     left_cheek = Box(
-        x1=face_left + outer_margin,
+        x1=nose_x - outer_width,
         y1=cheek_top_y,
         x2=nose_x - inner_gap,
         y2=cheek_bottom_y,
-    ).clamp(width, height)
+    ).normalize(width, height, min_size=24)
 
     right_cheek = Box(
         x1=nose_x + inner_gap,
         y1=cheek_top_y,
-        x2=face_right - outer_margin,
+        x2=nose_x + outer_width,
         y2=cheek_bottom_y,
-    ).clamp(width, height)
+    ).normalize(width, height, min_size=24)
 
     return {
         "whole_face": whole_face,
@@ -103,8 +185,6 @@ def _compute_rois(landmarks, width: int, height: int) -> dict[str, Box]:
         "left_cheek": left_cheek,
         "right_cheek": right_cheek,
     }
-
-
 def _load_landmarker():
     if not LANDMARKER_MODEL_PATH.exists():
         return None
@@ -134,9 +214,23 @@ def extract_face_rois(image: Image.Image) -> dict[str, Image.Image]:
     if not results.face_landmarks:
         raise ValueError("얼굴을 찾지 못했어요.")
 
-    rois = _compute_rois(results.face_landmarks[0], image.width, image.height)
+    aligned_landmarks, rotate_deg, rotate_center = _align_face_landmarks(results.face_landmarks[0], image.width, image.height)
+    aligned_image = image.rotate(
+        rotate_deg,
+        resample=Image.Resampling.BICUBIC,
+        center=rotate_center,
+        expand=False,
+    )
+    forehead_y = _to_point(aligned_landmarks, FOREHEAD_TOP, aligned_image.width, aligned_image.height)[1]
+    upper_lip_y = _to_point(aligned_landmarks, UPPER_LIP, aligned_image.width, aligned_image.height)[1]
+    # roll 보정만으로는 180도 뒤집힌 셀카가 남을 수 있어, 이마가 입보다 아래에 있으면 한 번 더 뒤집습니다.
+    if forehead_y > upper_lip_y:
+        aligned_image = aligned_image.rotate(180, resample=Image.Resampling.BICUBIC, expand=False)
+        aligned_landmarks = _rotate_landmarks_180(aligned_landmarks)
+
+    rois = _compute_rois(aligned_landmarks, aligned_image.width, aligned_image.height)
     # 이후 추론 모듈은 랜드마크 좌표를 몰라도 되도록, 잘린 이미지 조각만 반환합니다.
     return {
-        name: image.crop((box.x1, box.y1, box.x2, box.y2))
+        name: aligned_image.crop((box.x1, box.y1, box.x2, box.y2))
         for name, box in rois.items()
     }
