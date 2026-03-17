@@ -9,6 +9,7 @@ import com.piview.backend.routine.core.entity.RoutineColumn;
 import com.piview.backend.routine.core.entity.RoutineDetail;
 import com.piview.backend.routine.core.repository.RoutineColumnRepository;
 import com.piview.backend.routine.core.repository.RoutineRepository;
+import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,52 @@ public class RoutineService {
   private final ProductRepository productRepository;
 
   private final RedisDraftService redisDraftService;
+
+  // 제품을 루틴(redis)에 추가
+  @Transactional(readOnly = true) // DB에서 Product만 조회하므로 readOnly
+  public void addProductToDraft(Long userId, AddDraftItemRequest request) {
+    // 기존 장바구니 리스트 불러오기
+    List<DraftItemDto> currentDraft = new ArrayList<>(redisDraftService.getDraftItems(userId));
+
+    // 추가할 상품 정보 DB에서 조회
+    Product product = productRepository.findById(request.productId())
+        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
+
+    // 새로운 stepOrder 계산 (현재 장바구니에 있는 stepOrder 중 가장 큰 값 + 1)
+    int nextOrder = currentDraft.stream()
+        .mapToInt(DraftItemDto::stepOrder)
+        .max()
+        .orElse(0) + 1; // 장바구니가 비어있으면 1부터 시작
+
+    // 새로운 DraftItemDto 생성 및 리스트에 추가
+    DraftItemDto newItem = new DraftItemDto(
+        request.columnId(),
+        nextOrder,
+        ProductSummaryResponse.from(product)
+    );
+    currentDraft.add(newItem);
+
+    // 업데이트된 리스트를 다시 Redis에 저장
+    redisDraftService.saveDraftItems(userId, currentDraft);
+  }
+
+  // 제품을 루틴(redis)에서 삭제
+  public void removeProductFromDraft(Long userId, Long productId) {
+    // 기존 장바구니 불러오기
+    List<DraftItemDto> currentDraft = redisDraftService.getDraftItems(userId);
+
+    if (currentDraft == null || currentDraft.isEmpty()) {
+      return; // 장바구니가 비어있으면 무시
+    }
+
+    // 삭제하려는 productId와 일치하지 않는 제품들만 남기기 (필터링)
+    List<DraftItemDto> updatedDraft = currentDraft.stream()
+        .filter(item -> !item.product().getProductId().equals(productId))
+        .toList();
+
+    // 업데이트된 리스트를 다시 Redis에 저장 (해당 제품만 쏙 빠진 채로 덮어쓰기)
+    redisDraftService.saveDraftItems(userId, updatedDraft);
+  }
 
   // 루틴 생성 및 저장
   @Transactional
@@ -50,12 +97,23 @@ public class RoutineService {
         .isMain(routineCount == 0) // 첫 루틴이면 자동으로 메인
         .build();
 
-    for (DraftItemDto item : draftItems) {
-      RoutineColumn column = routineColumnRepository.findById(item.columnId())
-          .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 루틴 단계입니다."));
+    List<Integer> columnIds = draftItems.stream().map(DraftItemDto::columnId).toList();
+    List<Long> productIds = draftItems.stream().map(item -> item.product().getProductId()).toList();
 
-      Product product = productRepository.findById(item.productId())
-          .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
+    // 조회한 엔티티를 Map으로 변환하여 O(1) 성능으로 매칭 준비
+    Map<Integer, RoutineColumn> columnMap = routineColumnRepository.findAllById(columnIds).stream()
+        .collect(Collectors.toMap(RoutineColumn::getId, c -> c));
+    Map<Long, Product> productMap = productRepository.findAllById(productIds).stream()
+        .collect(Collectors.toMap(Product::getProductId, p -> p));
+
+    for (DraftItemDto item : draftItems) {
+      // 최적화: DB 쿼리를 날리지 않고 메모리(Map)에서 즉시 꺼내옴
+      RoutineColumn column = columnMap.get(item.columnId());
+      Product product = productMap.get(item.product().getProductId());
+
+      if (column == null || product == null) {
+        throw new IllegalArgumentException("존재하지 않는 단계이거나 상품입니다.");
+      }
 
       RoutineDetail detail = RoutineDetail.builder()
           .myRoutine(routine)
@@ -64,12 +122,10 @@ public class RoutineService {
           .stepOrder(item.stepOrder())
           .build();
 
-      // 엔티티에 만들어둔 리스트에 쏙쏙 담아줍니다.
       routine.getDetails().add(detail);
     }
 
     MyRoutine savedRoutine = routineRepository.save(routine);
-
     redisDraftService.clearDraft(userId);
 
     return savedRoutine.getId();
@@ -80,7 +136,7 @@ public class RoutineService {
   public void setMainRoutine(Long userId, Long targetRoutineId) {
     routineRepository.updateIsMainFalseByUserId(userId); // 벌크 연산
 
-    MyRoutine targetRoutine = routineRepository.findById(targetRoutineId)
+    MyRoutine targetRoutine = routineRepository.findByIdWithDetails(targetRoutineId)
         .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
 
     targetRoutine.changeMainStatus(true);
@@ -91,16 +147,32 @@ public class RoutineService {
     return routineRepository.findRoutineListByUserId(userId);
   }
 
+  // 메인 루틴 조회
+  public RoutineResponse getMainRoutine(Long userId) {
+    MyRoutine mainRoutine = routineRepository.findByUserIdAndIsMainTrue(userId)
+        .orElseThrow(() -> new IllegalArgumentException("설정된 메인 루틴이 없습니다."));
+
+    if (!mainRoutine.getUserId().equals(userId)) {
+      throw new IllegalArgumentException("본인의 루틴만 조회할 수 있습니다.");
+    }
+
+    return convertToRoutineResponse(mainRoutine);
+  }
+
   // 루틴 상세 조회
   public RoutineResponse getRoutineDetails(Long userId, Long routineId) {
-    MyRoutine routine = routineRepository.findById(routineId)
+    MyRoutine routine = routineRepository.findByIdWithDetails(routineId)
         .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
 
     if (!routine.getUserId().equals(userId)) {
       throw new IllegalArgumentException("본인의 루틴만 조회할 수 있습니다.");
     }
 
-    // 단계(RoutineColumn)별로 데이터를 그룹핑
+    return convertToRoutineResponse(routine);
+  }
+
+  // 공통 DTO 변환 로직
+  private RoutineResponse convertToRoutineResponse(MyRoutine routine) {
     Map<RoutineColumn, List<RoutineDetail>> groupedDetails = routine.getDetails().stream()
         .collect(Collectors.groupingBy(RoutineDetail::getRoutineColumn));
 
@@ -128,7 +200,7 @@ public class RoutineService {
   @Transactional
   public void updateRoutineOrders(Long userId, Long routineId, RoutineOrderUpdateRequest request) {
     // 해당 루틴이 본인 소유가 맞는지 검증
-    MyRoutine routine = routineRepository.findById(routineId)
+    MyRoutine routine = routineRepository.findByIdWithDetails(routineId)
         .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
 
     if (!routine.getUserId().equals(userId)) {
@@ -155,7 +227,7 @@ public class RoutineService {
   @Transactional
   public void deleteRoutine(Long userId, Long routineId) {
     // 루틴 조회
-    MyRoutine routine = routineRepository.findById(routineId)
+    MyRoutine routine = routineRepository.findByIdWithDetails(routineId)
         .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
 
     // 권한 검증
