@@ -54,7 +54,7 @@ public class RoutineService {
       RoutineColumn column = routineColumnRepository.findById(item.columnId())
           .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 루틴 단계입니다."));
 
-      Product product = productRepository.findById(item.productId())
+      Product product = productRepository.findById(item.product().getProductId())
           .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
 
       RoutineDetail detail = RoutineDetail.builder()
