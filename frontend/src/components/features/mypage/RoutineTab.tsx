@@ -6,14 +6,17 @@ const ROUTINE_CARD_BORDER_EMPTY = "var(--color-border-subtle)";
 const ROUTINE_CARD_BORDER_FILLED = "#D9D1C7";
 const SCORE_RING_TRACK_COLOR = "var(--color-border-subtle)";
 const SCORE_RING_SIZE = { width: 56, height: 56 };
-const ROUTINE_STEP_CODE_STYLE = {
-  width: "40px",
-  height: "40px",
-  borderRadius: "10px",
+// 제품 이미지(emoji) 영역 — 80×80 (step code 배지의 2배)
+const ROUTINE_PRODUCT_IMAGE_STYLE = {
+  width: "80px",
+  height: "80px",
+  borderRadius: "16px",
   backgroundColor: "var(--color-bg-muted-warm)",
-  fontSize: "11px",
-  fontWeight: 700,
-  color: "var(--color-text-warm)",
+  fontSize: "36px",
+  display: "flex" as const,
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
 };
 const ROUTINE_PLUS_MINUS_BTN = {
   width: "28px",
@@ -42,7 +45,7 @@ import {
   getScoreBarColor,
 } from "@/constants/routineEvaluation";
 import { MYPAGE_ROUTINE_STEPS } from "@/constants/routineSteps";
-import type { LocalProduct } from "@/stores/useLocalRoutineStore";
+import { useLocalRoutineStore, type LocalProduct } from "@/stores/useLocalRoutineStore";
 
 interface RoutineTabProps {
   routine: Record<string, LocalProduct | null>;
@@ -55,6 +58,9 @@ export default function RoutineTab({
   onOpenModal,
   onRemove,
 }: RoutineTabProps) {
+  // 홈화면 메인 루틴 on/off
+  const { isMainRoutine, toggleMainRoutine } = useLocalRoutineStore();
+
   // 추천 이유 펼침 상태 — key: step.code
   const [openReason, setOpenReason] = useState<Record<string, boolean>>({});
   const toggleReason = (code: string) =>
@@ -94,11 +100,18 @@ export default function RoutineTab({
       {/* 헤더 */}
       <div className="flex items-start justify-between mb-1">
         <div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2.5">
             <p className="text-base font-bold text-text-primary">내 루틴</p>
-            {/* ⚠️ API 연동 시 저장된 루틴명으로 교체 */}
-            <button className="flex items-center gap-0.5 text-xs text-text-muted bg-transparent border-none cursor-pointer">
-              ☆ 메인
+            {/* ⚠️ API 연동 시 서버 루틴 메인 설정 API로 교체 */}
+            <button
+              onClick={toggleMainRoutine}
+              className={`flex items-center gap-1 px-2 py-1 rounded-full border text-[12px] font-semibold cursor-pointer transition-all active:scale-95 ${
+                isMainRoutine
+                  ? "bg-amber-200 border-amber-200 text-[#8a827a]"
+                  : "bg-transparent border-[#D9D5D0] text-[#B8A99A]"
+              }`}
+            >
+              {isMainRoutine ? "★" : "☆"} 메인
             </button>
           </div>
           <p className="text-xs text-text-muted mt-0.5">
@@ -115,7 +128,7 @@ export default function RoutineTab({
             className="flex items-center gap-1 font-medium border border-border text-text-secondary cursor-pointer bg-transparent"
             style={ROUTINE_HEADER_BTN_STYLE}
           >
-            <RotateCcw size={11} /> 초기화
+            <RotateCcw size={12} /> 초기화
           </button>
           {/* OCR */}
           <button
@@ -140,7 +153,7 @@ export default function RoutineTab({
         return (
           <div
             key={step.code}
-            className="rounded-2xl px-4 py-3 transition-all"
+            className="rounded-2xl px-4 py-3 transition-all mt-3"
             style={{
               /* 채워진 카드는 흰 배경, 빈 카드는 베이지 배경 */
               backgroundColor: filled ? "#FFFFFF" : "var(--color-warm-bg)",
@@ -150,13 +163,10 @@ export default function RoutineTab({
             {filled ? (
               <div className="flex flex-col">
                 {/* 카드 메인 행 */}
-                <div className="flex items-center gap-3">
-                  {/* step code 배지 */}
-                  <div
-                    className="shrink-0 flex items-center justify-center text-text-muted"
-                    style={ROUTINE_STEP_CODE_STYLE}
-                  >
-                    {step.code}
+                <div className="flex items-start gap-3">
+                  {/* 제품 이미지 — emoji를 80×80 크기로 표시 */}
+                  <div style={ROUTINE_PRODUCT_IMAGE_STYLE}>
+                    {filled.emoji}
                   </div>
 
                   {/* 제품 정보 */}
@@ -221,7 +231,7 @@ export default function RoutineTab({
                   </div>
 
                   {/* + - 버튼 */}
-                  <div className="flex flex-col gap-1 shrink-0">
+                  <div className="flex flex-row gap-2 shrink-0">
                     <button
                       onClick={() => onOpenModal(step.code)}
                       className="flex items-center justify-center cursor-pointer"

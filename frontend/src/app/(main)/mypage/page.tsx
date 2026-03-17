@@ -14,13 +14,21 @@ import {
   useLocalRoutineStore,
   type LocalProduct,
 } from "@/stores/useLocalRoutineStore";
-import { useUserStore } from "@/stores/useUserStore";
+import { useUserStore, selectSkinType } from "@/stores/useUserStore";
+import { useOwnedStore } from "@/stores/useOwnedStore";
 import { authService } from "@/services/auth";
-import type { SearchProduct } from "@/constants/_mock/searchProducts";
+import type { OwnedProduct } from "@/stores/useOwnedStore";
 
 export default function MyPage() {
   const router = useRouter();
   const [tab, setTab] = useState<"routine" | "owned">("routine");
+
+  // 피부 설정 store 값 — 저장 후 프로필 영역에 태그로 표시
+  const savedSkinType = useUserStore(selectSkinType);
+  const savedConcerns = useUserStore((s) => s.concerns);
+  const savedAvoidContents = useUserStore((s) => s.avoidContents);
+  // skinType이 있으면 진단 완료 상태로 판단
+  const hasSkinProfile = !!savedSkinType;
 
   /**
    * 로그아웃 핸들러
@@ -65,14 +73,14 @@ export default function MyPage() {
 
   const handleRemoveFromRoutine = (code: string) => setStepProduct(code, null);
 
-  // 보유제품 / 피해야 할 제품 상태
-  // ⚠️ API 연동 시 useRoutineStore 또는 서버 상태로 교체
-  const [ownedProducts, setOwnedProducts] = useState<SearchProduct[]>([]);
-  const [avoidProducts, setAvoidProducts] = useState<SearchProduct[]>([]);
+  // 보유제품 — 전역 store로 검색/추천 페이지와 공유
+  const { ownedProducts, removeOwned } = useOwnedStore();
+  // 피해야 할 제품 — ⚠️ API 연동 시 서버 상태로 교체
+  const [avoidProducts, setAvoidProducts] = useState<OwnedProduct[]>([]);
   const [openAvoidModal, setOpenAvoidModal] = useState(false);
   const [avoidSearch, setAvoidSearch] = useState("");
 
-  const handleToggleAvoid = (product: SearchProduct) => {
+  const handleToggleAvoid = (product: OwnedProduct) => {
     setAvoidProducts((prev) =>
       prev.some((p) => p.id === product.id)
         ? prev.filter((p) => p.id !== product.id)
@@ -81,68 +89,18 @@ export default function MyPage() {
   };
 
   return (
-    <div style={{ minHeight: "100%", backgroundColor: "#F5F2EC" }}>
+    <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
 
       {/* ── 프로필 헤더 — 연한 베이지 그라디언트 배경 ── */}
       <div
         style={{
           background: "linear-gradient(160deg, #EDE8E0 0%, #F5F2EC 100%)",
-          padding: "52px 20px 20px",
+          padding: "15px 20px 20px",
           position: "relative",
           borderBottom: "1px solid #E2DDD8",
         }}
       >
-        {/* 상단 액션 버튼들 */}
-        <div
-          style={{
-            position: "absolute",
-            top: "16px",
-            right: "20px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          <Link href="/mypage/settings">
-            <button
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "34px",
-                height: "34px",
-                borderRadius: "50%",
-                backgroundColor: "rgba(166,157,146,0.12)",
-                border: "1px solid rgba(166,157,146,0.2)",
-                cursor: "pointer",
-              }}
-              aria-label="설정"
-            >
-              <Settings size={15} style={{ color: "#8C8277" }} />
-            </button>
-          </Link>
-          {/* 로그아웃 버튼 — ⚠️ API 연동 시 authService.logout() 활성화 */}
-          <button
-            onClick={handleLogout}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              fontSize: "12px",
-              color: "#BFB6AA",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "4px 2px",
-              fontFamily: "var(--font-pretendard), sans-serif",
-            }}
-          >
-            <LogOut size={13} />
-            로그아웃
-          </button>
-        </div>
-
-        {/* 아바타 + 정보 */}
+        {/* 아바타 + 정보 + 액션 버튼 */}
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           {/* 아바타 */}
           <div
@@ -173,60 +131,159 @@ export default function MyPage() {
 
           {/* 유저 정보 */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            {/* ⚠️ API 연동 시 useUserStore에서 실제 이름으로 교체 */}
-            <p
-              style={{
-                margin: 0,
-                fontSize: "20px",
-                fontWeight: 700,
-                color: "#2A2118",
-                letterSpacing: "-0.3px",
-                fontFamily: "var(--font-pretendard), sans-serif",
-              }}
-            >
-              User님
-            </p>
-            <p
-              style={{
-                margin: "3px 0 0",
-                fontSize: "13px",
-                color: "#A69D92",
-                fontFamily: "var(--font-pretendard), sans-serif",
-              }}
-            >
-              피부 타입을 진단해보세요
-            </p>
+            {/* User님 + 액션 버튼 한 줄 */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              {/* ⚠️ API 연동 시 useUserStore에서 실제 이름으로 교체 */}
+              <p
+                style={{
+                  fontSize: "20px",
+                  fontWeight: 700,
+                  color: "#2A2118",
+                  letterSpacing: "-0.3px",
+                  fontFamily: "var(--font-pretendard), sans-serif",
+                }}
+              >
+                User님
+              </p>
+
+              {/* 액션 버튼들 — 설정 / 로그아웃 */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                <Link href="/mypage/settings">
+                  <button
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "34px",
+                      height: "34px",
+                      borderRadius: "50%",
+                      backgroundColor: "rgba(166,157,146,0.12)",
+                      border: "1px solid rgba(166,157,146,0.2)",
+                      cursor: "pointer",
+                    }}
+                    aria-label="설정"
+                  >
+                    <Settings size={15} style={{ color: "#8C8277" }} />
+                  </button>
+                </Link>
+                {/* 로그아웃 버튼 — ⚠️ API 연동 시 authService.logout() 활성화 */}
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    fontSize: "12px",
+                    color: "#BFB6AA",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "4px 2px",
+                    fontFamily: "var(--font-pretendard), sans-serif",
+                  }}
+                >
+                  <LogOut size={13} />
+                  로그아웃
+                </button>
+              </div>
+            </div>
+            {/* 피부 설정 미완료 시 안내 문구, 완료 시 태그 표시 */}
+            {!hasSkinProfile ? (
+              <p
+                style={{
+                  margin: "3px 0 0",
+                  fontSize: "13px",
+                  color: "#A69D92",
+                  fontFamily: "var(--font-pretendard), sans-serif",
+                }}
+              >
+                피부 타입을 진단해보세요
+              </p>
+            ) : (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "16px" }}>
+                {/* 피부타입 태그 */}
+                <span
+                  style={{
+                    fontSize: "14px",
+                    padding: "2px 8px",
+                    borderRadius: "20px",
+                    backgroundColor: "#E8E3DC",
+                    color: "#5A504A",
+                    fontWeight: 600,
+                    fontFamily: "var(--font-pretendard), sans-serif",
+                  }}
+                >
+                  {savedSkinType}
+                </span>
+                {/* 피부 고민 태그 */}
+                {savedConcerns.map((concern) => (
+                  <span
+                    key={concern}
+                    style={{
+                      fontSize: "14px",
+                      padding: "2px 8px",
+                      borderRadius: "20px",
+                      backgroundColor: "#EEF0E8",
+                      color: "#6B7257",
+                      fontFamily: "var(--font-pretendard), sans-serif",
+                    }}
+                  >
+                    {concern}
+                  </span>
+                ))}
+                {/* 기피 성분 태그 */}
+                {savedAvoidContents.map((item) => (
+                  <span
+                    key={item.avoidContent}
+                    style={{
+                      fontSize: "14px",
+                      padding: "2px 8px",
+                      borderRadius: "20px",
+                      backgroundColor: "#F5EDE8",
+                      color: "#8C5A4A",
+                      fontFamily: "var(--font-pretendard), sans-serif",
+                    }}
+                  >
+                    {item.avoidContent}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
 
-        {/* 피부 진단 CTA 버튼 */}
-        <button
-          onClick={() => router.push("/skin-test")}
-          style={{
-            marginTop: "14px",
-            width: "100%",
-            height: "44px",
-            borderRadius: "12px",
-            background: "linear-gradient(135deg, #A69D92 0%, #BFB6AA 100%)",
-            color: "#FFFFFF",
-            fontSize: "14px",
-            fontWeight: 600,
-            border: "none",
-            cursor: "pointer",
-            letterSpacing: "-0.2px",
-            fontFamily: "var(--font-pretendard), sans-serif",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-            boxShadow: "0 2px 12px rgba(166,157,146,0.3)",
-            transition: "opacity 0.15s",
-          }}
-        >
-          <Sparkles size={15} />
-          피부 진단 시작하기
-        </button>
+        {/* 피부 설정 미완료 시에만 CTA 버튼 표시 */}
+        {!hasSkinProfile && (
+          <button
+            onClick={() => router.push("/skin-test")}
+            style={{
+              marginTop: "14px",
+              width: "50%",
+              marginLeft: "auto",
+              marginRight: "auto",
+              height: "44px",
+              borderRadius: "12px",
+              background: "linear-gradient(135deg, #A69D92 0%, #BFB6AA 100%)",
+              color: "#FFFFFF",
+              fontSize: "14px",
+              fontWeight: 600,
+              border: "none",
+              cursor: "pointer",
+              letterSpacing: "-0.2px",
+              fontFamily: "var(--font-pretendard), sans-serif",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              boxShadow: "0 2px 12px rgba(166,157,146,0.3)",
+              transition: "opacity 0.15s",
+            }}
+          >
+            <Sparkles size={15} />
+            피부 진단 시작하기
+          </button>
+        )}
       </div>
 
       {/* ── 탭 스위처 — 언더라인 스타일 ── */}
@@ -250,7 +307,7 @@ export default function MyPage() {
               flex: 1,
               paddingTop: "12px",
               paddingBottom: "11px",
-              fontSize: "14px",
+              fontSize: "16px",
               fontWeight: tab === t ? 600 : 400,
               color: tab === t ? "#2A2118" : "#BFB6AA",
               background: "none",
@@ -294,9 +351,7 @@ export default function MyPage() {
           routine={routine}
           ownedProducts={ownedProducts}
           avoidProducts={avoidProducts}
-          onRemoveOwned={(id) =>
-            setOwnedProducts((prev) => prev.filter((p) => p.id !== id))
-          }
+          onRemoveOwned={removeOwned}
           onRemoveAvoid={(id) =>
             setAvoidProducts((prev) => prev.filter((p) => p.id !== id))
           }

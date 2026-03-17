@@ -6,18 +6,16 @@ import ProductCard from "@/components/common/ProductCard";
 import { MOCK_SEARCH_PRODUCTS } from "@/constants/_mock/searchProducts";
 
 export default function LikesPage() {
-  const { likeList: likedIds, toggleLike, isLiked } = useLike();
+  // likeList만 사용 — ProductCard 내부에서 useLikeStore로 찜 상태를 직접 관리함
+  const { likeList: likedIds } = useLike();
 
   // ⚠️ API 연동 시 서버 fetch로 교체
   const likedProducts = MOCK_SEARCH_PRODUCTS.filter((p) => likedIds.has(p.id));
 
   return (
-    <div style={{ minHeight: "100%", backgroundColor: "#F5F2EC" }}>
+    <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
       {/* 헤더 */}
-      <div style={{ backgroundColor: "#F5F2EC", borderBottom: "1px solid #E2DDD8", padding: "56px 20px 16px" }}>
-        <p style={{ margin: 0, fontSize: "10px", color: "#BFB6AA", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "var(--font-cormorant), serif", fontStyle: "italic" }}>
-          My Favorites
-        </p>
+      <div style={{ backgroundColor: "#F5F2EC", padding: "15px 20px 16px" }}>
         <h1 style={{ margin: "3px 0 0", fontSize: "22px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.4px", fontFamily: "var(--font-pretendard), sans-serif" }}>
           찜한 제품
         </h1>
@@ -61,8 +59,6 @@ export default function LikesPage() {
                 emoji={product.emoji}
                 skinTypes={product.skinTypes}
                 effects={product.effects}
-                liked={isLiked(product.id)}
-                onLike={() => toggleLike(product.id)}
                 layout="grid"
               />
             ))}
@@ -72,7 +68,3 @@ export default function LikesPage() {
     </div>
   );
 }
-
-// ── 스타일 상수 ──────────────────────────────────────────────────────
-const HEADER_BG =
-  "linear-gradient(135deg, var(--color-bg-like) 0%, #FFFFFF 100%)";
