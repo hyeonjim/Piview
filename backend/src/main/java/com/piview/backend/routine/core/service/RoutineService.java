@@ -152,6 +152,10 @@ public class RoutineService {
     MyRoutine mainRoutine = routineRepository.findByUserIdAndIsMainTrue(userId)
         .orElseThrow(() -> new IllegalArgumentException("설정된 메인 루틴이 없습니다."));
 
+    if (!mainRoutine.getUserId().equals(userId)) {
+      throw new IllegalArgumentException("본인의 루틴만 조회할 수 있습니다.");
+    }
+
     return convertToRoutineResponse(mainRoutine);
   }
 
