@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Settings, Leaf, ShoppingBag, Sparkles, LogOut } from "lucide-react";
+import { Settings, Sparkles, LogOut } from "lucide-react";
 import { Toast } from "@/components/common/Toast";
 import { useToast } from "@/hooks";
 import RoutineTab from "@/components/features/mypage/RoutineTab";
@@ -17,6 +17,8 @@ import {
 import { useUserStore, selectSkinType } from "@/stores/useUserStore";
 import { useOwnedStore } from "@/stores/useOwnedStore";
 import { authService } from "@/services/auth";
+import { routineService } from "@/services/routine";
+import { ROUTINE_STEPS } from "@/constants/routineSteps";
 import type { OwnedProduct } from "@/stores/useOwnedStore";
 
 export default function MyPage() {
@@ -66,10 +68,20 @@ export default function MyPage() {
   const { toastMessage, showToast } = useToast();
 
   const handleAddToRoutine = (product: LocalProduct) => {
-    // ⚠️ API 연동 시 서버 루틴 추가 API로 교체
+    // 낙관적 업데이트 — UI 즉시 반영
     addStepProduct(openStep!, product);
     showToast(`✓ ${product.name} 루틴에 추가됨!`);
     setOpenStep(null);
+
+    // draft API 호출 — 실패해도 로컬 상태는 유지
+    // ⚠️ API 연동 시: mock 데이터 제거 후 product.id가 실제 숫자 ID로 교체되면 isNaN 가드 불필요
+    const columnId = ROUTINE_STEPS.find((s) => s.code === openStep)?.columnId;
+    const parsedProductId = parseInt(product.id, 10);
+    if (columnId && !isNaN(parsedProductId)) {
+      routineService
+        .addDraft(columnId, parsedProductId)
+        .catch((error) => console.error("draft API 실패:", error));
+    }
   };
 
   // productId 추가: 같은 스텝 내 특정 제품만 제거
@@ -219,9 +231,9 @@ export default function MyPage() {
                   {savedSkinType}
                 </span>
                 {/* 피부 고민 태그 */}
-                {savedConcerns.map((concern) => (
+                {savedConcerns.map((concern, index) => (
                   <span
-                    key={concern}
+                    key={`${concern}-${index}`}
                     style={{
                       fontSize: "14px",
                       padding: "2px 8px",
@@ -235,9 +247,9 @@ export default function MyPage() {
                   </span>
                 ))}
                 {/* 기피 성분 태그 */}
-                {savedAvoidContents.map((item) => (
+                {savedAvoidContents.map((item, index) => (
                   <span
-                    key={item.avoidContent}
+                    key={`${item.avoidContent}-${index}`}
                     style={{
                       fontSize: "14px",
                       padding: "2px 8px",

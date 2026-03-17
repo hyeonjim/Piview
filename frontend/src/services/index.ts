@@ -5,3 +5,4 @@
 
 export { default as client } from "./client";
 export { authService } from "./auth";
+export { routineService } from "./routine";
