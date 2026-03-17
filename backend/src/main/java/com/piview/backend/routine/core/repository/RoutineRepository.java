@@ -33,4 +33,7 @@ public interface RoutineRepository extends JpaRepository<MyRoutine, Long> {
       "WHERE r.userId = :userId " +
       "GROUP BY r.id, r.title, r.isMain")
   List<RoutineListResponse> findRoutineListByUserId(@Param("userId") Long userId);
+
+  // 사용자의 메인 루틴 찾기
+  Optional<MyRoutine> findByUserIdAndIsMainTrue(Long userId);
 }

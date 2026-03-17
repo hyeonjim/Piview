@@ -138,6 +138,14 @@ public class RoutineService {
     return routineRepository.findRoutineListByUserId(userId);
   }
 
+  // 메인 루틴 조회
+  public RoutineResponse getMainRoutine(Long userId) {
+    MyRoutine mainRoutine = routineRepository.findByUserIdAndIsMainTrue(userId)
+        .orElseThrow(() -> new IllegalArgumentException("설정된 메인 루틴이 없습니다."));
+
+    return convertToRoutineResponse(mainRoutine);
+  }
+
   // 루틴 상세 조회
   public RoutineResponse getRoutineDetails(Long userId, Long routineId) {
     MyRoutine routine = routineRepository.findById(routineId)
@@ -147,7 +155,11 @@ public class RoutineService {
       throw new IllegalArgumentException("본인의 루틴만 조회할 수 있습니다.");
     }
 
-    // 단계(RoutineColumn)별로 데이터를 그룹핑
+    return convertToRoutineResponse(routine);
+  }
+
+  // 공통 DTO 변환 로직
+  private RoutineResponse convertToRoutineResponse(MyRoutine routine) {
     Map<RoutineColumn, List<RoutineDetail>> groupedDetails = routine.getDetails().stream()
         .collect(Collectors.groupingBy(RoutineDetail::getRoutineColumn));
 
