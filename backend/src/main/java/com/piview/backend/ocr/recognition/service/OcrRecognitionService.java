@@ -31,17 +31,17 @@ public class OcrRecognitionService {
 
     private final OcrProductRepository productRepository;
     private final RestClient restClient;
-    private final String fastApiUrl;
+    private final String fastApiBaseUrl;
 
     private record ScoredProduct(Product product, int score) {}
 
     // 생성자 -> 여기서 RestClient에 타임아웃 씌우기
     public OcrRecognitionService(
             OcrProductRepository productRepository,
-            @Value("${fastapi.ocr.url:http://localhost:8000/extract-text}") String fastApiUrl) {
+            @Value("${fastapi.base-url}") String fastApiBaseUrl) {
 
         this.productRepository = productRepository;
-        this.fastApiUrl = fastApiUrl;
+        this.fastApiBaseUrl = fastApiBaseUrl;
 
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(3000); // 파이썬 서버와 연결하는 데 3초 이상 걸리면 포기
@@ -72,7 +72,7 @@ public class OcrRecognitionService {
             body.add("file", file.getResource());
 
             OcrFastApiResponseDto ocrResponse = restClient.post()
-                    .uri(fastApiUrl)
+                    .uri(fastApiBaseUrl + "/ocr/extract-text")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(body)
                     .retrieve()
