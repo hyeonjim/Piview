@@ -58,15 +58,11 @@ public class SurveySkinProblemMapper {
         // 오른쪽은 DB와 후속 추천 로직에서 공통으로 쓸 내부 피부 고민 태그다.
         mappings.put("여드름", List.of("여드름"));
         mappings.put("미백", List.of("미백"));
-        mappings.put("색소침착", List.of("색소침착"));
         mappings.put("기미/주근깨/잡티", List.of("색소침착"));
-        mappings.put("안티에이징", List.of("안티에이징"));
         mappings.put("주름/탄력", List.of("안티에이징"));
         mappings.put("피지", List.of("피지"));
         mappings.put("블랙헤드", List.of("블랙헤드"));
-        mappings.put("수분", List.of("수분"));
         mappings.put("속건조", List.of("수분"));
-        mappings.put("진정", List.of("진정"));
         mappings.put("홍조", List.of("진정"));
         mappings.put("각질", List.of("각질"));
 
