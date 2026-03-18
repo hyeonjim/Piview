@@ -2,6 +2,7 @@ package com.piview.backend.user.profile.controller;
 
 import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.global.security.UserPrincipal;
+import com.piview.backend.user.profile.dto.request.UserProfileUpdateRequest;
 import com.piview.backend.user.profile.dto.response.UserProfileResponse;
 import com.piview.backend.user.profile.service.UserProfileService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,9 +11,12 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -35,5 +39,23 @@ public class UserProfileController {
         @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
         return ApiResponse.success(userProfileService.getMyProfile(userPrincipal.getId()));
+    }
+
+    @Operation(
+        summary = "내 정보 수정",
+        description = "요청에 포함된 필드만 수정합니다. email은 수정하지 않으며, skinProblems는 필드가 오면 전체 교체합니다."
+    )
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 정보 수정 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content(schema = @Schema(hidden = true))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패", content = @Content(schema = @Schema(hidden = true))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음", content = @Content(schema = @Schema(hidden = true)))
+    })
+    @PatchMapping("/me")
+    public ApiResponse<UserProfileResponse> updateMyProfile(
+        @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
+        @Valid @RequestBody UserProfileUpdateRequest request
+    ) {
+        return ApiResponse.success(userProfileService.updateMyProfile(userPrincipal.getId(), request));
     }
 }
