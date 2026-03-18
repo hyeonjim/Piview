@@ -13,7 +13,11 @@ import {
   type LocalProduct,
   type SavedRoutine,
 } from "@/stores/useLocalRoutineStore";
-import { CATEGORY_COLORS } from "@/constants/categoryColors";
+import {
+  CATEGORY_COLORS,
+  SKIN_TYPE_TAG_COLORS,
+  SKIN_FUNCTION_COLORS,
+} from "@/constants/categoryColors";
 import { useToast } from "@/hooks";
 import { Toast } from "@/components/common/Toast";
 
@@ -37,11 +41,12 @@ interface RoutineTabProps {
   showToast?: (msg: string) => void;
 }
 
-// 드래그 상태 타입
+// 드래그 상태 타입 — 스텝 간 이동 지원
 interface DragState {
-  stepCode: string;
+  fromStepCode: string;
   fromIndex: number;
-  overIndex: number;
+  toStepCode: string;
+  toIndex: number;
 }
 
 export default function RoutineTab({
@@ -54,6 +59,7 @@ export default function RoutineTab({
     isMainRoutine,
     toggleMainRoutine,
     clearRoutine,
+    setRoutine,
     reorderStepProducts,
     saveRoutine,
     loadSavedRoutine,
@@ -148,42 +154,66 @@ export default function RoutineTab({
     index: number,
   ) => {
     event.currentTarget.setPointerCapture(event.pointerId);
-    setDragState({ stepCode, fromIndex: index, overIndex: index });
+    setDragState({ fromStepCode: stepCode, fromIndex: index, toStepCode: stepCode, toIndex: index });
   };
 
   // pointerMove — setPointerCapture 덕분에 핸들 밖으로 나가도 이벤트 수신
-  // document.elementFromPoint으로 포인터 아래 실제 아이템 인덱스 계산
+  // document.elementFromPoint으로 포인터 아래 드래그 아이템 또는 빈 스텝 드롭존 감지
   const handleDragHandlePointerMove = (
     event: React.PointerEvent<HTMLDivElement>,
   ) => {
     if (!dragState) return;
-    const elementUnder = document.elementFromPoint(
-      event.clientX,
-      event.clientY,
-    );
-    const itemElement = elementUnder?.closest(
-      "[data-drag-item]",
-    ) as HTMLElement | null;
-    if (!itemElement) return;
-    const stepCode = itemElement.getAttribute("data-step-code");
-    const indexStr = itemElement.getAttribute("data-item-index");
-    if (stepCode !== dragState.stepCode || indexStr === null) return;
-    const overIndex = parseInt(indexStr, 10);
-    if (overIndex !== dragState.overIndex) {
-      setDragState((prev) => (prev ? { ...prev, overIndex } : null));
+    const elementUnder = document.elementFromPoint(event.clientX, event.clientY);
+
+    // 다른 아이템 위에 있는 경우 — 스텝 간 이동 허용 (stepCode 제한 없음)
+    const itemElement = elementUnder?.closest("[data-drag-item]") as HTMLElement | null;
+    if (itemElement) {
+      const toStepCode = itemElement.getAttribute("data-step-code");
+      const indexStr = itemElement.getAttribute("data-item-index");
+      if (!toStepCode || indexStr === null) return;
+      const toIndex = parseInt(indexStr, 10);
+      if (toStepCode !== dragState.toStepCode || toIndex !== dragState.toIndex) {
+        setDragState((prev) => (prev ? { ...prev, toStepCode, toIndex } : null));
+      }
+      return;
+    }
+
+    // 빈 스텝 드롭존 위에 있는 경우
+    const dropZone = elementUnder?.closest("[data-drop-zone]") as HTMLElement | null;
+    if (dropZone) {
+      const toStepCode = dropZone.getAttribute("data-step-code");
+      const toIndex = parseInt(dropZone.getAttribute("data-drop-index") ?? "0", 10);
+      if (toStepCode && (toStepCode !== dragState.toStepCode || toIndex !== dragState.toIndex)) {
+        setDragState((prev) => (prev ? { ...prev, toStepCode, toIndex } : null));
+      }
     }
   };
 
   // pointerUp / pointerCancel — 드래그 종료, 순서 변경 커밋
   const handleDragHandlePointerUp = () => {
     if (!dragState) return;
-    const { stepCode, fromIndex, overIndex } = dragState;
-    if (fromIndex !== overIndex) {
-      const products = [...(routine[stepCode] ?? [])];
-      const [removed] = products.splice(fromIndex, 1);
-      products.splice(overIndex, 0, removed);
-      reorderStepProducts(stepCode, products);
+    const { fromStepCode, fromIndex, toStepCode, toIndex } = dragState;
+
+    if (fromStepCode === toStepCode) {
+      // 같은 스텝 내 순서 변경
+      if (fromIndex !== toIndex) {
+        const products = [...(routine[fromStepCode] ?? [])];
+        const [removed] = products.splice(fromIndex, 1);
+        products.splice(toIndex, 0, removed);
+        reorderStepProducts(fromStepCode, products);
+      }
+    } else {
+      // 다른 스텝으로 이동 — setRoutine으로 원자적 업데이트
+      const newRoutine = { ...routine };
+      const fromProducts = [...(newRoutine[fromStepCode] ?? [])];
+      const [removed] = fromProducts.splice(fromIndex, 1);
+      newRoutine[fromStepCode] = fromProducts;
+      const toProducts = [...(newRoutine[toStepCode] ?? [])];
+      toProducts.splice(toIndex, 0, removed);
+      newRoutine[toStepCode] = toProducts;
+      setRoutine(newRoutine);
     }
+
     setDragState(null);
   };
 
@@ -285,12 +315,20 @@ export default function RoutineTab({
             </div>
 
             {products.length === 0 ? (
-              // 빈 상태 플레이스홀더
+              // 빈 상태 플레이스홀더 — data-drop-zone으로 다른 스텝에서 드래그해 넣기 가능
               <div
+                data-drop-zone
+                data-step-code={step.code}
+                data-drop-index="0"
                 className="rounded-2xl px-4 py-3 flex items-center gap-3"
                 style={{
-                  backgroundColor: "var(--color-warm-bg)",
-                  border: "1px solid var(--color-border-subtle)",
+                  backgroundColor: dragState?.toStepCode === step.code
+                    ? "rgba(166,157,146,0.12)"
+                    : "var(--color-warm-bg)",
+                  border: dragState?.toStepCode === step.code
+                    ? "2px dashed #A69D92"
+                    : "1px solid var(--color-border-subtle)",
+                  transition: "background-color 0.1s, border 0.1s",
                 }}
               >
                 <div
@@ -308,12 +346,14 @@ export default function RoutineTab({
               <div className="flex flex-col gap-2">
                 {products.map((product, index) => {
                   const isDraggingThis =
-                    dragState?.stepCode === step.code &&
+                    dragState?.fromStepCode === step.code &&
                     dragState.fromIndex === index;
+                  // 다른 스텝에서 온 경우도 드롭 대상 표시
                   const isDropTarget =
-                    dragState?.stepCode === step.code &&
-                    dragState.overIndex === index &&
-                    dragState.fromIndex !== index;
+                    !!dragState &&
+                    dragState.toStepCode === step.code &&
+                    dragState.toIndex === index &&
+                    !(dragState.fromStepCode === step.code && dragState.fromIndex === index);
                   const categoryColor = product.category
                     ? CATEGORY_COLORS[product.category]
                     : undefined;
@@ -391,6 +431,40 @@ export default function RoutineTab({
                         <p className="m-0 text-[13px] font-medium text-[#2A2118] leading-[1.4] line-clamp-2">
                           {product.name}
                         </p>
+                        {/* 피부타입 태그 */}
+                        {(product.skinTypes ?? []).length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {(product.skinTypes ?? []).map((skinType) => {
+                              const tc = SKIN_TYPE_TAG_COLORS[skinType];
+                              return tc ? (
+                                <span
+                                  key={skinType}
+                                  className="text-[11px] px-1.5 py-px rounded-[3px] font-semibold"
+                                  style={{ backgroundColor: tc.bg, color: tc.text }}
+                                >
+                                  {skinType}
+                                </span>
+                              ) : null;
+                            })}
+                          </div>
+                        )}
+                        {/* 기능 태그 */}
+                        {(product.effects ?? []).length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {(product.effects ?? []).slice(0, 3).map((fn) => {
+                              const fc = SKIN_FUNCTION_COLORS[fn];
+                              return fc ? (
+                                <span
+                                  key={fn}
+                                  className="text-[11px] px-1.5 py-px rounded-[3px] font-medium"
+                                  style={{ backgroundColor: fc.chip, color: fc.accent }}
+                                >
+                                  {fn}
+                                </span>
+                              ) : null;
+                            })}
+                          </div>
+                        )}
                       </Link>
 
                       {/* 제거 버튼 */}
