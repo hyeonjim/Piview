@@ -20,6 +20,7 @@ import { useLikeStore } from "@/stores/useLikeStore";
 import { getMockProductById } from "@/constants/_mock/product";
 import { getEwgColor } from "@/constants/categoryColors";
 import { isAllergenIngredient } from "@/constants/allergens";
+import { ROUTINE_STEPS } from "@/constants/routineSteps";
 import CompareModal, {
   type CompareProduct,
 } from "@/components/common/CompareModal";
@@ -29,8 +30,8 @@ import { useOwnedStore } from "@/stores/useOwnedStore";
 // 알레르기 성분 아이콘 — 빨간 원형 경고 스타일
 function AllergenIcon() {
   return (
-    <div className="flex items-center justify-center shrink-0 self-center w-[14px] h-[14px] rounded-full bg-red-50">
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+    <div className="flex items-center justify-center shrink-0 self-center w-[20px] h-[20px] rounded-full bg-red-50">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="10" fill="#EF4444" />
         <rect x="11" y="6.5" width="2" height="7" rx="1" fill="white" />
         <circle cx="12" cy="17" r="1.3" fill="white" />
@@ -68,7 +69,7 @@ function ProductDetailInner() {
   // likedIds를 직접 구독 — isLiked() 함수 호출 결과는 store 변경 시 재계산되지 않음
   const likedIds = useLikeStore((state) => state.likedIds);
   const toggleLike = useLikeStore((state) => state.toggleLike);
-  const isLiked = !!likedIds[String(productData?.id ?? "")];
+  const isLiked = !!likedIds[id ?? ""];
   // 내루틴 비교하기 모달 상태
   const [showRoutineCompare, setShowRoutineCompare] = useState(false);
   // 루틴에 동일 카테고리 제품이 여러 개일 때 선택된 제품 인덱스
@@ -80,6 +81,9 @@ function ProductDetailInner() {
   // 루틴 store — routineMap 구독 + addStepProduct 모두 여기서 한 번에 구독
   const routineMap = useLocalRoutineStore((state) => state.routine);
   const addStepProduct = useLocalRoutineStore((state) => state.addStepProduct);
+  const removeStepProduct = useLocalRoutineStore(
+    (state) => state.removeStepProduct,
+  );
   // flat() 후 null/undefined 제거 (persist 복원 시 null이 섞일 수 있음)
   const allRoutineProducts = Object.values(routineMap).flat().filter(Boolean);
   const sameCategoryRoutineProducts = productData
@@ -154,48 +158,35 @@ function ProductDetailInner() {
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
-  // productData가 없으면 (id 미확정 초기 렌더) 아무것도 렌더하지 않음
-  if (!productData || !currentProductAsCompare) return null;
+  // productIdStr — URL param 기준 (productData.id와 불일치 방지)
+  const productIdStr = id ?? String(productData?.id ?? "");
 
-  // 루틴에 이미 있는지 — store에서 직접 확인
-  const productIdStr = String(productData.id);
+  // 루틴에 이미 있는지
   const routineAdded = Object.values(routineMap)
     .flat()
     .filter(Boolean)
     .some((p) => p.id === productIdStr);
 
-  // 보유 중인지 — store에서 직접 확인
+  // 보유 중인지
   const owned = getIsOwned(productIdStr);
 
   const handleAddRoutine = () => {
-    if (routineAdded) return;
-
-    const ROUTINE_STEPS_LIST = [
-      {
-        code: "CL",
-        categories: [
-          "폼/젤/밤/오일",
-          "클렌저",
-          "클렌징폼",
-          "클렌징젤",
-          "클렌징밤",
-          "클렌징오일",
-        ],
-      },
-      { code: "PR", categories: ["스킨/토너", "토너", "미스트", "패드"] },
-      {
-        code: "SR",
-        categories: ["에센스/앰플/세럼", "세럼", "에센스", "세럼/에센스"],
-      },
-      { code: "LT", categories: ["로션/에멀젼", "로션", "에멀전"] },
-      { code: "CR", categories: ["크림", "페이스오일", "아이크림"] },
-      { code: "SC", categories: ["선크림/스틱", "선크림", "선스틱", "선케어"] },
-    ];
-    const matchedStep = ROUTINE_STEPS_LIST.find((step) =>
+    if (!productData) return;
+    if (routineAdded) {
+      Object.entries(routineMap).forEach(([code, products]) => {
+        products.forEach((p) => {
+          if (p && p.id === productIdStr) {
+            removeStepProduct(code, productIdStr);
+          }
+        });
+      });
+      showToast(`✓ ${productData.name} 루틴에서 제거됨`);
+      return;
+    }
+    const matchedStep = ROUTINE_STEPS.find((step) =>
       step.categories.includes(productData.category),
     );
     const stepCode = matchedStep?.code ?? "PR";
-
     addStepProduct(stepCode, {
       id: productIdStr,
       brand: productData.brand,
@@ -212,11 +203,11 @@ function ProductDetailInner() {
       ewgCaution: productData.ewg.caution,
       ewgDanger: productData.ewg.danger,
     });
-
     showToast(`✓ ${productData.name} 루틴에 추가됨!`);
   };
 
   const handleToggleOwned = () => {
+    if (!productData) return;
     toggleOwned({
       id: productIdStr,
       brand: productData.brand,
@@ -228,6 +219,9 @@ function ProductDetailInner() {
       ) as string[],
     });
   };
+
+  // productData가 없으면 (id 미확정 초기 렌더) 아무것도 렌더하지 않음
+  if (!productData || !currentProductAsCompare) return null;
 
   const { total, safe, caution, danger, unknown } = productData.ewg;
   const allergenList = productData.ingredientsKr.filter((ingredientName) =>
@@ -398,7 +392,7 @@ function ProductDetailInner() {
 
         {/* 좋아요 버튼 — ProductCard의 useLikeStore와 동일한 전역 상태 */}
         <button
-          onClick={() => toggleLike(productData.id)}
+          onClick={() => toggleLike(id)}
           className="size-9 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer transition-all active:scale-[0.93]"
         >
           <Heart
@@ -504,7 +498,6 @@ function ProductDetailInner() {
             <div className="flex gap-1.5 shrink-0">
               <button
                 onClick={handleAddRoutine}
-                disabled={routineAdded}
                 className={`flex items-center justify-center gap-1 w-20 h-8 rounded-xl border-none cursor-pointer transition-all active:scale-[0.98] text-xs font-bold ${
                   routineAdded
                     ? "bg-[#F0F0F0] text-text-muted"
@@ -692,9 +685,19 @@ function ProductDetailInner() {
           {/* 전성분 분석 탭 */}
           {activeTab === "ingredients" && (
             <div className="rounded-2xl bg-white overflow-hidden">
+              {/* 전성분 텍스트 나열 — 제품 설명 위 */}
+              {productData.ingredientsKr.length > 0 && (
+                <div className="p-4 border-b border-[#F5F5F5]">
+                  <p className="font-semibold text-text-sub mb-1.5">전성분</p>
+                  <p className="text-xs text-text-primary leading-[1.6]">
+                    {productData.ingredientsKr.join(", ")}
+                  </p>
+                </div>
+              )}
+
               {productData.description && (
                 <div className="p-4 border-b border-[#F5F5F5]">
-                  <p className=" font-semibold text-text-sub mb-1.5">
+                  <p className="font-semibold text-text-sub mb-1.5">
                     제품 설명
                   </p>
                   <p className="text-xs text-text-primary leading-[1.6]">

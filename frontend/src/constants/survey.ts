@@ -143,10 +143,5 @@ export const ALLERGY_QUESTION: SurveyQuestion = {
   ],
 };
 
-/** 설문 id → 피부타입 매핑 (세안 후 피부 상태 질문 기준) */
-export const SKIN_TYPE_MAP: Record<string, string> = {
-  dry: "dry",
-  combination: "combination",
-  oily: "oily",
-  dehydrated: "dehydrated",
-};
+
+

@@ -1,18 +1,22 @@
 /**
- * types/user/skin.ts
- * ERD: MySkin, SkinProblems
+ * types/skin.ts
+ * 피부 진단 API 요청/응답 타입 — POST /skin/surveys
  */
 
-// ERD: SkinProblems → 피부고민 마스터 테이블
-export interface SkinProblem {
-  id: number;           // ERD: skin_problem_id
-  skinProblem: string;  // "여드름", "주름", "미백" 등
+// POST /skin/surveys 요청 body
+// ⚠️ 프론트 enum과 다름 → enumConvert.ts로 변환 후 전송
+export interface SurveySubmitRequest {
+  gender: "MEN" | "WOMEN";
+  ageGroup: "TEENS" | "TWENTIES" | "THIRTIES" | "FORTIES_PLUS";
+  question3: "A" | "B" | "C" | "D";
+  question4: "A" | "B" | "C" | "D";
+  question5: "A" | "B" | "C" | "D";
+  question6: "A" | "B" | "C" | "D";
+  skinProblems: string[];
 }
 
-// ERD: MySkin → 유저-피부고민 매핑
-export interface MySkin {
-  id: number;           // ERD: myskin_id
-  userId: number;
-  skinProblem: string;  // ERD: skin_problem VARCHAR
-  // ⚠️ ERD에서 SkinProblems와 FK 없이 텍스트 직접 저장 → BE 팀 확인 필요
+// POST /skin/surveys 응답
+export interface SurveySubmitResponse {
+  mySkinType: "DRY" | "OILY" | "COMBINATION" | "DEHYDRATED_OILY";
+  skinProblems: string[];
 }

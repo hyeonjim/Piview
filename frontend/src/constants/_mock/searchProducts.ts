@@ -38,8 +38,4 @@ export const MOCK_SEARCH_PRODUCTS: SearchProduct[] = [
   { id:"s12", brand:"라로슈포제", name:"안티헬리오스 XL SPF50+",             category:"선크림/스틱",      mainCategory:"선케어",   skinType1:"건성",                     concerns:{ 진정:true },                                     price:34000, volume:"50ml",     rating:4.7, reviews:2180, emoji:"🌤️",matchScore:86, skinTypes:["건성"],           effects:["진정"],                   ewgSafe:18, ewgCaution:8, ewgDanger:3 },
 ];
 
-export const MAIN_CATEGORIES_MOCK: Record<string, string[]> = {
-  "스킨케어": ["스킨/토너","로션/에멀젼","에센스/앰플/세럼","크림","페이스오일","미스트","패드"],
-  "클렌징": ["폼/젤/밤/오일"],
-  "선케어": ["선크림/스틱"],
-};
+

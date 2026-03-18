@@ -32,51 +32,6 @@ export interface ProductDetail {
   };
 }
 
-export interface PurposeScore {
-  label: string;
-  score: number;
-}
-export interface SkinTypeScore {
-  label: string;
-  score: number;
-  isMyType?: boolean;
-}
-
-/** 제품 상세 더미 데이터 (기존 — search page 등에서 참조) */
-export const MOCK_PRODUCT: ProductDetail = {
-  id: 1,
-  name: "119 스마트 시카 패드",
-  brand: "클라랩",
-  price: 28000,
-  count: "60ea",
-  rating: 0,
-  reviewCount: 0,
-  skinTypes: ["지성", "복합성"],
-  effects: ["여드름", "안티에이징", "진정"],
-  matchScore: 0,
-  ewg: {
-    total: 20,
-    safe: 10,
-    caution: 6,
-    danger: 2,
-    unknown: 2,
-    safePercent: 50,
-  },
-};
-export const MOCK_PURPOSE_SCORES: PurposeScore[] = [
-  { label: "보습", score: 0 },
-  { label: "미백", score: 0 },
-  { label: "진정", score: 0 },
-  { label: "각질케어", score: 0 },
-  { label: "항산화", score: 0 },
-  { label: "모공관리", score: 0 },
-];
-export const MOCK_SKIN_TYPE_SCORES: SkinTypeScore[] = [
-  { label: "건성", score: 0, isMyType: true },
-  { label: "지성", score: 0 },
-  { label: "복합성", score: 0 },
-  { label: "수부지", score: 0 },
-];
 
 // ── 신규: 피그마 ProductDetailPage 기준 상세 타입 ────────────────────────────
 export interface IngredientDetail {
