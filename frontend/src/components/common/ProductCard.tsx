@@ -356,9 +356,22 @@ export default function ProductCard({
             )}
           </div>
 
-          {/* 텍스트 영역 */}
-          <div className="flex-1 px-3 pt-2.5 pb-2">
-            <BrandLabel brand={brand} />
+          {/* 텍스트 영역 — 고정 높이로 카드 간 높이 통일 */}
+          <div
+            className="px-3 pt-2.5 pb-2 overflow-hidden"
+            style={{ height: "96px" }}
+          >
+            {/* 브랜드명 + 비교 버튼 한 줄 */}
+            <div className="flex items-center justify-between">
+              <BrandLabel brand={brand} />
+              {showActions && (
+                <CompareButton
+                  isInCompare={isInCompare}
+                  onToggle={(event) => handleAction(event, onToggleCompare)}
+                  size="sm"
+                />
+              )}
+            </div>
             <p className="mt-0.75 m-0 text-[17px] font-medium text-[#2A2118] leading-[1.4] line-clamp-2 overflow-hidden">
               {name}
             </p>
@@ -375,26 +388,7 @@ export default function ProductCard({
           </div>
         </Link>
 
-        {/* 액션 버튼 영역 — showActions=true 일 때만 표시 */}
-        {showActions && (
-          <div className="px-2.5 pb-2.5 flex gap-1.5">
-            <RoutineButton
-              inRoutine={inRoutine}
-              onAdd={(event) => handleAction(event, onAddRoutine)}
-              className="flex-1 text-[10px] h-7"
-            />
-            <OwnedButton
-              isOwned={isOwned}
-              onToggle={(event) => handleAction(event, onToggleOwned)}
-              size="sm"
-            />
-            <CompareButton
-              isInCompare={isInCompare}
-              onToggle={(event) => handleAction(event, onToggleCompare)}
-              size="sm"
-            />
-          </div>
-        )}
+        {/* 액션 버튼 영역 — 루틴추가/보유추가 제거, 비교는 상단으로 이동 */}
       </div>
     );
   }
