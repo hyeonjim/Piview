@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { MOCK_SEARCH_PRODUCTS } from "@/constants/_mock/searchProducts";
+import { Search, SlidersHorizontal, Scale } from "lucide-react";
 import { MAIN_CATEGORIES, BRANDS } from "@/constants/productCategories";
 import { DEFAULT_FILTER } from "@/constants/filterDefaults";
 import { FilterModal } from "@/components/common/FilterModal";
@@ -15,29 +15,22 @@ import SearchBar from "@/components/common/SearchBar";
 import CompareModal, {
   type CompareProduct,
 } from "@/components/common/CompareModal";
-import { useToast } from "@/hooks";
-import { useCompare } from "@/hooks/useCompare";
+import { useToast, useCompare } from "@/hooks";
+import { MOCK_RECOMMEND } from "@/constants/_mock/recommend";
 import { useOwnedStore } from "@/stores/useOwnedStore";
 import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
-import { SlidersHorizontal, Search, Scale } from "lucide-react";
 
-// 2열 그리드: 페이지당 12개 (짝수)
 const PAGE_SIZE = 12;
 
-// matchScore 보완 — ⚠️ API 연동 시 서버 계산값으로 교체
-const PRODUCTS = MOCK_SEARCH_PRODUCTS.map((product, index) => ({
-  ...product,
-  matchScore: product.matchScore ?? 78 + (index % 18),
-}));
-
-export default function SearchPage() {
+export default function RecommendPage() {
   const [selectedMain, setSelectedMain] = useState<string | null>("스킨케어");
   const [selectedSub, setSelectedSub] = useState<string | null>("스킨/토너");
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [showFilter, setShowFilter] = useState(false);
   const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER);
+
   // 루틴 상태 — 전역 store (상세 페이지와 동기화)
   const routineMap = useLocalRoutineStore((state) => state.routine);
   const addStepProduct = useLocalRoutineStore((state) => state.addStepProduct);
@@ -46,13 +39,13 @@ export default function SearchPage() {
       .flat()
       .filter(Boolean)
       .some((p) => p.id === productId);
+
   // 보유 상태 — 전역 store로 마이페이지와 공유
   const { toggleOwned, ownedProducts } = useOwnedStore();
   const isOwned = (id: string) => ownedProducts.some((p) => p.id === id);
 
   const { toastMessage } = useToast();
 
-  // 기존 useCompare 훅 사용 — 비교 선택/모달 상태를 페이지 단위로 관리
   const {
     compareItems,
     showCompare,
@@ -70,62 +63,55 @@ export default function SearchPage() {
     (filter.priceRange[0] > 0 || filter.priceRange[1] < 1000000 ? 1 : 0);
 
   const filteredProducts = useMemo(() => {
-    let list = PRODUCTS;
+    let list = MOCK_RECOMMEND;
     if (searchQuery.trim()) {
       const keyword = searchQuery.toLowerCase();
       list = list.filter(
-        (product) =>
-          product.name.toLowerCase().includes(keyword) ||
-          product.brand.toLowerCase().includes(keyword),
+        (p) =>
+          p.name.toLowerCase().includes(keyword) ||
+          p.brand.toLowerCase().includes(keyword),
       );
     }
     if (selectedSub) {
-      list = list.filter((product) => product.category === selectedSub);
+      list = list.filter((p) => p.category === selectedSub);
     } else if (selectedMain) {
-      list = list.filter((product) =>
-        (MAIN_CATEGORIES[selectedMain] ?? []).includes(product.category),
+      list = list.filter((p) =>
+        (MAIN_CATEGORIES[selectedMain] ?? []).includes(p.category),
       );
     }
-    if (filter.filterSkin) {
-      list = list.filter((product) =>
-        product.skinTypes.includes(filter.filterSkin!),
+    if (filter.filterSkin)
+      list = list.filter((p) => p.skinTypes.includes(filter.filterSkin!));
+    if (filter.filterFns.size > 0)
+      list = list.filter((p) =>
+        [...filter.filterFns].some((e) => p.effects.includes(e)),
       );
-    }
-    if (filter.filterFns.size > 0) {
-      list = list.filter((product) =>
-        [...filter.filterFns].some((effectName) =>
-          product.effects.includes(effectName),
-        ),
-      );
-    }
-    if (filter.filterBrands.size > 0) {
-      list = list.filter((product) => filter.filterBrands.has(product.brand));
-    }
-    return list;
+    if (filter.filterBrands.size > 0)
+      list = list.filter((p) => filter.filterBrands.has(p.brand));
+    return [...list].sort((a, b) => b.matchScore - a.matchScore);
   }, [selectedMain, selectedSub, searchQuery, filter]);
 
   const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
-  const paginatedProducts = filteredProducts.slice(
+  const paginated = filteredProducts.slice(
     (page - 1) * PAGE_SIZE,
     page * PAGE_SIZE,
   );
 
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
+  const handleSearchChange = (v: string) => {
+    setSearchQuery(v);
     setPage(1);
   };
-  const handleMainSelect = (main: string | null) => {
-    setSelectedMain(main);
+  const handleMainSelect = (m: string | null) => {
+    setSelectedMain(m);
     setPage(1);
   };
-  const handleSubSelect = (sub: string | null) => {
-    setSelectedSub(sub);
+  const handleSubSelect = (s: string | null) => {
+    setSelectedSub(s);
     setPage(1);
   };
 
   const handleAddRoutine = (productId: string) => {
     if (isInRoutine(productId)) return;
-    const product = PRODUCTS.find((p) => p.id === productId);
+    const product = filteredProducts.find((p) => p.id === productId);
     if (!product) return;
     const matchedStep = ROUTINE_STEPS.find((step) =>
       step.categories.includes(product.category),
@@ -139,7 +125,6 @@ export default function SearchPage() {
       skinTypes: product.skinTypes,
       effects: product.effects,
       matchScore: product.matchScore,
-      price: product.price,
       ewgSafe: product.ewgSafe,
       ewgCaution: product.ewgCaution,
       ewgDanger: product.ewgDanger,
@@ -152,17 +137,13 @@ export default function SearchPage() {
       (item) => item.id === product.id,
     );
     toggleCompare(product);
-    // 추가로 2개가 되는 시점에 모달 오픈
-    if (!isAlreadySelected && compareItems.length === 1) {
-      openCompare();
-    }
+    if (!isAlreadySelected && compareItems.length === 1) openCompare();
   };
 
   return (
     <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
       <Toast msg={toastMessage} />
 
-      {/* 비교 모달 — 2개 선택 완료 후 표시 */}
       {showCompare && canCompare && (
         <CompareModal
           compareItems={compareItems as [CompareProduct, CompareProduct]}
@@ -189,10 +170,9 @@ export default function SearchPage() {
               lineHeight: 1.2,
             }}
           >
-            전체 제품
+            맞춤 추천
           </h1>
 
-          {/* 검색바 + 필터 버튼 한 줄 */}
           <div className="flex items-center gap-5">
             <div className="flex-1">
               <SearchBar
@@ -202,7 +182,6 @@ export default function SearchPage() {
               />
             </div>
 
-            {/* 필터 버튼 — 검색바 오른쪽 끝 */}
             <button
               onClick={() => setShowFilter(true)}
               className="flex items-center gap-1.5 cursor-pointer border transition-all active:scale-[0.96] shrink-0"
@@ -249,7 +228,7 @@ export default function SearchPage() {
         onSubSelect={handleSubSelect}
       />
 
-      {/* ── 비교 선택 힌트 바 — 1개 선택 시 표시 ──────────── */}
+      {/* 비교 선택 힌트 바 — 1개 선택 시 */}
       {compareItems.length === 1 && (
         <div
           className="flex items-center justify-between mx-4 mt-3 px-3 py-2.5 rounded-xl"
@@ -325,7 +304,7 @@ export default function SearchPage() {
       )}
 
       {/* ── 제품 그리드 ─────────────────────────────────── */}
-      <div style={{ padding: "16px 20px 24px" }}>
+      <div style={{ padding: "16px 16px 24px" }}>
         {filteredProducts.length === 0 ? (
           <div
             style={{
@@ -347,18 +326,25 @@ export default function SearchPage() {
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gap: "24px",
+              alignItems: "start",
             }}
           >
-            {paginatedProducts.map((product) => (
+            {paginated.map((product) => (
               <ProductCard
                 key={product.id}
                 id={product.id}
+                href={
+                  product.reason
+                    ? `/product/${product.id}?reason=${encodeURIComponent(product.reason)}`
+                    : undefined
+                }
                 brand={product.brand}
                 name={product.name}
                 category={product.category}
                 emoji={product.emoji}
                 skinTypes={product.skinTypes}
                 effects={product.effects}
+                isRecommended={!!product.reason}
                 layout="grid"
                 showActions={true}
                 inRoutine={isInRoutine(product.id)}
@@ -374,7 +360,6 @@ export default function SearchPage() {
                     name: product.name,
                     brand: product.brand,
                     emoji: product.emoji,
-                    price: product.price,
                     skinTypes: product.skinTypes,
                     effects: product.effects,
                     ewgSafe: product.ewgSafe,

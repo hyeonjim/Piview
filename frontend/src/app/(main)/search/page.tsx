@@ -325,7 +325,7 @@ export default function SearchPage() {
       )}
 
       {/* ── 제품 그리드 ─────────────────────────────────── */}
-      <div style={{ padding: "16px 20px 24px" }}>
+      <div style={{ padding: "16px 16px 24px" }}>
         {filteredProducts.length === 0 ? (
           <div
             style={{
@@ -347,6 +347,7 @@ export default function SearchPage() {
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gap: "24px",
+              alignItems: "start",
             }}
           >
             {paginatedProducts.map((product) => (
