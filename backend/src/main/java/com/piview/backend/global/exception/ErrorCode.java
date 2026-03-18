@@ -14,7 +14,7 @@ public enum ErrorCode {
 
     // 403 FORBIDDEN
     UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "본인의 화장품 목록만 접근 및 삭제할 수 있습니다."),
-    SKIN_ANALYSIS_ACCESS_DENIED(HttpStatus.FORBIDDEN, "본인의 피부 분석 결과만 조회할 수 있습니다."),
+    SKIN_ANALYSIS_ACCESS_DENIED(HttpStatus.FORBIDDEN, "본인의 피부 분석만 확인할 수 있습니다."),
 
     // 404 NOT_FOUND
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
@@ -25,6 +25,10 @@ public enum ErrorCode {
 
     // 409 CONFLICT
     ALREADY_SAVED_PRODUCT(HttpStatus.CONFLICT, "이미 보관함에 존재하는 상품입니다."),
+    SKIN_ANALYSIS_NOT_COMPLETED(HttpStatus.CONFLICT, "피부 분석이 아직 완료되지 않았습니다. 잠시 후 다시 시도해주세요."),
+    SKIN_ANALYSIS_FAILED(HttpStatus.CONFLICT, "피부 분석에 실패했습니다. 다시 촬영한 뒤 시도해주세요."),
+    SKIN_ANALYSIS_ALREADY_CONSUMED(HttpStatus.CONFLICT, "이미 최종 제출이 완료된 분석입니다."),
+    SKIN_SURVEY_SUBMIT_IN_PROGRESS(HttpStatus.CONFLICT, "이미 처리 중인 요청입니다. 잠시 후 다시 시도해주세요."),
 
     // 503 SERVICE_UNAVAILABLE
     AI_SERVER_TIMEOUT(HttpStatus.SERVICE_UNAVAILABLE, "AI 서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요."),
