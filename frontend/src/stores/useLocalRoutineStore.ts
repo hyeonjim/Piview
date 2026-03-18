@@ -27,6 +27,7 @@ export interface LocalProduct {
   effects: string[];
   matchScore: number;
   // ⚠️ API 연동 시 서버 값으로 교체
+  imageUrl?: string;
   price?: number;
   ewgSafe?: number;
   ewgCaution?: number;
@@ -42,7 +43,7 @@ export interface SavedRoutine {
   name: string;
   routine: LocalRoutineMap;
   productCount: number; // 총 제품 수 (카드 표시용)
-  savedAt: number;      // Unix timestamp (ms)
+  savedAt: number; // Unix timestamp (ms)
 }
 
 interface LocalRoutineStore {
@@ -110,7 +111,10 @@ export const useLocalRoutineStore = create<LocalRoutineStore>()(
 
       // 초기화 시 루틴 이름도 기본값으로 복원
       clearRoutine: () =>
-        set({ routine: INITIAL_ROUTINE as LocalRoutineMap, currentRoutineName: "내 루틴" }),
+        set({
+          routine: INITIAL_ROUTINE as LocalRoutineMap,
+          currentRoutineName: "내 루틴",
+        }),
 
       toggleMainRoutine: () =>
         set((state) => ({ isMainRoutine: !state.isMainRoutine })),
@@ -126,10 +130,14 @@ export const useLocalRoutineStore = create<LocalRoutineStore>()(
             savedAt: Date.now(),
           };
           // 같은 이름이 이미 있으면 덮어쓰기, 없으면 추가
-          const existingIndex = state.savedRoutines.findIndex((r) => r.name === name);
+          const existingIndex = state.savedRoutines.findIndex(
+            (r) => r.name === name,
+          );
           const updatedSavedRoutines =
             existingIndex >= 0
-              ? state.savedRoutines.map((r, i) => (i === existingIndex ? newSaved : r))
+              ? state.savedRoutines.map((r, i) =>
+                  i === existingIndex ? newSaved : r,
+                )
               : [...state.savedRoutines, newSaved];
           return {
             savedRoutines: updatedSavedRoutines,

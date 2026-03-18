@@ -16,24 +16,9 @@ import { X, Sparkles } from "lucide-react";
 import { SKIN_FUNCTION_COLORS } from "@/constants/categoryColors";
 import { formatPrice } from "@/utils/format";
 import { SkinTypeTag } from "@/components/common/ProductCard";
+import type { CompareProduct } from "@/types/common";
 
-/** 비교용 제품 정보 인터페이스 */
-export interface CompareProduct {
-  id: string | number;
-  name: string;
-  brand: string;
-  imageUrl?: string;
-  emoji?: string;
-  price?: number;
-  skinTypes?: string[];
-  effects?: string[];
-  /** 피부기능별 수치 점수 0~100 — ⚠️ API 연동 시 서버 값으로 교체 */
-  effectScores?: Record<string, number>;
-  /** EWG 성분 안전도 — ⚠️ API 연동 시 서버 값으로 교체 */
-  ewgSafe?: number;
-  ewgCaution?: number;
-  ewgDanger?: number;
-}
+export type { CompareProduct };
 
 interface CompareModalProps {
   /** 비교할 2개 제품 */

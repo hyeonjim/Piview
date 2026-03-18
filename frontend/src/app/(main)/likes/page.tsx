@@ -1,11 +1,11 @@
 "use client";
 
 import { Heart } from "lucide-react";
-import { useLike } from "@/hooks/useLike";
-import { useCompare } from "@/hooks/useCompare";
+
+
 import { useOwnedStore } from "@/stores/useOwnedStore";
 import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
-import { useToast } from "@/hooks";
+import { useToast, useLike, useCompare } from "@/hooks";
 import ProductCard from "@/components/common/ProductCard";
 import CompareModal, {
   type CompareProduct,
