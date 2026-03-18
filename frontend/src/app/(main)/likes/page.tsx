@@ -149,6 +149,7 @@ export default function LikesPage() {
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gap: "24px",
+              alignItems: "start",
             }}
           >
             {likedProducts.map((product) => (
