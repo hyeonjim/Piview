@@ -19,6 +19,7 @@ public class SurveySkinProblemMapper {
 
     public List<String> mapToTags(List<String> skinProblems) {
         // 입력 순서는 유지하면서, 여러 보기에서 같은 태그가 나오면 한 번만 저장한다.
+        // 예를 들어 "홍조"는 내부 저장 태그 "진정"으로, "속건조"는 "수분"으로 변환된다.
         LinkedHashSet<String> mappedTags = new LinkedHashSet<>();
 
         for (String skinProblem : skinProblems) {
@@ -53,19 +54,21 @@ public class SurveySkinProblemMapper {
     private static Map<String, List<String>> createMappings() {
         Map<String, List<String>> mappings = new LinkedHashMap<>();
 
-        // 1:1 매핑 케이스
-        mappings.put("아토피", List.of("아토피"));
+        // 왼쪽은 실제로 프론트에서 들어올 수 있는 값 또는 내부 canonical 값이고,
+        // 오른쪽은 DB와 후속 추천 로직에서 공통으로 쓸 내부 피부 고민 태그다.
         mappings.put("여드름", List.of("여드름"));
         mappings.put("미백", List.of("미백"));
+        mappings.put("색소침착", List.of("색소침착"));
+        mappings.put("기미/주근깨/잡티", List.of("색소침착"));
+        mappings.put("안티에이징", List.of("안티에이징"));
+        mappings.put("주름/탄력", List.of("안티에이징"));
         mappings.put("피지", List.of("피지"));
         mappings.put("블랙헤드", List.of("블랙헤드"));
-        mappings.put("기미/주근깨/잡티", List.of("색소침착"));
+        mappings.put("수분", List.of("수분"));
         mappings.put("속건조", List.of("수분"));
-        mappings.put("주름/탄력", List.of("안티에이징"));
-
-        // 1:N 매핑 케이스. 한 설문 보기가 여러 추천 태그로 확장될 수 있다.
-        mappings.put("홍조", List.of("홍조", "진정"));
-        mappings.put("각질", List.of("수분", "영양"));
+        mappings.put("진정", List.of("진정"));
+        mappings.put("홍조", List.of("진정"));
+        mappings.put("각질", List.of("각질"));
 
         return Map.copyOf(mappings);
     }

@@ -1,6 +1,7 @@
 package com.piview.backend.skin.survey.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,11 +23,12 @@ public class SurveyController {
 
     private final SurveyService surveyService;
 
-    @PostMapping
+    @PostMapping("/{analysisId}")
     public ApiResponse<SurveySubmitResponse> submitSurvey(
         @AuthenticationPrincipal UserPrincipal userPrincipal,
+        @PathVariable String analysisId,
         @Valid @RequestBody SurveySubmitRequest request
     ) {
-        return ApiResponse.success(surveyService.submitSurvey(userPrincipal.getId(), request));
+        return ApiResponse.success(surveyService.submitSurvey(userPrincipal.getId(), analysisId, request));
     }
 }
