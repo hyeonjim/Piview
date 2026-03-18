@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Settings, Sparkles, LogOut } from "lucide-react";
 import { Toast } from "@/components/common/Toast";
-import { useToast } from "@/hooks";
+import { useToast, useSyncRoutineDraft } from "@/hooks";
 import RoutineTab from "@/components/features/mypage/RoutineTab";
 import RoutineAddModal from "@/components/features/mypage/RoutineAddModal";
 import OwnedTab from "@/components/features/mypage/OwnedTab";
@@ -14,11 +14,10 @@ import {
   useLocalRoutineStore,
   type LocalProduct,
 } from "@/stores/useLocalRoutineStore";
+
 import { useUserStore, selectSkinType } from "@/stores/useUserStore";
 import { useOwnedStore } from "@/stores/useOwnedStore";
 import { authService } from "@/services/auth";
-import { routineService } from "@/services/routine";
-import { ROUTINE_STEPS } from "@/constants/routineSteps";
 import type { OwnedProduct } from "@/stores/useOwnedStore";
 
 export default function MyPage() {
@@ -47,7 +46,7 @@ export default function MyPage() {
     }
   };
 
-  const { routine, addStepProduct, removeStepProduct } = useLocalRoutineStore();
+  const { routine, addStepProduct, removeStepProduct, currentRoutineName } = useLocalRoutineStore();
 
   // 페이지 마운트 시 localStorage에서 루틴 복구
   useEffect(() => {
@@ -67,21 +66,17 @@ export default function MyPage() {
 
   const { toastMessage, showToast } = useToast();
 
+  /**
+   * 루틴 변경(추가·제거·순서 변경)을 감지해 PUT /api/v1/routines/draft 자동 동기화
+   * 디바운스 500ms — 연속 조작 시 마지막 상태만 전송
+   */
+  useSyncRoutineDraft();
+
   const handleAddToRoutine = (product: LocalProduct) => {
-    // 낙관적 업데이트 — UI 즉시 반영
+    // 낙관적 업데이트 — 스토어 변경 → useSyncRoutineDraft가 자동으로 API 호출
     addStepProduct(openStep!, product);
     showToast(`✓ ${product.name} 루틴에 추가됨!`);
     setOpenStep(null);
-
-    // draft API 호출 — 실패해도 로컬 상태는 유지
-    // ⚠️ API 연동 시: mock 데이터 제거 후 product.id가 실제 숫자 ID로 교체되면 isNaN 가드 불필요
-    const columnId = ROUTINE_STEPS.find((s) => s.code === openStep)?.columnId;
-    const parsedProductId = parseInt(product.id, 10);
-    if (columnId && !isNaN(parsedProductId)) {
-      routineService
-        .addDraft(columnId, parsedProductId)
-        .catch((error) => console.error("draft API 실패:", error));
-    }
   };
 
   // productId 추가: 같은 스텝 내 특정 제품만 제거
@@ -339,9 +334,8 @@ export default function MyPage() {
             }}
           >
             {t === "routine" ? (
-              <>
-                내 루틴
-              </>
+              // 저장된 루틴 이름 표시 — 기본값 "내 루틴"
+              <>{currentRoutineName}</>
             ) : (
               <>
                 보유제품
@@ -357,6 +351,7 @@ export default function MyPage() {
           routine={routine}
           onOpenModal={(code) => setOpenStep(code)}
           onRemove={handleRemoveFromRoutine}
+          showToast={showToast}
         />
       )}
       {tab === "owned" && (

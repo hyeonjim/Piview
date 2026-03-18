@@ -10,3 +10,4 @@ export { useToast } from "./useToast";
 export { useScroll } from "./useScroll";
 export { useCompare } from "./useCompare";
 export { useLike } from "./useLike";
+export { useSyncRoutineDraft } from "./useSyncRoutineDraft";
