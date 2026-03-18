@@ -735,12 +735,12 @@ function ProductDetailInner() {
                           {ingredient.name}
                         </p>
                         {ingredient.nameEn && (
-                          <p className="text-xs text-text-muted my-0.5">
+                          <p className="text-xs text-text-muted my-0.5 font-(family-name:--font-hanken)">
                             {ingredient.nameEn}
                           </p>
                         )}
                         {ingredient.funcs && ingredient.funcs.length > 0 && (
-                          <p className="text-xs text-text-hint leading-[1.5]">
+                          <p className="text-xs text-text-hint leading-normal">
                             {ingredient.funcs.join(", ")}
                           </p>
                         )}
@@ -805,7 +805,7 @@ function ProductDetailInner() {
                     <div className="flex items-center gap-2">
                       <span className=" text-text-primary">{label}</span>
                       {label === productData.skinType1 && (
-                        <span className="text-[10px] px-2 py-[1px] rounded-[20px] bg-brand text-white font-semibold">
+                        <span className="text-[10px] px-2 py-px rounded-modal bg-brand text-white font-semibold">
                           내 피부
                         </span>
                       )}

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus, X, RotateCcw, GripVertical } from "lucide-react";
+import { Plus, X, RotateCcw, ArrowUpDown } from "lucide-react";
 import {
   getRoutineEvaluation,
   getScoreBarColor,
@@ -32,6 +32,14 @@ const ROUTINE_HEADER_BTN_STYLE = {
 };
 const CIRCUMFERENCE = 138;
 
+// 드래그 상태 타입 — 스텝 간 이동 지원
+interface DragState {
+  fromStepCode: string;
+  fromIndex: number;
+  toStepCode: string;
+  toIndex: number;
+}
+
 interface RoutineTabProps {
   routine: Record<string, LocalProduct[]>;
   onOpenModal: (code: string) => void;
@@ -41,13 +49,6 @@ interface RoutineTabProps {
   showToast?: (msg: string) => void;
 }
 
-// 드래그 상태 타입 — 스텝 간 이동 지원
-interface DragState {
-  fromStepCode: string;
-  fromIndex: number;
-  toStepCode: string;
-  toIndex: number;
-}
 
 export default function RoutineTab({
   routine,
@@ -118,6 +119,75 @@ export default function RoutineTab({
   const strokeDash =
     routineScores.length > 0 ? (averageScore / 100) * CIRCUMFERENCE : 0;
 
+  // ── 드래그 핸들러 (포인터 이벤트 — 데스크톱+모바일 통합) ──────────────
+  // pointerDown — 드래그 핸들에서 포인터 캡처 시작, 드래그 상태 확정
+  const handleDragHandlePointerDown = (
+    event: React.PointerEvent<HTMLDivElement>,
+    stepCode: string,
+    index: number,
+  ) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDragState({ fromStepCode: stepCode, fromIndex: index, toStepCode: stepCode, toIndex: index });
+  };
+
+  // pointerMove — 포인터 아래 대상 추적
+  const handleDragHandlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragState) return;
+    const elementUnder = document.elementFromPoint(event.clientX, event.clientY);
+
+    // 다른 아이템 위에 있는 경우 — 스텝 간 이동 허용
+    const itemElement = elementUnder?.closest("[data-drag-item]") as HTMLElement | null;
+    if (itemElement) {
+      const toStepCode = itemElement.getAttribute("data-step-code");
+      const indexStr = itemElement.getAttribute("data-item-index");
+      if (!toStepCode || indexStr === null) return;
+      const toIndex = parseInt(indexStr, 10);
+      if (toStepCode !== dragState.toStepCode || toIndex !== dragState.toIndex) {
+        setDragState((prev) => (prev ? { ...prev, toStepCode, toIndex } : null));
+      }
+      return;
+    }
+
+    // 빈 스텝 드롭존 위에 있는 경우
+    const dropZone = elementUnder?.closest("[data-drop-zone]") as HTMLElement | null;
+    if (dropZone) {
+      const toStepCode = dropZone.getAttribute("data-step-code");
+      const toIndex = parseInt(dropZone.getAttribute("data-drop-index") ?? "0", 10);
+      if (toStepCode && (toStepCode !== dragState.toStepCode || toIndex !== dragState.toIndex)) {
+        setDragState((prev) => (prev ? { ...prev, toStepCode, toIndex } : null));
+      }
+    }
+  };
+
+  // pointerUp / pointerCancel — 순서 변경 커밋
+  const handleDragHandlePointerUp = () => {
+    if (!dragState) return;
+
+    const { fromStepCode, fromIndex, toStepCode, toIndex } = dragState;
+
+    if (fromStepCode === toStepCode) {
+      // 같은 스텝 내 순서 변경
+      if (fromIndex !== toIndex) {
+        const products = [...(routine[fromStepCode] ?? [])];
+        const [removed] = products.splice(fromIndex, 1);
+        products.splice(toIndex, 0, removed);
+        reorderStepProducts(fromStepCode, products);
+      }
+    } else {
+      // 다른 스텝으로 이동 — setRoutine으로 원자적 업데이트
+      const newRoutine = { ...routine };
+      const fromProducts = [...(newRoutine[fromStepCode] ?? [])];
+      const [removed] = fromProducts.splice(fromIndex, 1);
+      newRoutine[fromStepCode] = fromProducts;
+      const toProducts = [...(newRoutine[toStepCode] ?? [])];
+      toProducts.splice(toIndex, 0, removed);
+      newRoutine[toStepCode] = toProducts;
+      setRoutine(newRoutine);
+    }
+
+    setDragState(null);
+  };
+
   // ── 저장 루틴 핸들러 ─────────────────────────────────────────────────
   const handleOpenSaveModal = () => {
     setSaveModalName(currentRoutineName === "내 루틴" ? "" : currentRoutineName);
@@ -146,76 +216,6 @@ export default function RoutineTab({
     if (found) notify(`"${found.name}" 루틴이 삭제되었습니다.`);
   };
 
-  // ── 드래그 핸들러 (포인터 이벤트 — 데스크톱+모바일 통합) ───────────────
-  // 드래그 핸들에서 pointerDown → 포인터 캡처 시작
-  const handleDragHandlePointerDown = (
-    event: React.PointerEvent<HTMLDivElement>,
-    stepCode: string,
-    index: number,
-  ) => {
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setDragState({ fromStepCode: stepCode, fromIndex: index, toStepCode: stepCode, toIndex: index });
-  };
-
-  // pointerMove — setPointerCapture 덕분에 핸들 밖으로 나가도 이벤트 수신
-  // document.elementFromPoint으로 포인터 아래 드래그 아이템 또는 빈 스텝 드롭존 감지
-  const handleDragHandlePointerMove = (
-    event: React.PointerEvent<HTMLDivElement>,
-  ) => {
-    if (!dragState) return;
-    const elementUnder = document.elementFromPoint(event.clientX, event.clientY);
-
-    // 다른 아이템 위에 있는 경우 — 스텝 간 이동 허용 (stepCode 제한 없음)
-    const itemElement = elementUnder?.closest("[data-drag-item]") as HTMLElement | null;
-    if (itemElement) {
-      const toStepCode = itemElement.getAttribute("data-step-code");
-      const indexStr = itemElement.getAttribute("data-item-index");
-      if (!toStepCode || indexStr === null) return;
-      const toIndex = parseInt(indexStr, 10);
-      if (toStepCode !== dragState.toStepCode || toIndex !== dragState.toIndex) {
-        setDragState((prev) => (prev ? { ...prev, toStepCode, toIndex } : null));
-      }
-      return;
-    }
-
-    // 빈 스텝 드롭존 위에 있는 경우
-    const dropZone = elementUnder?.closest("[data-drop-zone]") as HTMLElement | null;
-    if (dropZone) {
-      const toStepCode = dropZone.getAttribute("data-step-code");
-      const toIndex = parseInt(dropZone.getAttribute("data-drop-index") ?? "0", 10);
-      if (toStepCode && (toStepCode !== dragState.toStepCode || toIndex !== dragState.toIndex)) {
-        setDragState((prev) => (prev ? { ...prev, toStepCode, toIndex } : null));
-      }
-    }
-  };
-
-  // pointerUp / pointerCancel — 드래그 종료, 순서 변경 커밋
-  const handleDragHandlePointerUp = () => {
-    if (!dragState) return;
-    const { fromStepCode, fromIndex, toStepCode, toIndex } = dragState;
-
-    if (fromStepCode === toStepCode) {
-      // 같은 스텝 내 순서 변경
-      if (fromIndex !== toIndex) {
-        const products = [...(routine[fromStepCode] ?? [])];
-        const [removed] = products.splice(fromIndex, 1);
-        products.splice(toIndex, 0, removed);
-        reorderStepProducts(fromStepCode, products);
-      }
-    } else {
-      // 다른 스텝으로 이동 — setRoutine으로 원자적 업데이트
-      const newRoutine = { ...routine };
-      const fromProducts = [...(newRoutine[fromStepCode] ?? [])];
-      const [removed] = fromProducts.splice(fromIndex, 1);
-      newRoutine[fromStepCode] = fromProducts;
-      const toProducts = [...(newRoutine[toStepCode] ?? [])];
-      toProducts.splice(toIndex, 0, removed);
-      newRoutine[toStepCode] = toProducts;
-      setRoutine(newRoutine);
-    }
-
-    setDragState(null);
-  };
 
   return (
     <div className="px-5 pt-4 flex flex-col gap-2 pb-10">
@@ -315,12 +315,13 @@ export default function RoutineTab({
             </div>
 
             {products.length === 0 ? (
-              // 빈 상태 플레이스홀더 — data-drop-zone으로 다른 스텝에서 드래그해 넣기 가능
-              <div
+              // 빈 상태 플레이스홀더 — 클릭 시 추가 모달 오픈, 드래그 드롭존
+              <button
                 data-drop-zone
                 data-step-code={step.code}
                 data-drop-index="0"
-                className="rounded-2xl px-4 py-3 flex items-center gap-3"
+                onClick={() => onOpenModal(step.code)}
+                className="w-full rounded-2xl px-4 py-3 flex items-center gap-3 cursor-pointer border-none text-left transition-colors"
                 style={{
                   backgroundColor: dragState?.toStepCode === step.code
                     ? "rgba(166,157,146,0.12)"
@@ -340,7 +341,8 @@ export default function RoutineTab({
                 <p className="flex-1 text-sm font-medium text-text-muted">
                   아직 추가된 제품이 없어요
                 </p>
-              </div>
+                <Plus size={14} color="#A69D92" className="shrink-0" />
+              </button>
             ) : (
               // 드래그 정렬 가능한 제품 목록
               <div className="flex flex-col gap-2">
@@ -348,7 +350,6 @@ export default function RoutineTab({
                   const isDraggingThis =
                     dragState?.fromStepCode === step.code &&
                     dragState.fromIndex === index;
-                  // 다른 스텝에서 온 경우도 드롭 대상 표시
                   const isDropTarget =
                     !!dragState &&
                     dragState.toStepCode === step.code &&
@@ -361,29 +362,22 @@ export default function RoutineTab({
                   return (
                     <div
                       key={product.id}
-                      // 드래그 대상 식별용 데이터 속성
                       data-drag-item
                       data-step-code={step.code}
                       data-item-index={index}
-                      className="flex items-stretch rounded-[10px] overflow-hidden"
+                      className="flex items-stretch h-25 rounded-[10px] overflow-hidden"
                       style={{
                         opacity: isDraggingThis ? 0.4 : 1,
-                        border: isDropTarget
-                          ? "2px solid #A69D92"
-                          : "1px solid #E2DDD8",
+                        border: isDropTarget ? "2px solid #A69D92" : "1px solid #E2DDD8",
                         boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-                        transition: "opacity 0.15s, border-color 0.1s",
                         backgroundColor: "#FFFFFF",
+                        transition: "opacity 0.15s, border-color 0.1s",
                       }}
                     >
-                      {/* 드래그 핸들 — 포인터 캡처로 모바일 터치 드래그 지원 */}
+                      {/* 제품 이미지 — 이미지 영역 전체가 드래그 핸들 */}
                       <div
-                        className="flex items-center justify-center w-8 shrink-0 cursor-grab active:cursor-grabbing select-none"
-                        style={{
-                          backgroundColor: "var(--color-bg-muted-warm)",
-                          touchAction: "none",
-                          color: "#C4BEB7",
-                        }}
+                        className="relative w-25 h-full shrink-0 bg-[#F5F2EC] cursor-grab active:cursor-grabbing select-none"
+                        style={{ touchAction: "none" }}
                         onPointerDown={(event) =>
                           handleDragHandlePointerDown(event, step.code, index)
                         }
@@ -391,20 +385,19 @@ export default function RoutineTab({
                         onPointerUp={handleDragHandlePointerUp}
                         onPointerCancel={handleDragHandlePointerUp}
                       >
-                        <GripVertical size={14} />
-                      </div>
-
-                      {/* 제품 이미지 */}
-                      <div className="relative shrink-0 w-[72px] h-[72px] bg-[#F5F2EC]">
                         <div className="absolute inset-0 flex items-center justify-center text-[26px]">
                           {product.emoji || "🧴"}
+                        </div>
+                        {/* 드래그 힌트 — 좌상단 ArrowUpDown 아이콘 */}
+                        <div className="absolute top-1 left-1">
+                          <ArrowUpDown size={10} className="text-[#C4BEB7] opacity-70" />
                         </div>
                       </div>
 
                       {/* 제품 정보 — 브랜드, 카테고리 태그, 이름 */}
                       <Link
                         href={`/product/${product.id}`}
-                        className="flex-1 min-w-0 px-3 py-2 no-underline flex flex-col justify-center"
+                        className="flex-1 min-w-0 px-3 py-2 no-underline flex flex-col justify-start"
                         onClick={(event) => {
                           // 드래그 중에는 링크 이동 차단
                           if (dragState) event.preventDefault();
@@ -415,7 +408,6 @@ export default function RoutineTab({
                           <span className="text-[12px] font-medium text-[#BFB6AA] uppercase tracking-[0.08em]">
                             {product.brand}
                           </span>
-                          {/* 브랜드 옆 카테고리 태그 */}
                           {product.category && categoryColor && (
                             <span
                               className="text-[11px] px-1.5 py-[1px] rounded-[3px] font-semibold"
@@ -428,7 +420,7 @@ export default function RoutineTab({
                             </span>
                           )}
                         </div>
-                        <p className="m-0 text-[13px] font-medium text-[#2A2118] leading-[1.4] line-clamp-2">
+                        <p className="m-0 text-[16px] font-medium text-[#2A2118] leading-[1.4] line-clamp-2">
                           {product.name}
                         </p>
                         {/* 피부타입 태그 */}
@@ -467,14 +459,14 @@ export default function RoutineTab({
                         )}
                       </Link>
 
-                      {/* 제거 버튼 */}
+                      {/* 제거 버튼 — 상단 배치 */}
                       <button
                         onClick={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
                           onRemove(step.code, product.id);
                         }}
-                        className="shrink-0 flex items-center justify-center w-9 border-none bg-transparent cursor-pointer"
+                        className="shrink-0 flex items-start justify-center w-9 pt-2 border-none bg-transparent cursor-pointer"
                       >
                         <X size={14} color="#C4BEB7" />
                       </button>
