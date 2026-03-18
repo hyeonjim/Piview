@@ -196,9 +196,7 @@ function OwnedButton({
       style={isOwned ? ACTION_BUTTON_ACTIVE : ACTION_BUTTON_INACTIVE}
       title={isOwned ? "보유 중" : "보유추가"}
     >
-      <ShoppingBag
-        size={isSmall ? 14 : 11}
-      />
+      <ShoppingBag size={isSmall ? 14 : 11} />
       {!isSmall && (isOwned ? "보유중" : "보유추가")}
     </button>
   );
@@ -286,9 +284,10 @@ export default function ProductCard({
   showLike = true,
   showEwg = true,
 }: ProductCardProps) {
-  // 전역 찜 스토어 사용 — 페이지 간 상태 공유
-  const { isLiked: getIsLiked, toggleLike } = useLikeStore();
-  const isLiked = getIsLiked(id);
+  // likedIds를 직접 구독 — isLiked() 함수 호출 결과는 store 변경 시 재계산되지 않음
+  const likedIds = useLikeStore((state) => state.likedIds);
+  const toggleLike = useLikeStore((state) => state.toggleLike);
+  const isLiked = !!likedIds[String(id)];
 
   // 상세페이지 링크 — href prop 우선, 없으면 기본 경로
   const productHref = href ?? `/product/${id}`;

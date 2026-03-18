@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, SlidersHorizontal, Scale } from "lucide-react";
+import { MOCK_SEARCH_PRODUCTS } from "@/constants/_mock/searchProducts";
 import { MAIN_CATEGORIES, BRANDS } from "@/constants/productCategories";
 import { DEFAULT_FILTER } from "@/constants/filterDefaults";
 import { FilterModal } from "@/components/common/FilterModal";
@@ -15,30 +15,44 @@ import SearchBar from "@/components/common/SearchBar";
 import CompareModal, {
   type CompareProduct,
 } from "@/components/common/CompareModal";
-import { useToast, useCompare } from "@/hooks";
-import { MOCK_RECOMMEND } from "@/constants/_mock/recommend";
+import { useToast } from "@/hooks";
+import { useCompare } from "@/hooks/useCompare";
 import { useOwnedStore } from "@/stores/useOwnedStore";
+import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
+import { ROUTINE_STEPS } from "@/constants/routineSteps";
+import { SlidersHorizontal, Search, Scale } from "lucide-react";
 
+// 2열 그리드: 페이지당 12개 (짝수)
 const PAGE_SIZE = 12;
 
-export default function RecommendPage() {
-  // 초기값: 스킨케어 대분류 + 스킨/토너 소분류 고정
+// matchScore 보완 — ⚠️ API 연동 시 서버 계산값으로 교체
+const PRODUCTS = MOCK_SEARCH_PRODUCTS.map((product, index) => ({
+  ...product,
+  matchScore: product.matchScore ?? 78 + (index % 18),
+}));
+
+export default function SearchPage() {
   const [selectedMain, setSelectedMain] = useState<string | null>("스킨케어");
   const [selectedSub, setSelectedSub] = useState<string | null>("스킨/토너");
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [showFilter, setShowFilter] = useState(false);
   const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER);
-
-  // 제품별 루틴추가 상태 — ⚠️ API 연동 시 서버 상태로 교체
-  const [routineMap, setRoutineMap] = useState<Record<string, boolean>>({});
-  // 보유 상태 — 전역 store로 마이페이지와 공유 (search 페이지와 동일)
+  // 루틴 상태 — 전역 store (상세 페이지와 동기화)
+  const routineMap = useLocalRoutineStore((state) => state.routine);
+  const addStepProduct = useLocalRoutineStore((state) => state.addStepProduct);
+  const isInRoutine = (productId: string) =>
+    Object.values(routineMap)
+      .flat()
+      .filter(Boolean)
+      .some((p) => p.id === productId);
+  // 보유 상태 — 전역 store로 마이페이지와 공유
   const { toggleOwned, ownedProducts } = useOwnedStore();
   const isOwned = (id: string) => ownedProducts.some((p) => p.id === id);
 
   const { toastMessage } = useToast();
 
-  // 비교 선택/모달 상태를 페이지 단위로 관리
+  // 기존 useCompare 훅 사용 — 비교 선택/모달 상태를 페이지 단위로 관리
   const {
     compareItems,
     showCompare,
@@ -55,52 +69,81 @@ export default function RecommendPage() {
     (filter.filterBrands.size > 0 ? 1 : 0) +
     (filter.priceRange[0] > 0 || filter.priceRange[1] < 1000000 ? 1 : 0);
 
-  const filtered = useMemo(() => {
-    let list = MOCK_RECOMMEND;
+  const filteredProducts = useMemo(() => {
+    let list = PRODUCTS;
     if (searchQuery.trim()) {
       const keyword = searchQuery.toLowerCase();
       list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(keyword) ||
-          p.brand.toLowerCase().includes(keyword),
+        (product) =>
+          product.name.toLowerCase().includes(keyword) ||
+          product.brand.toLowerCase().includes(keyword),
       );
     }
     if (selectedSub) {
-      list = list.filter((p) => p.category === selectedSub);
+      list = list.filter((product) => product.category === selectedSub);
     } else if (selectedMain) {
-      list = list.filter((p) =>
-        (MAIN_CATEGORIES[selectedMain] ?? []).includes(p.category),
+      list = list.filter((product) =>
+        (MAIN_CATEGORIES[selectedMain] ?? []).includes(product.category),
       );
     }
-    if (filter.filterSkin)
-      list = list.filter((p) => p.skinTypes.includes(filter.filterSkin!));
-    if (filter.filterFns.size > 0)
-      list = list.filter((p) =>
-        [...filter.filterFns].some((e) => p.effects.includes(e)),
+    if (filter.filterSkin) {
+      list = list.filter((product) =>
+        product.skinTypes.includes(filter.filterSkin!),
       );
-    if (filter.filterBrands.size > 0)
-      list = list.filter((p) => filter.filterBrands.has(p.brand));
-    return [...list].sort((a, b) => b.matchScore - a.matchScore);
+    }
+    if (filter.filterFns.size > 0) {
+      list = list.filter((product) =>
+        [...filter.filterFns].some((effectName) =>
+          product.effects.includes(effectName),
+        ),
+      );
+    }
+    if (filter.filterBrands.size > 0) {
+      list = list.filter((product) => filter.filterBrands.has(product.brand));
+    }
+    return list;
   }, [selectedMain, selectedSub, searchQuery, filter]);
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
+  const paginatedProducts = filteredProducts.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE,
+  );
 
-  const handleSearchChange = (v: string) => {
-    setSearchQuery(v);
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
     setPage(1);
   };
-  const handleMainSelect = (m: string | null) => {
-    setSelectedMain(m);
+  const handleMainSelect = (main: string | null) => {
+    setSelectedMain(main);
     setPage(1);
   };
-  const handleSubSelect = (s: string | null) => {
-    setSelectedSub(s);
+  const handleSubSelect = (sub: string | null) => {
+    setSelectedSub(sub);
     setPage(1);
   };
 
   const handleAddRoutine = (productId: string) => {
-    setRoutineMap((prev) => ({ ...prev, [productId]: true }));
+    if (isInRoutine(productId)) return;
+    const product = PRODUCTS.find((p) => p.id === productId);
+    if (!product) return;
+    const matchedStep = ROUTINE_STEPS.find((step) =>
+      step.categories.includes(product.category),
+    );
+    addStepProduct(matchedStep?.code ?? "PR", {
+      id: product.id,
+      brand: product.brand,
+      name: product.name,
+      category: product.category,
+      emoji: product.emoji,
+      skinTypes: product.skinTypes,
+      effects: product.effects,
+      matchScore: product.matchScore,
+      price: product.price,
+      ewgSafe: product.ewgSafe,
+      ewgCaution: product.ewgCaution,
+      ewgDanger: product.ewgDanger,
+    });
   };
 
   /** 비교 토글 — 2개 선택 완료 시 모달 자동 오픈 */
@@ -109,6 +152,7 @@ export default function RecommendPage() {
       (item) => item.id === product.id,
     );
     toggleCompare(product);
+    // 추가로 2개가 되는 시점에 모달 오픈
     if (!isAlreadySelected && compareItems.length === 1) {
       openCompare();
     }
@@ -145,7 +189,7 @@ export default function RecommendPage() {
               lineHeight: 1.2,
             }}
           >
-            맞춤 추천
+            전체 제품
           </h1>
 
           {/* 검색바 + 필터 버튼 한 줄 */}
@@ -281,8 +325,8 @@ export default function RecommendPage() {
       )}
 
       {/* ── 제품 그리드 ─────────────────────────────────── */}
-      <div style={{ padding: "12px 16px 24px" }}>
-        {filtered.length === 0 ? (
+      <div style={{ padding: "16px 20px 24px" }}>
+        {filteredProducts.length === 0 ? (
           <div
             style={{
               backgroundColor: "#FFFFFF",
@@ -305,25 +349,19 @@ export default function RecommendPage() {
               gap: "24px",
             }}
           >
-            {paginated.map((product) => (
+            {paginatedProducts.map((product) => (
               <ProductCard
                 key={product.id}
                 id={product.id}
-                href={
-                  product.reason
-                    ? `/product/${product.id}?reason=${encodeURIComponent(product.reason)}`
-                    : undefined
-                }
                 brand={product.brand}
                 name={product.name}
                 category={product.category}
                 emoji={product.emoji}
                 skinTypes={product.skinTypes}
                 effects={product.effects}
-                isRecommended={!!product.reason}
                 layout="grid"
                 showActions={true}
-                inRoutine={routineMap[product.id] ?? false}
+                inRoutine={isInRoutine(product.id)}
                 onAddRoutine={() => handleAddRoutine(product.id)}
                 isOwned={isOwned(product.id)}
                 onToggleOwned={() => toggleOwned(product)}
@@ -336,6 +374,7 @@ export default function RecommendPage() {
                     name: product.name,
                     brand: product.brand,
                     emoji: product.emoji,
+                    price: product.price,
                     skinTypes: product.skinTypes,
                     effects: product.effects,
                     ewgSafe: product.ewgSafe,
@@ -357,7 +396,7 @@ export default function RecommendPage() {
         state={filter}
         onChange={(next) => setFilter((prev) => ({ ...prev, ...next }))}
         onReset={() => setFilter(DEFAULT_FILTER)}
-        resultCount={filtered.length}
+        resultCount={filteredProducts.length}
         availableBrands={BRANDS}
       />
     </div>
