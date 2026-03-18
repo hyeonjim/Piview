@@ -229,8 +229,7 @@ function ProductDetailInner() {
     });
   };
 
-  const { total, safe, caution, danger, unknown, safePercent } =
-    productData.ewg;
+  const { total, safe, caution, danger, unknown } = productData.ewg;
   const allergenList = productData.ingredientsKr.filter((ingredientName) =>
     isAllergenIngredient(ingredientName),
   );
@@ -553,24 +552,11 @@ function ProductDetailInner() {
 
         {/* EWG 성분 분석 카드 */}
         <div ref={ewgSectionRef} className="mx-5 rounded-2xl bg-white p-4 mb-3">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="size-7 rounded-full flex items-center justify-center bg-ewg-safe-bg">
-                <span className="text-ewg-safe text-sm font-bold">✓</span>
-              </div>
-              <div>
-                <p className="text-[16px] font-bold text-text-primary">
-                  EWG 성분 분석
-                </p>
-                <p className="text-xs text-text-muted">총 {total}개 성분</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-text-muted">안전 비율</p>
-              <p className="text-[22px] font-extrabold text-ewg-safe">
-                {safePercent}%
-              </p>
-            </div>
+          <div className="mb-3">
+            <p className="text-[16px] font-bold text-text-primary">
+              EWG 성분 분석
+            </p>
+            <p className="text-xs text-text-muted">총 {total}개 성분</p>
           </div>
 
           {/* EWG 비율 바 — flex 값은 동적이라 style 유지 */}
