@@ -16,6 +16,8 @@ class AnalysisCacheValue {
     private String analysisId;
     private Long userId;
     private SkinAnalysisStatus status;
+    // 최종 설문이 이미 한 번 처리됐는지 표시하는 플래그입니다.
+    private Boolean consumed;
     private JsonNode result;
     private String errorMessage;
 
@@ -25,6 +27,7 @@ class AnalysisCacheValue {
                 .analysisId(analysisId)
                 .userId(userId)
                 .status(SkinAnalysisStatus.PENDING)
+                .consumed(false)
                 .build();
     }
 
@@ -34,6 +37,7 @@ class AnalysisCacheValue {
                 .analysisId(analysisId)
                 .userId(userId)
                 .status(SkinAnalysisStatus.COMPLETED)
+                .consumed(false)
                 .result(result)
                 .build();
     }
@@ -44,6 +48,7 @@ class AnalysisCacheValue {
                 .analysisId(analysisId)
                 .userId(userId)
                 .status(SkinAnalysisStatus.FAILED)
+                .consumed(false)
                 .errorMessage(errorMessage)
                 .build();
     }
