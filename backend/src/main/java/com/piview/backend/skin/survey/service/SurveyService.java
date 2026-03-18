@@ -10,14 +10,23 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.skin.analysis.service.SkinAnalysisCacheService;
 import com.piview.backend.skin.survey.dto.request.SurveySubmitRequest;
+import com.piview.backend.skin.survey.dto.response.SurveyAiResultResponse;
+import com.piview.backend.skin.survey.dto.response.SurveyAxisResponse;
+import com.piview.backend.skin.survey.dto.response.SurveyMoistureResponse;
+import com.piview.backend.skin.survey.dto.response.SurveyRegionalSkinTypeResponse;
+import com.piview.backend.skin.survey.dto.response.SurveyRoiAlignmentResponse;
+import com.piview.backend.skin.survey.dto.response.SurveyRoiAreaResponse;
+import com.piview.backend.skin.survey.dto.response.SurveyRoiBboxResponse;
+import com.piview.backend.skin.survey.dto.response.SurveyRoiImageSizeResponse;
+import com.piview.backend.skin.survey.dto.response.SurveyRoiMetadataResponse;
+import com.piview.backend.skin.survey.dto.response.SurveyRoisResponse;
 import com.piview.backend.skin.survey.dto.response.SurveySubmitResponse;
+import com.piview.backend.skin.survey.dto.response.SurveyWarningResponse;
 import com.piview.backend.skin.survey.entity.MySkin;
 import com.piview.backend.skin.survey.entity.SurveyAgeGroup;
 import com.piview.backend.skin.survey.entity.SurveySkinType;
@@ -178,53 +187,153 @@ public class SurveyService {
             .toList();
     }
 
-    private JsonNode buildClientAiResult(JsonNode aiResult) {
-        // Redis에는 원본 AI 응답을 보존하고, 최종 제출 응답에서는 프론트가 바로 쓰기 좋게 한 번 정리해서 내린다.
-        JsonNode copied = aiResult.deepCopy();
-        stripInternalProbabilities(copied);
-        enrichMoistureState(copied);
-        return copied;
+    private SurveyAiResultResponse buildClientAiResult(JsonNode aiResult) {
+        // Redis에는 원본 AI 응답을 보존하고, 최종 제출 응답에서는 프론트가 바로 쓰기 좋은 DTO로 정리해 내린다.
+        // 이 메서드는 "응답 스키마를 안정적으로 유지하는 진입점" 역할을 한다.
+        // 즉 Redis 원본 JSON 구조가 일부 바뀌더라도, 프론트 계약은 여기서 최대한 흡수한다.
+        return SurveyAiResultResponse.builder()
+            .globalFace(buildAxisResponse(aiResult.path("global_face")))
+            .regionalSkinType(buildRegionalSkinTypeResponse(aiResult.path("regional_skin_type")))
+            .moisture(buildMoistureResponse(aiResult.path("moisture")))
+            .roiMetadata(buildRoiMetadataResponse(aiResult.path("roi_metadata")))
+            .warnings(buildWarningResponses(aiResult.path("warnings")))
+            .build();
     }
 
-    private void stripInternalProbabilities(JsonNode node) {
-        if (node == null || node.isNull() || node.isValueNode()) {
-            return;
+    private SurveyAxisResponse buildAxisResponse(JsonNode node) {
+        if (node.isMissingNode() || node.isNull()) {
+            return null;
         }
 
-        if (node.isArray()) {
-            // warnings 같은 배열 안에 객체가 들어올 수 있어 재귀적으로 같은 규칙을 적용한다.
-            ArrayNode arrayNode = (ArrayNode) node;
-            arrayNode.forEach(this::stripInternalProbabilities);
-            return;
-        }
-
-        ObjectNode objectNode = (ObjectNode) node;
-        // raw probability 는 내부 디버깅/검증에는 유용하지만 프론트 표시에는 중복이라 제거한다.
-        // 화면에는 axis 와 display_* 만 내려가도록 응답을 얇게 만든다.
-        objectNode.remove(List.of(
-            "dry_probability",
-            "oily_probability",
-            "cheek_mean_dry_probability",
-            "cheek_mean_oily_probability"
-        ));
-        objectNode.elements().forEachRemaining(this::stripInternalProbabilities);
+        // global_face 와 forehead/left_cheek/right_cheek 모두 같은 축 구조를 쓰므로
+        // 공통 변환 메서드로 묶어 display 확률만 노출한다.
+        return SurveyAxisResponse.builder()
+            .axis(node.path("axis").asText(null))
+            .displayDryProbability(readNullableDouble(node, "display_dry_probability"))
+            .displayOilyProbability(readNullableDouble(node, "display_oily_probability"))
+            .build();
     }
 
-    private void enrichMoistureState(JsonNode aiResult) {
-        JsonNode moistureNode = aiResult.path("moisture");
-        if (!(moistureNode instanceof ObjectNode moistureObject)) {
-            // moisture 추론 실패 시에는 이 노드가 null 일 수 있으므로 조용히 빠진다.
-            return;
+    private SurveyRegionalSkinTypeResponse buildRegionalSkinTypeResponse(JsonNode node) {
+        if (node.isMissingNode() || node.isNull()) {
+            return null;
         }
 
-        double cheekMeanScore = moistureObject.path("cheek_mean_score").asDouble(Double.NaN);
-        if (Double.isNaN(cheekMeanScore)) {
-            return;
+        // regional_skin_type 는 이마/좌볼/우볼 개별 결과와,
+        // 좌우 볼 평균, 부위 차이 존재 여부, 전형적인 복합성 패턴 여부까지 포함하는 요약 노드다.
+        return SurveyRegionalSkinTypeResponse.builder()
+            .forehead(buildAxisResponse(node.path("forehead")))
+            .leftCheek(buildAxisResponse(node.path("left_cheek")))
+            .rightCheek(buildAxisResponse(node.path("right_cheek")))
+            .cheekMeanAxis(node.path("cheek_mean_axis").asText(null))
+            .displayDryProbability(readNullableDouble(node, "display_dry_probability"))
+            .displayOilyProbability(readNullableDouble(node, "display_oily_probability"))
+            .regionalDifferenceExists(readNullableBoolean(node, "regional_difference_exists"))
+            .foreheadOilyCheekDry(readNullableBoolean(node, "forehead_oily_cheek_dry"))
+            .build();
+    }
+
+    private SurveyMoistureResponse buildMoistureResponse(JsonNode node) {
+        if (node.isMissingNode() || node.isNull()) {
+            return null;
         }
 
-        // 수분은 현재 score 그대로 노출하되, 프론트가 별도 기준식을 몰라도 되도록
-        // 우리가 해석한 결과 문자열(state)을 함께 내려준다.
+        // moisture 모델은 아직 회귀 점수만 반환하므로,
+        // 서비스 기준 threshold 로 low/normal 상태를 한 번 더 해석해 함께 내려준다.
+        Double cheekMeanScore = readNullableDouble(node, "cheek_mean_score");
+        if (cheekMeanScore == null) {
+            return null;
+        }
+
         boolean isLow = surveyScoreCalculator.isCheekMeanMoistureLow(cheekMeanScore);
-        moistureObject.put("state", isLow ? "low" : "normal");
+        return SurveyMoistureResponse.builder()
+            .cheekMeanScore(cheekMeanScore)
+            .state(isLow ? "low" : "normal")
+            .build();
+    }
+
+    private SurveyRoiMetadataResponse buildRoiMetadataResponse(JsonNode node) {
+        if (node.isMissingNode() || node.isNull()) {
+            return null;
+        }
+
+        // ROI 메타데이터는 프론트 오버레이 표시용이다.
+        // image_size / alignment / rois 를 나눠서 담아두면, 좌표계가 바뀌더라도 설명과 확장이 쉽다.
+        JsonNode imageSize = node.path("image_size");
+        JsonNode alignment = node.path("alignment");
+        JsonNode rois = node.path("rois");
+
+        return SurveyRoiMetadataResponse.builder()
+            .coordinateSpace(node.path("coordinate_space").asText(null))
+            .imageSize(SurveyRoiImageSizeResponse.builder()
+                .width(readNullableInt(imageSize, "width"))
+                .height(readNullableInt(imageSize, "height"))
+                .build())
+            .alignment(SurveyRoiAlignmentResponse.builder()
+                .rotateDeg(readNullableDouble(alignment, "rotate_deg"))
+                .flipped180(readNullableBoolean(alignment, "flipped_180"))
+                .build())
+            .rois(SurveyRoisResponse.builder()
+                .forehead(buildRoiAreaResponse(rois.path("forehead")))
+                .leftCheek(buildRoiAreaResponse(rois.path("left_cheek")))
+                .rightCheek(buildRoiAreaResponse(rois.path("right_cheek")))
+                .build())
+            .build();
+    }
+
+    private SurveyRoiAreaResponse buildRoiAreaResponse(JsonNode node) {
+        if (node.isMissingNode() || node.isNull()) {
+            return null;
+        }
+
+        // 현재 ROI 는 사각형 bbox 만 노출한다.
+        // 향후 polygon 이 필요해지면 이 DTO 아래에만 필드를 추가하면 된다.
+        JsonNode bbox = node.path("bbox");
+        if (bbox.isMissingNode() || bbox.isNull()) {
+            return null;
+        }
+
+        return SurveyRoiAreaResponse.builder()
+            .bbox(SurveyRoiBboxResponse.builder()
+                .x1(readNullableDouble(bbox, "x1"))
+                .y1(readNullableDouble(bbox, "y1"))
+                .x2(readNullableDouble(bbox, "x2"))
+                .y2(readNullableDouble(bbox, "y2"))
+                .build())
+            .build();
+    }
+
+    private List<SurveyWarningResponse> buildWarningResponses(JsonNode node) {
+        if (node.isMissingNode() || node.isNull() || !node.isArray()) {
+            return List.of();
+        }
+
+        // 경고는 분석 실패처럼 요청 자체를 깨는 정보가 아니라,
+        // 일부 단계가 생략되었거나 운영상 참고가 필요한 비치명적 메시지로만 내려준다.
+        List<SurveyWarningResponse> warnings = new ArrayList<>();
+        node.forEach(warningNode -> warnings.add(
+            SurveyWarningResponse.builder()
+                .stage(warningNode.path("stage").asText(null))
+                .detail(warningNode.path("detail").asText(null))
+                .build()
+        ));
+        return warnings;
+    }
+
+    private Double readNullableDouble(JsonNode node, String fieldName) {
+        // 응답 JSON 에 필드가 없을 수 있는 경우를 허용하기 위해,
+        // primitive 가 아닌 nullable wrapper 로 한 번 읽어온다.
+        JsonNode valueNode = node.path(fieldName);
+        return valueNode.isMissingNode() || valueNode.isNull() ? null : valueNode.asDouble();
+    }
+
+    private Integer readNullableInt(JsonNode node, String fieldName) {
+        JsonNode valueNode = node.path(fieldName);
+        return valueNode.isMissingNode() || valueNode.isNull() ? null : valueNode.asInt();
+    }
+
+    private Boolean readNullableBoolean(JsonNode node, String fieldName) {
+        JsonNode valueNode = node.path(fieldName);
+        return valueNode.isMissingNode() || valueNode.isNull() ? null : valueNode.asBoolean();
     }
 }
