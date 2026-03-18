@@ -10,7 +10,7 @@ from inference.display_score import build_display_scores
 from inference.global_face import is_model_ready, predict_global_face_probabilities
 from inference.moisture import predict_moisture_states
 from inference.regional_face import predict_regional_axis
-from preprocessing.mediapipe.roi_extractor import extract_face_rois
+from preprocessing.mediapipe.roi_extractor import RoiExtractionResult, extract_face_roi_result
 
 ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
@@ -25,10 +25,10 @@ def _predict_global_face_with_context(image: Image.Image) -> tuple[float, float]
         raise RuntimeError(f"global_face 추론 중 예기치 못한 오류가 발생했어요: {exc}") from exc
 
 
-def _extract_face_rois_with_context(image: Image.Image) -> dict[str, Image.Image]:
+def _extract_face_rois_with_context(image: Image.Image) -> RoiExtractionResult:
     # MediaPipe 단계는 이후 regional/moisture 추론에 필요한 공통 ROI를 한 번만 준비합니다.
     try:
-        return extract_face_rois(image)
+        return extract_face_roi_result(image)
     except ValueError as exc:
         raise ValueError(f"MediaPipe ROI 추출 실패: {exc}") from exc
     except RuntimeError as exc:
@@ -190,6 +190,7 @@ async def extract_skin_states(file: UploadFile) -> dict:
             "global_face": global_face,
             "regional_skin_type": None,
             "moisture": None,
+            "roi_metadata": None,
             "warnings": [
                 {
                     "stage": "mediapipe_roi",
@@ -198,7 +199,8 @@ async def extract_skin_states(file: UploadFile) -> dict:
             ],
         }
 
-    rois = roi_result
+    roi_bundle = roi_result
+    rois = roi_bundle.crops
 
     # ROI 기반 모델들은 서로 독립이라 두 번째 병렬 구간으로 묶습니다.
     try:
@@ -208,6 +210,7 @@ async def extract_skin_states(file: UploadFile) -> dict:
             "global_face": global_face,
             "regional_skin_type": None,
             "moisture": None,
+            "roi_metadata": roi_bundle.roi_metadata,
             "warnings": [
                 {
                     "stage": "regional_or_moisture",
@@ -220,6 +223,7 @@ async def extract_skin_states(file: UploadFile) -> dict:
             "global_face": global_face,
             "regional_skin_type": None,
             "moisture": None,
+            "roi_metadata": roi_bundle.roi_metadata,
             "warnings": [
                 {
                     "stage": "regional_or_moisture",
@@ -235,5 +239,6 @@ async def extract_skin_states(file: UploadFile) -> dict:
         "global_face": global_face,
         "regional_skin_type": regional_skin_type,
         "moisture": moisture,
+        "roi_metadata": roi_bundle.roi_metadata,
         "warnings": [],
     }
