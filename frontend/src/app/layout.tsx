@@ -19,6 +19,22 @@ const ridiBatang = localFont({
   variable: "--font-pretendard", // 기존 변수명 유지 — 다른 파일 수정 불필요
 });
 
+// ── Hanken Grotesk — 성분 영어명 전용 폰트 (로컬) ─────────────────
+const hankenGrotesk = localFont({
+  src: [
+    {
+      path: "../../public/fonts/HankenGrotesk-VariableFont_wght.ttf",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/HankenGrotesk-Italic-VariableFont_wght.ttf",
+      style: "italic",
+    },
+  ],
+  display: "swap",
+  variable: "--font-hanken",
+});
+
 // ── RIDIBatang (세리프 디스플레이용 별칭) ─────────────────────────
 const ridiBatangSerif = localFont({
   src: "../../public/fonts/RIDIBatang.otf",
@@ -33,7 +49,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className={`${googleSansFlex.variable} ${ridiBatang.variable} ${ridiBatangSerif.variable}`}>
+    <html lang="ko" className={`${googleSansFlex.variable} ${ridiBatang.variable} ${ridiBatangSerif.variable} ${hankenGrotesk.variable}`}>
       <body>
         <div className="min-h-screen" style={{ backgroundColor: "#F2EFE9" }}>
           <div

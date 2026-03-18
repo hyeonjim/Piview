@@ -37,6 +37,18 @@ export interface RoutineDetail {
   stepOrder: number;            // ERD: step_order → 드래그 순서
 }
 
+/**
+ * PUT /api/v1/routines/draft 요청 body 아이템 1건
+ *
+ * - 화면의 루틴 전체 목록을 flat 배열로 변환해 전송
+ * - 백엔드는 Redis에 통째로 덮어쓰기 (diff 없음)
+ */
+export interface DraftItem {
+  columnId: number;  // 루틴 단계 ID (ERD: RoutineColumn.routine_col_id)
+  productId: number; // 화장품 고유 ID (Long)
+  stepOrder: number; // 루틴 전체 내 순서 (1부터 시작, 연속값)
+}
+
 // 루틴 스텝 키 타입 (RoutineColumn.routineColName 값)
 export type RoutineStepKey =
   | "cleanser"
