@@ -11,6 +11,12 @@ public enum ErrorCode {
     // 400 BAD_REQUEST
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
     INVALID_IMAGE_FILE(HttpStatus.BAD_REQUEST, "이미지 파일이 비어있거나 손상되었습니다."),
+    INVALID_USER_PROFILE_REQUEST(HttpStatus.BAD_REQUEST, "내 정보 수정 요청 형식이 올바르지 않습니다."),
+    INVALID_USER_NAME(HttpStatus.BAD_REQUEST, "이름은 비워둘 수 없습니다."),
+    INVALID_GENDER(HttpStatus.BAD_REQUEST, "성별 값이 올바르지 않습니다."),
+    INVALID_AGE_GROUP(HttpStatus.BAD_REQUEST, "연령대 값이 올바르지 않습니다."),
+    INVALID_MY_SKIN_TYPE(HttpStatus.BAD_REQUEST, "피부타입 값이 올바르지 않습니다."),
+    INVALID_SKIN_PROBLEMS(HttpStatus.BAD_REQUEST, "피부 고민 목록 값이 올바르지 않습니다."),
 
     // 403 FORBIDDEN
     UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "본인의 화장품 목록만 접근 및 삭제할 수 있습니다."),
