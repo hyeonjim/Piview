@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "안 맞는 제품 API", description = "사용자가 안 맞는 제품을 등록, 조회, 삭제하는 API입니다.")
+@Tag(name = "안 맞는 제품 API", description = "사용자가 안 맞는 제품을 등록, 조회, 삭제하고, 등록된 제품 기준 문제 성분 목록을 확인하는 API입니다.")
 @RestController
 @RequestMapping("/users/me/disliked/products")
 @RequiredArgsConstructor

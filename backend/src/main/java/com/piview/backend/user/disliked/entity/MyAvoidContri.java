@@ -33,6 +33,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+// 안 맞는 제품 등록 결과로 계산된 문제 성분을 사용자별로 보관한다.
 public class MyAvoidContri extends BaseEntity {
 
     @Id
