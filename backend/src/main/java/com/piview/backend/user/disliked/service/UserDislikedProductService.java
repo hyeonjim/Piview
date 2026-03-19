@@ -13,6 +13,7 @@ import com.piview.backend.user.entity.User;
 import com.piview.backend.user.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -95,7 +96,14 @@ public class UserDislikedProductService {
             .product(product)
             .build();
 
-        MyDislikeProduct saved = myDislikeProductRepository.save(myDislikeProduct);
+        // 애플리케이션 레벨 중복 검사 사이에 동시 요청이 들어오면
+        // DB unique 제약에서 막힐 수 있으므로 409로 다시 변환한다.
+        MyDislikeProduct saved;
+        try {
+            saved = myDislikeProductRepository.saveAndFlush(myDislikeProduct);
+        } catch (DataIntegrityViolationException exception) {
+            throw new CustomException(ErrorCode.ALREADY_DISLIKED_PRODUCT);
+        }
 
         // 프론트가 이후 목록 조회/삭제에 쓸 수 있도록 생성된 PK를 반환한다.
         return new DislikedProductCreateResponse(saved.getId());
