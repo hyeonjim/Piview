@@ -2,6 +2,8 @@ package com.piview.backend.routine.core.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.piview.backend.global.exception.CustomException;
+import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.routine.core.dto.DraftItemDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -28,7 +30,7 @@ public class RedisDraftService {
       String json = objectMapper.writeValueAsString(items);
       redisTemplate.opsForValue().set(key, json);
     } catch (Exception e) {
-      throw new RuntimeException("Redis 데이터 저장 중 오류가 발생했습니다.", e);
+      throw new CustomException(ErrorCode.REDIS_SAVE_FAILED);
     }
   }
 
@@ -45,8 +47,26 @@ public class RedisDraftService {
       // JSON 문자열을 다시 객체 리스트로 변환
       return objectMapper.readValue(json, new TypeReference<List<DraftItemDto>>() {});
     } catch (Exception e) {
-      throw new RuntimeException("Redis 데이터 읽기 중 오류가 발생했습니다.", e);
+      throw new CustomException(ErrorCode.REDIS_SAVE_FAILED);
     }
+  }
+
+  // 제품을 루틴(redis)에서 삭제
+  public void removeProductFromDraft(Long userId, Long productId) {
+    // 기존 장바구니 불러오기
+    List<DraftItemDto> currentDraft = getDraftItems(userId);
+
+    if (currentDraft == null || currentDraft.isEmpty()) {
+      return; // 장바구니가 비어있으면 무시
+    }
+
+    // 삭제하려는 productId와 일치하지 않는 제품들만 남기기 (필터링)
+    List<DraftItemDto> updatedDraft = currentDraft.stream()
+        .filter(item -> item.product() != null && !item.product().getProductId().equals(productId))
+        .toList();
+
+    // 업데이트된 리스트를 다시 Redis에 저장 (해당 제품만 쏙 빠진 채로 덮어쓰기)
+    saveDraftItems(userId, updatedDraft);
   }
 
   // 저장 완료되면 레디스 초기화
