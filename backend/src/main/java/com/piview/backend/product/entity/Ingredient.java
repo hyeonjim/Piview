@@ -22,6 +22,12 @@ public class Ingredient {
     @Column(name = "name_ko", length = 500)
     private String nameKo;
 
+    @Column(name = "has_allergen")
+    private Boolean hasAllergen;
+
+    @Column(name = "coos_functions")
+    private String coosFunctions;
+
     @Column(name = "ewg_score_min")
     private Integer ewgScoreMin;
 
@@ -31,7 +37,4 @@ public class Ingredient {
     @Column(name = "ewg_grade")
     @Enumerated(EnumType.STRING)
     private EwgGrade ewgGrade;
-
-    @Column(name = "coos_functions", columnDefinition = "TEXT")
-    private String coosFunctions;   // COOS 기능명 쉼표 구분("보습제, 유연화제, ...")
 }
