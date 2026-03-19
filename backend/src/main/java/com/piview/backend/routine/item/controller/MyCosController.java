@@ -26,7 +26,6 @@ public class MyCosController {
     private final MyCosService myCosService;
 
     @Operation(summary = "보유제품 목록 조회", description = "로그인한 사용자가 보유한 화장품 목록을 조회합니다. (피부 타입 1, 2순위 포함)")
-
     @GetMapping
     public ResponseEntity<List<MyCosResponseDto>> getMyCosList(
         @Parameter(hidden = true)
@@ -39,6 +38,7 @@ public class MyCosController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "보유제품 등록", description = "사용자가 새로운 제품을 보유 제품 목록에 추가합니다.")
     @PostMapping
     public ResponseEntity<Long> saveMyCos(
         @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -52,6 +52,7 @@ public class MyCosController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedMyCosId);
     }
 
+    @Operation(summary = "보유제품 삭제", description = "사용자의 보유 제품 목록에서 특정 제품을 삭제합니다.")
     @DeleteMapping("/{myCosId}")
     public ResponseEntity<String> deleteMyCos(
         @PathVariable("myCosId") Long myCosId,

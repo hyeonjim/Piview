@@ -3,15 +3,13 @@ package com.piview.backend.product.catalog.controller;
 import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
+import com.piview.backend.product.catalog.dto.ProductDetailResponse;
 import com.piview.backend.product.catalog.dto.ProductPageResponse;
 import com.piview.backend.product.catalog.dto.ProductSearchCondition;
 import com.piview.backend.product.catalog.service.ProductCatalogService;
 import com.piview.backend.product.entity.SkinTypeEnum;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -64,5 +62,11 @@ public class ProductCatalogController {
         } catch (IllegalArgumentException e) {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
+    }
+
+    @GetMapping("/{productId}")
+    public ApiResponse<ProductDetailResponse> productDetail(@PathVariable Long productId) {
+        ProductDetailResponse result = productCatalogService.getProductDetail(productId);
+        return ApiResponse.success(result);
     }
 }
