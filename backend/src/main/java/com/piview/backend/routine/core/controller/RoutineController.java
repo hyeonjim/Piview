@@ -5,6 +5,9 @@ import com.piview.backend.routine.core.dto.RoutineListResponse;
 import com.piview.backend.routine.core.dto.RoutineOrderUpdateRequest;
 import com.piview.backend.routine.core.dto.RoutineResponse;
 import com.piview.backend.routine.core.service.RoutineService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "루틴 관리 API", description = "피뷰(FiView) 맞춤형 스킨케어 루틴 생성 및 관리 API")
 @RestController
 @RequestMapping("/routines")
 @RequiredArgsConstructor
@@ -21,10 +25,10 @@ public class RoutineController {
   // 루틴 생성 요청 DTO
   public record CreateRoutineRequest(Long userId, String title) {}
 
-  // 루틴 생성
+  @Operation(summary = "루틴 생성", description = "임시 장바구니(Redis)에 담긴 화장품 목록을 바탕으로 새로운 루틴을 생성합니다. (최대 6개)")
   @PostMapping
   public ResponseEntity<Long> createRoutine(
-      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
       @RequestBody CreateRoutineRequest request) {
 
     Long userId = userPrincipal.getId();
@@ -32,10 +36,10 @@ public class RoutineController {
     return ResponseEntity.ok(routineId);
   }
 
-  // 루틴 수정(순서 및 이름 변경)
+  @Operation(summary = "루틴 순서 수정", description = "특정 루틴 내에 포함된 화장품들의 사용 순서를 변경합니다.")
   @PatchMapping("/{routineId}/order")
   public ResponseEntity<Void> updateRoutineOrder(
-      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
       @PathVariable Long routineId,
       @RequestBody RoutineOrderUpdateRequest request) {
 
@@ -45,21 +49,32 @@ public class RoutineController {
     return ResponseEntity.ok().build();
   }
 
-  // 메인 루틴으로 설정
+  @Operation(summary = "메인 루틴 조회", description = "사용자가 메인으로 설정한 단일 루틴의 상세 정보(제품 목록 포함)를 조회합니다.")
+  @GetMapping("/main")
+  public ResponseEntity<RoutineResponse> getMainRoutine(
+      @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+    Long userId = userPrincipal.getId();
+    RoutineResponse response = routineService.getMainRoutine(userId);
+
+    return ResponseEntity.ok(response);
+  }
+
+  @Operation(summary = "메인 루틴으로 설정", description = "특정 루틴을 사용자의 메인 루틴으로 지정합니다. (기존 메인 루틴은 해제됨)")
   @PatchMapping("/{routineId}/main")
   public ResponseEntity<Void> setMainRoutine(
       @PathVariable Long routineId,
-      @AuthenticationPrincipal UserPrincipal userPrincipal) {
+      @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
     Long userId = userPrincipal.getId();
     routineService.setMainRoutine(userId, routineId);
     return ResponseEntity.ok().build();
   }
 
-  // 루틴 목록 조회
+  @Operation(summary = "루틴 전체 목록 조회", description = "사용자가 생성한 모든 루틴의 요약 리스트를 조회합니다.")
   @GetMapping
   public ResponseEntity<List<RoutineListResponse>> getUserRoutines(
-      @AuthenticationPrincipal UserPrincipal userPrincipal) {
+      @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
     Long userId = userPrincipal.getId();
     List<RoutineListResponse> response = routineService.getUserRoutines(userId);
@@ -67,10 +82,10 @@ public class RoutineController {
     return ResponseEntity.ok(response);
   }
 
-  // 루틴 상세정보 조회
+  @Operation(summary = "루틴 상세정보 조회", description = "특정 루틴에 포함된 단계별 화장품 목록과 상세 정보를 조회합니다.")
   @GetMapping("/{routineId}")
   public ResponseEntity<RoutineResponse> getRoutineDetails(
-      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
       @PathVariable Long routineId) {
 
     Long userId = userPrincipal.getId();
@@ -78,10 +93,10 @@ public class RoutineController {
     return ResponseEntity.ok(response);
   }
 
-  // 루틴 삭제
+  @Operation(summary = "루틴 삭제", description = "특정 루틴을 삭제합니다. (메인 루틴 삭제 시 다른 루틴이 자동으로 메인으로 승격됨)")
   @DeleteMapping("/{routineId}")
   public ResponseEntity<Void> deleteRoutine(
-      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
       @PathVariable Long routineId) {
 
     Long userId = userPrincipal.getId();
