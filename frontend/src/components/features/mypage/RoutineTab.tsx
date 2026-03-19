@@ -679,7 +679,7 @@ export default function RoutineTab({
       {/* ── 루틴 저장 이름 입력 모달 ── */}
       {showSaveModal && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center pb-8 bg-black/45"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45"
           onClick={() => setShowSaveModal(false)}
         >
           <div
@@ -692,7 +692,7 @@ export default function RoutineTab({
               type="text"
               value={saveModalName}
               onChange={(event) => setSaveModalName(event.target.value)}
-              placeholder="예) 아침 루틴, 데일리 케어"
+              placeholder="예) 루틴1,루틴2"
               className="w-full px-3 py-2.5 text-sm rounded-xl border border-[#E2DDD8] outline-none mb-4"
               autoFocus
               onKeyDown={(event) => {

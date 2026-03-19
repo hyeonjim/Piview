@@ -147,7 +147,7 @@ export default function MyPage() {
       <div style={{ backgroundColor: "#F5F2EC", padding: "0 20px", position: "sticky", top: 0, zIndex: 10, borderBottom: "1px solid #E2DDD8", display: "flex" }}>
         {(["routine", "owned"] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)} style={{ flex: 1, paddingTop: "12px", paddingBottom: "11px", fontSize: "16px", fontWeight: tab === t ? 600 : 400, color: tab === t ? "#2A2118" : "#BFB6AA", background: "none", border: "none", borderBottom: tab === t ? "2px solid #A69D92" : "2px solid transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", transition: "all 0.15s", fontFamily: "var(--font-pretendard), sans-serif", marginBottom: "-1px" }}>
-            {t === "routine" ? <>내 루틴</> : <>보유제품</>}
+            {t === "routine" ? <>내 루틴</> : <>내 화장대</>}
           </button>
         ))}
       </div>

@@ -43,7 +43,7 @@ const ridiBatangSerif = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "SkinFit",
+  title: "Piview",
   description: "나만의 스킨케어 루틴",
 };
 
@@ -51,13 +51,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko" className={`${googleSansFlex.variable} ${ridiBatang.variable} ${ridiBatangSerif.variable} ${hankenGrotesk.variable}`}>
       <body>
-        <div className="min-h-screen" style={{ backgroundColor: "#F2EFE9" }}>
+        <div className="min-h-screen bg-[#F2EFE9]">
           <div
-            className="mx-auto min-h-screen bg-white flex flex-col relative w-full"
-            style={{
-              maxWidth: "500px",
-              boxShadow: "0 0 0 1px rgba(0,0,0,0.04), 0 20px 80px rgba(0,0,0,0.08)",
-            }}
+            className="mx-auto min-h-screen bg-white flex flex-col relative w-full max-w-app shadow-app"
           >
             <Providers>{children}</Providers>
           </div>
