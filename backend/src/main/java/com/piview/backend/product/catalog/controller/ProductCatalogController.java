@@ -2,6 +2,7 @@ package com.piview.backend.product.catalog.controller;
 
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
+import com.piview.backend.global.security.UserPrincipal;
 import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.product.catalog.dto.ProductDetailResponse;
 import com.piview.backend.product.catalog.dto.ProductFilterMetaResponse;
@@ -16,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,7 +48,8 @@ public class ProductCatalogController {
             @Parameter(description = "최소 가격", example = "10000") @RequestParam(required = false) Integer minPrice,
             @Parameter(description = "최대 가격", example = "30000") @RequestParam(required = false) Integer maxPrice,
             @Parameter(description = "페이지 번호(0부터 시작)", example = "0") @RequestParam(required = false, defaultValue = "0")  int page,
-            @Parameter(description = "페이지 크기(최대 50)", example = "10") @RequestParam(required = false, defaultValue = "10") int size) {
+            @Parameter(description = "페이지 크기(최대 50)", example = "10") @RequestParam(required = false, defaultValue = "10") int size,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
         size = Math.min(size, 50);  // 최대 50개 방어 처리
 
@@ -63,7 +66,8 @@ public class ProductCatalogController {
                 .size(size)
                 .build();
 
-        ProductPageResponse result = productCatalogService.searchProducts(condition);
+        Long userId = (userPrincipal != null) ? userPrincipal.getId() : null;
+        ProductPageResponse result = productCatalogService.searchProducts(condition, userId);
 
         return ApiResponse.success(result);
     }
@@ -86,8 +90,11 @@ public class ProductCatalogController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(schema = @Schema(hidden = true)))
     })
     @GetMapping("/{productId}")
-    public ApiResponse<ProductDetailResponse> productDetail(@Parameter(description = "상품 ID", example = "101012") @PathVariable Long productId) {
-        ProductDetailResponse result = productCatalogService.getProductDetail(productId);
+    public ApiResponse<ProductDetailResponse> productDetail(@PathVariable Long productId,
+        @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+        Long userId = (userPrincipal != null) ? userPrincipal.getId() : null;
+        ProductDetailResponse result = productCatalogService.getProductDetail(productId, userId);
         return ApiResponse.success(result);
     }
 
