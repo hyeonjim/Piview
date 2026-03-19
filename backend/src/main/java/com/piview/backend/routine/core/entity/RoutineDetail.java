@@ -26,7 +26,7 @@ public class RoutineDetail extends BaseEntity {
   private RoutineColumn routineColumn;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "product_id")
+  @JoinColumn(name = "product_id", referencedColumnName = "product_id")
   private Product product;
 
   @Column(name = "step_order", nullable = false)
