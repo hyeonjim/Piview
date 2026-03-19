@@ -3,13 +3,13 @@ package com.piview.backend.product.catalog.service;
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.product.catalog.dto.*;
-import com.piview.backend.product.catalog.repository.AllergenRepository;
 import com.piview.backend.product.catalog.repository.ProductIngredientRepository;
 import com.piview.backend.product.catalog.repository.ProductRepository;
+import com.piview.backend.product.catalog.repository.IngredientRepository;
 import com.piview.backend.product.entity.EwgGrade;
 import com.piview.backend.product.entity.Ingredient;
 import com.piview.backend.product.entity.Product;
-import com.piview.backend.product.entity.ProductIngredient;
+import com.piview.backend.product.entity.ProductIngredients;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 @Service
@@ -27,11 +29,9 @@ public class ProductCatalogService {
 
     private final ProductRepository productRepository;
     private final ProductIngredientRepository productIngredientRepository;
-    private final AllergenRepository allergenRepository;
+    private final IngredientRepository ingredientRepository;
 
-    // 검색, 카테고리 별 조회
     public ProductPageResponse searchProducts(ProductSearchCondition condition) {
-
         validate(condition);
 
         String normalizedQ = normalizeQ(condition.getQ());
@@ -87,24 +87,36 @@ public class ProductCatalogService {
         return values.stream().distinct().toList();
     }
 
-    // 상품 상세 조회
     public ProductDetailResponse getProductDetail(Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COSMETICS_NOT_FOUND));
 
-        List<ProductIngredient> productIngredients = productIngredientRepository.findByProductId(productId);
+        ProductIngredients pi = productIngredientRepository.findByProductId(productId).orElse(null);
 
-        List<Long> ingredientIds = productIngredients.stream()
-                .map(ProductIngredient::getIngredient)
-                .filter(Objects::nonNull)
-                .map(Ingredient::getIngredientId)
-                .toList();
+        List<String> koList = splitIngredients(pi != null ? pi.getProductIngredientsKo() : null);
+        List<String> enList = splitIngredients(pi != null ? pi.getProductIngredientsEn() : null);
 
-        Set<Long> allergenIngredientIds = new HashSet<>(
-                ingredientIds.isEmpty() ? List.of() : allergenRepository.findAllergenIngredientIds(ingredientIds)
-        );
+        int itemCount = Math.max(koList.size(), enList.size());
 
-        // low, medium, high, unknown 카운트 계산
+        Set<String> namesForLookup = Stream.concat(koList.stream(), enList.stream())
+                .filter(s -> s != null && !s.isBlank())
+                .collect(Collectors.toSet());
+
+        List<Ingredient> matchedIngredients = namesForLookup.isEmpty()
+                ? List.of()
+                : ingredientRepository.findAllByNames(namesForLookup);
+
+        Map<String, Ingredient> ingredientByKo = new HashMap<>();
+        Map<String, Ingredient> ingredientByEn = new HashMap<>();
+        for (Ingredient ingredient : matchedIngredients) {
+            if (ingredient.getNameKo() != null) {
+                ingredientByKo.put(ingredient.getNameKo(), ingredient);
+            }
+            if (ingredient.getNameEn() != null) {
+                ingredientByEn.put(ingredient.getNameEn(), ingredient);
+            }
+        }
+
         int lowCount = 0;
         int mediumCount = 0;
         int highCount = 0;
@@ -114,14 +126,20 @@ public class ProductCatalogService {
         List<String> allergenIngredients = new ArrayList<>();
         List<ProductIngredientDetailResponse> ingredients = new ArrayList<>();
 
-        for (ProductIngredient pi : productIngredients) {
-            Ingredient ingredient = pi.getIngredient();
+        for (int i = 0; i < itemCount; i++) {
+            String nameKo = i < koList.size() ? koList.get(i) : null;
+            String nameEn = i < enList.size() ? enList.get(i) : null;
 
-            Long ingredientId = (ingredient != null) ? ingredient.getIngredientId() : null;
+            Ingredient ingredient = null;
+            if (nameKo != null) {
+                ingredient = ingredientByKo.get(nameKo);
+            }
+            if (ingredient == null && nameEn != null) {
+                ingredient = ingredientByEn.get(nameEn);
+            }
+
             EwgGrade ewgGrade = (ingredient != null) ? ingredient.getEwgGrade() : null;
-            String functions = (ingredient != null) ? ingredient.getCoosFunctions() : null;
-
-            boolean isAllergen = ingredientId != null && allergenIngredientIds.contains(ingredientId);
+            boolean isAllergen = ingredient != null && Boolean.TRUE.equals(ingredient.getHasAllergen());
 
             if (ewgGrade == null) {
                 unknownCount++;
@@ -131,42 +149,36 @@ public class ProductCatalogService {
                 mediumCount++;
             } else if (ewgGrade == EwgGrade.high) {
                 highCount++;
-                cautionIngredients.add(pi.getNameKo());
+                cautionIngredients.add(nameKo != null ? nameKo : nameEn);
             }
 
             if (isAllergen) {
-                allergenIngredientIds.add(ingredientId);
+                allergenIngredients.add(nameKo != null ? nameKo : nameEn);
             }
 
             ingredients.add(ProductIngredientDetailResponse.builder()
-                    .position(pi.getPosition())
-                    .nameKo(pi.getNameKo())
-                    .nameEn(pi.getNameEn())
+                    .position(i + 1)
+                    .nameKo(nameKo)
+                    .nameEn(nameEn)
                     .ewgGrade(ewgGrade)
-                    .functions(functions)
+                    .functions(null)
                     .isAllergen(isAllergen)
                     .build());
         }
 
         List<String> skinTypes = new ArrayList<>();
-
-        if (product.getSkinScore() != null) {
-            if (product.getSkinScore().getTopSkinType() != null) {
-                skinTypes.add(product.getSkinScore().getTopSkinType().name());
-            }
-            if (product.getSkinScore().getTop2SkinType() != null) {
-                skinTypes.add(product.getSkinScore().getTop2SkinType().name());
-            }
+        if (product.getTopSkinType() != null) {
+            skinTypes.add(product.getTopSkinType().name());
+        }
+        if (product.getTop2SkinType() != null) {
+            skinTypes.add(product.getTop2SkinType().name());
         }
 
         Map<String, Integer> skinTypeScores = new HashMap<>();
-
-        if (product.getSkinScore() != null) {
-            skinTypeScores.put("dry", toIntFloor(product.getSkinScore().getScoreDry()));
-            skinTypeScores.put("oily", toIntFloor(product.getSkinScore().getScoreOily()));
-            skinTypeScores.put("combination", toIntFloor(product.getSkinScore().getScoreCombination()));
-            skinTypeScores.put("subuji", toIntFloor(product.getSkinScore().getScoreSubuji()));
-        }
+        skinTypeScores.put("dry", toIntFloor(product.getScoreDry()));
+        skinTypeScores.put("oily", toIntFloor(product.getScoreOily()));
+        skinTypeScores.put("combination", toIntFloor(product.getScoreCombination()));
+        skinTypeScores.put("subuji", toIntFloor(product.getScoreSubuji()));
 
         return ProductDetailResponse.builder()
                 .productId(product.getProductId())
@@ -188,12 +200,27 @@ public class ProductCatalogService {
                 .build();
     }
 
-    // int 변환
+    private List<String> splitIngredients(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return List.of();
+        }
+
+        String normalized = raw.trim();
+        if (normalized.startsWith("'") && normalized.endsWith("'") && normalized.length() >= 2) {
+            normalized = normalized.substring(1, normalized.length() - 1);
+        }
+
+        return Arrays.stream(normalized.split("'\\s*,\\s*'"))
+                .map(String::trim)
+                .map(s -> s.replaceAll("^'+|'+$", ""))
+                .filter(s -> !s.isBlank())
+                .toList();
+    }
+
     private Integer toIntFloor(BigDecimal value) {
         if (value == null) {
             return null;
         }
         return value.intValue();
     }
-
 }

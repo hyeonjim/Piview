@@ -37,10 +37,8 @@ public class MyCosService {
                 .productName(mc.getProduct().getName())           // Product 이름
                 .category(mc.getProduct().getCategory().getCategoryName()) // Product -> Category 접근
                 .imageUrl(mc.getProduct().getImage().getUrl()) // Product -> Image 접근
-                .topSkinType(mc.getProduct().getSkinScore() != null
-                    ? mc.getProduct().getSkinScore().getTopSkinType() : null)
-                .top2SkinType(mc.getProduct().getSkinScore() != null
-                    ? mc.getProduct().getSkinScore().getTop2SkinType() : null)
+                .topSkinType(mc.getProduct().getTopSkinType())
+                .top2SkinType(mc.getProduct().getTop2SkinType())
                 .build())
                 .toList(); // Stream을 List로 변환
     }
