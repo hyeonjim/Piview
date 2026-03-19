@@ -165,7 +165,7 @@ export function AddToRoutineModal({
               style={{
                 fontSize: "11px",
                 color: COLORS.primary,
-                fontWeight: 500,
+                fontWeight: 600,
                 marginTop: 2,
               }}
             >

@@ -418,7 +418,7 @@ function ProductDetailInner() {
           {/* 브랜드·제품명 + 내루틴 비교하기 버튼 */}
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="flex-1 min-w-0">
-              <p className="text-[16px] text-text-muted font-medium mb-0.5">
+              <p className="text-[16px] text-text-muted font-semibold mb-0.5">
                 {productData.brand}
               </p>
               <h1 className="text-[20px] font-semibold text-text-primary leading-[1.35]">
@@ -671,7 +671,7 @@ function ProductDetailInner() {
                 className={`flex-1 h-9 rounded-[10px] border-none cursor-pointer transition-all text-[16px] ${
                   activeTab === key
                     ? "bg-white text-text-primary font-bold shadow-[0_1px_4px_rgba(0,0,0,0.1)]"
-                    : "bg-transparent text-text-muted font-medium"
+                    : "bg-transparent text-text-muted font-semibold"
                 }`}
               >
                 {label}

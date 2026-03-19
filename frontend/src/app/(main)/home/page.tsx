@@ -112,7 +112,7 @@ export default function HomePage() {
 
                   {/* 스텝 정보 */}
                   <div className="flex-1 min-w-0">
-                    <p className="m-0 text-xs text-[#A69D92] font-medium tracking-[0.03em]">
+                    <p className="m-0 text-xs text-[#A69D92] font-bold tracking-[0.03em]">
                       {step.label}
                     </p>
                     <p className="mt-px text-base font-semibold text-[#2A2118] overflow-hidden text-ellipsis whitespace-nowrap">
@@ -126,7 +126,7 @@ export default function HomePage() {
             /* 루틴 없음 빈 상태 */
             <div className="flex flex-col items-center justify-center py-8 px-5">
               <Star size={28} className="text-[#D9D5D0] mb-2.5" />
-              <p className="m-0 text-sm font-medium text-[#A69D92] text-center">
+              <p className="m-0 text-sm font-semibold text-[#A69D92] text-center">
                 아직 루틴이 없어요
               </p>
               <p className="mt-1 text-xs text-[#BFB6AA] text-center leading-normal">

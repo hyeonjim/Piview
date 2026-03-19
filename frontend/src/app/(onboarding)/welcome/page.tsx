@@ -171,7 +171,7 @@ export default function WelcomePage() {
             className="cursor-pointer border-none bg-transparent"
             style={{
               fontSize: "15px",
-              fontWeight: 500,
+              fontWeight: 600,
               color: "rgba(255,255,255,0.75)",
               letterSpacing: "0.2px",
               textDecoration: "underline",
@@ -263,7 +263,7 @@ export default function WelcomePage() {
             backgroundColor: "#E5DFD3",
             height: "54px",
             fontSize: "16px",
-            fontWeight: 500,
+            fontWeight: 600,
             color: "#5A5248",
           }}
         >

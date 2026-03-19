@@ -41,7 +41,7 @@ const HINT_BOX_STYLE = {
 const HINT_TEXT_STYLE = {
   fontSize: "13px",
   color: "#fff",
-  fontWeight: 500,
+  fontWeight: 600,
   textAlign: "center" as const,
   margin: 0,
 };
@@ -84,7 +84,7 @@ const SHUTTER_INNER_STYLE = {
 const HINT_BOTTOM_TEXT = {
   fontSize: "13px",
   color: "rgba(255,255,255,0.5)",
-  fontWeight: 500,
+  fontWeight: 600,
 };
 const UPLOAD_BTN_STYLE = {
   height: 44,
@@ -102,7 +102,7 @@ const RETRY_BTN_STYLE = {
   backgroundColor: "rgba(255,255,255,0.1)",
   color: "rgba(255,255,255,0.55)",
   fontSize: "13px",
-  fontWeight: 500,
+  fontWeight: 600,
 };
 
 /* ── 얼굴 가이드 SVG 오버레이 ── */

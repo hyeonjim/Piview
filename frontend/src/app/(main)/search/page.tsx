@@ -121,7 +121,7 @@ export default function SearchPage() {
       {/* 상단 헤더 */}
       <div style={{ backgroundColor: "#F5F2EC", borderBottom: "1px solid #E2DDD8", paddingTop: "5px" }}>
         <div style={{ padding: "16px 16px 12px" }}>
-          <h1 style={{ margin: "3px 0 12px", fontSize: "22px", fontWeight: 800, color: "#2A2118", letterSpacing: "-0.4px", lineHeight: 1.2 }}>
+          <h1 style={{ margin: "3px 0 12px", fontSize: "22px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.4px", lineHeight: 1.2 }}>
             전체 제품
           </h1>
           <div className="flex items-center gap-5">
@@ -162,7 +162,7 @@ export default function SearchPage() {
         <div className="flex items-center justify-between mx-4 mt-3 px-3 py-2.5 rounded-xl" style={{ backgroundColor: "#F2EFE9", border: "1px solid #D9D5D0" }}>
           <div className="flex items-center gap-2">
             <Scale size={13} style={{ color: "#8A8278" }} />
-            <span style={{ fontSize: "12px", color: "#6B6258", fontWeight: 500 }}>비교할 제품을 1개 더 선택하세요</span>
+            <span style={{ fontSize: "12px", color: "#6B6258", fontWeight: 600 }}>비교할 제품을 1개 더 선택하세요</span>
           </div>
           <button onClick={clearCompare} style={{ fontSize: "11px", color: "#A69D92", border: "none", background: "none", cursor: "pointer" }}>취소</button>
         </div>
@@ -171,7 +171,7 @@ export default function SearchPage() {
         <div className="flex items-center justify-between mx-4 mt-3 px-3 py-2.5 rounded-xl" style={{ backgroundColor: "#3D3028" }}>
           <div className="flex items-center gap-2">
             <Scale size={13} style={{ color: "#F2EFE9" }} />
-            <span style={{ fontSize: "12px", color: "#F2EFE9", fontWeight: 500 }}>2개 제품 선택 완료</span>
+            <span style={{ fontSize: "12px", color: "#F2EFE9", fontWeight: 600 }}>2개 제품 선택 완료</span>
           </div>
           <div className="flex gap-2">
             <button onClick={clearCompare} style={{ fontSize: "11px", color: "#BFB6AA", border: "none", background: "none", cursor: "pointer" }}>취소</button>

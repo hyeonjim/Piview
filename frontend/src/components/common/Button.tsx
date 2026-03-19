@@ -35,7 +35,7 @@ export default function Button({
       disabled={disabled || loading}
       className={cn(
         // 기본: 피그마 rounded-[32px] 풀 라운드 버튼
-        "rounded-[32px] font-medium transition-all active:scale-[0.97]",
+        "rounded-[32px] font-semibold transition-all active:scale-[0.97]",
         // 사이즈
         size === "sm" && "h-9 px-5 text-sm",
         size === "md" && "h-12 px-6 text-[15px]",

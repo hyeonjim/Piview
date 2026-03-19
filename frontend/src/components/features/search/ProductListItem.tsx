@@ -52,7 +52,7 @@ const THUMB_IMG_STYLE = {
 const BRAND_TEXT_STYLE = {
   fontSize: "10px",
   color: "#9E9E9E",
-  fontWeight: 500,
+  fontWeight: 600,
 };
 const NAME_TEXT_STYLE = { fontSize: "13px", fontWeight: 600, color: "#1A1A1A" };
 const ROUTINE_BADGE_STYLE = {
@@ -73,7 +73,7 @@ const CAT_BADGE_BASE = {
   fontSize: "10px",
   padding: "2px 6px",
   borderRadius: "6px",
-  fontWeight: 500,
+  fontWeight: 600,
 };
 const TAG_BADGE_BASE = {
   fontSize: "9px",
@@ -199,7 +199,7 @@ export function ProductListItem({
                     ...TAG_BADGE_BASE,
                     backgroundColor: concernColor?.chip ?? "#F8F6F0",
                     color: concernColor?.accent ?? "var(--color-text-warm)",
-                    fontWeight: 500,
+                    fontWeight: 600,
                   }}
                 >
                   {concernName}
@@ -231,7 +231,7 @@ export function ProductListItem({
             backgroundColor: isInRoutine ? "#E8F0E0" : "#F0F2E8",
             color: "var(--color-brand)",
             fontSize: "11px",
-            fontWeight: 500,
+            fontWeight: 600,
           }}
         >
           <Plus size={12} /> {isInRoutine ? "루틴중" : "루틴추가"}
@@ -247,7 +247,7 @@ export function ProductListItem({
             backgroundColor: isLiked ? "var(--color-bg-like)" : "#F5F5F5",
             color: isLiked ? "#E57373" : "#9E9E9E",
             fontSize: "11px",
-            fontWeight: 500,
+            fontWeight: 600,
           }}
         >
           <Heart size={12} fill={isLiked ? "#E57373" : "none"} />{" "}
@@ -264,7 +264,7 @@ export function ProductListItem({
             backgroundColor: inCompare ? "#E8F5E9" : "#F5F5F5",
             color: inCompare ? "#4CAF50" : "#9E9E9E",
             fontSize: "11px",
-            fontWeight: 500,
+            fontWeight: 600,
           }}
         >
           <GitCompareArrows size={12} />

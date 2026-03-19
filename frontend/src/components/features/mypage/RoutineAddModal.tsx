@@ -259,7 +259,7 @@ export default function RoutineAddModal({
                                 return fc ? (
                                   <span
                                     key={fn}
-                                    className="text-[11px] px-2 py-[2px] rounded-[4px] font-medium"
+                                    className="text-[11px] px-2 py-[2px] rounded-[4px] font-bold"
                                     style={{
                                       backgroundColor: fc.chip,
                                       color: fc.accent,
