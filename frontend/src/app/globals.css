@@ -7,6 +7,7 @@
 /* ── 디자인 토큰 (피그마 ThemeContext 원본값) ── */
 @theme {
   --max-width-app: 500px;
+  --shadow-app: 0 0 0 1px rgba(0,0,0,0.04), 0 20px 80px rgba(0,0,0,0.08);
 
   /* Primary — Beige-5 (#A69D92) */
   --color-brand: #a69d92;

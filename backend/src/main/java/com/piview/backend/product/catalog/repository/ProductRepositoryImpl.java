@@ -19,7 +19,6 @@ import static com.piview.backend.product.entity.QBrand.brand;
 import static com.piview.backend.product.entity.QCategory.category;
 import static com.piview.backend.product.entity.QImage.image;
 import static com.piview.backend.product.entity.QProduct.product;
-import static com.piview.backend.product.entity.QProductSkinScore.productSkinScore;
 import static com.piview.backend.product.entity.QProductTagScore.productTagScore;
 
 @Repository
@@ -37,7 +36,6 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .join(product.image, image).fetchJoin()
             .join(product.category, category).fetchJoin()
             .join(category.bigCategory, bigCategory).fetchJoin()
-            .leftJoin(product.skinScore, productSkinScore).fetchJoin()
             .where(
                     qContains(condition.getQ()),
                     categoryEq(condition.getCategoryId()),
@@ -87,8 +85,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     if (skinType == null) {
       return null;
     }
-    return productSkinScore.topSkinType.eq(skinType)
-            .or(productSkinScore.top2SkinType.eq(skinType));
+    return product.topSkinType.eq(skinType)
+            .or(product.top2SkinType.eq(skinType));
   }
 
   private BooleanExpression hasAllTags(List<Long> tagIds) {

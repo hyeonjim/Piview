@@ -17,16 +17,11 @@ import {
   SKIN_FUNCTIONS,
   SKIN_TYPE_LABELS_FOR_FILTER,
 } from "@/constants/categoryColors";
+import type { FilterState } from "@/types/common";
+import { PRICE_MAX } from "@/types/common";
 
-const PRICE_MAX = 1_000_000;
-
-export interface FilterState {
-  filterSkin: string | null;
-  filterFns: Set<string>;
-  filterChosung: string | null;
-  filterBrands: Set<string>;
-  priceRange: [number, number];
-}
+export type { FilterState };
+export { FILTER_INITIAL_STATE } from "@/types/common";
 
 interface FilterModalProps {
   open: boolean;
