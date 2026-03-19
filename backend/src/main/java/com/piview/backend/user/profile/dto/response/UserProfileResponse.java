@@ -22,6 +22,14 @@ public class UserProfileResponse {
     @Schema(description = "카카오 계정 이메일입니다. 조회만 가능하고 수정은 지원하지 않습니다.", example = "test@example.com")
     private String email;
 
+    // OAuth 로그인 시 User.imageUrl에 저장한 카카오 프로필 이미지를 마이페이지 GET에도 그대로 노출한다.
+    @Schema(
+        description = "카카오 프로필 이미지 URL입니다. 설정되지 않았다면 null일 수 있습니다.",
+        nullable = true,
+        example = "http://k.kakaocdn.net/dn/profile.jpg"
+    )
+    private String imageUrl;
+
     @Schema(
         description = "현재 저장된 성별입니다. 아직 설정되지 않았다면 null일 수 있습니다.",
         nullable = true,
@@ -44,7 +52,7 @@ public class UserProfileResponse {
     private SurveySkinType mySkinType;
 
     @ArraySchema(
-        schema = @Schema(description = "현재 저장된 피부 고민 태그입니다. 응답은 설문 문구가 아니라 내부 저장 태그 기준으로 내려갑니다.", example = "수분"),
+        schema = @Schema(description = "현재 설정된 피부 고민 항목입니다.", example = "수분"),
         arraySchema = @Schema(description = "현재 저장된 피부 고민 목록입니다. 값이 없다면 빈 배열로 응답합니다.", example = "[\"수분\", \"진정\", \"피지\"]")
     )
     private List<String> skinProblems;
