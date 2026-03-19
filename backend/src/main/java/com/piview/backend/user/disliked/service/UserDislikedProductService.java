@@ -76,6 +76,7 @@ public class UserDislikedProductService {
         findUser(userId);
 
         // 저장된 문제 성분을 성분 상세와 함께 응답으로 변환한다.
+        // 표시값은 MyAvoidContri에 문자열로 저장하지 않고 Ingredient를 join해서 가져온다.
         return myAvoidContriRepository.findAllByUserIdWithIngredient(userId).stream()
             .map(avoidContri -> new DislikedIngredientSummaryResponse(
                 avoidContri.getIngredient().getIngredientId(),
@@ -152,6 +153,7 @@ public class UserDislikedProductService {
 
     private void syncAvoidIngredients(User user) {
         // 현재 유저의 비적합 제품 전체를 기준으로 알레르기 유발 성분 ID 집합을 다시 만든다.
+        // 등록/삭제 시점마다 재계산해서 MyAvoidContri를 최신 상태로 유지한다.
         Set<Long> allergenIngredientIds = extractAllergenIngredientIds(user.getId());
 
         // 재계산 결과로 덮어쓰는 방식이라 기존 데이터는 먼저 비운다.
@@ -177,6 +179,7 @@ public class UserDislikedProductService {
         Set<String> namesForLookup = new HashSet<>();
 
         for (MyDislikeProduct dislikedProduct : myDislikeProductRepository.findAllByUser_Id(userId)) {
+            // 제품별 전성분 문자열을 읽어 Ingredient 마스터와 이름 기준으로 매칭한다.
             ProductIngredients productIngredients = productIngredientRepository
                 .findByProductId(dislikedProduct.getProduct().getProductId())
                 .orElse(null);
@@ -194,12 +197,14 @@ public class UserDislikedProductService {
         }
 
         return ingredientRepository.findAllByNames(namesForLookup).stream()
+            // 현재 정책은 hasAllergen = true 인 성분만 문제 성분으로 저장한다.
             .filter(ingredient -> Boolean.TRUE.equals(ingredient.getHasAllergen()))
             .map(Ingredient::getIngredientId)
             .collect(java.util.stream.Collectors.toSet());
     }
 
     private List<String> splitIngredients(String raw) {
+        // "'정제수','향료','판테놀'" 형태의 문자열을 개별 성분명 목록으로 분리한다.
         if (raw == null || raw.isBlank()) {
             return List.of();
         }
