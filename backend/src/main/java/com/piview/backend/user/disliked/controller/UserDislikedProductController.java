@@ -20,7 +20,9 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -75,6 +77,16 @@ public class UserDislikedProductController {
         return ApiResponse.success(
             userDislikedProductService.getDislikedProducts(userPrincipal.getId())
         );
+    }
+
+    @DeleteMapping("/{dislikedProductId}")
+    public ApiResponse<Void> deleteDislikedProduct(
+        @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
+        @PathVariable Long dislikedProductId
+    ) {
+        // 목록에 보이는 등록 ID를 기준으로 현재 로그인 사용자의 데이터만 삭제한다.
+        userDislikedProductService.deleteDislikedProduct(userPrincipal.getId(), dislikedProductId);
+        return ApiResponse.success();
     }
 
     @Operation(
