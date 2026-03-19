@@ -28,7 +28,7 @@ public class RedisDraftService {
     try {
       // 객체 리스트를 JSON 문자열로 변환하여 Redis에 저장
       String json = objectMapper.writeValueAsString(items);
-      redisTemplate.opsForValue().set(key, json);
+      redisTemplate.opsForValue().set(key, json, 7, java.util.concurrent.TimeUnit.DAYS);
     } catch (Exception e) {
       throw new CustomException(ErrorCode.REDIS_SAVE_FAILED);
     }
