@@ -70,6 +70,12 @@ class NormalizedLandmark:
     y: float
 
 
+@dataclass
+class RoiExtractionResult:
+    crops: dict[str, Image.Image]
+    roi_metadata: dict[str, object]
+
+
 def _to_point(landmarks, index: int, width: int, height: int) -> tuple[int, int]:
     landmark = landmarks[index]
     return int(landmark.x * width), int(landmark.y * height)
@@ -83,6 +89,110 @@ def _rotate_point(x: float, y: float, center_x: float, center_y: float, angle_ra
     rotated_x = shifted_x * cos_a - shifted_y * sin_a
     rotated_y = shifted_x * sin_a + shifted_y * cos_a
     return rotated_x + center_x, rotated_y + center_y
+
+
+def _clamp_point(x: float, y: float, width: int, height: int) -> tuple[float, float]:
+    max_x = max(0.0, float(width - 1))
+    max_y = max(0.0, float(height - 1))
+    return min(max(x, 0.0), max_x), min(max(y, 0.0), max_y)
+
+
+def _normalize_box(box: Box, width: int, height: int) -> dict[str, float]:
+    return {
+        "x1": round(box.x1 / width, 6),
+        "y1": round(box.y1 / height, 6),
+        "x2": round(box.x2 / width, 6),
+        "y2": round(box.y2 / height, 6),
+    }
+
+
+def _to_original_vertices(
+    box: Box,
+    width: int,
+    height: int,
+    rotate_deg: float,
+    rotate_center: tuple[float, float],
+    flipped_180: bool,
+) -> list[tuple[float, float]]:
+    vertices = [
+        (float(box.x1), float(box.y1)),
+        (float(box.x2), float(box.y1)),
+        (float(box.x2), float(box.y2)),
+        (float(box.x1), float(box.y2)),
+    ]
+    image_center = (width / 2.0, height / 2.0)
+    original_vertices: list[tuple[float, float]] = []
+
+    for point_x, point_y in vertices:
+        if flipped_180:
+            point_x, point_y = _rotate_point(
+                point_x,
+                point_y,
+                image_center[0],
+                image_center[1],
+                math.radians(180.0),
+            )
+
+        point_x, point_y = _rotate_point(
+            point_x,
+            point_y,
+            rotate_center[0],
+            rotate_center[1],
+            math.radians(-rotate_deg),
+        )
+        original_vertices.append(_clamp_point(point_x, point_y, width, height))
+
+    return original_vertices
+
+
+def _build_roi_overlay_metadata(
+    rois: dict[str, Box],
+    width: int,
+    height: int,
+    rotate_deg: float,
+    rotate_center: tuple[float, float],
+    flipped_180: bool,
+) -> dict[str, object]:
+    overlay_names = ("forehead", "left_cheek", "right_cheek")
+    roi_entries: dict[str, object] = {}
+
+    for roi_name in overlay_names:
+        box = rois[roi_name]
+        original_vertices = _to_original_vertices(
+            box,
+            width,
+            height,
+            rotate_deg,
+            rotate_center,
+            flipped_180,
+        )
+        min_x = min(point[0] for point in original_vertices)
+        max_x = max(point[0] for point in original_vertices)
+        min_y = min(point[1] for point in original_vertices)
+        max_y = max(point[1] for point in original_vertices)
+        original_bbox = Box(
+            x1=int(math.floor(min_x)),
+            y1=int(math.floor(min_y)),
+            x2=int(math.ceil(max_x)),
+            y2=int(math.ceil(max_y)),
+        ).normalize(width, height, min_size=1)
+
+        roi_entries[roi_name] = {
+            "bbox": _normalize_box(original_bbox, width, height),
+        }
+
+    return {
+        "coordinate_space": "original_normalized",
+        "image_size": {
+            "width": width,
+            "height": height,
+        },
+        "alignment": {
+            "rotate_deg": round(rotate_deg, 4),
+            "flipped_180": flipped_180,
+        },
+        "rois": roi_entries,
+    }
 
 
 def _align_face_landmarks(landmarks, width: int, height: int) -> tuple[list[NormalizedLandmark], float, tuple[float, float]]:
@@ -204,7 +314,7 @@ def _load_landmarker():
 LANDMARKER = _load_landmarker()
 
 
-def extract_face_rois(image: Image.Image) -> dict[str, Image.Image]:
+def extract_face_roi_result(image: Image.Image) -> RoiExtractionResult:
     if LANDMARKER is None:
         raise RuntimeError("face_landmarker.task 파일을 확인하세요.")
 
@@ -224,13 +334,30 @@ def extract_face_rois(image: Image.Image) -> dict[str, Image.Image]:
     forehead_y = _to_point(aligned_landmarks, FOREHEAD_TOP, aligned_image.width, aligned_image.height)[1]
     upper_lip_y = _to_point(aligned_landmarks, UPPER_LIP, aligned_image.width, aligned_image.height)[1]
     # roll 보정만으로는 180도 뒤집힌 셀카가 남을 수 있어, 이마가 입보다 아래에 있으면 한 번 더 뒤집습니다.
+    flipped_180 = False
     if forehead_y > upper_lip_y:
         aligned_image = aligned_image.rotate(180, resample=Image.Resampling.BICUBIC, expand=False)
         aligned_landmarks = _rotate_landmarks_180(aligned_landmarks)
+        flipped_180 = True
 
     rois = _compute_rois(aligned_landmarks, aligned_image.width, aligned_image.height)
-    # 이후 추론 모듈은 랜드마크 좌표를 몰라도 되도록, 잘린 이미지 조각만 반환합니다.
-    return {
+    crops = {
         name: aligned_image.crop((box.x1, box.y1, box.x2, box.y2))
         for name, box in rois.items()
     }
+    return RoiExtractionResult(
+        crops=crops,
+        roi_metadata=_build_roi_overlay_metadata(
+            rois=rois,
+            width=image.width,
+            height=image.height,
+            rotate_deg=rotate_deg,
+            rotate_center=rotate_center,
+            flipped_180=flipped_180,
+        ),
+    )
+
+
+def extract_face_rois(image: Image.Image) -> dict[str, Image.Image]:
+    # 기존 호출부 호환성을 위해 crop 이미지 dict 인터페이스는 유지합니다.
+    return extract_face_roi_result(image).crops

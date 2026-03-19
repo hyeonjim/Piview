@@ -52,17 +52,24 @@ docker run --name local-redis -p 6379:6379 -d redis
 - 기본 포트는 `8080`입니다.
 - 서버가 정상 실행되면 아래 주소를 기준으로 확인합니다.
   - 서버 기본 주소: `http://localhost:8080`
-  - 카카오 로그인 시작 주소: `http://localhost:8080/oauth2/authorization/kakao`
+  - 개발용 토큰 발급 주소: `http://localhost:8080/api/v1/auth/dev/login?email=test@kakao.com`
 
-### 7. 로컬 점검 순서
+### 7. 로컬 API 테스트
+
+```http
+GET /api/v1/auth/dev/login?email=test@kakao.com
+```
+
+- 응답으로 받은 access token을 `Authorization` 헤더에 넣어 API를 호출합니다.
+
+```http
+Authorization: Bearer {accessToken}
+```
+
+### 8. 로컬 점검 순서
 1. MySQL 접속 확인
 2. Redis 실행 확인
 3. `local` 프로필로 서버 실행
-4. 로그인 또는 토큰 재발급 흐름 확인
+4. 개발용 토큰 발급 API 호출
 5. Postman으로 주요 API 호출
 6. 필요 시 DataGrip 등으로 대표 테이블 상태 확인
-
-## 참고
-- 현재 로컬 점검 시 대표적으로 확인하는 테이블은 `users`, `my_skin`입니다.
-- 위 테이블은 설문/로그인 연동 확인에 자주 쓰이는 예시이며, 전체 백엔드 테이블 목록을 뜻하지는 않습니다.
-- API 확인도 특정 기능만 한정하지 않고, 현재 작업 범위에 맞는 엔드포인트를 기준으로 진행하면 됩니다.
