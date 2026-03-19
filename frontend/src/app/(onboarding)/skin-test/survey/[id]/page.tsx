@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useCallback } from "react";
+import { use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   GENDER_QUESTION,
