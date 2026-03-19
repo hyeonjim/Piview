@@ -20,18 +20,17 @@ public class ProductSummaryResponse {
     private String imageUrl;
     private List<String> skinTypes;
     private List<String> tags;
+    private boolean isLiked;
 
-    public static ProductSummaryResponse from(Product product) {
+    public static ProductSummaryResponse from(Product product, boolean isLiked) {
 
         List<String> skinTypes = new ArrayList<>();
 
-        if (product.getSkinScore() != null) {
-            if (product.getSkinScore().getTopSkinType() != null) {
-                skinTypes.add(product.getSkinScore().getTopSkinType().name());
-            }
-            if (product.getSkinScore().getTop2SkinType() != null) {
-                skinTypes.add(product.getSkinScore().getTop2SkinType().name());
-            }
+        if (product.getTopSkinType() != null) {
+            skinTypes.add(product.getTopSkinType().name());
+        }
+        if (product.getTop2SkinType() != null) {
+            skinTypes.add(product.getTop2SkinType().name());
         }
 
         return ProductSummaryResponse.builder()
@@ -42,6 +41,8 @@ public class ProductSummaryResponse {
                 .imageUrl(product.getImage() != null ? product.getImage().getUrl() : null)
                 .skinTypes(skinTypes)
                 .tags(null)     // 태그 파이프라인 미구현 -> null 고정(추후 추가 예정)
+                .isLiked(isLiked)
                 .build();
+
     }
 }

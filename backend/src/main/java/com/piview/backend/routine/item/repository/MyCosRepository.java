@@ -17,7 +17,6 @@ public interface MyCosRepository extends JpaRepository<MyCos, Long> {
             "JOIN FETCH p.brand " +
             "JOIN FETCH p.category " +
             "JOIN FETCH p.image " +
-            "LEFT JOIN FETCH p.skinScore " +
             "WHERE m.user.id = :userId")
     List<MyCos> findAllByUserIdWithProduct(@Param("userId") Long userId);
 
