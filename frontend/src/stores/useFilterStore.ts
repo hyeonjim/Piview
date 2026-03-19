@@ -1,12 +1,13 @@
 /**
  * stores/useFilterStore.ts
  * 검색/필터 전역 상태
- * SearchPage와 FilterModal, FilterButton이 이 스토어를 공유
+ * ⚠️ 현재 search/recommend 페이지는 로컬 useState로 필터 관리 중
+ *    API 연동 시 이 store로 전환 결정 필요
  */
 
 import { create } from "zustand";
-import type { FilterState, SortOption } from "@/types/filter";
-import { FILTER_INITIAL_STATE } from "@/types/filter";
+import type { FilterState, SortOption } from "@/types/common";
+import { FILTER_INITIAL_STATE } from "@/types/common";
 
 interface FilterStore {
   filter: FilterState;
@@ -19,23 +20,18 @@ interface FilterStore {
 export const useFilterStore = create<FilterStore>((set) => ({
   filter: FILTER_INITIAL_STATE,
   sortOption: "recommend",
-
   setFilter: (filter) => set({ filter }),
-
-  // 필터 전체 초기화
   resetFilter: () => set({ filter: FILTER_INITIAL_STATE }),
-
   setSortOption: (option) => set({ sortOption: option }),
 }));
 
 // 활성 필터 개수 (FilterButton 뱃지 표시용)
-export const selectActiveFilterCount = (store: FilterStore): number => {
-  const { filter } = store;
+export const selectActiveFilterCount = (s: FilterStore): number => {
+  const { filter } = s;
   return (
-    filter.skinTypes.length +
-    filter.concerns.length +
-    filter.categories.length +
-    filter.ewgGrades.length +
-    (filter.priceRange ? 1 : 0)
+    (filter.filterSkin ? 1 : 0) +
+    (filter.filterFns.size > 0 ? 1 : 0) +
+    (filter.filterBrands.size > 0 ? 1 : 0) +
+    (filter.priceRange[0] > 0 || filter.priceRange[1] < 1_000_000 ? 1 : 0)
   );
 };

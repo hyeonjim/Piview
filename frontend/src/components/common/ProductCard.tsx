@@ -65,6 +65,10 @@ interface ProductCardProps {
   isInCompare?: boolean;
   /** 비교 토글 콜백 */
   onToggleCompare?: () => void;
+  /** 좋아요 버튼 표시 여부 — false 시 heart 버튼 숨김 (기본값 true) */
+  showLike?: boolean;
+  /** EWG 지표 표시 여부 — false 시 피부타입·기능 태그로 대체 (기본값 true, horizontal 전용) */
+  showEwg?: boolean;
 }
 
 // ── 피부타입 태그 — 색상이 동적(상수 맵)이므로 색상만 inline style 유지
@@ -192,9 +196,7 @@ function OwnedButton({
       style={isOwned ? ACTION_BUTTON_ACTIVE : ACTION_BUTTON_INACTIVE}
       title={isOwned ? "보유 중" : "보유추가"}
     >
-      <ShoppingBag
-        size={isSmall ? 14 : 11}
-      />
+      <ShoppingBag size={isSmall ? 14 : 11} />
       {!isSmall && (isOwned ? "보유중" : "보유추가")}
     </button>
   );
@@ -279,10 +281,13 @@ export default function ProductCard({
   isOwned,
   isInCompare = false,
   onToggleCompare = () => {},
+  showLike = true,
+  showEwg = true,
 }: ProductCardProps) {
-  // 전역 찜 스토어 사용 — 페이지 간 상태 공유
-  const { isLiked: getIsLiked, toggleLike } = useLikeStore();
-  const isLiked = getIsLiked(id);
+  // likedIds를 직접 구독 — isLiked() 함수 호출 결과는 store 변경 시 재계산되지 않음
+  const likedIds = useLikeStore((state) => state.likedIds);
+  const toggleLike = useLikeStore((state) => state.toggleLike);
+  const isLiked = !!likedIds[String(id)];
 
   // 상세페이지 링크 — href prop 우선, 없으면 기본 경로
   const productHref = href ?? `/product/${id}`;
@@ -326,21 +331,23 @@ export default function ProductCard({
               </div>
             )}
 
-            {/* 좋아요 버튼 */}
-            <button
-              onClick={handleLike}
-              className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full border-none cursor-pointer backdrop-blur-xs"
-              style={{
-                backgroundColor: "rgba(255,255,255,0.92)",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-              }}
-            >
-              <Heart
-                size={16}
-                className="transition-all duration-150"
-                style={heartStyle}
-              />
-            </button>
+            {/* 좋아요 버튼 — showLike=false 시 숨김 */}
+            {showLike && (
+              <button
+                onClick={handleLike}
+                className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full border-none cursor-pointer backdrop-blur-xs"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.92)",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                }}
+              >
+                <Heart
+                  size={16}
+                  className="transition-all duration-150"
+                  style={heartStyle}
+                />
+              </button>
+            )}
 
             {showPickBadge && (
               <div className="absolute top-2 left-2">
@@ -349,9 +356,22 @@ export default function ProductCard({
             )}
           </div>
 
-          {/* 텍스트 영역 */}
-          <div className="flex-1 px-3 pt-2.5 pb-2">
-            <BrandLabel brand={brand} />
+          {/* 텍스트 영역 — 고정 높이로 카드 간 높이 통일 */}
+          <div
+            className="px-3 pt-2.5 pb-2 overflow-hidden"
+            style={{ height: "96px" }}
+          >
+            {/* 브랜드명 + 비교 버튼 한 줄 */}
+            <div className="flex items-center justify-between">
+              <BrandLabel brand={brand} />
+              {showActions && (
+                <CompareButton
+                  isInCompare={isInCompare}
+                  onToggle={(event) => handleAction(event, onToggleCompare)}
+                  size="sm"
+                />
+              )}
+            </div>
             <p className="mt-0.75 m-0 text-[17px] font-medium text-[#2A2118] leading-[1.4] line-clamp-2 overflow-hidden">
               {name}
             </p>
@@ -368,26 +388,7 @@ export default function ProductCard({
           </div>
         </Link>
 
-        {/* 액션 버튼 영역 — showActions=true 일 때만 표시 */}
-        {showActions && (
-          <div className="px-2.5 pb-2.5 flex gap-1.5">
-            <RoutineButton
-              inRoutine={inRoutine}
-              onAdd={(event) => handleAction(event, onAddRoutine)}
-              className="flex-1 text-[10px] h-7"
-            />
-            <OwnedButton
-              isOwned={isOwned}
-              onToggle={(event) => handleAction(event, onToggleOwned)}
-              size="sm"
-            />
-            <CompareButton
-              isInCompare={isInCompare}
-              onToggle={(event) => handleAction(event, onToggleCompare)}
-              size="sm"
-            />
-          </div>
-        )}
+        {/* 액션 버튼 영역 — 루틴추가/보유추가 제거, 비교는 상단으로 이동 */}
       </div>
     );
   }
@@ -412,20 +413,36 @@ export default function ProductCard({
             <p className="mt-0.75 m-0 text-[13px] font-medium text-[#2A2118] leading-[1.4]">
               {name}
             </p>
-            <EWGIndicator
-              safe={ewgSafe}
-              caution={ewgCaution}
-              danger={ewgDanger}
-              className="mt-1.5"
-            />
+            {showEwg ? (
+              // EWG 지표 표시 (기본값)
+              <EWGIndicator
+                safe={ewgSafe}
+                caution={ewgCaution}
+                danger={ewgDanger}
+                className="mt-1.5"
+              />
+            ) : (
+              // 피부타입·기능 태그로 대체
+              <div className="flex flex-wrap gap-1 mt-1">
+                {skinTypes.slice(0, 1).map((skinType) => (
+                  <SkinTypeTag key={skinType} label={skinType} />
+                ))}
+                {effects.slice(0, 2).map((effect) => (
+                  <EffectTag key={effect} label={effect} />
+                ))}
+              </div>
+            )}
           </div>
 
-          <button
-            onClick={handleLike}
-            className="p-3 shrink-0 bg-transparent border-none cursor-pointer"
-          >
-            <Heart size={17} style={heartStyle} />
-          </button>
+          {/* 좋아요 버튼 — showLike=false 시 숨김 */}
+          {showLike && (
+            <button
+              onClick={handleLike}
+              className="p-3 shrink-0 bg-transparent border-none cursor-pointer"
+            >
+              <Heart size={17} style={heartStyle} />
+            </button>
+          )}
         </div>
       </Link>
     );

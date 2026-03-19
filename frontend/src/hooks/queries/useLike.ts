@@ -15,7 +15,7 @@ export function useLike() {
   const { likedIds, toggleLike, isLiked } = useLikeStore();
 
   return {
-    /** 찜한 제품 ID Set */
+    /** 찜한 제품 ID Record */
     likeList: likedIds,
     toggleLike,
     isLiked,

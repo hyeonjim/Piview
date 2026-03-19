@@ -5,10 +5,9 @@ import { Sparkles, ArrowRight, Leaf, Sun, Moon, Droplets, Star, ChevronRight } f
 import Link from "next/link";
 import { SKINCARE_INSIGHTS } from "@/constants";
 import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
-import { ROUTINE_STEPS, type RoutineStep } from "@/constants/routineSteps";
+import { useUserStore, selectSkinType } from "@/stores/useUserStore";
+import { ROUTINE_STEPS } from "@/constants/routineSteps";
 
-// ── 스타일 상수 ──────────────────────────────────────────────────────
-const ROUTINE_DIVIDER = "1px solid rgba(0,0,0,0.05)";
 
 function getGreeting(): { text: string; icon: React.ReactNode } {
   const hour = new Date().getHours();
@@ -29,16 +28,16 @@ export default function HomePage() {
   const greeting = getGreeting();
   const nickname  = "User";
   const { routine, isMainRoutine } = useLocalRoutineStore();
+  // 피부타입이 설정되어 있으면 AI 진단 배너 숨김
+  const skinType = useUserStore(selectSkinType);
+  const hasSkinType = skinType !== null;
 
   useEffect(() => { useLocalRoutineStore.persist.rehydrate(); }, []);
 
-  const mainRoutineItems = ROUTINE_STEPS.map((step) => ({
-    step,
-    product: routine[step.code],
-  })).filter((item) => item.product !== null) as {
-    step: RoutineStep;
-    product: NonNullable<(typeof routine)[string]>;
-  }[];
+  // 각 스텝별 제품 배열을 flat — 스텝당 여러 제품이 있을 수 있음
+  const mainRoutineItems = ROUTINE_STEPS.flatMap((step) =>
+    (routine[step.code] ?? []).map((product) => ({ step, product }))
+  );
 
   // isMainRoutine이 off면 홈에서 루틴 미표시
   const hasRoutine = isMainRoutine && mainRoutineItems.length > 0;
@@ -61,7 +60,7 @@ export default function HomePage() {
           {greeting.icon}
           <span
             style={{
-              fontSize: "11px",
+              fontSize: "16px",
               fontWeight: 400,
               color: "#B0A99F",
               letterSpacing: "0.12em",
@@ -76,8 +75,9 @@ export default function HomePage() {
 
         <h1
           style={{
-            margin: 0,
-            fontSize: "26px",
+            marginTop: "10px",
+            marginBottom: "5px",
+            fontSize: "22px",
             fontWeight: 700,
             color: "#1C1C1E",
             letterSpacing: "-0.5px",
@@ -91,8 +91,8 @@ export default function HomePage() {
           오늘의 스킨케어 루틴을 확인하세요
         </p>
 
-        {/* ── AI 진단 배너 ───────────────────────────────── */}
-        <Link href="/skin-test" className="block" style={{ marginTop: "16px" }}>
+        {/* ── AI 진단 배너 — 피부타입 미설정 시에만 노출 ───────────────────────────────── */}
+        {!hasSkinType && <Link href="/skin-test" className="block" style={{ marginTop: "16px" }}>
           <div
             className="relative overflow-hidden flex items-center justify-between"
             style={{
@@ -134,7 +134,7 @@ export default function HomePage() {
               <ArrowRight size={17} style={{ color: "#FFFFFF" }} />
             </div>
           </div>
-        </Link>
+        </Link>}
       </div>
 
       {/* ── 나의 루틴 ────────────────────────────────────── */}
@@ -156,7 +156,6 @@ export default function HomePage() {
             }}
           >
             <div className="flex items-center gap-2">
-              <Leaf size={14} style={{ color: "#A69D92" }} />
               <span style={{ fontSize: "14px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.2px", fontFamily: "var(--font-pretendard), sans-serif" }}>
                 나의 메인루틴
               </span>
@@ -192,14 +191,11 @@ export default function HomePage() {
                   </span>
                   <span style={{ fontSize: "20px", width: "28px", textAlign: "center", flexShrink: 0 }}>{product.emoji}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: "10px", color: "#A69D92", fontWeight: 500, letterSpacing: "0.03em", fontFamily: "var(--font-pretendard), sans-serif" }}>
+                    <p style={{ margin: 0, fontSize: "12px", color: "#A69D92", fontWeight: 500, letterSpacing: "0.03em", fontFamily: "var(--font-pretendard), sans-serif" }}>
                       {step.label}
                     </p>
-                    <p style={{ margin: "1px 0 0", fontSize: "13px", fontWeight: 600, color: "#2A2118", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "var(--font-pretendard), sans-serif" }}>
+                    <p style={{ margin: "1px 0 0", fontSize: "16px", fontWeight: 600, color: "#2A2118", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "var(--font-pretendard), sans-serif" }}>
                       {product.name}
-                    </p>
-                    <p style={{ margin: 0, fontSize: "11px", color: "#BFB6AA", textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: "var(--font-pretendard), sans-serif" }}>
-                      {product.brand}
                     </p>
                   </div>
                 </div>
@@ -240,8 +236,8 @@ export default function HomePage() {
       {/* ── Skincare Tips ─────────────────────────────────── */}
       <div style={{ padding: "20px 16px 24px" }}>
         {/* 섹션 타이틀 */}
-        <div className="flex items-baseline gap-2" style={{ marginBottom: "12px" }}>
-          <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.3px", fontFamily: "var(--font-pretendard), sans-serif" }}>
+        <div className="flex items-baseline gap-2" style={{ marginBottom: "15px" }}>
+          <h2 style={{fontSize: "16px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.3px", fontFamily: "var(--font-pretendard), sans-serif" }}>
             Skincare Tips
           </h2>
         </div>

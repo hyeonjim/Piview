@@ -42,7 +42,7 @@ import type { LocalProduct } from "@/stores/useLocalRoutineStore";
 
 interface RoutineAddModalProps {
   openStep: string;
-  routine: Record<string, LocalProduct | null>;
+  routine: Record<string, LocalProduct[]>;
   onClose: () => void;
   onAdd: (product: LocalProduct) => void;
 }
@@ -198,8 +198,9 @@ export default function RoutineAddModal({
             ) : (
               <div className="flex flex-col gap-3">
                 {displayProducts.map((product) => {
+                  // ⚠️ API 연동 시 서버 루틴 상태로 교체
                   const isAdded =
-                    !!routine[openStep] && routine[openStep]?.id === product.id;
+                    routine[openStep]?.some((p) => p.id === product.id) ?? false;
                   return (
                     <div
                       key={product.id}

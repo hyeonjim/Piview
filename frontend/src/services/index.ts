@@ -5,3 +5,8 @@
 
 export { default as client } from "./client";
 export { authService } from "./auth";
+export { productService } from "./product";
+export { myCosService } from "./myCos";
+export { routineService } from "./routine";
+export { skinService } from "./skin";
+export { ocrService } from "./ocr";
