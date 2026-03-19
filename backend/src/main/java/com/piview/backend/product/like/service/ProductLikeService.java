@@ -36,7 +36,7 @@ public class ProductLikeService {
       // 좋아요가 없다면? -> 새로 생성 (좋아요 추가)
       User user = userRepository.findById(userId)
           .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
-      Product product = productRepository.findById(productId)
+      Product product = productRepository.findByProductId(productId)
           .orElseThrow(() -> new IllegalArgumentException("해당 제품을 찾을 수 없습니다."));
 
       ProductLike newLike = ProductLike.builder()
