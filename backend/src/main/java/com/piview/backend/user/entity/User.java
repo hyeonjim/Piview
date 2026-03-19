@@ -75,8 +75,9 @@ public class User extends BaseEntity {
     private SurveySkinType mySkinType;
 
     // 사용자 활성 여부를 저장한다.
+    @Builder.Default
     @Column(name = "exist")
-    private Boolean exist;
+    private Boolean exist = true;
 
     // 탈퇴 유저 복구(Soft Delete) 처리를 위한 타임스탬프
     @Column(name = "deleted_at")
