@@ -40,7 +40,7 @@ public class RoutineService {
     List<DraftItemDto> currentDraft = new ArrayList<>(redisDraftService.getDraftItems(userId));
 
     // 추가할 상품 정보 DB에서 조회
-    Product product = productRepository.findById(request.productId())
+    Product product = productRepository.findByProductId(request.productId())
         .orElseThrow(() -> new CustomException(ErrorCode.COSMETICS_NOT_FOUND));
 
     // 새로운 stepOrder 계산 (현재 장바구니에 있는 stepOrder 중 가장 큰 값 + 1)
@@ -108,7 +108,7 @@ public class RoutineService {
     // 조회한 엔티티를 Map으로 변환하여 O(1) 성능으로 매칭 준비
     Map<Integer, RoutineColumn> columnMap = routineColumnRepository.findAllById(columnIds).stream()
         .collect(Collectors.toMap(RoutineColumn::getId, c -> c));
-    Map<Long, Product> productMap = productRepository.findAllById(productIds).stream()
+    Map<Long, Product> productMap = productRepository.findByProductIdIn(productIds).stream()
         .collect(Collectors.toMap(Product::getProductId, p -> p));
 
     for (DraftItemDto item : draftItems) {
