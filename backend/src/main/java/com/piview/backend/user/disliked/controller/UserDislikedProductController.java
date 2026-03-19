@@ -4,6 +4,7 @@ import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.global.exception.ErrorResponse;
 import com.piview.backend.global.security.UserPrincipal;
 import com.piview.backend.user.disliked.dto.response.DislikedProductCreateApiResponse;
+import com.piview.backend.user.disliked.dto.response.DislikedProductListApiResponse;
 import com.piview.backend.user.disliked.dto.request.DislikedProductCreateRequest;
 import com.piview.backend.user.disliked.dto.response.DislikedProductCreateResponse;
 import com.piview.backend.user.disliked.dto.response.DislikedProductSummaryResponse;
@@ -25,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "안 맞는 제품 API", description = "사용자가 안 맞는 제품을 등록하는 API입니다.")
+@Tag(name = "안 맞는 제품 API", description = "사용자가 안 맞는 제품을 등록하고 조회하는 API입니다.")
 @RestController
 @RequestMapping("/users/me/disliked/products")
 @RequiredArgsConstructor
@@ -33,9 +34,42 @@ public class UserDislikedProductController {
 
     private final UserDislikedProductService userDislikedProductService;
 
+    @Operation(
+        summary = "안 맞는 제품 목록 조회",
+        description = "로그인 사용자가 등록한 안 맞는 제품 목록을 조회합니다. 상품 기본 카드 정보와 카테고리, 용량, 가격, 추천 피부타입을 함께 반환합니다."
+    )
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "안 맞는 제품 목록 조회 성공",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = DislikedProductListApiResponse.class),
+                examples = @ExampleObject(
+                    name = "GetDislikedProductsSuccess",
+                    summary = "목록 조회 성공",
+                    value = "{\"status\":200,\"message\":\"요청에 성공했습니다.\",\"data\":[{\"dislikedProductId\":1,\"productId\":161485,\"productName\":\"판테토인 에센스 토너\",\"brandName\":\"마녀공장\",\"categoryName\":\"스킨/토너\",\"imageUrl\":\"161485.jpg\",\"volume\":\"200ml\",\"price\":32000,\"topSkinType\":\"combination\",\"top2SkinType\":\"oily\"}]}"
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패", content = @Content(schema = @Schema(hidden = true))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "사용자를 찾을 수 없음",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(
+                    name = "UserNotFound",
+                    summary = "사용자를 찾을 수 없음",
+                    value = "{\"status\":404,\"error\":\"NOT_FOUND\",\"code\":\"USER_NOT_FOUND\",\"message\":\"해당 사용자를 찾을 수 없습니다.\"}"
+                )
+            )
+        )
+    })
     @GetMapping
     public ApiResponse<List<DislikedProductSummaryResponse>> getDislikedProducts(
-        @AuthenticationPrincipal UserPrincipal userPrincipal
+        @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
         // 로그인 사용자가 등록한 안 맞는 제품 목록만 조회한다.
         return ApiResponse.success(
