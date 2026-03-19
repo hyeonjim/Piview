@@ -1,5 +1,7 @@
 package com.piview.backend.product.like.service;
 
+import com.piview.backend.global.exception.CustomException;
+import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.product.catalog.dto.ProductSummaryResponse;
 import com.piview.backend.product.catalog.repository.ProductRepository;
 import com.piview.backend.product.entity.Product;
@@ -35,10 +37,9 @@ public class ProductLikeService {
     } else {
       // 좋아요가 없다면? -> 새로 생성 (좋아요 추가)
       User user = userRepository.findById(userId)
-          .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+          .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
       Product product = productRepository.findByProductId(productId)
-          .orElseThrow(() -> new IllegalArgumentException("해당 제품을 찾을 수 없습니다."));
-
+          .orElseThrow(() -> new CustomException(ErrorCode.COSMETICS_NOT_FOUND));
       ProductLike newLike = ProductLike.builder()
           .user(user)
           .product(product)
