@@ -4,10 +4,12 @@ import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.product.catalog.dto.ProductDetailResponse;
+import com.piview.backend.product.catalog.dto.ProductFilterMetaResponse;
 import com.piview.backend.product.catalog.dto.ProductPageResponse;
 import com.piview.backend.product.catalog.dto.ProductSearchCondition;
 import com.piview.backend.product.catalog.service.ProductCatalogService;
 import com.piview.backend.product.entity.SkinTypeEnum;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -68,5 +70,10 @@ public class ProductCatalogController {
     public ApiResponse<ProductDetailResponse> productDetail(@PathVariable Long productId) {
         ProductDetailResponse result = productCatalogService.getProductDetail(productId);
         return ApiResponse.success(result);
+    }
+
+    @GetMapping("/filters")
+    public ApiResponse<ProductFilterMetaResponse> getProductFilters() {
+        return ApiResponse.success(productCatalogService.getFilterMeta());
     }
 }
