@@ -4,6 +4,7 @@ import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.global.exception.ErrorResponse;
 import com.piview.backend.global.security.UserPrincipal;
 import com.piview.backend.user.disliked.dto.response.DislikedProductCreateApiResponse;
+import com.piview.backend.user.disliked.dto.response.DislikedProductDeleteApiResponse;
 import com.piview.backend.user.disliked.dto.response.DislikedProductListApiResponse;
 import com.piview.backend.user.disliked.dto.request.DislikedProductCreateRequest;
 import com.piview.backend.user.disliked.dto.response.DislikedProductCreateResponse;
@@ -28,7 +29,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "안 맞는 제품 API", description = "사용자가 안 맞는 제품을 등록하고 조회하는 API입니다.")
+@Tag(name = "안 맞는 제품 API", description = "사용자가 안 맞는 제품을 등록, 조회, 삭제하는 API입니다.")
 @RestController
 @RequestMapping("/users/me/disliked/products")
 @RequiredArgsConstructor
@@ -36,9 +37,10 @@ public class UserDislikedProductController {
 
     private final UserDislikedProductService userDislikedProductService;
 
+    // 안 맞는 제품 목록 조회 문서
     @Operation(
         summary = "안 맞는 제품 목록 조회",
-        description = "로그인 사용자가 등록한 안 맞는 제품 목록을 조회합니다. 상품 기본 카드 정보와 카테고리, 용량, 가격, 추천 피부타입을 함께 반환합니다."
+        description = "로그인 사용자가 등록한 안 맞는 제품 목록을 조회합니다. 상품명, 브랜드명, 카테고리, 이미지, 용량, 가격, 추천 피부타입 정보를 함께 반환합니다."
     )
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -54,7 +56,18 @@ public class UserDislikedProductController {
                 )
             )
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패", content = @Content(schema = @Schema(hidden = true))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "로그인이 필요함",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    name = "Unauthorized",
+                    summary = "인증되지 않은 요청",
+                    value = "{\"timestamp\":\"2026-03-19T06:58:09.428+00:00\",\"status\":401,\"error\":\"Unauthorized\",\"path\":\"/api/v1/users/me/disliked/products\"}"
+                )
+            )
+        ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "404",
             description = "사용자를 찾을 수 없음",
@@ -73,22 +86,79 @@ public class UserDislikedProductController {
     public ApiResponse<List<DislikedProductSummaryResponse>> getDislikedProducts(
         @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        // 로그인 사용자가 등록한 안 맞는 제품 목록만 조회한다.
+        // 실제 목록 조회는 Service에서 처리하고, 응답 형식만 맞춰서 반환한다.
         return ApiResponse.success(
             userDislikedProductService.getDislikedProducts(userPrincipal.getId())
         );
     }
 
+    // 안 맞는 제품 삭제 문서
+    @Operation(
+        summary = "안 맞는 제품 삭제",
+        description = "로그인 사용자의 안 맞는 제품 목록에서 특정 항목을 삭제합니다. 삭제할 때는 상품 ID가 아니라 `dislikedProductId`를 사용합니다."
+    )
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "안 맞는 제품 삭제 성공",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = DislikedProductDeleteApiResponse.class),
+                examples = @ExampleObject(
+                    name = "DeleteDislikedProductSuccess",
+                    summary = "삭제 성공",
+                    value = "{\"status\":200,\"message\":\"요청에 성공했습니다.\"}"
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "로그인이 필요함",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    name = "Unauthorized",
+                    summary = "인증되지 않은 요청",
+                    value = "{\"timestamp\":\"2026-03-19T06:58:09.448+00:00\",\"status\":401,\"error\":\"Unauthorized\",\"path\":\"/api/v1/users/me/disliked/products/1\"}"
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "사용자를 찾을 수 없거나 삭제할 안 맞는 제품이 없음",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "UserNotFound",
+                        summary = "사용자를 찾을 수 없음",
+                        value = "{\"status\":404,\"error\":\"NOT_FOUND\",\"code\":\"USER_NOT_FOUND\",\"message\":\"해당 사용자를 찾을 수 없습니다.\"}"
+                    ),
+                    @ExampleObject(
+                        name = "DislikedProductNotFound",
+                        summary = "삭제 대상을 찾을 수 없음",
+                        value = "{\"status\":404,\"error\":\"NOT_FOUND\",\"code\":\"DISLIKED_PRODUCT_NOT_FOUND\",\"message\":\"안 맞는 제품 목록에서 해당 상품을 찾을 수 없습니다.\"}"
+                    )
+                }
+            )
+        )
+    })
     @DeleteMapping("/{dislikedProductId}")
     public ApiResponse<Void> deleteDislikedProduct(
         @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
+        @Parameter(
+            description = "삭제할 안 맞는 제품 ID입니다. 목록 조회 응답의 `dislikedProductId` 값을 사용합니다.",
+            example = "1"
+        )
         @PathVariable Long dislikedProductId
     ) {
-        // 목록에 보이는 등록 ID를 기준으로 현재 로그인 사용자의 데이터만 삭제한다.
+        // 프론트는 상품 ID가 아니라 목록 응답으로 받은 dislikedProductId를 넘겨야 한다.
         userDislikedProductService.deleteDislikedProduct(userPrincipal.getId(), dislikedProductId);
         return ApiResponse.success();
     }
 
+    // 안 맞는 제품 등록 문서
     @Operation(
         summary = "안 맞는 제품 등록",
         description = "기존 상품 검색 결과에서 선택한 `productId`를 기준으로 로그인 사용자의 안 맞는 제품 목록에 상품을 등록합니다. 상품 자체의 표시 정보는 저장하지 않고 `productId`만 저장합니다."
@@ -120,7 +190,18 @@ public class UserDislikedProductController {
                 )
             )
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패", content = @Content(schema = @Schema(hidden = true))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "로그인이 필요함",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    name = "Unauthorized",
+                    summary = "인증되지 않은 요청",
+                    value = "{\"timestamp\":\"2026-03-19T06:58:09.441+00:00\",\"status\":401,\"error\":\"Unauthorized\",\"path\":\"/api/v1/users/me/disliked/products\"}"
+                )
+            )
+        ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "404",
             description = "사용자 또는 상품을 찾을 수 없음",
