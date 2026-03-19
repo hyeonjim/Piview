@@ -3,13 +3,9 @@ package com.piview.backend.product.catalog.service;
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.product.catalog.dto.*;
-import com.piview.backend.product.catalog.repository.ProductIngredientRepository;
-import com.piview.backend.product.catalog.repository.ProductRepository;
-import com.piview.backend.product.catalog.repository.IngredientRepository;
-import com.piview.backend.product.entity.EwgGrade;
-import com.piview.backend.product.entity.Ingredient;
-import com.piview.backend.product.entity.Product;
-import com.piview.backend.product.entity.ProductIngredients;
+import com.piview.backend.product.catalog.repository.*;
+import com.piview.backend.product.entity.*;
+import com.piview.backend.product.like.repository.ProductLikeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -27,11 +23,67 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class ProductCatalogService {
 
+    // 조회를 위한 repository
     private final ProductRepository productRepository;
     private final ProductIngredientRepository productIngredientRepository;
     private final IngredientRepository ingredientRepository;
 
-    public ProductPageResponse searchProducts(ProductSearchCondition condition) {
+    // MetaData 제공을 위한 repository
+    private final BigCategoryRepository bigCategoryRepository;
+    private final CategoryRepository categoryRepository;
+    private final BrandRepository brandRepository;
+    private final TagRepository tagRepository;
+    private final ProductLikeRepository productLikeRepository;
+
+    // filter MetaData 제공 service
+    public ProductFilterMetaResponse getFilterMeta() {
+
+        List<BigCategory> bigCategories = bigCategoryRepository.findAllByOrderByBigCategoryIdAsc();
+        List<Category> categories = categoryRepository.findAllByOrderByBigCategory_BigCategoryIdAscCategoryIdAsc();
+        List<Brand> brands = brandRepository.findAllByOrderByBrandNameAsc();
+        List<Tag> tags = tagRepository.findAllByOrderByTagAsc();
+
+        Map<Integer, List<Category>> categoryMap = categories.stream()
+                .collect(Collectors.groupingBy(category -> category.getBigCategory().getBigCategoryId()));
+
+        List<BigCategoryFilterDto> bigCategoryDtos = bigCategories.stream()
+                .map(bigCategory -> BigCategoryFilterDto.builder()
+                        .bigCategoryId(bigCategory.getBigCategoryId())
+                        .bigCategoryName(bigCategory.getBigCategoryName())
+                        .categories(
+                                categoryMap.getOrDefault(bigCategory.getBigCategoryId(), List.of()).stream()
+                                        .map(category -> CategoryFilterDto.builder()
+                                                .categoryId(category.getCategoryId())
+                                                .categoryName(category.getCategoryName())
+                                                .build())
+                                        .toList()
+                        )
+                        .build())
+                .toList();
+
+        List<BrandFilterDto> brandDtos = brands.stream()
+                .map(brand -> BrandFilterDto.builder()
+                        .brandId(brand.getBrandId())
+                        .brandName(brand.getBrandName())
+                        .build())
+                .toList();
+
+        List<TagFilterDto> tagDtos = tags.stream()
+                .map(tag -> TagFilterDto.builder()
+                        .tagId(tag.getTagId())
+                        .tag(tag.getTag())
+                        .build())
+                .toList();
+
+        return ProductFilterMetaResponse.builder()
+                .bigCategories(bigCategoryDtos)
+                .brands(brandDtos)
+                .tags(tagDtos)
+                .build();
+    }
+
+    // 조회 service
+    public ProductPageResponse searchProducts(ProductSearchCondition condition, Long userId) {
         validate(condition);
 
         String normalizedQ = normalizeQ(condition.getQ());
@@ -54,9 +106,16 @@ public class ProductCatalogService {
         PageRequest pageable = PageRequest.of(normalized.getPage(), normalized.getSize());
         Slice<Product> productSlice = productRepository.search(normalized, pageable);
 
+        List<Long> likedProductIds = (userId != null)
+            ? productLikeRepository.findLikedProductIdsByUserId(userId)
+            : Collections.emptyList();
+
         List<ProductSummaryResponse> responses = productSlice.getContent().stream()
-                .map(ProductSummaryResponse::from)
-                .toList();
+            .map(product -> {
+                boolean isLiked = likedProductIds.contains(product.getProductId());
+                return ProductSummaryResponse.from(product, isLiked);
+            })
+            .toList();
 
         return ProductPageResponse.builder()
                 .products(responses)
@@ -87,7 +146,7 @@ public class ProductCatalogService {
         return values.stream().distinct().toList();
     }
 
-    public ProductDetailResponse getProductDetail(Long productId) {
+    public ProductDetailResponse getProductDetail(Long productId, Long userId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COSMETICS_NOT_FOUND));
 
@@ -180,6 +239,12 @@ public class ProductCatalogService {
         skinTypeScores.put("combination", toIntFloor(product.getScoreCombination()));
         skinTypeScores.put("subuji", toIntFloor(product.getScoreSubuji()));
 
+        boolean isLiked = false;
+        if (userId != null) {
+            // 아까 레포지토리에 만들어둔 단건 조회 메서드 재활용!
+            isLiked = productLikeRepository.findByUserIdAndProductId(userId, productId).isPresent();
+        }
+
         return ProductDetailResponse.builder()
                 .productId(product.getProductId())
                 .imageUrl(product.getImage() != null ? product.getImage().getUrl() : null)
@@ -197,6 +262,7 @@ public class ProductCatalogService {
                 .allergenIngredients(allergenIngredients)
                 .ingredients(ingredients)
                 .skinTypeScores(skinTypeScores)
+                .isLiked(isLiked)
                 .build();
     }
 
