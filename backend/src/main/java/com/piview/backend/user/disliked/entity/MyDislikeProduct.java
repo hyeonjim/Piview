@@ -45,8 +45,8 @@ public class MyDislikeProduct extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // 사용자가 안 맞는 제품으로 선택한 상품
+    // products 테이블은 실제로 product_id 기준으로 식별되므로 PK(id) 기본 참조를 막고 명시적으로 맞춘다.
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_id", nullable = false, referencedColumnName = "product_id")
     private Product product;
 }
