@@ -4,11 +4,7 @@
  *
  * 사용처:
  *   - src/app/(onboarding)/skin-test/select/page.tsx  → SKIN_TYPES, AGE_GROUPS, GENDER_OPTIONS, SKIN_CONCERNS, ALLERGIES
- *   - src/app/(main)/recommend/page.tsx               → SKIN_TYPE_LABELS
  */
-
-/** 피부 타입 레이블 (필터 칩용 — 짧은 이름) */
-export const SKIN_TYPE_LABELS = ["건성", "지성", "복합성", "수부지"] as const;
 
 /** 피부 타입 선택 옵션 (아이콘 포함) */
 export const SKIN_TYPES = [

@@ -13,6 +13,7 @@
 
 export interface RoutineStep {
   code:       string;    // 스텝 코드 (CL, PR, SR, LT, CR, SC)
+  columnId:   number;    // 백엔드 RoutineColumn ID (draft API용)
   key:        string;    // 영문 키 (AddToRoutineModal 호환)
   label:      string;    // 화면 표시 라벨
   icon:       string;    // 이모지 아이콘
@@ -21,23 +22,23 @@ export interface RoutineStep {
 
 /** 루틴 스텝 전체 정의 — 순서가 루틴 순서 */
 export const ROUTINE_STEPS: RoutineStep[] = [
-  { code: "CL", key: "cleanser",  label: "클렌저",      icon: "🫧", categories: ["클렌저", "폼/젤/밤/오일", "클렌징폼", "클렌징젤", "클렌징밤", "클렌징오일", "클렌징밀크"] },
-  { code: "PR", key: "toner",     label: "스킨/토너",   icon: "💧", categories: ["스킨/토너", "토너", "미스트", "패드"] },
-  { code: "SR", key: "serum",     label: "세럼/에센스", icon: "✨", categories: ["에센스/앰플/세럼", "세럼", "에센스", "세럼/에센스"] },
-  { code: "LT", key: "lotion",    label: "로션/에멀전", icon: "🧴", categories: ["로션/에멀젼", "로션", "에멀전"] },
-  { code: "CR", key: "cream",     label: "크림/오일",   icon: "🤍", categories: ["크림", "페이스오일", "아이크림"] },
-  { code: "SC", key: "sunscreen", label: "선크림",      icon: "☀️", categories: ["선크림/스틱", "선크림", "선스틱", "선케어"] },
+  { code: "CL", columnId: 1, key: "cleanser",  label: "클렌저",      icon: "🫧", categories: ["클렌저", "폼/젤/밤/오일", "클렌징폼", "클렌징젤", "클렌징밤", "클렌징오일", "클렌징밀크"] },
+  { code: "PR", columnId: 2, key: "toner",     label: "스킨/토너",   icon: "💧", categories: ["스킨/토너", "토너", "미스트", "패드"] },
+  { code: "SR", columnId: 3, key: "serum",     label: "세럼/에센스", icon: "✨", categories: ["에센스/앰플/세럼", "세럼", "에센스", "세럼/에센스"] },
+  { code: "LT", columnId: 4, key: "lotion",    label: "로션/에멀전", icon: "🧴", categories: ["로션/에멀젼", "로션", "에멀전"] },
+  { code: "CR", columnId: 5, key: "cream",     label: "크림/오일",   icon: "🤍", categories: ["크림", "페이스오일", "아이크림"] },
+  { code: "SC", columnId: 6, key: "sunscreen", label: "선크림",      icon: "☀️", categories: ["선크림/스틱", "선크림", "선스틱", "선케어"] },
 ];
 
 /** AddToRoutineModal에서 사용하는 스텝 키 타입 */
 export type RoutineStepKey = typeof ROUTINE_STEPS[number]["key"];
 
 /**
- * 루틴 스토어 초기값 — 모든 스텝을 null로 초기화
+ * 루틴 스토어 초기값 — 모든 스텝을 빈 배열로 초기화
  * ⚠️ 백엔드 연동 시 삭제
  */
 export const INITIAL_ROUTINE = Object.fromEntries(
-  ROUTINE_STEPS.map((s) => [s.code, null])
+  ROUTINE_STEPS.map((s) => [s.code, [] as never[]])
 );
 
 /**
