@@ -31,6 +31,7 @@ public enum ErrorCode {
 
     // 409 CONFLICT
     ALREADY_SAVED_PRODUCT(HttpStatus.CONFLICT, "이미 보관함에 존재하는 상품입니다."),
+    ALREADY_DISLIKED_PRODUCT(HttpStatus.CONFLICT, "이미 안 맞는 제품으로 등록된 상품입니다."),
     SKIN_ANALYSIS_NOT_COMPLETED(HttpStatus.CONFLICT, "피부 분석이 아직 완료되지 않았습니다. 잠시 후 다시 시도해주세요."),
     SKIN_ANALYSIS_FAILED(HttpStatus.CONFLICT, "피부 분석에 실패했습니다. 다시 촬영한 뒤 시도해주세요."),
     SKIN_ANALYSIS_ALREADY_CONSUMED(HttpStatus.CONFLICT, "이미 최종 제출이 완료된 분석입니다."),
