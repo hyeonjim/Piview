@@ -3,10 +3,13 @@
  * 카카오 OAuth 콜백 처리 페이지
  *
  * 플로우:
- * 1. 백엔드가 이 URL로 리다이렉트 (?token=xxx)
- * 2. URL 쿼리 파라미터에서 accessToken 꺼내기
- * 3. Zustand에 저장
- * 4. /home으로 이동
+ * 1. 백엔드가 이 URL로 리다이렉트
+ *    - 로컬: accessToken을 쿠키로 전달
+ *    - 배포: accessToken을 URL 파라미터(?token=xxx)로 전달
+ *    → 쿠키 먼저 시도, 없으면 파라미터에서 꺼내기
+ * 2. Zustand에 저장 후 쿠키 즉시 삭제
+ * 3. GET /users/me 호출 → 유저 정보 저장
+ * 4. mySkinType 없으면 /skin-test, 있으면 /home
  *
  * ⚠️ Route Group 밖에 위치해야 함 (백엔드 리다이렉트 URL 고정)
  */
@@ -17,6 +20,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/useUserStore";
 import { authService } from "@/services/auth";
+import { getCookieAndClear } from "@/services/client";
 
 export default function OAuthCallbackPage() {
   const router = useRouter();
@@ -24,9 +28,11 @@ export default function OAuthCallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // 1. URL 쿼리 파라미터에서 token 꺼내기 (?token=xxx)
-        const params = new URLSearchParams(window.location.search);
-        const accessToken = params.get("token");
+        // 1. 쿠키 먼저 시도, 없으면 URL 파라미터에서 꺼내기
+        //    로컬: 쿠키로 전달 / 배포: ?token=xxx 파라미터로 전달
+        const accessToken =
+          getCookieAndClear("accessToken") ??
+          new URLSearchParams(window.location.search).get("token");
 
         if (!accessToken) {
           // token이 없으면 인증 실패
