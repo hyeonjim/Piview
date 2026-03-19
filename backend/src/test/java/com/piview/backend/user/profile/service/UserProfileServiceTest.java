@@ -47,6 +47,7 @@ class UserProfileServiceTest {
 
         assertThat(response.getName()).isEqualTo("기존이름");
         assertThat(response.getEmail()).isEqualTo("test@example.com");
+        assertThat(response.getImageUrl()).isEqualTo("http://k.kakaocdn.net/dn/profile.jpg");
         assertThat(response.getGender()).isEqualTo(SurveyGender.WOMEN);
         assertThat(response.getAgeGroup()).isEqualTo(SurveyAgeGroup.TWENTIES);
         assertThat(response.getMySkinType()).isEqualTo(SurveySkinType.OILY);
@@ -71,6 +72,7 @@ class UserProfileServiceTest {
         UserProfileResponse response = userProfileService.updateMyProfile(1L, request);
 
         assertThat(response.getName()).isEqualTo("새이름");
+        assertThat(response.getImageUrl()).isEqualTo("http://k.kakaocdn.net/dn/profile.jpg");
         assertThat(response.getMySkinType()).isEqualTo(SurveySkinType.DRY);
         assertThat(response.getGender()).isEqualTo(SurveyGender.WOMEN);
         assertThat(response.getAgeGroup()).isEqualTo(SurveyAgeGroup.TWENTIES);
@@ -160,6 +162,7 @@ class UserProfileServiceTest {
             .email("test@example.com")
             .provider(AuthProvider.KAKAO)
             .providerId("dev_test@example.com")
+            .imageUrl("http://k.kakaocdn.net/dn/profile.jpg")
             .gender(SurveyGender.WOMEN)
             .ageGroup(SurveyAgeGroup.TWENTIES)
             .mySkinType(SurveySkinType.OILY)
