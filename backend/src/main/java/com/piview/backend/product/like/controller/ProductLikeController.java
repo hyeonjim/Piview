@@ -6,10 +6,12 @@ import com.piview.backend.product.catalog.dto.ProductSummaryResponse;
 import com.piview.backend.product.like.dto.ProductLikeResponseDto;
 import com.piview.backend.product.like.service.ProductLikeService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,7 +26,32 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductLikeController {
   private final ProductLikeService productLikeService;
 
-  @Operation(summary = "제품 좋아요 토글", description = "제품의 좋아요 상태를 변경합니다. (없으면 추가, 있으면 취소)")
+  @Operation(summary = "제품 좋아요 토글", description = "제품을 찜 목록에 추가하거나 삭제합니다. (이미 찜한 상태면 삭제, 아니면 추가)")
+  @ApiResponses(value = {
+      @io.swagger.v3.oas.annotations.responses.ApiResponse(
+          responseCode = "200",
+          description = "토글 성공",
+          content = @Content(
+              mediaType = "application/json",
+              examples = @ExampleObject(
+                  name = "LikeSuccess",
+                  value = "{ \"status\": 200, \"message\": \"요청에 성공했습니다.\", \"data\": true }",
+                  description = "좋아요가 추가된 경우 true 반환"
+              )
+          )
+      ),
+      @io.swagger.v3.oas.annotations.responses.ApiResponse(
+          responseCode = "404",
+          description = "제품을 찾을 수 없는 경우",
+          content = @Content(
+              mediaType = "application/json",
+              examples = @ExampleObject(
+                  name = "ProductNotFound",
+                  value = "{ \"status\": 404, \"code\": \"P001\", \"message\": \"해당 제품을 찾을 수 없습니다.\" }"
+              )
+          )
+      )
+  })
   @PostMapping("/{productId}/likes/toggle")
   public ApiResponse<ProductLikeResponseDto> toggleProductLike(
       @PathVariable("productId") Long productId,
