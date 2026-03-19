@@ -1,6 +1,6 @@
 /**
- * _mock/recommend.ts
- * 추천 페이지 더미 제품 데이터
+ * 🔧 _mock/recommend.ts
+ * 🔧 추천 페이지 더미 제품 데이터 — 임시 하드코딩, 실제 데이터 아님
  *
  * ⚠️ API 교체 대상
  *    교체 시: recommendService.getPersonalized() 로 대체
@@ -25,6 +25,7 @@ export interface RecommendProduct {
   ewgDanger:  number;
 }
 
+// 🔧 추천 제품 목업 — ⚠️ API 연동 시 삭제
 export const MOCK_RECOMMEND: RecommendProduct[] = [
   { id:"s2",  brand:"라운드랩",   name:"1025 독도 토너",                    category:"스킨/토너",        emoji:"🌊", skinTypes:["건성"],          effects:["수분","진정"],                    reason:"독도 해양 심층수 성분이 피부 장벽을 강화하고 수분을 공급합니다.",                                                         matchScore:87, ewgSafe:20, ewgCaution:3, ewgDanger:0 },
   { id:"s1",  brand:"아누아",     name:"어성초 77 토너",                    category:"스킨/토너",        emoji:"💧", skinTypes:["지성","복합성"],  effects:["여드름","피지","진정"],            reason:"피지 조절에 탁월하며 어성초 성분이 피부 진정에 도움을 줍니다.",                                                          matchScore:92, ewgSafe:18, ewgCaution:4, ewgDanger:1 },

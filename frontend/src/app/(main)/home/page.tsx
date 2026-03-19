@@ -1,37 +1,39 @@
 "use client";
 
 import { useEffect } from "react";
-import { Sparkles, ArrowRight, Leaf, Sun, Moon, Droplets, Star, ChevronRight } from "lucide-react";
+import { Leaf, Sun, Moon, Droplets, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { SKINCARE_INSIGHTS } from "@/constants";
 import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
-import { useUserStore, selectSkinType } from "@/stores/useUserStore";
+import { useUserStore } from "@/stores/useUserStore";
+import { useUserQuery } from "@/hooks";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
 
-
+// 시간대별 인사말과 아이콘 반환
 function getGreeting(): { text: string; icon: React.ReactNode } {
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 12)
-    return { text: "Morning Glow", icon: <Sun size={13} style={{ color: "#C8A96E" }} /> };
+    return { text: "Morning Glow", icon: <Sun size={13} className="text-[#C8A96E]" /> };
   if (hour >= 12 && hour < 18)
-    return { text: "Afternoon Care", icon: <Sun size={13} style={{ color: "#C8A96E" }} /> };
-  return { text: "Evening Ritual", icon: <Moon size={13} style={{ color: "#A8A39D" }} /> };
+    return { text: "Afternoon Care", icon: <Sun size={13} className="text-[#C8A96E]" /> };
+  return { text: "Evening Ritual", icon: <Moon size={13} className="text-[#A8A39D]" /> };
 }
 
+// 아이콘 이름 → JSX 컴포넌트 매핑 (SKINCARE_INSIGHTS.iconName에 대응)
 const ICON_MAP = {
-  droplets: (size: number) => <Droplets size={size} style={{ color: "#8A9468" }} />,
-  sun:      (size: number) => <Sun size={size} style={{ color: "#C8A96E" }} />,
-  leaf:     (size: number) => <Leaf size={size} style={{ color: "#8A9468" }} />,
+  droplets: (size: number) => <Droplets size={size} className="text-[#8A9468]" />,
+  sun:      (size: number) => <Sun size={size} className="text-[#C8A96E]" />,
+  leaf:     (size: number) => <Leaf size={size} className="text-[#8A9468]" />,
 };
 
 export default function HomePage() {
+  // store.user 없을 때 /users/me 재조회 — 새로고침·직접 진입 시 이름 복원
+  useUserQuery();
   const greeting = getGreeting();
-  const nickname  = "User";
+  const nickname = useUserStore((s) => s.user?.name ?? "User");
   const { routine, isMainRoutine } = useLocalRoutineStore();
-  // 피부타입이 설정되어 있으면 AI 진단 배너 숨김
-  const skinType = useUserStore(selectSkinType);
-  const hasSkinType = skinType !== null;
 
+  // 로컬 루틴 스토어 rehydrate (localStorage → zustand)
   useEffect(() => { useLocalRoutineStore.persist.rehydrate(); }, []);
 
   // 각 스텝별 제품 배열을 flat — 스텝당 여러 제품이 있을 수 있음
@@ -43,130 +45,47 @@ export default function HomePage() {
   const hasRoutine = isMainRoutine && mainRoutineItems.length > 0;
 
   return (
-    <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
+    <div className="flex-1 bg-[#F5F2EC]">
 
-      {/* ── 상단 헤더 — 연한 베이지 배경 ──────────────────────── */}
-      <div
-        style={{
-          backgroundColor: "#F5F2EC",
-          paddingTop: "15px",
-          paddingBottom: "20px",
-          paddingLeft: "20px",
-          paddingRight: "20px",
-        }}
-      >
-        {/* 인사말 */}
+      {/* ── 상단 헤더 ──────────────────────────────────────────── */}
+      <div className="bg-[#F5F2EC] pt-3.75 pb-5 px-5">
+
+        {/* 인사말 — Cormorant 폰트 (기본 폰트 아님) */}
         <div className="flex items-center gap-1.5">
           {greeting.icon}
-          <span
-            style={{
-              fontSize: "16px",
-              fontWeight: 400,
-              color: "#B0A99F",
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              fontFamily: "var(--font-cormorant), serif",
-              fontStyle: "italic",
-            }}
-          >
+          <span className="text-base font-normal text-[#B0A99F] tracking-[0.12em] uppercase italic [font-family:var(--font-cormorant),serif]">
             {greeting.text}
           </span>
         </div>
 
-        <h1
-          style={{
-            marginTop: "10px",
-            marginBottom: "5px",
-            fontSize: "22px",
-            fontWeight: 700,
-            color: "#1C1C1E",
-            letterSpacing: "-0.5px",
-            lineHeight: 1.2,
-            fontFamily: "var(--font-pretendard), sans-serif",
-          }}
-        >
+        {/* 닉네임 */}
+        <h1 className="mt-2.5 mb-1.25 text-[22px] font-bold text-[#1C1C1E] tracking-[-0.5px] leading-[1.2]">
           {nickname}님,
         </h1>
-        <p style={{ margin: "4px 0 0", fontSize: "14px", color: "#B0A99F", fontFamily: "var(--font-pretendard), sans-serif" }}>
+
+        {/* 서브타이틀 */}
+        <p className="mt-1 text-sm text-[#B0A99F]">
           오늘의 스킨케어 루틴을 확인하세요
         </p>
-
-        {/* ── AI 진단 배너 — 피부타입 미설정 시에만 노출 ───────────────────────────────── */}
-        {!hasSkinType && <Link href="/skin-test" className="block" style={{ marginTop: "16px" }}>
-          <div
-            className="relative overflow-hidden flex items-center justify-between"
-            style={{
-              /* 연한 베이지 그라디언트 — 밝고 따뜻한 톤 */
-              background: "linear-gradient(135deg, #BFB6AA 0%, #A69D92 100%)",
-              borderRadius: "12px",
-              padding: "20px",
-            }}
-          >
-            {/* 배경 텍스처 원 */}
-            <div style={{ position: "absolute", top: "-20px", right: "10px", width: "80px", height: "80px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.12)" }} />
-            <div style={{ position: "absolute", bottom: "-15px", right: "60px", width: "56px", height: "56px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.08)" }} />
-
-            <div style={{ position: "relative", zIndex: 1 }}>
-              {/* 뱃지 */}
-              <div
-                className="flex items-center gap-1.5"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  borderRadius: "4px",
-                  padding: "4px 8px",
-                  marginBottom: "10px",
-                }}
-              >
-                <Sparkles size={11} style={{ color: "#FFFFFF" }} />
-                <span style={{ fontSize: "9px", fontWeight: 600, color: "#FFFFFF", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "var(--font-pretendard), sans-serif" }}>
-                  AI SKIN ANALYSIS
-                </span>
-              </div>
-              <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#FFFFFF", lineHeight: 1.35, fontFamily: "var(--font-pretendard), sans-serif" }}>
-                나만의 피부 타입을<br />분석해보세요
-              </p>
-            </div>
-
-            <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "36px", height: "36px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.2)", flexShrink: 0 }}>
-              <ArrowRight size={17} style={{ color: "#FFFFFF" }} />
-            </div>
-          </div>
-        </Link>}
       </div>
 
-      {/* ── 나의 루틴 ────────────────────────────────────── */}
-      <div style={{ padding: "20px 16px 0" }}>
-        <div
-          style={{
-            backgroundColor: "#FFFFFF",
-            borderRadius: "12px",
-            border: "1px solid #E2DDD8",
-            overflow: "hidden",
-          }}
-        >
+      {/* ── 나의 루틴 ─────────────────────────────────────────── */}
+      <div className="py-5 px-4">
+        <div className="bg-white rounded-xl border border-[#E2DDD8] overflow-hidden">
+
           {/* 섹션 헤더 */}
-          <div
-            className="flex items-center justify-between"
-            style={{
-              padding: "14px 16px",
-              borderBottom: "1px solid #EDE9E3",
-            }}
-          >
-            <div className="flex items-center gap-2">
-              <span style={{ fontSize: "14px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.2px", fontFamily: "var(--font-pretendard), sans-serif" }}>
-                나의 메인루틴
-              </span>
-            </div>
+          <div className="flex items-center justify-between py-3.5 px-4 border-b border-[#EDE9E3]">
+            <span className="text-sm font-bold text-[#2A2118] tracking-[-0.2px]">
+              나의 메인루틴
+            </span>
+
             {hasRoutine ? (
-              <span style={{ fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: "12px", backgroundColor: "#F2EFE9", color: "#A69D92", fontFamily: "var(--font-pretendard), sans-serif" }}>
+              <span className="text-[11px] font-semibold py-0.75 px-2.5 rounded-xl bg-[#F2EFE9] text-[#A69D92]">
                 {mainRoutineItems.length}단계
               </span>
             ) : (
               <Link href="/mypage">
-                <span className="flex items-center gap-0.5" style={{ fontSize: "12px", color: "#A69D92", fontFamily: "var(--font-pretendard), sans-serif" }}>
+                <span className="flex items-center gap-0.5 text-xs text-[#A69D92]">
                   설정하기 <ChevronRight size={12} />
                 </span>
               </Link>
@@ -175,26 +94,28 @@ export default function HomePage() {
 
           {/* 루틴 리스트 */}
           {hasRoutine ? (
-            <div style={{ padding: "0 16px" }}>
+            <div className="px-4">
               {mainRoutineItems.map(({ step, product }, index) => (
                 <div
-                  key={step.code}
-                  className="flex items-center gap-3"
-                  style={{
-                    paddingTop: "12px",
-                    paddingBottom: "12px",
-                    borderBottom: index < mainRoutineItems.length - 1 ? "1px solid #EDE9E3" : "none",
-                  }}
+                  key={`${step.code}-${product.name}`}
+                  className={`flex items-center gap-3 py-3${
+                    index < mainRoutineItems.length - 1 ? " border-b border-[#EDE9E3]" : ""
+                  }`}
                 >
-                  <span style={{ fontSize: "10px", fontWeight: 700, color: "#BFB6AA", width: "16px", flexShrink: 0, fontFamily: "var(--font-cormorant), serif" }}>
+                  {/* 스텝 번호 — Cormorant 폰트 (기본 폰트 아님) */}
+                  <span className="text-[10px] font-bold text-[#BFB6AA] w-4 shrink-0 [font-family:var(--font-cormorant),serif]">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <span style={{ fontSize: "20px", width: "28px", textAlign: "center", flexShrink: 0 }}>{product.emoji}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: "12px", color: "#A69D92", fontWeight: 500, letterSpacing: "0.03em", fontFamily: "var(--font-pretendard), sans-serif" }}>
+
+                  {/* 이모지 */}
+                  <span className="text-[20px] w-7 text-center shrink-0">{product.emoji}</span>
+
+                  {/* 스텝 정보 */}
+                  <div className="flex-1 min-w-0">
+                    <p className="m-0 text-xs text-[#A69D92] font-medium tracking-[0.03em]">
                       {step.label}
                     </p>
-                    <p style={{ margin: "1px 0 0", fontSize: "16px", fontWeight: 600, color: "#2A2118", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "var(--font-pretendard), sans-serif" }}>
+                    <p className="mt-px text-base font-semibold text-[#2A2118] overflow-hidden text-ellipsis whitespace-nowrap">
                       {product.name}
                     </p>
                   </div>
@@ -202,29 +123,17 @@ export default function HomePage() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center" style={{ padding: "32px 20px" }}>
-              <Star size={28} style={{ color: "#D9D5D0", marginBottom: "10px" }} />
-              <p style={{ margin: 0, fontSize: "14px", fontWeight: 500, color: "#A69D92", textAlign: "center", fontFamily: "var(--font-pretendard), sans-serif" }}>
+            /* 루틴 없음 빈 상태 */
+            <div className="flex flex-col items-center justify-center py-8 px-5">
+              <Star size={28} className="text-[#D9D5D0] mb-2.5" />
+              <p className="m-0 text-sm font-medium text-[#A69D92] text-center">
                 아직 루틴이 없어요
               </p>
-              <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#BFB6AA", textAlign: "center", lineHeight: 1.5, fontFamily: "var(--font-pretendard), sans-serif" }}>
+              <p className="mt-1 text-xs text-[#BFB6AA] text-center leading-normal">
                 마이페이지에서 루틴을 설정해보세요
               </p>
               <Link href="/mypage">
-                <button
-                  className="flex items-center gap-1.5 cursor-pointer border-none"
-                  style={{
-                    marginTop: "14px",
-                    padding: "8px 18px",
-                    borderRadius: "6px",
-                    /* 따뜻한 다크 브라운 — 베이지 테마와 조화 */
-                    backgroundColor: "#3D3028",
-                    color: "#F2EFE9",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    fontFamily: "var(--font-pretendard), sans-serif",
-                  }}
-                >
+                <button className="flex items-center gap-1.5 cursor-pointer border-none mt-3.5 py-2 px-4.5 rounded-md bg-[#3D3028] text-[#F2EFE9] text-xs font-semibold">
                   <Leaf size={12} /> 루틴 설정하기
                 </button>
               </Link>
@@ -233,43 +142,34 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ── Skincare Tips ─────────────────────────────────── */}
-      <div style={{ padding: "20px 16px 24px" }}>
+      {/* ── Skincare Tips ──────────────────────────────────────── */}
+      <div className="pt-5 px-4 pb-6">
+
         {/* 섹션 타이틀 */}
-        <div className="flex items-baseline gap-2" style={{ marginBottom: "15px" }}>
-          <h2 style={{fontSize: "16px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.3px", fontFamily: "var(--font-pretendard), sans-serif" }}>
+        <div className="flex items-baseline gap-2 mb-3.75">
+          <h2 className="text-base font-bold text-[#2A2118] tracking-[-0.3px]">
             Skincare Tips
           </h2>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        {/* 팁 카드 목록 */}
+        <div className="flex flex-col gap-2">
           {SKINCARE_INSIGHTS.map((item) => (
             <div
               key={item.label}
-              className="flex items-start gap-3"
-              style={{
-                backgroundColor: "#FFFFFF",
-                borderRadius: "10px",
-                border: "1px solid #E2DDD8",
-                padding: "14px",
-              }}
+              className="flex items-start gap-3 bg-white rounded-[10px] border border-[#E2DDD8] p-3.5"
             >
-              <div
-                className="flex items-center justify-center shrink-0"
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "8px",
-                  backgroundColor: "#F2EFE9",
-                }}
-              >
+              {/* 아이콘 박스 */}
+              <div className="flex items-center justify-center shrink-0 w-9 h-9 rounded-lg bg-[#F2EFE9]">
                 {ICON_MAP[item.iconName](15)}
               </div>
+
+              {/* 텍스트 */}
               <div>
-                <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#2A2118", fontFamily: "var(--font-pretendard), sans-serif" }}>
+                <p className="m-0 text-[13px] font-semibold text-[#2A2118]">
                   {item.label}
                 </p>
-                <p style={{ margin: "3px 0 0", fontSize: "12px", color: "#A69D92", lineHeight: 1.6, fontFamily: "var(--font-pretendard), sans-serif" }}>
+                <p className="mt-0.75 text-xs text-[#A69D92] leading-[1.6]">
                   {item.desc}
                 </p>
               </div>

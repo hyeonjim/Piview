@@ -1,6 +1,6 @@
 /**
- * _mock/product.ts
- * 제품 상세 페이지 더미 데이터
+ * 🔧 _mock/product.ts
+ * 🔧 제품 상세 페이지 더미 데이터 — 임시 하드코딩, 실제 데이터 아님
  *
  * ⚠️  API 교체 대상
  *     교체 시: 이 파일의 import를 삭제하고
@@ -72,7 +72,7 @@ export interface ProductDetailFull {
 }
 
 /**
- * 피그마 ProductDetailPage 기준 상세 더미
+ * 🔧 피그마 ProductDetailPage 기준 상세 더미
  * ⚠️  API 연동 시 productService.getProduct(id) 결과로 교체
  */
 export const MOCK_PRODUCT_DETAIL: ProductDetailFull = {
@@ -248,12 +248,12 @@ export const MOCK_PRODUCT_DETAIL: ProductDetailFull = {
   },
 };
 
-// ── id별 mock 맵 ──────────────────────────────────────────────────────────────
+// ── 🔧 id별 mock 맵 ──────────────────────────────────────────────────────────────
 // searchProducts(s1~s12), mypageProducts(c1~c2, t1~t4, s1~s3, cr1~cr2, sc1~sc2) 커버
 // ⚠️ API 연동 시 productService.getProduct(id) 로 교체 — 이 맵 전체 삭제
 
 /**
- * id로 mock 제품 상세 조회
+ * 🔧 id로 mock 제품 상세 조회
  * - searchProducts에서 기본 정보(이름/브랜드/카테고리/피부타입/효과 등) 가져옴
  * - 성분/EWG/점수 등 상세 필드는 MOCK_PRODUCT_DETAIL 기본값으로 채움
  * ⚠️ API 연동 시 이 함수만 productService.getProduct(id) 로 교체

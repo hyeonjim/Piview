@@ -1,3 +1,15 @@
+/**
+ * 🔧 _mock/searchProducts.ts
+ * 🔧 검색 제품 더미 데이터 — 임시 하드코딩, 실제 데이터 아님
+ *
+ * ⚠️ API 교체 대상
+ *    교체 시: productService.searchProducts() 로 대체
+ *
+ * 사용처:
+ *   - src/app/(main)/search/page.tsx → MOCK_SEARCH_PRODUCTS
+ *   - src/constants/_mock/product.ts → getMockProductById()
+ */
+
 export interface SearchProduct {
   id: string;
   brand: string;
@@ -23,6 +35,7 @@ export interface SearchProduct {
   ewgDanger: number;
 }
 
+// 🔧 검색 제품 목업 — ⚠️ API 연동 시 삭제 (productService.searchProducts() 로 교체)
 export const MOCK_SEARCH_PRODUCTS: SearchProduct[] = [
   { id:"s1",  brand:"아누아",     name:"어성초 77 토너",                    category:"스킨/토너",        mainCategory:"스킨케어", skinType1:"지성",   skinType2:"복합성", concerns:{ 여드름:true, 피지:true, 진정:true },              price:24000, volume:"250ml",    rating:4.7, reviews:5892, emoji:"💧", matchScore:92, skinTypes:["지성","복합성"],  effects:["여드름","피지","진정"],    ewgSafe:18, ewgCaution:4, ewgDanger:1 },
   { id:"s2",  brand:"라운드랩",   name:"1025 독도 토너",                    category:"스킨/토너",        mainCategory:"스킨케어", skinType1:"건성",   skinType2:"건성",  concerns:{ 수분:true, 진정:true },                          price:18000, volume:"300ml",    rating:4.6, reviews:3412, emoji:"🌊", matchScore:87, skinTypes:["건성"],           effects:["수분","진정"],            ewgSafe:20, ewgCaution:3, ewgDanger:0 },
