@@ -44,6 +44,7 @@ export interface SavedRoutine {
   routine: LocalRoutineMap;
   productCount: number; // 총 제품 수 (카드 표시용)
   savedAt: number; // Unix timestamp (ms)
+  isMain: boolean; // 메인 루틴 여부 — toggleMainRoutine 시 동기화
 }
 
 interface LocalRoutineStore {
@@ -116,8 +117,17 @@ export const useLocalRoutineStore = create<LocalRoutineStore>()(
           currentRoutineName: "내 루틴",
         }),
 
+      // 메인 토글 시 savedRoutines의 해당 항목도 동기화
       toggleMainRoutine: () =>
-        set((state) => ({ isMainRoutine: !state.isMainRoutine })),
+        set((state) => {
+          const newIsMain = !state.isMainRoutine;
+          const updatedSavedRoutines = state.savedRoutines.map((savedRoutine) =>
+            savedRoutine.name === state.currentRoutineName
+              ? { ...savedRoutine, isMain: newIsMain }
+              : savedRoutine,
+          );
+          return { isMainRoutine: newIsMain, savedRoutines: updatedSavedRoutines };
+        }),
 
       saveRoutine: (name) =>
         set((state) => {
@@ -128,6 +138,8 @@ export const useLocalRoutineStore = create<LocalRoutineStore>()(
             routine: { ...state.routine },
             productCount,
             savedAt: Date.now(),
+            // 저장 시점의 메인 상태 함께 저장
+            isMain: state.isMainRoutine,
           };
           // 같은 이름이 이미 있으면 덮어쓰기, 없으면 추가
           const existingIndex = state.savedRoutines.findIndex(
@@ -145,6 +157,7 @@ export const useLocalRoutineStore = create<LocalRoutineStore>()(
           };
         }),
 
+      // 불러오기 시 해당 루틴의 저장된 isMain 상태 복원
       loadSavedRoutine: (id) =>
         set((state) => {
           const found = state.savedRoutines.find((r) => r.id === id);
@@ -152,6 +165,7 @@ export const useLocalRoutineStore = create<LocalRoutineStore>()(
           return {
             routine: found.routine,
             currentRoutineName: found.name,
+            isMainRoutine: found.isMain,
           };
         }),
 

@@ -7,6 +7,9 @@
 import type { ProductSearchParams } from "@/types/product";
 
 export const queryKeys = {
+  // 사용자 정보 — GET /users/me
+  user: ["user"] as const,
+
   // 보유제품 목록 — GET /my-cos
   myCos: ["myCos"] as const,
 

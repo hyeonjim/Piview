@@ -11,6 +11,7 @@ import { ROUTINE_STEPS } from "@/constants/routineSteps";
 import {
   useLocalRoutineStore,
   type LocalProduct,
+  type LocalRoutineMap,
   type SavedRoutine,
 } from "@/stores/useLocalRoutineStore";
 import {
@@ -39,6 +40,16 @@ interface DragState {
   fromIndex: number;
   toStepCode: string;
   toIndex: number;
+}
+
+// 로컬/서버 루틴을 통합한 화면 표시용 타입 — ⚠️ API 연동 시 서버 타입으로 단일화
+interface SavedRoutineDisplayItem {
+  id: string;
+  name: string;
+  routine: LocalRoutineMap;
+  productCount: number;
+  savedAt: number;
+  isMain: boolean;
 }
 
 interface RoutineTabProps {
@@ -85,6 +96,12 @@ export default function RoutineTab({
   const savedRoutineScrollRef = useRef<HTMLDivElement>(null);
   const [activeCardIndex, setActiveCardIndex] = useState(0);
 
+  // 슬라이더 마우스 드래그 전용 ref — useState 대신 useRef 사용 (렌더 트리거 불필요)
+  const sliderDragStartXRef = useRef<number>(0);          // 드래그 시작 clientX
+  const sliderDragStartScrollLeftRef = useRef<number>(0); // 드래그 시작 시점 scrollLeft
+  const isSliderDraggingRef = useRef<boolean>(false);     // 드래그 진행 중 여부
+  const sliderDragMovedRef = useRef<boolean>(false);      // 5px 이상 이동 여부 (클릭 차단용)
+
   // 스크롤 위치 기준으로 활성 카드 인덱스 갱신
   const handleSavedRoutineScroll = () => {
     const container = savedRoutineScrollRef.current;
@@ -95,6 +112,57 @@ export default function RoutineTab({
     const cardWidth = firstCard.offsetWidth + 8;
     const index = Math.round(container.scrollLeft / cardWidth);
     setActiveCardIndex(Math.min(index, savedRoutines.length - 1));
+  };
+
+  // ── 슬라이더 마우스 드래그 핸들러 (웹 데스크톱 지원) ─────────────────
+  // pointerDown — 드래그 시작 좌표·scrollLeft 기록만 수행
+  // ⚠️ setPointerCapture는 여기서 호출하지 않음 — pointerDown에서 캡처하면
+  //    자식 카드(SavedRoutineCard)의 click 이벤트가 컨테이너에 흡수되어 클릭 불가
+  const handleSliderPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    // 터치 이벤트는 네이티브 스크롤에 위임
+    if (event.pointerType === "touch") return;
+    const container = savedRoutineScrollRef.current;
+    if (!container) return;
+    isSliderDraggingRef.current = true;
+    sliderDragMovedRef.current = false;
+    sliderDragStartXRef.current = event.clientX;
+    sliderDragStartScrollLeftRef.current = container.scrollLeft;
+  };
+
+  // pointerMove — 드래그 확정(5px) 이후에만 포인터 캡처 + scrollLeft 조작
+  // 캡처를 이동 확정 후로 미룸 → 단순 클릭 시 캡처가 발생하지 않아 카드 click 이벤트 정상 동작
+  const handleSliderPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!isSliderDraggingRef.current || event.pointerType === "touch") return;
+    const container = savedRoutineScrollRef.current;
+    if (!container) return;
+    const deltaX = event.clientX - sliderDragStartXRef.current;
+    if (Math.abs(deltaX) > 5) {
+      sliderDragMovedRef.current = true;
+      // 드래그 확정 후 포인터 캡처 — 빠른 드래그 시 컨테이너 밖 이탈 방지
+      if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }
+      container.style.cursor = "grabbing";
+    }
+    container.scrollLeft = sliderDragStartScrollLeftRef.current - deltaX;
+  };
+
+  // pointerUp / pointerCancel — 드래그 종료, 커서 복원
+  const handleSliderPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
+    const container = savedRoutineScrollRef.current;
+    if (!container) return;
+    isSliderDraggingRef.current = false;
+    container.style.cursor = "grab";
+    // sliderDragMovedRef는 handleSliderClickCapture에서 소비
+  };
+
+  // clickCapture — 드래그 후 자식 카드의 click 이벤트를 capture phase에서 차단
+  const handleSliderClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (sliderDragMovedRef.current) {
+      event.stopPropagation();
+      sliderDragMovedRef.current = false;
+    }
   };
 
   // 드래그 상태 — 스텝 코드 + 이동 전/후 인덱스
@@ -309,7 +377,7 @@ export default function RoutineTab({
   // 화면에 표시할 루틴 목록
   // 로컬 저장 루틴을 기본으로 표시하고, 서버 루틴(목업)은 별도 병합
   // ⚠️ API 연동 시: localSavedRoutines 제거하고 serverRoutineList만 사용하도록 교체
-  const savedRoutines = [
+  const savedRoutines: SavedRoutineDisplayItem[] = [
     // 로컬 스토어 루틴 — 저장 즉시 반영됨
     ...localSavedRoutines.map((savedRoutine) => ({
       id: savedRoutine.id,
@@ -317,7 +385,8 @@ export default function RoutineTab({
       routine: savedRoutine.routine,
       productCount: savedRoutine.productCount,
       savedAt: savedRoutine.savedAt,
-      isMain: false,
+      // SavedRoutine에 저장된 isMain 값 직접 사용 — toggleMainRoutine 시 동기화됨
+      isMain: savedRoutine.isMain,
     })),
     // 서버 루틴 — 로컬에 없는 항목만 추가 (이름 기준 중복 제거)
     // ⚠️ API 연동 시: 이 병합 로직 삭제하고 serverRoutineList만 사용
@@ -326,7 +395,7 @@ export default function RoutineTab({
       .map((serverRoutine) => ({
         id: String(serverRoutine.routineId),
         name: serverRoutine.title,
-        routine: {} as ReturnType<typeof useLocalRoutineStore.getState>["routine"],
+        routine: {} as LocalRoutineMap,
         productCount: serverRoutine.productCount,
         savedAt: 0,
         isMain: serverRoutine.isMain,
@@ -348,15 +417,22 @@ export default function RoutineTab({
       {savedRoutines.length > 0 && (
         <div className="mb-2">
           <p className="text-xs font-semibold text-text-muted mb-2">저장된 루틴</p>
-          {/* scrollbarWidth: none, WebkitOverflowScrolling은 Tailwind 불가 — style 유지 */}
+          {/* scrollbarWidth, scrollSnapType, overscrollBehaviorX, cursor, userSelect는 Tailwind 불가 — style 유지 */}
           <div
             ref={savedRoutineScrollRef}
-            className="flex gap-2 overflow-x-scroll pb-1"
+            className="flex gap-2 overflow-x-auto pb-1"
             onScroll={handleSavedRoutineScroll}
+            onPointerDown={handleSliderPointerDown}
+            onPointerMove={handleSliderPointerMove}
+            onPointerUp={handleSliderPointerUp}
+            onPointerCancel={handleSliderPointerUp}
+            onClickCapture={handleSliderClickCapture}
             style={{
               scrollbarWidth: "none",
               scrollSnapType: "x mandatory",
-              WebkitOverflowScrolling: "touch",
+              overscrollBehaviorX: "contain",
+              cursor: "grab",     // 초기 커서 — grabbing 전환은 핸들러에서 DOM 직접 조작
+              userSelect: "none", // 드래그 중 텍스트 선택 방지
             }}
           >
             {savedRoutines.map((saved) => (
@@ -722,15 +798,8 @@ export default function RoutineTab({
   );
 }
 
-// ── 저장된 루틴 카드 — 카드 클릭으로 불러오기, 3개씩 가로 나열 ──────────────────────
-function SavedRoutineCard({
-  saved,
-  isActive,
-  isMain,
-  isMock,
-  onLoad,
-  onDelete,
-}: {
+// ── 저장된 루틴 카드 props ──────────────────────────────────────────────────
+interface SavedRoutineCardProps {
   saved: SavedRoutine & { isMain?: boolean };
   isActive: boolean;
   isMain?: boolean;
@@ -740,7 +809,17 @@ function SavedRoutineCard({
   onDelete: () => void;
   // ⚠️ API 연동 시: PATCH /api/v1/routines/{routineId}/main 호출
   onSetMain?: () => void;
-}) {
+}
+
+// ── 저장된 루틴 카드 — 카드 클릭으로 불러오기, 3개씩 가로 나열 ──────────────────────
+function SavedRoutineCard({
+  saved,
+  isActive,
+  isMain,
+  isMock,
+  onLoad,
+  onDelete,
+}: SavedRoutineCardProps) {
   // 활성 카드 테두리 색상 — JS 조건 분기 (Tailwind arbitrary value로 불가)
   const activeBorderColor = isMock ? "#F5C842" : isMain ? "#C8A96E" : "#A69D92";
   const activeBgColor = isMock ? "#FFFBEF" : isMain ? "#FBF7EF" : "#F5F2EC";
@@ -757,14 +836,21 @@ function SavedRoutineCard({
         minWidth: "calc(38% - 4px)",
         maxWidth: "calc(38% - 4px)",
         scrollSnapAlign: "start",
+        // 빠른 스와이프 시 카드 건너뜀 방지 — 한 번에 카드 하나씩 스냅
+        scrollSnapStop: "always",
         // 활성 카드만 테두리 강조, 비활성은 테두리 없음
         border: isActive ? `1.5px solid ${activeBorderColor}` : "none",
         backgroundColor: isActive ? activeBgColor : "#F8F6F2",
       }}
     >
-      {/* 메인 표시 — 좌상단 별표 아이콘 */}
+      {/* 메인 표시 — 좌상단 골드 원형 배지 */}
       {isMain && (
-        <span className="absolute top-1.5 left-1.5 text-xs leading-none text-[#C8A96E]">★</span>
+        <span
+          className="absolute top-1.5 left-1.5 w-4 h-4 flex items-center justify-center rounded-full text-[10px] leading-none"
+          style={{ backgroundColor: "#C8A96E", color: "#FFFFFF" }}
+        >
+          ★
+        </span>
       )}
 
       {/* 삭제 버튼 — 우측 상단 */}

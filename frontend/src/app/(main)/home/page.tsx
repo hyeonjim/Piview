@@ -5,6 +5,8 @@ import { Leaf, Sun, Moon, Droplets, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { SKINCARE_INSIGHTS } from "@/constants";
 import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
+import { useUserStore } from "@/stores/useUserStore";
+import { useUserQuery } from "@/hooks";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
 
 // 시간대별 인사말과 아이콘 반환
@@ -25,9 +27,10 @@ const ICON_MAP = {
 };
 
 export default function HomePage() {
+  // store.user 없을 때 /users/me 재조회 — 새로고침·직접 진입 시 이름 복원
+  useUserQuery();
   const greeting = getGreeting();
-  // ⚠️ API 연동 시 유저 닉네임으로 교체
-  const nickname = "User";
+  const nickname = useUserStore((s) => s.user?.name ?? "User");
   const { routine, isMainRoutine } = useLocalRoutineStore();
 
   // 로컬 루틴 스토어 rehydrate (localStorage → zustand)

@@ -6,13 +6,17 @@
 
 import client from "./client";
 import type { User } from "@/types/user";
+import type { ApiResponse } from "@/types/common";
 
 export const authService = {
   /**
    * 로그인 후 유저 정보 조회
-   * ⚠️ /users/me API 미구현 — 연동 시 주석 해제
+   * 응답 형태: { status, message, data: User } → data 필드만 반환
    */
-  getMe: () => client.get<User>("/users/me").then((response) => response.data),
+  getMe: () =>
+    client
+      .get<ApiResponse<User>>("/users/me")
+      .then((response) => response.data.data),
 
   /**
    * 로그아웃
