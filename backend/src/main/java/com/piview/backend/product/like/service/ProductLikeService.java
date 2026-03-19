@@ -55,7 +55,7 @@ public class ProductLikeService {
 
     // 이미 잘 만들어둔 DTO로 변환합니다. (내 찜 목록이니까 isLiked는 무조건 true!)
     return likedProducts.stream()
-        .map(product -> ProductSummaryResponse.from(product, true)) // 🌟 여기서 재사용!
+        .map(product -> ProductSummaryResponse.from(product, true))
         .toList();
   }
 }

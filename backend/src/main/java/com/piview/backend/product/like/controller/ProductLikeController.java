@@ -26,7 +26,7 @@ public class ProductLikeController {
 
   @Operation(summary = "제품 좋아요 토글", description = "제품의 좋아요 상태를 변경합니다. (없으면 추가, 있으면 취소)")
   @PostMapping("/{productId}/likes/toggle")
-  public ResponseEntity<ProductLikeResponseDto> toggleProductLike(
+  public ApiResponse<ProductLikeResponseDto> toggleProductLike(
       @PathVariable("productId") Long productId,
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
@@ -37,7 +37,7 @@ public class ProductLikeController {
     String message = isLiked ? "제품을 찜했습니다. ❤️" : "찜하기가 취소되었습니다. 🤍";
 
     // DTO에 담아서 200 OK와 함께 예쁘게 리턴!
-    return ResponseEntity.ok(new ProductLikeResponseDto(isLiked, message));
+    return ApiResponse.success(new ProductLikeResponseDto(isLiked, message));
   }
 
   @Operation(summary = "찜한 제품 목록 조회", description = "내가 좋아요(찜) 누른 화장품 목록을 전체 조회합니다.")
