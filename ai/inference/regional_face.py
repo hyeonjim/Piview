@@ -8,8 +8,11 @@ from PIL import Image
 from torchvision import transforms
 from torchvision.models import convnext_tiny, efficientnet_b2
 
+from inference.display_score import build_display_scores
+
 BASE_DIR = Path(__file__).resolve().parents[1]
 MODELS_DIR = BASE_DIR / "models"
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 ROI_CONFIG = {
     "forehead": {
@@ -22,13 +25,13 @@ ROI_CONFIG = {
         "model_path": MODELS_DIR / "left_cheek_skin_type_best.pt",
         "backbone": "convnext_tiny",
         "image_size": 224,
-        "threshold": 0.5,
+        "threshold": 0.45,
     },
     "right_cheek": {
         "model_path": MODELS_DIR / "right_cheek_skin_type_best.pt",
         "backbone": "efficientnet_b2",
         "image_size": 288,
-        "threshold": 0.5,
+        "threshold": 0.45,
     },
 }
 
@@ -75,7 +78,8 @@ def _load_models() -> dict[str, dict]:
             continue
 
         model = _create_model(config["backbone"])
-        model.load_state_dict(torch.load(model_path, map_location="cpu"))
+        model.load_state_dict(torch.load(model_path, map_location=DEVICE))
+        model.to(DEVICE)
         model.eval()
         loaded[roi_name] = {
             "model": model,
@@ -98,7 +102,8 @@ def predict_regional_axis(roi_name: str, image: Image.Image) -> dict:
     threshold = bundle["threshold"]
 
     with torch.no_grad():
-        probs = torch.softmax(model(transform(image).unsqueeze(0)), dim=-1)[0].numpy()
+        inputs = transform(image).unsqueeze(0).to(DEVICE)
+        probs = torch.softmax(model(inputs), dim=-1)[0].detach().cpu().numpy()
 
     dry_prob = float(probs[0])
     oily_prob = float(probs[1])
@@ -109,5 +114,5 @@ def predict_regional_axis(roi_name: str, image: Image.Image) -> dict:
         "axis": axis,
         "dry_probability": round(dry_prob, 4),
         "oily_probability": round(oily_prob, 4),
-        "confidence": round(max(dry_prob, oily_prob), 4),
+        **build_display_scores(oily_prob, threshold),
     }

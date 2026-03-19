@@ -24,14 +24,14 @@ import { useMemo } from "react";
 import { X, Search, ShieldAlert, Minus, Plus } from "lucide-react";
 import { CATEGORY_COLORS } from "@/constants/categoryColors";
 import { MOCK_SEARCH_PRODUCTS } from "@/constants/_mock/searchProducts";
-import type { SearchProduct } from "@/constants/_mock/searchProducts";
+import type { OwnedProduct } from "@/stores/useOwnedStore";
 
 interface AvoidProductModalProps {
-  avoidProducts: SearchProduct[];
+  avoidProducts: OwnedProduct[];
   avoidSearch: string;
   onSearchChange: (value: string) => void;
   onClose: () => void;
-  onToggle: (product: SearchProduct) => void;
+  onToggle: (product: OwnedProduct) => void;
 }
 
 export default function AvoidProductModal({
