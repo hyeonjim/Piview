@@ -24,7 +24,7 @@ public record DislikedProductSummaryResponse(
     String categoryName,
 
     // 상품 이미지 경로 또는 파일명
-    @Schema(description = "상품 이미지 경로 또는 파일명입니다.", example = "161485.jpg")
+    @Schema(description = "상품 이미지 URL 또는 파일명입니다.", example = "https://piview-products-images.s3.ap-northeast-2.amazonaws.com/products/glowpick_images/161485.jpg")
     String imageUrl,
 
     // 용량 정보
