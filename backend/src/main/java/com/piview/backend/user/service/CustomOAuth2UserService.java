@@ -54,7 +54,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         // 이메일로 DB 조회 (기존 회원인지 검증)
-        Optional<User> authOptional = userRepository.findByEmail(userInfo.getEmail());
+        Optional<User> authOptional = userRepository.findByEmailIncludingDeleted(userInfo.getEmail());
         User user;
 
         if (authOptional.isPresent()) {
@@ -69,6 +69,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             // 탈퇴한 유저 복구 로직
             if (user.getDeletedAt() != null) {
                 log.info("탈퇴 유저 복구 처리: {}", user.getEmail());
+                user.setExist(true);
                 user.setDeletedAt(null);
             }
 
@@ -92,12 +93,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         user.setName(userInfo.getName());
         user.setEmail(userInfo.getEmail());
 
+        user.setImageUrl(userInfo.getImageUrl());
+
         return userRepository.save(user);
     }
 
     // 기존 회원 정보 업데이트 처리
     private User updateExistingUser(User existingUser, OAuth2UserInfo userInfo) {
         existingUser.setName(userInfo.getName());
+        existingUser.setImageUrl(userInfo.getImageUrl());
         return userRepository.save(existingUser);
     }
 }

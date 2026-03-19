@@ -31,6 +31,7 @@ import org.hibernate.annotations.SQLRestriction;
 @NoArgsConstructor
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE users SET exist = false, deleted_at = CURRENT_TIMESTAMP WHERE user_id = ?")
+@SQLRestriction("exist = true")
 public class User extends BaseEntity {
 
     @Id
@@ -54,6 +55,8 @@ public class User extends BaseEntity {
     // 카카오에서 부여한 사용자 고유 ID
     @Column(name = "provider_id", nullable = false)
     private String providerId;
+
+    private String imageUrl;
 
     // 설문 응답으로 갱신되는 사용자 기본 프로필 값들이다.
     // 성별 값을 저장한다.
