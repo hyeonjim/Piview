@@ -3,10 +3,13 @@
  * 카카오 OAuth 콜백 처리 페이지
  *
  * 플로우:
- * 1. 백엔드가 이 URL로 리다이렉트 (accessToken은 쿠키로 전달)
- * 2. document.cookie에서 accessToken 꺼내기
- * 3. Zustand에 저장 후 쿠키 즉시 삭제
- * 4. /home으로 이동
+ * 1. 백엔드가 이 URL로 리다이렉트
+ *    - 로컬: accessToken을 쿠키로 전달
+ *    - 배포: accessToken을 URL 파라미터(?token=xxx)로 전달
+ *    → 쿠키 먼저 시도, 없으면 파라미터에서 꺼내기
+ * 2. Zustand에 저장 후 쿠키 즉시 삭제
+ * 3. GET /users/me 호출 → 유저 정보 저장
+ * 4. mySkinType 없으면 /skin-test, 있으면 /home
  *
  * ⚠️ Route Group 밖에 위치해야 함 (백엔드 리다이렉트 URL 고정)
  */
@@ -16,6 +19,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/useUserStore";
+import { authService } from "@/services/auth";
 import { getCookieAndClear } from "@/services/client";
 
 export default function OAuthCallbackPage() {
@@ -24,7 +28,8 @@ export default function OAuthCallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // 1. 쿠키에서 accessToken 꺼내기 + 즉시 삭제 (보안)
+        // 1. 쿠키 먼저 시도, 없으면 URL 파라미터에서 꺼내기
+        //    로컬: 쿠키로 전달 / 배포: ?token=xxx 파라미터로 전달
         const accessToken =
           getCookieAndClear("accessToken") ??
           new URLSearchParams(window.location.search).get("token");
@@ -38,16 +43,16 @@ export default function OAuthCallbackPage() {
         // 2. Zustand에 저장 (이후 모든 API 요청 헤더에 자동 주입됨)
         useUserStore.getState().setAccessToken(accessToken);
 
-        // 3. ⚠️ /users/me API 연동 전까지 바로 home으로 이동
-        // TODO: API 연동 시 아래 주석 해제 후 router.replace("/home") 제거
-        // const user = await authService.getMe();
-        // useUserStore.getState().setUser(user);
-        // if (!user.mySkinType) {
-        //   router.replace("/skin-test");
-        // } else {
-        //   router.replace("/home");
-        // }
-        router.replace("/home");
+        // 3. 유저 정보 조회 후 store에 저장
+        const user = await authService.getMe();
+        useUserStore.getState().setUser(user);
+
+        // 4. 피부 타입 진단 여부에 따라 분기
+        if (!user.mySkinType) {
+          router.replace("/skin-test");
+        } else {
+          router.replace("/home");
+        }
       } catch {
         // 인증 실패 → welcome 페이지로 복귀
         router.replace("/welcome");
