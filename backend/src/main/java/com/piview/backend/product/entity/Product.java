@@ -89,8 +89,8 @@ public class Product {
     @Column(name = "has_copper_pep")
     private Boolean hasCopperPep;
 
-    @Column(name = "has_naicinamide")
-    private Boolean hasNaicinamide;
+    @Column(name = "has_niacinamide")
+    private Boolean hasNiacinamide;
 
     @Column(name = "has_benzoyl")
     private Boolean hasBenzoyl;
