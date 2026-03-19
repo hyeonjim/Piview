@@ -1,13 +1,17 @@
 package com.piview.backend.product.like.controller;
 
+import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.global.security.UserPrincipal;
+import com.piview.backend.product.catalog.dto.ProductSummaryResponse;
 import com.piview.backend.product.like.dto.ProductLikeResponseDto;
 import com.piview.backend.product.like.service.ProductLikeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,4 +39,18 @@ public class ProductLikeController {
     // DTO에 담아서 200 OK와 함께 예쁘게 리턴!
     return ResponseEntity.ok(new ProductLikeResponseDto(isLiked, message));
   }
+
+  @Operation(summary = "찜한 제품 목록 조회", description = "내가 좋아요(찜) 누른 화장품 목록을 전체 조회합니다.")
+  @GetMapping("/likes")
+  public ApiResponse<List<ProductSummaryResponse>> getMyLikedProducts(
+      @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+    Long userId = userPrincipal.getId();
+
+    // 서비스 호출해서 잘 깎아둔 DTO 리스트 받아오기
+    List<ProductSummaryResponse> result = productLikeService.getMyLikedProducts(userId);
+
+    return ApiResponse.success(result);
+  }
+
 }
