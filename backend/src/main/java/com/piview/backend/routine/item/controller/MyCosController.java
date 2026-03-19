@@ -36,15 +36,15 @@ public class MyCosController {
     }
 
     @Operation(summary = "보유제품 등록", description = "사용자가 새로운 제품을 보유 제품 목록에 추가합니다.")
-    @PostMapping
+    @PostMapping("/{productId}")
     public ApiResponse<Long> saveMyCos(
         @Parameter(hidden = true)
         @AuthenticationPrincipal UserPrincipal userPrincipal,
-        @RequestBody MyCosCreateRequestDto requestDto) {
+        @PathVariable("productId") Long productId) {
         Long userId = userPrincipal.getId();
 
         // 저장 후 생성된 MyCos 테이블의 ID를 반환
-        Long savedMyCosId = myCosService.saveMyCos(userId, requestDto);
+        Long savedMyCosId = myCosService.saveMyCos(userId, productId);
 
         return ApiResponse.success(savedMyCosId);
     }
