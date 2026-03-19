@@ -6,6 +6,7 @@ import com.piview.backend.global.security.UserPrincipal;
 import com.piview.backend.user.disliked.dto.response.DislikedProductCreateApiResponse;
 import com.piview.backend.user.disliked.dto.request.DislikedProductCreateRequest;
 import com.piview.backend.user.disliked.dto.response.DislikedProductCreateResponse;
+import com.piview.backend.user.disliked.dto.response.DislikedProductSummaryResponse;
 import com.piview.backend.user.disliked.service.UserDislikedProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,8 +16,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,6 +32,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserDislikedProductController {
 
     private final UserDislikedProductService userDislikedProductService;
+
+    @GetMapping
+    public ApiResponse<List<DislikedProductSummaryResponse>> getDislikedProducts(
+        @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        // 로그인 사용자가 등록한 안 맞는 제품 목록만 조회한다.
+        return ApiResponse.success(
+            userDislikedProductService.getDislikedProducts(userPrincipal.getId())
+        );
+    }
 
     @Operation(
         summary = "안 맞는 제품 등록",
