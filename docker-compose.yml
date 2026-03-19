@@ -101,6 +101,8 @@ services:
     container_name: dev-frontend
     build:
       context: ./frontend
+      args:
+        - NEXT_PUBLIC_API_URL=https://j14e101.p.ssafy.io:3000
     networks:
       - app-network
 
@@ -136,6 +138,8 @@ services:
     container_name: prod-frontend
     build:
       context: ./frontend
+    args:
+      - NEXT_PUBLIC_API_URL=https://j14e101.p.ssafy.io
     networks:
       - app-network
 
