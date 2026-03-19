@@ -100,7 +100,6 @@ export default function BottomNav() {
                 className="text-[9px]"
                 style={{
                   color: isActive ? "#5A504A" : "#C4BEB7",
-                  fontFamily: "var(--font-pretendard), sans-serif",
                   fontWeight: isActive ? 600 : 400,
                   letterSpacing: "0.08em",
                   marginTop: "2px",

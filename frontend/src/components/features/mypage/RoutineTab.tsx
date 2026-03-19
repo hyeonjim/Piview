@@ -406,8 +406,9 @@ export default function RoutineTab({
     <div className="px-5 pt-4 flex flex-col gap-2 pb-10">
 
       {/* ── 목업 데이터 사용 중 알림 배너 — BE 연동 시 삭제 ── */}
+      {/* text-xs(12px) → font-semibold: 소형 텍스트 가독성 보완 */}
       {IS_MOCK_DATA && serverRoutineList.length > 0 && (
-        <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-[#FFF8E7] border border-[#F5C842] text-[#8A6A00]">
+        <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[#FFF8E7] border border-[#F5C842] text-[#8A6A00]">
           <Wrench size={12} />
           <span>목업 데이터 사용 중 — BE 연동 시 자동으로 실제 데이터로 교체됩니다</span>
         </div>
@@ -416,7 +417,7 @@ export default function RoutineTab({
       {/* ── 저장된 루틴 슬라이더 — 3개씩 가로 스와이프 ── */}
       {savedRoutines.length > 0 && (
         <div className="mb-2">
-          <p className="text-xs font-semibold text-text-muted mb-2">저장된 루틴</p>
+          <p className="text-xs font-bold text-text-muted mb-2">저장된 루틴</p>
           {/* scrollbarWidth, scrollSnapType, overscrollBehaviorX, cursor, userSelect는 Tailwind 불가 — style 유지 */}
           <div
             ref={savedRoutineScrollRef}
@@ -477,14 +478,14 @@ export default function RoutineTab({
       <div className="flex items-start justify-between mb-1">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2.5">
-            {/* 현재 루틴 이름 — 저장 후 갱신됨, 기본값 "내 루틴" */}
-            <p className="text-base font-bold text-text-primary truncate max-w-[140px]">
+            {/* 현재 루틴 이름 — text-base(16px) → font-semibold: 세리프 굵기 조절 */}
+            <p className="text-base font-semibold text-text-primary truncate max-w-[140px]">
               {currentRoutineName}
             </p>
             {/* ⚠️ API 연동 시: handleSetMainRoutine(routineId)으로 교체 */}
             <button
               onClick={toggleMainRoutine}
-              className={`flex items-center gap-1 px-2 py-1 rounded-full border text-xs font-semibold cursor-pointer transition-all active:scale-95 shrink-0 ${
+              className={`flex items-center gap-1 px-2 py-1 rounded-full border text-xs font-bold cursor-pointer transition-all active:scale-95 shrink-0 ${
                 isMainRoutine
                   ? "bg-amber-200 border-amber-200 text-[#8a827a]"
                   : "bg-transparent border-[#D9D5D0] text-[#B8A99A]"
@@ -493,28 +494,28 @@ export default function RoutineTab({
               {isMainRoutine ? "★" : "☆"} 메인
             </button>
           </div>
-          {/* 동적 단계 수 — ROUTINE_STEPS.length 기반 (6단계 고정 아님) */}
-          <p className="text-xs text-text-muted mt-0.5">
+          {/* 동적 단계 수 — text-xs(12px) → font-semibold: 소형 텍스트 보완 */}
+          <p className="text-xs font-bold text-text-muted mt-0.5">
             {filledCount}/{ROUTINE_STEPS.length}단계 완성 · 드래그로 순서 변경
           </p>
         </div>
         <div className="flex gap-1.5">
-          {/* 초기화 — 로컬 상태 + 서버 draft(Redis) 동시 초기화 */}
+          {/* 초기화 — text-xs(12px) → font-semibold */}
           <button
             onClick={handleClearRoutine}
-            className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent"
+            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent"
           >
             <RotateCcw size={12} /> 초기화
           </button>
-          {/* OCR */}
-          <button className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent">
+          {/* OCR — text-xs(12px) → font-semibold */}
+          <button className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent">
             ⇄ OCR
           </button>
-          {/* 저장 — 클릭 시 루틴 이름 입력 모달 → POST /api/v1/routines */}
+          {/* 저장 — text-xs(12px) → font-semibold */}
           <button
             onClick={handleOpenSaveModal}
             disabled={isCreating}
-            className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent disabled:opacity-50"
+            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent disabled:opacity-50"
           >
             {isCreating ? "저장 중..." : "저장"}
           </button>
@@ -531,13 +532,14 @@ export default function RoutineTab({
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
                 <span className="text-base">{step.icon}</span>
-                <span className="text-sm font-semibold text-text-primary">
+                <span className="text-[16px] font-semibold text-text-primary">
                   {step.label}
                 </span>
               </div>
+              {/* + 추가 버튼 — text-xs(12px) → font-semibold */}
               <button
                 onClick={() => onOpenModal(step.code)}
-                className="flex items-center gap-1 text-xs font-medium text-brand cursor-pointer border-none bg-transparent"
+                className="flex items-center gap-1 text-xs font-bold text-brand cursor-pointer border-none bg-transparent"
               >
                 <Plus size={13} /> 추가
               </button>
@@ -561,7 +563,8 @@ export default function RoutineTab({
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold text-text-muted shrink-0 bg-bg-muted-warm">
                   {step.code}
                 </div>
-                <p className="flex-1 text-sm font-medium text-text-muted">
+                {/* 빈 상태 안내 — text-sm(14px) 본문 → font-normal */}
+                <p className="flex-1 text-sm font-semibold text-text-muted">
                   아직 추가된 제품이 없어요
                 </p>
                 <Plus size={14} className="shrink-0 text-[#A69D92]" />
@@ -627,13 +630,14 @@ export default function RoutineTab({
                       >
                         {/* 브랜드 + 카테고리 태그 한 줄 */}
                         <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                          <span className="text-xs font-medium text-[#BFB6AA] uppercase tracking-[0.08em]">
+                          {/* 브랜드명 uppercase — text-xs(12px) → font-semibold */}
+                          <span className="text-xs font-bold text-[#BFB6AA] uppercase tracking-[0.08em]">
                             {product.brand}
                           </span>
                           {product.category && categoryColor && (
                             // 카테고리 색상은 동적 객체값 — style 유지
                             <span
-                              className="text-[11px] px-1.5 py-px rounded-[3px] font-semibold"
+                              className="text-[11px] px-1.5 py-px rounded-[3px] font-bold"
                               style={{
                                 backgroundColor: categoryColor.chip,
                                 color: categoryColor.accent,
@@ -643,7 +647,8 @@ export default function RoutineTab({
                             </span>
                           )}
                         </div>
-                        <p className="m-0 text-base font-medium text-[#2A2118] leading-snug line-clamp-2">
+                        {/* 제품명 — text-base(16px) 본문 → font-normal */}
+                        <p className="text-[18px] font-semibold text-[#2A2118] leading-snug line-clamp-2">
                           {product.name}
                         </p>
                         {/* 피부타입 태그 */}
@@ -655,7 +660,7 @@ export default function RoutineTab({
                                 // 피부타입 색상은 동적 객체값 — style 유지
                                 <span
                                   key={skinType}
-                                  className="text-[11px] px-1.5 py-px rounded-[3px] font-semibold"
+                                  className="text-[11px] px-1.5 py-px rounded-[3px] font-bold"
                                   style={{ backgroundColor: tagColor.bg, color: tagColor.text }}
                                 >
                                   {skinType}
@@ -669,11 +674,11 @@ export default function RoutineTab({
                           <div className="flex flex-wrap gap-1 mt-0.5">
                             {(product.effects ?? []).slice(0, 3).map((effect) => {
                               const effectColor = SKIN_FUNCTION_COLORS[effect];
+                              // 기능 색상은 동적 객체값 — style 유지 / text-[11px] → font-semibold
                               return effectColor ? (
-                                // 기능 색상은 동적 객체값 — style 유지
                                 <span
                                   key={effect}
-                                  className="text-[11px] px-1.5 py-px rounded-[3px] font-medium"
+                                  className="text-[11px] px-1.5 py-px rounded-[3px] font-bold"
                                   style={{ backgroundColor: effectColor.chip, color: effectColor.accent }}
                                 >
                                   {effect}
@@ -732,8 +737,9 @@ export default function RoutineTab({
               />
             </svg>
             {/* 점수 텍스트 색상도 JS 변수 — style 유지 */}
+            {/* text-[13px] → font-semibold: 세리프 폰트 13px에서 bold는 과함 */}
             <span
-              className="relative z-10 text-[13px] font-bold"
+              className="relative z-10 text-[13px] font-semibold"
               style={{ color: filledCount > 0 ? scoreColor : "var(--color-text-muted)" }}
             >
               {averageScore}
@@ -741,8 +747,10 @@ export default function RoutineTab({
           </div>
           {/* 텍스트 */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-text-primary mb-1">내 루틴 종합 점수</p>
-            <p className="text-xs text-text-muted leading-relaxed break-keep">
+            {/* text-sm(14px) 레이블 → font-normal: 본문 기본 굵기 */}
+            <p className="text-sm font-semibold text-text-primary mb-1">내 루틴 종합 점수</p>
+            {/* text-xs(12px) 설명 → font-semibold: 소형 텍스트 가독성 */}
+            <p className="text-xs font-bold text-text-muted leading-relaxed break-keep">
               {evaluation.text}
             </p>
           </div>
@@ -762,8 +770,10 @@ export default function RoutineTab({
             className="bg-white rounded-2xl p-6 mx-5 w-full max-w-sm"
             onClick={(event) => event.stopPropagation()}
           >
-            <h3 className="text-base font-bold text-[#2A2118] mb-1">루틴 이름 저장</h3>
-            <p className="text-xs text-[#A69D92] mb-4">저장하면 목록에서 불러올 수 있어요</p>
+            {/* text-base(16px) 모달 제목 → font-semibold */}
+            <h3 className="text-base font-semibold text-[#2A2118] mb-1">루틴 이름 저장</h3>
+            {/* text-xs(12px) 안내 → font-semibold */}
+            <p className="text-xs font-bold text-[#A69D92] mb-4">저장하면 목록에서 불러올 수 있어요</p>
             <input
               type="text"
               value={saveModalName}
@@ -777,16 +787,18 @@ export default function RoutineTab({
               }}
             />
             <div className="flex gap-2">
+              {/* 취소 버튼 — text-sm(14px) 본문 → font-normal */}
               <button
                 onClick={() => setShowSaveModal(false)}
-                className="flex-1 py-2.5 text-sm font-medium rounded-xl border border-[#E2DDD8] text-[#8A8278] bg-transparent cursor-pointer"
+                className="flex-1 py-2.5 text-sm font-semibold rounded-xl border border-[#E2DDD8] text-[#8A8278] bg-transparent cursor-pointer"
               >
                 취소
               </button>
+              {/* 저장 버튼 — text-sm(14px) 강조 → font-semibold */}
               <button
                 onClick={handleSaveRoutine}
                 disabled={!saveModalName.trim()}
-                className="flex-1 py-2.5 text-sm font-bold rounded-xl text-white bg-[#A69D92] cursor-pointer disabled:opacity-40"
+                className="flex-1 py-2.5 text-sm font-semibold rounded-xl text-white bg-[#A69D92] cursor-pointer disabled:opacity-40"
               >
                 저장
               </button>
@@ -865,13 +877,14 @@ function SavedRoutineCard({
       <div className="flex items-center justify-center gap-0.5 px-1">
         {/* 목업 아이콘 — ⚠️ BE 연동 시 isMock prop과 함께 제거 */}
         {isMock && <Wrench size={10} className="shrink-0 text-[#8A6A00]" />}
-        <p className="text-sm font-bold text-[#2A2118] truncate leading-tight">
+        {/* text-sm(14px) 카드 이름 → font-semibold */}
+        <p className="text-sm font-semibold text-[#2A2118] truncate leading-tight">
           {saved.name}
         </p>
       </div>
 
-      {/* 제품 수 */}
-      <p className="text-[10px] text-[#A69D92] text-center">
+      {/* 제품 수 — text-[10px] 극소형 → font-bold: 아주 작아서 최대 굵기 필요 */}
+      <p className="text-[10px] font-bold text-[#A69D92] text-center">
         {saved.productCount}개 제품
       </p>
     </div>

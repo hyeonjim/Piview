@@ -105,7 +105,7 @@ function EffectTag({ label }: { label: string }) {
 // ── PICK 배지 — 고정 색상이므로 Tailwind만 사용
 function PickBadge() {
   return (
-    <span className="text-[9px] font-semibold px-[7px] py-[3px] rounded-[10px] uppercase tracking-[0.06em] bg-[#3D3028] text-[#F2EFE9]">
+    <span className="text-[11px] font-semibold px-[7px] py-[3px] rounded-[10px] uppercase tracking-[0.06em] bg-[#3D3028] text-[#F2EFE9]">
       PICK
     </span>
   );

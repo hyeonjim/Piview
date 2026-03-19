@@ -53,7 +53,7 @@ export default function HomePage() {
         {/* 인사말 — Cormorant 폰트 (기본 폰트 아님) */}
         <div className="flex items-center gap-1.5">
           {greeting.icon}
-          <span className="text-base font-normal text-[#B0A99F] tracking-[0.12em] uppercase italic [font-family:var(--font-cormorant),serif]">
+          <span className="text-base font-normal text-[#B0A99F] tracking-[0.12em] uppercase italic [font-family:var(--font-english),serif]">
             {greeting.text}
           </span>
         </div>
@@ -75,7 +75,7 @@ export default function HomePage() {
 
           {/* 섹션 헤더 */}
           <div className="flex items-center justify-between py-3.5 px-4 border-b border-[#EDE9E3]">
-            <span className="text-sm font-bold text-[#2A2118] tracking-[-0.2px]">
+            <span className="text-[16px] font-semibold text-[#2A2118] tracking-[-0.2px]">
               나의 메인루틴
             </span>
 
@@ -102,8 +102,8 @@ export default function HomePage() {
                     index < mainRoutineItems.length - 1 ? " border-b border-[#EDE9E3]" : ""
                   }`}
                 >
-                  {/* 스텝 번호 — Cormorant 폰트 (기본 폰트 아님) */}
-                  <span className="text-[10px] font-bold text-[#BFB6AA] w-4 shrink-0 [font-family:var(--font-cormorant),serif]">
+                  {/* 스텝 번호 — SortsMillGoudy 폰트 (영어 숫자용) */}
+                  <span className="text-[10px] font-bold text-[#BFB6AA] w-4 shrink-0 [font-family:var(--font-english),serif]">
                     {String(index + 1).padStart(2, "0")}
                   </span>
 
@@ -147,7 +147,7 @@ export default function HomePage() {
 
         {/* 섹션 타이틀 */}
         <div className="flex items-baseline gap-2 mb-3.75">
-          <h2 className="text-base font-bold text-[#2A2118] tracking-[-0.3px]">
+          <h2 className="text-[18px] font-bold text-[#2A2118] tracking-[-0.3px]">
             Skincare Tips
           </h2>
         </div>

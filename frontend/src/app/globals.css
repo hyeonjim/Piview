@@ -121,14 +121,15 @@
 
   html {
     /* next/font/local이 주입하는 CSS 변수 사용 */
-    /* 영어: Google Sans Flex → 한국어: HCRDotum → 시스템 폰트 순으로 폴백 */
+    /* 영어: SortsMillGoudy → 한글: MaruBuri → 시스템 폰트 순으로 폴백 */
+    /* 영어 글자는 SortsMillGoudy가 처리하고, 한글 글자는 MaruBuri로 폴백됨 */
     font-family:
       var(--font-english),
-      var(--font-pretendard),
+      var(--font-korean),
       -apple-system,
       BlinkMacSystemFont,
       system-ui,
-      sans-serif;
+      serif;
     font-size: 16px;
   }
 

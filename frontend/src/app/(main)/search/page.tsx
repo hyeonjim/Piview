@@ -121,7 +121,7 @@ export default function SearchPage() {
       {/* 상단 헤더 */}
       <div style={{ backgroundColor: "#F5F2EC", borderBottom: "1px solid #E2DDD8", paddingTop: "5px" }}>
         <div style={{ padding: "16px 16px 12px" }}>
-          <h1 style={{ margin: "3px 0 12px", fontSize: "22px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.4px", lineHeight: 1.2 }}>
+          <h1 style={{ margin: "3px 0 12px", fontSize: "22px", fontWeight: 800, color: "#2A2118", letterSpacing: "-0.4px", lineHeight: 1.2 }}>
             전체 제품
           </h1>
           <div className="flex items-center gap-5">
@@ -132,13 +132,13 @@ export default function SearchPage() {
               onClick={() => setShowFilter(true)}
               className="flex items-center gap-1.5 cursor-pointer border transition-all active:scale-[0.96] shrink-0"
               style={{
-                height: "38px", padding: "0 12px", borderRadius: "10px", fontSize: "14px", fontWeight: 500,
+                height: "38px", padding: "0 12px", borderRadius: "10px", fontSize: "14px", fontWeight: 600,
                 borderColor: filterCount > 0 ? "#A69D92" : "#E2DDD8",
                 backgroundColor: filterCount > 0 ? "#A69D92" : "#FFFFFF",
                 color: filterCount > 0 ? "#FFFFFF" : "#8A8278",
               }}
             >
-              <SlidersHorizontal size={13} />
+              <SlidersHorizontal size={14} />
               필터
               {filterCount > 0 && (
                 <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "16px", height: "16px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.25)", fontSize: "10px", fontWeight: 700 }}>

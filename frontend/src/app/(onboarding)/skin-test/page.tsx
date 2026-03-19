@@ -19,7 +19,7 @@ export default function SkinTestPage() {
       </div>
 
       <div className="mt-8">
-        <h1 className="text-text-primary font-medium text-2xl leading-[1.4]">
+        <h1 className="text-text-primary font-bold text-2xl leading-[1.4]">
           내 피부 타입을 설정합니다
         </h1>
       </div>
@@ -37,7 +37,7 @@ export default function SkinTestPage() {
               <div className="text-text-faint group-hover:text-brand transition-colors duration-200">
                 <Icon size={24} />
               </div>
-              <p className="text-text-primary font-semibold text-base mt-2.5">
+              <p className="text-text-primary font-bold text-[17px] mt-2.5">
                 {option.title}
               </p>
               <p className="text-text-muted text-[15px] mt-1 leading-normal">
@@ -52,7 +52,7 @@ export default function SkinTestPage() {
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-107.5 px-5 pb-8 pt-3">
         <button
           onClick={() => router.push("/home")}
-          className="w-full h-13 rounded-[32px] text-[15px] transition-all duration-200 border-none font-semibold bg-border-warm text-gray-800 cursor-pointer"
+          className="w-full h-13 rounded-[32px] text-[18px] transition-all duration-200 border-none font-extrabold bg-border-warm text-gray-800 cursor-pointer"
         >
           건너뛰기
         </button>
