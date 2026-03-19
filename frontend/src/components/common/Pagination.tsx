@@ -42,7 +42,6 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
             fontSize: "12px",
             fontWeight: page === n ? 700 : 400,
             cursor: "pointer",
-            fontFamily: "var(--font-pretendard), sans-serif",
           }}
         >
           {n}

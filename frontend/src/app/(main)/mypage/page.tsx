@@ -113,12 +113,14 @@ export default function MyPage() {
             className="w-16 h-16 rounded-full flex items-center justify-center border-[3px] border-[#F2EFE9] shadow-[0_2px_12px_rgba(166,157,146,0.25)] shrink-0"
             style={{ background: "linear-gradient(135deg, #D9D5D0 0%, #BFB6AA 100%)" }}
           >
-            <span className="text-[22px] font-bold text-white">U</span>
+            {/* 22px 이상 → font-semibold: 세리프 폰트는 대형 사이즈에서 bold가 무거움 */}
+            <span className="text-[22px] font-semibold text-white">U</span>
           </div>
 
           <div className="flex-1 min-w-0">
             {/* 이름 + 설정/로그아웃 버튼 행 */}
             <div className="flex items-center justify-between">
+              {/* 20px → font-semibold: 디스플레이 크기, 세리프는 600이 더 균형적 */}
               <p className="text-[20px] font-bold text-text-primary tracking-[-0.3px]">
                 {userName}님
               </p>
@@ -131,9 +133,10 @@ export default function MyPage() {
                     <Settings size={15} className="text-brand-dark" />
                   </button>
                 </Link>
+                {/* 12px 소형 텍스트 → font-semibold: 작은 크기 가독성 보완 */}
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-1 text-[12px] text-text-faint bg-transparent border-none cursor-pointer py-1 px-0.5"
+                  className="flex items-center gap-1 text-[12px] font-semibold text-text-faint bg-transparent border-none cursor-pointer py-1 px-0.5"
                 >
                   <LogOut size={13} />로그아웃
                 </button>
@@ -142,27 +145,27 @@ export default function MyPage() {
 
             {/* 피부 프로필 태그 영역 */}
             {!hasSkinProfile ? (
-              <p className="mt-[3px] text-[13px] text-brand">피부 타입을 진단해보세요</p>
+              <p className="mt-[3px] text-[13px] font-semibold text-brand">피부 타입을 진단해보세요</p>
             ) : (
               <div className="flex flex-wrap gap-1 mt-4">
                 {/* 피부 타입 배지 */}
                 <span className="text-sm py-0.5 px-2 rounded-full bg-[#E8E3DC] text-[#5A504A] font-semibold">
                   {savedSkinType}
                 </span>
-                {/* 피부 고민 배지 */}
+                {/* 피부 고민 배지 — text-sm(14px) 배지: font-semibold로 선명하게 */}
                 {savedConcerns.map((concern, index) => (
                   <span
                     key={`${concern}-${index}`}
-                    className="text-sm py-0.5 px-2 rounded-full bg-[#EEF0E8] text-[#6B7257]"
+                    className="text-sm font-semibold py-0.5 px-2 rounded-full bg-[#EEF0E8] text-[#6B7257]"
                   >
                     {concern}
                   </span>
                 ))}
-                {/* 기피 성분 배지 */}
+                {/* 기피 성분 배지 — text-sm(14px) 배지: font-semibold로 선명하게 */}
                 {savedAvoidContents.map((item, index) => (
                   <span
                     key={`${item.avoidContent}-${index}`}
-                    className="text-sm py-0.5 px-2 rounded-full bg-[#F5EDE8] text-[#8C5A4A]"
+                    className="text-sm font-semibold py-0.5 px-2 rounded-full bg-[#F5EDE8] text-[#8C5A4A]"
                   >
                     {item.avoidContent}
                   </span>
@@ -207,7 +210,7 @@ export default function MyPage() {
       )}
       {tab === "owned" && (
         myCosLoading ? (
-          <div className="flex justify-center py-20 text-brand text-sm">불러오는 중...</div>
+          <div className="flex justify-center py-20 text-brand text-sm font-normal">불러오는 중...</div>
         ) : (
           <OwnedTab
             routine={routine}

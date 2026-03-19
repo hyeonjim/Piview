@@ -92,9 +92,6 @@ export default function SelectPage() {
           <br />
           입력해주세요
         </h1>
-        <p className="text-text-muted mt-2" style={PAGE_DESC_STYLE}>
-          더 정확한 제품 추천을 위해 사용해요
-        </p>
 
         {/* 성별 */}
         <div className="mt-6">
@@ -301,9 +298,7 @@ export default function SelectPage() {
 
       {/* 하단 버튼 */}
       <div
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-6 pb-8 pt-4"
-        style={{ background: BOTTOM_BG_SELECT }}
-      >
+        className="w-full px-20 pb-8 pt-4">
         <button
           onClick={() =>
             isValid && router.push(`/skin-test/result?type=${selectedType}`)

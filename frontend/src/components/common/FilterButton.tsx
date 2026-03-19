@@ -17,7 +17,7 @@ export default function FilterButton({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 h-9 px-3 rounded-[8px] border text-[13px] font-medium cursor-pointer transition-colors active:scale-[0.97] ${className}`}
+      className={`flex items-center gap-1.5 h-9 px-3 rounded-[8px] border text-[13px] font-bold cursor-pointer transition-colors active:scale-[0.97] ${className}`}
       style={{
         borderColor: filterCount > 0 ? "#a2aa7b" : "#D9D5D0",
         backgroundColor: filterCount > 0 ? "#F0F2E8" : "#fff",

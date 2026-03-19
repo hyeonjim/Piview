@@ -110,7 +110,7 @@ export default function SettingsPage() {
                 <button
                   key={st.id}
                   onClick={() => setSkinTypeLocal(st.id)}
-                  className={`inline-flex items-center gap-1 px-4 py-2 rounded-chip text-sm font-medium cursor-pointer transition-all border select-none ${
+                  className={`inline-flex items-center gap-1 px-4 py-2 rounded-chip text-sm font-semibold cursor-pointer transition-all border select-none ${
                     isActive
                       ? "bg-brand text-white border-brand shadow-[0_2px_8px_rgba(162,170,123,0.2)]"
                       : "bg-white text-text-primary border-border"
@@ -138,7 +138,7 @@ export default function SettingsPage() {
                 <button
                   key={c.id}
                   onClick={() => toggleConcern(c.label)}
-                  className={`inline-flex items-center gap-1 px-4 py-2 rounded-chip text-sm font-medium cursor-pointer transition-all border select-none ${
+                  className={`inline-flex items-center gap-1 px-4 py-2 rounded-chip text-sm font-semibold cursor-pointer transition-all border select-none ${
                     isActive
                       ? "bg-brand text-white border-brand shadow-[0_2px_8px_rgba(162,170,123,0.2)]"
                       : "bg-white text-text-primary border-border"
@@ -167,7 +167,7 @@ export default function SettingsPage() {
                 <button
                   key={a.id}
                   onClick={() => toggleAllergy(a.label)}
-                  className={`inline-flex items-center gap-1 px-4 py-2 rounded-chip text-sm font-medium cursor-pointer transition-all border select-none ${
+                  className={`inline-flex items-center gap-1 px-4 py-2 rounded-chip text-sm font-semibold cursor-pointer transition-all border select-none ${
                     isActive
                       ? "bg-warm text-white border-warm shadow-[0_2px_8px_rgba(194,140,126,0.25)]"
                       : "bg-white text-text-primary border-border"

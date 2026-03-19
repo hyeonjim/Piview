@@ -16,7 +16,6 @@ export interface SkinTestOption {
   icon:  LucideIcon;
   title: string;
   desc:  string;
-  badge?: string;
 }
 
 export const SKIN_TEST_OPTIONS: SkinTestOption[] = [
@@ -26,7 +25,6 @@ export const SKIN_TEST_OPTIONS: SkinTestOption[] = [
     icon:  Camera,
     title: "AI 사진 분석",
     desc:  "얼굴 사진으로 AI가 피부 타입을 분석해요",
-    badge: "추천",
   },
   {
     key:   "know",

@@ -53,7 +53,7 @@ export default function HomePage() {
         {/* 인사말 — Cormorant 폰트 (기본 폰트 아님) */}
         <div className="flex items-center gap-1.5">
           {greeting.icon}
-          <span className="text-base font-normal text-[#B0A99F] tracking-[0.12em] uppercase italic [font-family:var(--font-cormorant),serif]">
+          <span className="text-base font-normal text-[#B0A99F] tracking-[0.12em] uppercase italic [font-family:var(--font-english),serif]">
             {greeting.text}
           </span>
         </div>
@@ -75,7 +75,7 @@ export default function HomePage() {
 
           {/* 섹션 헤더 */}
           <div className="flex items-center justify-between py-3.5 px-4 border-b border-[#EDE9E3]">
-            <span className="text-sm font-bold text-[#2A2118] tracking-[-0.2px]">
+            <span className="text-[16px] font-semibold text-[#2A2118] tracking-[-0.2px]">
               나의 메인루틴
             </span>
 
@@ -102,8 +102,8 @@ export default function HomePage() {
                     index < mainRoutineItems.length - 1 ? " border-b border-[#EDE9E3]" : ""
                   }`}
                 >
-                  {/* 스텝 번호 — Cormorant 폰트 (기본 폰트 아님) */}
-                  <span className="text-[10px] font-bold text-[#BFB6AA] w-4 shrink-0 [font-family:var(--font-cormorant),serif]">
+                  {/* 스텝 번호 — SortsMillGoudy 폰트 (영어 숫자용) */}
+                  <span className="text-[10px] font-bold text-[#BFB6AA] w-4 shrink-0 [font-family:var(--font-english),serif]">
                     {String(index + 1).padStart(2, "0")}
                   </span>
 
@@ -112,7 +112,7 @@ export default function HomePage() {
 
                   {/* 스텝 정보 */}
                   <div className="flex-1 min-w-0">
-                    <p className="m-0 text-xs text-[#A69D92] font-medium tracking-[0.03em]">
+                    <p className="m-0 text-xs text-[#A69D92] font-bold tracking-[0.03em]">
                       {step.label}
                     </p>
                     <p className="mt-px text-base font-semibold text-[#2A2118] overflow-hidden text-ellipsis whitespace-nowrap">
@@ -126,7 +126,7 @@ export default function HomePage() {
             /* 루틴 없음 빈 상태 */
             <div className="flex flex-col items-center justify-center py-8 px-5">
               <Star size={28} className="text-[#D9D5D0] mb-2.5" />
-              <p className="m-0 text-sm font-medium text-[#A69D92] text-center">
+              <p className="m-0 text-sm font-semibold text-[#A69D92] text-center">
                 아직 루틴이 없어요
               </p>
               <p className="mt-1 text-xs text-[#BFB6AA] text-center leading-normal">
@@ -147,7 +147,7 @@ export default function HomePage() {
 
         {/* 섹션 타이틀 */}
         <div className="flex items-baseline gap-2 mb-3.75">
-          <h2 className="text-base font-bold text-[#2A2118] tracking-[-0.3px]">
+          <h2 className="text-[18px] font-bold text-[#2A2118] tracking-[-0.3px]">
             Skincare Tips
           </h2>
         </div>

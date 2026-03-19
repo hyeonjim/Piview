@@ -51,11 +51,10 @@ export function CategoryFilter({
               style={{
                 height: "44px",
                 padding: "0 14px",
-                fontSize: "16px",
-                fontWeight: isActive ? 600 : 400,
+                fontSize: "18px",
+                fontWeight: 700,
                 // 활성 시 검정 대신 웜 브라운 계열
                 color: isActive ? "#6B5445" : "#A8A39D",
-                fontFamily: "var(--font-pretendard), sans-serif",
                 letterSpacing: "0.01em",
                 transition: "color 0.15s",
                 // 활성 하단 선 — 웜 브라운
@@ -96,10 +95,8 @@ export function CategoryFilter({
                   height: "30px",
                   padding: "0 12px",
                   borderRadius: "20px",
-                  fontSize: "13px",
-                  fontWeight: isActive ? 400 : 400,
-                  fontFamily: "var(--font-pretendard), sans-serif",
-                  letterSpacing: "0.01em",
+                  fontSize: "16px",
+                  fontWeight: 600,
                   ...(isActive
                     ? {
                         // 활성 시 검정 대신 웜 모카 브라운

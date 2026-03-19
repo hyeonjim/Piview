@@ -123,7 +123,7 @@ export default function AvoidProductModal({
                     </p>
                     {CATEGORY_COLORS[product.category] && (
                       <span
-                        className="inline-block text-[10px] px-1.5 py-[1px] rounded-[4px] font-medium mt-0.5"
+                        className="inline-block text-[10px] px-1.5 py-[1px] rounded-[4px] font-bold mt-0.5"
                         style={{
                           backgroundColor:
                             CATEGORY_COLORS[product.category].chip,

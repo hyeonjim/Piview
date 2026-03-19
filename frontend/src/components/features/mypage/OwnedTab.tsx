@@ -108,7 +108,7 @@ export default function OwnedTab({
                     </span>
                     {CATEGORY_COLORS[product.category] && (
                       <span
-                        className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-medium"
+                        className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-bold"
                         style={{
                           backgroundColor:
                             CATEGORY_COLORS[product.category].chip,
@@ -122,7 +122,7 @@ export default function OwnedTab({
                     {Object.values(routine).flat().some(
                       (routineProduct) => routineProduct.id === product.id,
                     ) && (
-                      <span className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-medium bg-brand-bg text-brand">
+                      <span className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-bold bg-brand-bg text-brand">
                         루틴
                       </span>
                     )}
@@ -137,7 +137,7 @@ export default function OwnedTab({
                         return tc ? (
                           <span
                             key={skinType}
-                            className="text-[10px] px-[6px] py-[1px] rounded-[4px] font-medium"
+                            className="text-[10px] px-[6px] py-[1px] rounded-[4px] font-bold"
                             style={{ backgroundColor: tc.bg, color: tc.text }}
                           >
                             {skinType}
@@ -216,7 +216,7 @@ export default function OwnedTab({
                     </span>
                     {CATEGORY_COLORS[product.category] && (
                       <span
-                        className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-medium"
+                        className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-bold"
                         style={{
                           backgroundColor:
                             CATEGORY_COLORS[product.category].chip,
@@ -237,7 +237,7 @@ export default function OwnedTab({
                         return tc ? (
                           <span
                             key={skinType}
-                            className="text-[10px] px-[6px] py-[1px] rounded-[4px] font-medium"
+                            className="text-[10px] px-[6px] py-[1px] rounded-[4px] font-bold"
                             style={{ backgroundColor: tc.bg, color: tc.text }}
                           >
                             {skinType}
