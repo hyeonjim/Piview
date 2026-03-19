@@ -25,6 +25,7 @@ public enum ErrorCode {
     // 404 NOT_FOUND
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
     COSMETICS_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 상품을 찾을 수 없습니다."),
+    DISLIKED_PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "안 맞는 제품 목록에서 해당 상품을 찾을 수 없습니다."),
     OCR_TEXT_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지에서 화장품 관련 텍스트를 찾을 수 없습니다."),
     MY_COS_NOT_FOUND(HttpStatus.NOT_FOUND, "보관함에서 해당 화장품을 찾을 수 없습니다."),
     SKIN_ANALYSIS_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 피부 분석 결과를 찾을 수 없습니다."),
