@@ -57,6 +57,19 @@ public class UserDislikedProductService {
     }
 
     @Transactional
+    public void deleteDislikedProduct(Long userId, Long dislikedProductId) {
+        // 토큰에 담긴 사용자가 실제로 존재하는지 먼저 확인한다.
+        findUser(userId);
+
+        // 삭제할 등록 ID가 현재 로그인 사용자 소유인지 함께 확인한다.
+        MyDislikeProduct dislikedProduct = myDislikeProductRepository.findByIdAndUser_Id(dislikedProductId, userId)
+            .orElseThrow(() -> new CustomException(ErrorCode.DISLIKED_PRODUCT_NOT_FOUND));
+
+        // 조회가 끝난 엔티티를 그대로 삭제한다.
+        myDislikeProductRepository.delete(dislikedProduct);
+    }
+
+    @Transactional
     public DislikedProductCreateResponse createDislikedProduct(
         Long userId,
         DislikedProductCreateRequest request
