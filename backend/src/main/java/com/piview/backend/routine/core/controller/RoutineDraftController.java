@@ -66,7 +66,7 @@ public class RoutineDraftController {
       @PathVariable Long productId) {
 
     Long userId = userPrincipal.getId();
-    routineService.removeProductFromDraft(userId, productId);
+    redisDraftService.removeProductFromDraft(userId, productId);
 
     return ApiResponse.success("제품이 임시 루틴에서 삭제되었습니다.", null);
   }
