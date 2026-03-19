@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Settings, Sparkles, LogOut } from "lucide-react";
+import { Settings, LogOut } from "lucide-react";
 import { Toast } from "@/components/common/Toast";
-import { useToast, useSyncRoutineDraft, useMyCosQuery, useRemoveMyCos } from "@/hooks";
+import { useToast, useSyncRoutineDraft, useMyCosQuery, useRemoveMyCos, useUserQuery } from "@/hooks";
 import RoutineTab from "@/components/features/mypage/RoutineTab";
 import RoutineAddModal from "@/components/features/mypage/RoutineAddModal";
 import OwnedTab from "@/components/features/mypage/OwnedTab";
@@ -14,16 +14,19 @@ import { useLocalRoutineStore, type LocalProduct } from "@/stores/useLocalRoutin
 import { useUserStore, selectSkinType } from "@/stores/useUserStore";
 import { authService } from "@/services/auth";
 import type { OwnedProduct } from "@/stores/useOwnedStore";
-
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
 
 export default function MyPage() {
   const router = useRouter();
   const [tab, setTab] = useState<"routine" | "owned">("routine");
 
+  // 페이지 로드 시 user 정보 조회 + Zustand store 동기화
+  useUserQuery();
+  const userName = useUserStore((store) => store.user?.name ?? "User");
+
   const savedSkinType = useUserStore(selectSkinType);
-  const savedConcerns = useUserStore((s) => s.concerns);
-  const savedAvoidContents = useUserStore((s) => s.avoidContents);
+  const savedConcerns = useUserStore((store) => store.concerns);
+  const savedAvoidContents = useUserStore((store) => store.avoidContents);
   const hasSkinProfile = !!savedSkinType;
 
   const handleLogout = async () => {
@@ -37,7 +40,7 @@ export default function MyPage() {
     }
   };
 
-  const { routine, addStepProduct, removeStepProduct, currentRoutineName } = useLocalRoutineStore();
+  const { routine, addStepProduct, removeStepProduct } = useLocalRoutineStore();
 
   useEffect(() => {
     useLocalRoutineStore.persist.rehydrate();
@@ -64,7 +67,9 @@ export default function MyPage() {
     removeStepProduct(code, productId);
 
   // ── 보유제품 API 연동 ─────────────────────────────────────────
-  const { data: myCosItems = [], isLoading: myCosLoading } = useMyCosQuery();
+  // 서버 응답이 배열이 아닌 경우(래핑된 객체 등) 방어 처리
+  const { data: myCosRawData, isLoading: myCosLoading } = useMyCosQuery();
+  const myCosItems = Array.isArray(myCosRawData) ? myCosRawData : [];
   const { mutate: removeMyCos } = useRemoveMyCos();
 
   // MyCosItem → OwnedProduct 변환 (OwnedTab props 호환)
@@ -90,82 +95,126 @@ export default function MyPage() {
   const [avoidSearch, setAvoidSearch] = useState("");
 
   const handleToggleAvoid = (product: OwnedProduct) => {
-    setAvoidProducts((prev) =>
-      prev.some((p) => p.id === product.id)
-        ? prev.filter((p) => p.id !== product.id)
-        : [...prev, product],
+    setAvoidProducts((previousProducts) =>
+      previousProducts.some((previousProduct) => previousProduct.id === product.id)
+        ? previousProducts.filter((previousProduct) => previousProduct.id !== product.id)
+        : [...previousProducts, product],
     );
   };
 
   return (
-    <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
+    <div className="flex-1 bg-[#F5F2EC]">
 
       {/* 프로필 헤더 */}
-      <div style={{ background: "linear-gradient(160deg, #EDE8E0 0%, #F5F2EC 100%)", padding: "15px 20px 20px", position: "relative", borderBottom: "1px solid #E2DDD8" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "linear-gradient(135deg, #D9D5D0 0%, #BFB6AA 100%)", display: "flex", alignItems: "center", justifyContent: "center", border: "3px solid #F2EFE9", boxShadow: "0 2px 12px rgba(166,157,146,0.25)", flexShrink: 0 }}>
-            <span style={{ fontSize: "22px", fontWeight: 700, color: "#FFFFFF", fontFamily: "var(--font-pretendard), sans-serif" }}>U</span>
+      <div className="pt-3.75 px-5 pb-5 relative border-b border-border">
+        <div className="flex items-center gap-4">
+          {/* 아바타 — 그라디언트 배경은 Tailwind arbitrary 불가 — style 유지 */}
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center border-[3px] border-[#F2EFE9] shadow-[0_2px_12px_rgba(166,157,146,0.25)] shrink-0"
+            style={{ background: "linear-gradient(135deg, #D9D5D0 0%, #BFB6AA 100%)" }}
+          >
+            <span className="text-[22px] font-bold text-white">U</span>
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              {/* ⚠️ /users/me 연동 후 실제 이름으로 교체 */}
-              <p style={{ fontSize: "20px", fontWeight: 700, color: "#2A2118", letterSpacing: "-0.3px", fontFamily: "var(--font-pretendard), sans-serif" }}>User님</p>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+
+          <div className="flex-1 min-w-0">
+            {/* 이름 + 설정/로그아웃 버튼 행 */}
+            <div className="flex items-center justify-between">
+              <p className="text-[20px] font-bold text-text-primary tracking-[-0.3px]">
+                {userName}님
+              </p>
+              <div className="flex items-center gap-2 shrink-0">
                 <Link href="/mypage/settings">
-                  <button style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "50%", backgroundColor: "rgba(166,157,146,0.12)", border: "1px solid rgba(166,157,146,0.2)", cursor: "pointer" }} aria-label="설정">
-                    <Settings size={15} style={{ color: "#8C8277" }} />
+                  <button
+                    className="flex items-center justify-center w-[34px] h-[34px] rounded-full bg-brand/12 border border-brand/20 cursor-pointer"
+                    aria-label="설정"
+                  >
+                    <Settings size={15} className="text-brand-dark" />
                   </button>
                 </Link>
-                <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", color: "#BFB6AA", background: "none", border: "none", cursor: "pointer", padding: "4px 2px", fontFamily: "var(--font-pretendard), sans-serif" }}>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1 text-[12px] text-text-faint bg-transparent border-none cursor-pointer py-1 px-0.5"
+                >
                   <LogOut size={13} />로그아웃
                 </button>
               </div>
             </div>
+
+            {/* 피부 프로필 태그 영역 */}
             {!hasSkinProfile ? (
-              <p style={{ margin: "3px 0 0", fontSize: "13px", color: "#A69D92", fontFamily: "var(--font-pretendard), sans-serif" }}>피부 타입을 진단해보세요</p>
+              <p className="mt-[3px] text-[13px] text-brand">피부 타입을 진단해보세요</p>
             ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "16px" }}>
-                <span style={{ fontSize: "14px", padding: "2px 8px", borderRadius: "20px", backgroundColor: "#E8E3DC", color: "#5A504A", fontWeight: 600, fontFamily: "var(--font-pretendard), sans-serif" }}>{savedSkinType}</span>
+              <div className="flex flex-wrap gap-1 mt-4">
+                {/* 피부 타입 배지 */}
+                <span className="text-sm py-0.5 px-2 rounded-full bg-[#E8E3DC] text-[#5A504A] font-semibold">
+                  {savedSkinType}
+                </span>
+                {/* 피부 고민 배지 */}
                 {savedConcerns.map((concern, index) => (
-                  <span key={`${concern}-${index}`} style={{ fontSize: "14px", padding: "2px 8px", borderRadius: "20px", backgroundColor: "#EEF0E8", color: "#6B7257", fontFamily: "var(--font-pretendard), sans-serif" }}>{concern}</span>
+                  <span
+                    key={`${concern}-${index}`}
+                    className="text-sm py-0.5 px-2 rounded-full bg-[#EEF0E8] text-[#6B7257]"
+                  >
+                    {concern}
+                  </span>
                 ))}
+                {/* 기피 성분 배지 */}
                 {savedAvoidContents.map((item, index) => (
-                  <span key={`${item.avoidContent}-${index}`} style={{ fontSize: "14px", padding: "2px 8px", borderRadius: "20px", backgroundColor: "#F5EDE8", color: "#8C5A4A", fontFamily: "var(--font-pretendard), sans-serif" }}>{item.avoidContent}</span>
+                  <span
+                    key={`${item.avoidContent}-${index}`}
+                    className="text-sm py-0.5 px-2 rounded-full bg-[#F5EDE8] text-[#8C5A4A]"
+                  >
+                    {item.avoidContent}
+                  </span>
                 ))}
               </div>
             )}
           </div>
         </div>
-        {!hasSkinProfile && (
-          <button onClick={() => router.push("/skin-test")} style={{ marginTop: "14px", width: "50%", marginLeft: "auto", marginRight: "auto", height: "44px", borderRadius: "12px", background: "linear-gradient(135deg, #A69D92 0%, #BFB6AA 100%)", color: "#FFFFFF", fontSize: "14px", fontWeight: 600, border: "none", cursor: "pointer", letterSpacing: "-0.2px", fontFamily: "var(--font-pretendard), sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", boxShadow: "0 2px 12px rgba(166,157,146,0.3)", transition: "opacity 0.15s" }}>
-            <Sparkles size={15} />피부 진단 시작하기
-          </button>
-        )}
       </div>
 
       {/* 탭 스위처 */}
-      <div style={{ backgroundColor: "#F5F2EC", padding: "0 20px", position: "sticky", top: 0, zIndex: 10, borderBottom: "1px solid #E2DDD8", display: "flex" }}>
-        {(["routine", "owned"] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)} style={{ flex: 1, paddingTop: "12px", paddingBottom: "11px", fontSize: "16px", fontWeight: tab === t ? 600 : 400, color: tab === t ? "#2A2118" : "#BFB6AA", background: "none", border: "none", borderBottom: tab === t ? "2px solid #A69D92" : "2px solid transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", transition: "all 0.15s", fontFamily: "var(--font-pretendard), sans-serif", marginBottom: "-1px" }}>
-            {t === "routine" ? <>{currentRoutineName}</> : <>보유제품</>}
+      <div className="bg-[#F5F2EC] sticky top-0 z-10 border-b border-border flex">
+        {(["routine", "owned"] as const).map((tabType) => (
+          <button
+            key={tabType}
+            onClick={() => setTab(tabType)}
+            className={`relative flex-1 pt-3 pb-2.75 text-base flex items-center justify-center gap-1.5 cursor-pointer bg-transparent border-none transition-colors duration-200 -mb-px ${
+              tab === tabType
+                ? "font-semibold text-text-primary"
+                : "font-normal text-text-faint"
+            }`}
+          >
+            {tabType === "routine" ? <>내 루틴</> : <>내 화장대</>}
+            {/* 선택 인디케이터 — 하단 라인 */}
+            <span
+              className={`absolute bottom-0 left-0 right-0 h-[2.5px] rounded-t-full transition-all duration-200 ${
+                tab === tabType ? "bg-brand opacity-100" : "bg-transparent opacity-0"
+              }`}
+            />
           </button>
         ))}
       </div>
 
       {/* 탭 콘텐츠 */}
       {tab === "routine" && (
-        <RoutineTab routine={routine} onOpenModal={(code) => setOpenStep(code)} onRemove={handleRemoveFromRoutine} showToast={showToast} />
+        <RoutineTab
+          routine={routine}
+          onOpenModal={(code) => setOpenStep(code)}
+          onRemove={handleRemoveFromRoutine}
+          showToast={showToast}
+        />
       )}
       {tab === "owned" && (
         myCosLoading ? (
-          <div className="flex justify-center py-20" style={{ color: "#A69D92", fontSize: "14px" }}>불러오는 중...</div>
+          <div className="flex justify-center py-20 text-brand text-sm">불러오는 중...</div>
         ) : (
           <OwnedTab
             routine={routine}
             ownedProducts={ownedProducts}
             avoidProducts={avoidProducts}
             onRemoveOwned={handleRemoveOwned}
-            onRemoveAvoid={(id) => setAvoidProducts((prev) => prev.filter((p) => p.id !== id))}
+            onRemoveAvoid={(id) => setAvoidProducts((previousProducts) => previousProducts.filter((previousProduct) => previousProduct.id !== id))}
             onOpenAvoidModal={() => { setOpenAvoidModal(true); setAvoidSearch(""); }}
           />
         )
@@ -174,10 +223,21 @@ export default function MyPage() {
       <Toast msg={toastMessage} />
 
       {openStep && (
-        <RoutineAddModal openStep={openStep} routine={routine} onClose={() => setOpenStep(null)} onAdd={handleAddToRoutine} />
+        <RoutineAddModal
+          openStep={openStep}
+          routine={routine}
+          onClose={() => setOpenStep(null)}
+          onAdd={handleAddToRoutine}
+        />
       )}
       {openAvoidModal && (
-        <AvoidProductModal avoidProducts={avoidProducts} avoidSearch={avoidSearch} onSearchChange={setAvoidSearch} onClose={() => setOpenAvoidModal(false)} onToggle={handleToggleAvoid} />
+        <AvoidProductModal
+          avoidProducts={avoidProducts}
+          avoidSearch={avoidSearch}
+          onSearchChange={setAvoidSearch}
+          onClose={() => setOpenAvoidModal(false)}
+          onToggle={handleToggleAvoid}
+        />
       )}
     </div>
   );

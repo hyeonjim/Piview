@@ -16,6 +16,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/useUserStore";
+import { authService } from "@/services/auth";
 
 export default function OAuthCallbackPage() {
   const router = useRouter();
@@ -36,16 +37,16 @@ export default function OAuthCallbackPage() {
         // 2. Zustand에 저장 (이후 모든 API 요청 헤더에 자동 주입됨)
         useUserStore.getState().setAccessToken(accessToken);
 
-        // 3. ⚠️ /users/me API 연동 전까지 바로 home으로 이동
-        // TODO: API 연동 시 아래 주석 해제 후 router.replace("/home") 제거
-        // const user = await authService.getMe();
-        // useUserStore.getState().setUser(user);
-        // if (!user.mySkinType) {
-        //   router.replace("/skin-test");
-        // } else {
-        //   router.replace("/home");
-        // }
-        router.replace("/home");
+        // 3. 유저 정보 조회 후 store에 저장
+        const user = await authService.getMe();
+        useUserStore.getState().setUser(user);
+
+        // 4. 피부 타입 진단 여부에 따라 분기
+        if (!user.mySkinType) {
+          router.replace("/skin-test");
+        } else {
+          router.replace("/home");
+        }
       } catch {
         // 인증 실패 → welcome 페이지로 복귀
         router.replace("/welcome");
