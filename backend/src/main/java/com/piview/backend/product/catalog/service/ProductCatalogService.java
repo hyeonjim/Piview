@@ -5,6 +5,7 @@ import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.product.catalog.dto.*;
 import com.piview.backend.product.catalog.repository.*;
 import com.piview.backend.product.entity.*;
+import com.piview.backend.product.like.repository.ProductLikeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -32,6 +33,7 @@ public class ProductCatalogService {
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
     private final TagRepository tagRepository;
+    private final ProductLikeRepository productLikeRepository;
 
     // filter MetaData 제공 service
     public ProductFilterMetaResponse getFilterMeta() {
@@ -81,7 +83,7 @@ public class ProductCatalogService {
     }
 
     // 조회 service
-    public ProductPageResponse searchProducts(ProductSearchCondition condition) {
+    public ProductPageResponse searchProducts(ProductSearchCondition condition, Long userId) {
         validate(condition);
 
         String normalizedQ = normalizeQ(condition.getQ());
@@ -104,9 +106,16 @@ public class ProductCatalogService {
         PageRequest pageable = PageRequest.of(normalized.getPage(), normalized.getSize());
         Slice<Product> productSlice = productRepository.search(normalized, pageable);
 
+        List<Long> likedProductIds = (userId != null)
+            ? productLikeRepository.findLikedProductIdsByUserId(userId)
+            : Collections.emptyList();
+
         List<ProductSummaryResponse> responses = productSlice.getContent().stream()
-                .map(ProductSummaryResponse::from)
-                .toList();
+            .map(product -> {
+                boolean isLiked = likedProductIds.contains(product.getProductId());
+                return ProductSummaryResponse.from(product, isLiked);
+            })
+            .toList();
 
         return ProductPageResponse.builder()
                 .products(responses)
@@ -137,7 +146,7 @@ public class ProductCatalogService {
         return values.stream().distinct().toList();
     }
 
-    public ProductDetailResponse getProductDetail(Long productId) {
+    public ProductDetailResponse getProductDetail(Long productId, Long userId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COSMETICS_NOT_FOUND));
 
@@ -230,6 +239,12 @@ public class ProductCatalogService {
         skinTypeScores.put("combination", toIntFloor(product.getScoreCombination()));
         skinTypeScores.put("subuji", toIntFloor(product.getScoreSubuji()));
 
+        boolean isLiked = false;
+        if (userId != null) {
+            // 아까 레포지토리에 만들어둔 단건 조회 메서드 재활용!
+            isLiked = productLikeRepository.findByUserIdAndProductId(userId, productId).isPresent();
+        }
+
         return ProductDetailResponse.builder()
                 .productId(product.getProductId())
                 .imageUrl(product.getImage() != null ? product.getImage().getUrl() : null)
@@ -247,6 +262,7 @@ public class ProductCatalogService {
                 .allergenIngredients(allergenIngredients)
                 .ingredients(ingredients)
                 .skinTypeScores(skinTypeScores)
+                .isLiked(isLiked)
                 .build();
     }
 

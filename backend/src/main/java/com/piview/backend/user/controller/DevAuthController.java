@@ -1,5 +1,6 @@
 package com.piview.backend.user.controller;
 
+import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.global.security.TokenProvider;
 import com.piview.backend.user.entity.AuthProvider;
 import com.piview.backend.user.entity.User;
@@ -8,7 +9,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,7 +27,7 @@ public class DevAuthController {
   @Operation(summary = "테스트용 Access Token 강제 발급",
       description = "이메일을 입력하면 해당 유저의 Access Token을 발급합니다. 유저가 없으면 새로 생성합니다.")
   @GetMapping("/login")
-  public ResponseEntity<String> devLogin(
+  public ApiResponse<String> devLogin(
       @Parameter(description = "테스트할 유저 이메일", example = "test@kakao.com")
       @RequestParam(defaultValue = "test@kakao.com") String email) {
 
@@ -47,6 +47,6 @@ public class DevAuthController {
     String accessToken = tokenProvider.createDevAccessToken(user.getId(), user.getEmail(), "ROLE_USER");
 
     // 토큰만 깔끔하게 리턴 (화면에서 바로 복사하기 좋게)
-    return ResponseEntity.ok(accessToken);
+    return ApiResponse.success("개발용 토큰이 발급되었습니다. data 필드의 값을 복사하세요!", accessToken);
   }
 }
