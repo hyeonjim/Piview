@@ -3,6 +3,7 @@ package com.piview.backend.routine.core.service;
 import com.piview.backend.product.catalog.dto.ProductSummaryResponse;
 import com.piview.backend.product.catalog.repository.ProductRepository;
 import com.piview.backend.product.entity.Product;
+import com.piview.backend.product.like.repository.ProductLikeRepository;
 import com.piview.backend.routine.core.dto.*;
 import com.piview.backend.routine.core.entity.MyRoutine;
 import com.piview.backend.routine.core.entity.RoutineColumn;
@@ -27,7 +28,7 @@ public class RoutineService {
   private final RoutineRepository routineRepository;
   private final RoutineColumnRepository routineColumnRepository;
   private final ProductRepository productRepository;
-
+  private final ProductLikeRepository productLikeRepository;
   private final RedisDraftService redisDraftService;
 
   // 제품을 루틴(redis)에 추가
@@ -46,11 +47,13 @@ public class RoutineService {
         .max()
         .orElse(0) + 1; // 장바구니가 비어있으면 1부터 시작
 
+    boolean isLiked = productLikeRepository.findByUserIdAndProductId(userId, product.getProductId()).isPresent();
+
     // 새로운 DraftItemDto 생성 및 리스트에 추가
     DraftItemDto newItem = new DraftItemDto(
         request.columnId(),
         nextOrder,
-        ProductSummaryResponse.from(product)
+        ProductSummaryResponse.from(product, isLiked)
     );
     currentDraft.add(newItem);
 
@@ -156,7 +159,7 @@ public class RoutineService {
       throw new IllegalArgumentException("본인의 루틴만 조회할 수 있습니다.");
     }
 
-    return convertToRoutineResponse(mainRoutine);
+    return convertToRoutineResponse(mainRoutine, userId);
   }
 
   // 루틴 상세 조회
@@ -168,11 +171,13 @@ public class RoutineService {
       throw new IllegalArgumentException("본인의 루틴만 조회할 수 있습니다.");
     }
 
-    return convertToRoutineResponse(routine);
+    return convertToRoutineResponse(routine, userId);
   }
 
   // 공통 DTO 변환 로직
-  private RoutineResponse convertToRoutineResponse(MyRoutine routine) {
+  private RoutineResponse convertToRoutineResponse(MyRoutine routine, Long userId) {
+    List<Long> likedProductIds = productLikeRepository.findLikedProductIdsByUserId(userId);
+
     Map<RoutineColumn, List<RoutineDetail>> groupedDetails = routine.getDetails().stream()
         .collect(Collectors.groupingBy(RoutineDetail::getRoutineColumn));
 
@@ -181,11 +186,16 @@ public class RoutineService {
           RoutineColumn column = entry.getKey();
           List<RoutineProductDto> products = entry.getValue().stream()
               .sorted(Comparator.comparing(RoutineDetail::getStepOrder)) // 순서대로 정렬
-              .map(detail -> new RoutineProductDto(
-                  detail.getId(),
-                  detail.getStepOrder(),
-                  ProductSummaryResponse.from(detail.getProduct())
-              ))
+              .map(detail -> {
+                // 내 찜 목록에 이 화장품 ID가 있는지 확인
+                boolean isLiked = likedProductIds.contains(detail.getProduct().getProductId());
+
+                return new RoutineProductDto(
+                    detail.getId(),
+                    detail.getStepOrder(),
+                    ProductSummaryResponse.from(detail.getProduct(), isLiked)
+                );
+              })
               .toList();
 
           return new RoutineStepGroupDto(column.getId(), column.getName(), products);

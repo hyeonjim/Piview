@@ -20,8 +20,9 @@ public class ProductSummaryResponse {
     private String imageUrl;
     private List<String> skinTypes;
     private List<String> tags;
+    private boolean isLiked;
 
-    public static ProductSummaryResponse from(Product product) {
+    public static ProductSummaryResponse from(Product product, boolean isLiked) {
 
         List<String> skinTypes = new ArrayList<>();
 
@@ -40,6 +41,8 @@ public class ProductSummaryResponse {
                 .imageUrl(product.getImage() != null ? product.getImage().getUrl() : null)
                 .skinTypes(skinTypes)
                 .tags(null)     // 태그 파이프라인 미구현 -> null 고정(추후 추가 예정)
+                .isLiked(isLiked)
                 .build();
+
     }
 }
