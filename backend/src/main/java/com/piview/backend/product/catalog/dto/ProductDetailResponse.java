@@ -1,7 +1,5 @@
 package com.piview.backend.product.catalog.dto;
 
-
-import com.piview.backend.product.entity.EwgGrade;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -33,4 +31,5 @@ public class ProductDetailResponse {
     private List<ProductIngredientDetailResponse> ingredients;
 
     private Map<String, Integer> skinTypeScores;    // 스킨 타입 별 점수
+    private boolean isLiked;
 }

@@ -3,6 +3,7 @@ package com.piview.backend.product.catalog.controller;
 import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
+import com.piview.backend.global.security.UserPrincipal;
 import com.piview.backend.product.catalog.dto.ProductDetailResponse;
 import com.piview.backend.product.catalog.dto.ProductFilterMetaResponse;
 import com.piview.backend.product.catalog.dto.ProductPageResponse;
@@ -11,6 +12,7 @@ import com.piview.backend.product.catalog.service.ProductCatalogService;
 import com.piview.backend.product.entity.SkinTypeEnum;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,7 +35,8 @@ public class ProductCatalogController {
             @RequestParam(required = false) Integer minPrice,
             @RequestParam(required = false) Integer maxPrice,
             @RequestParam(required = false, defaultValue = "0")  int page,
-            @RequestParam(required = false, defaultValue = "10") int size) {
+            @RequestParam(required = false, defaultValue = "10") int size,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
         size = Math.min(size, 50);  // 최대 50개 방어 처리
 
@@ -50,7 +53,8 @@ public class ProductCatalogController {
                 .size(size)
                 .build();
 
-        ProductPageResponse result = productCatalogService.searchProducts(condition);
+        Long userId = (userPrincipal != null) ? userPrincipal.getId() : null;
+        ProductPageResponse result = productCatalogService.searchProducts(condition, userId);
 
         return ApiResponse.success(result);
     }
@@ -67,8 +71,11 @@ public class ProductCatalogController {
     }
 
     @GetMapping("/{productId}")
-    public ApiResponse<ProductDetailResponse> productDetail(@PathVariable Long productId) {
-        ProductDetailResponse result = productCatalogService.getProductDetail(productId);
+    public ApiResponse<ProductDetailResponse> productDetail(@PathVariable Long productId,
+        @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+        Long userId = (userPrincipal != null) ? userPrincipal.getId() : null;
+        ProductDetailResponse result = productCatalogService.getProductDetail(productId, userId);
         return ApiResponse.success(result);
     }
 
