@@ -3,13 +3,8 @@ package com.piview.backend.product.catalog.service;
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.product.catalog.dto.*;
-import com.piview.backend.product.catalog.repository.ProductIngredientRepository;
-import com.piview.backend.product.catalog.repository.ProductRepository;
-import com.piview.backend.product.catalog.repository.IngredientRepository;
-import com.piview.backend.product.entity.EwgGrade;
-import com.piview.backend.product.entity.Ingredient;
-import com.piview.backend.product.entity.Product;
-import com.piview.backend.product.entity.ProductIngredients;
+import com.piview.backend.product.catalog.repository.*;
+import com.piview.backend.product.entity.*;
 import com.piview.backend.product.like.repository.ProductLikeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -28,11 +23,66 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class ProductCatalogService {
 
+    // 조회를 위한 repository
     private final ProductRepository productRepository;
     private final ProductIngredientRepository productIngredientRepository;
     private final IngredientRepository ingredientRepository;
+
+    // MetaData 제공을 위한 repository
+    private final BigCategoryRepository bigCategoryRepository;
+    private final CategoryRepository categoryRepository;
+    private final BrandRepository brandRepository;
+    private final TagRepository tagRepository;
     private final ProductLikeRepository productLikeRepository;
 
+    // filter MetaData 제공 service
+    public ProductFilterMetaResponse getFilterMeta() {
+
+        List<BigCategory> bigCategories = bigCategoryRepository.findAllByOrderByBigCategoryIdAsc();
+        List<Category> categories = categoryRepository.findAllByOrderByBigCategory_BigCategoryIdAscCategoryIdAsc();
+        List<Brand> brands = brandRepository.findAllByOrderByBrandNameAsc();
+        List<Tag> tags = tagRepository.findAllByOrderByTagAsc();
+
+        Map<Integer, List<Category>> categoryMap = categories.stream()
+                .collect(Collectors.groupingBy(category -> category.getBigCategory().getBigCategoryId()));
+
+        List<BigCategoryFilterDto> bigCategoryDtos = bigCategories.stream()
+                .map(bigCategory -> BigCategoryFilterDto.builder()
+                        .bigCategoryId(bigCategory.getBigCategoryId())
+                        .bigCategoryName(bigCategory.getBigCategoryName())
+                        .categories(
+                                categoryMap.getOrDefault(bigCategory.getBigCategoryId(), List.of()).stream()
+                                        .map(category -> CategoryFilterDto.builder()
+                                                .categoryId(category.getCategoryId())
+                                                .categoryName(category.getCategoryName())
+                                                .build())
+                                        .toList()
+                        )
+                        .build())
+                .toList();
+
+        List<BrandFilterDto> brandDtos = brands.stream()
+                .map(brand -> BrandFilterDto.builder()
+                        .brandId(brand.getBrandId())
+                        .brandName(brand.getBrandName())
+                        .build())
+                .toList();
+
+        List<TagFilterDto> tagDtos = tags.stream()
+                .map(tag -> TagFilterDto.builder()
+                        .tagId(tag.getTagId())
+                        .tag(tag.getTag())
+                        .build())
+                .toList();
+
+        return ProductFilterMetaResponse.builder()
+                .bigCategories(bigCategoryDtos)
+                .brands(brandDtos)
+                .tags(tagDtos)
+                .build();
+    }
+
+    // 조회 service
     public ProductPageResponse searchProducts(ProductSearchCondition condition, Long userId) {
         validate(condition);
 
