@@ -1,6 +1,6 @@
 /**
- * _mock/mypageProducts.ts
- * 마이페이지 루틴 스텝 추천 제품 더미 데이터
+ * 🔧 _mock/mypageProducts.ts
+ * 🔧 마이페이지 루틴 스텝 추천 제품 더미 데이터 — 임시 하드코딩, 실제 데이터 아님
  *
  * ⚠️ API 교체 대상
  *    교체 시: productService.getRecommendedByStep(stepCode) 로 대체
@@ -10,7 +10,7 @@
  */
 import { LocalProduct } from "@/stores/useLocalRoutineStore";
 
-/** 스텝별 추천 제품 목록 */
+/** 🔧 스텝별 추천 제품 목록 — ⚠️ API 연동 시 삭제 */
 export const STEP_PRODUCTS: LocalProduct[] = [
   {
     id: "c1",

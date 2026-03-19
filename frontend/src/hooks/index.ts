@@ -16,3 +16,17 @@ export { useMyCosQuery, useAddMyCos, useRemoveMyCos } from "./queries/useMyCos";
 export { useProductSearch } from "./queries/useProductSearch";
 export { useSurveySubmit } from "./queries/useSurveySubmit";
 export { useOcr } from "./queries/useOcr";
+
+// 루틴 쿼리 훅
+export {
+  useDraftQuery,
+  useRoutineListQuery,
+  useMainRoutineQuery,
+  useRoutineDetailQuery,
+  useClearDraftMutation,
+  useRemoveProductFromDraftMutation,
+  useCreateRoutineMutation,
+  useSetMainRoutineMutation,
+  useUpdateRoutineOrderMutation,
+  useDeleteRoutineMutation,
+} from "./queries/useRoutineQueries";

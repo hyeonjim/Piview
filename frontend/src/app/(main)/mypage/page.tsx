@@ -37,7 +37,7 @@ export default function MyPage() {
     }
   };
 
-  const { routine, addStepProduct, removeStepProduct, currentRoutineName } = useLocalRoutineStore();
+  const { routine, addStepProduct, removeStepProduct } = useLocalRoutineStore();
 
   useEffect(() => {
     useLocalRoutineStore.persist.rehydrate();
@@ -138,7 +138,7 @@ export default function MyPage() {
         </div>
         {!hasSkinProfile && (
           <button onClick={() => router.push("/skin-test")} style={{ marginTop: "14px", width: "50%", marginLeft: "auto", marginRight: "auto", height: "44px", borderRadius: "12px", background: "linear-gradient(135deg, #A69D92 0%, #BFB6AA 100%)", color: "#FFFFFF", fontSize: "14px", fontWeight: 600, border: "none", cursor: "pointer", letterSpacing: "-0.2px", fontFamily: "var(--font-pretendard), sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", boxShadow: "0 2px 12px rgba(166,157,146,0.3)", transition: "opacity 0.15s" }}>
-            <Sparkles size={15} />피부 진단 시작하기
+            피부 진단 시작하기
           </button>
         )}
       </div>
@@ -147,7 +147,7 @@ export default function MyPage() {
       <div style={{ backgroundColor: "#F5F2EC", padding: "0 20px", position: "sticky", top: 0, zIndex: 10, borderBottom: "1px solid #E2DDD8", display: "flex" }}>
         {(["routine", "owned"] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)} style={{ flex: 1, paddingTop: "12px", paddingBottom: "11px", fontSize: "16px", fontWeight: tab === t ? 600 : 400, color: tab === t ? "#2A2118" : "#BFB6AA", background: "none", border: "none", borderBottom: tab === t ? "2px solid #A69D92" : "2px solid transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", transition: "all 0.15s", fontFamily: "var(--font-pretendard), sans-serif", marginBottom: "-1px" }}>
-            {t === "routine" ? <>{currentRoutineName}</> : <>보유제품</>}
+            {t === "routine" ? <>내 루틴</> : <>보유제품</>}
           </button>
         ))}
       </div>

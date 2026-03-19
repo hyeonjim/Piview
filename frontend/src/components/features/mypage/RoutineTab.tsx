@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Plus, X, RotateCcw, ArrowUpDown } from "lucide-react";
+import { Plus, X, RotateCcw, ArrowUpDown, Wrench } from "lucide-react";
 import {
   getRoutineEvaluation,
   getScoreBarColor,
@@ -18,18 +18,19 @@ import {
   SKIN_TYPE_TAG_COLORS,
   SKIN_FUNCTION_COLORS,
 } from "@/constants/categoryColors";
-import { useToast } from "@/hooks";
+import {
+  useToast,
+  useRoutineListQuery,
+  useCreateRoutineMutation,
+  useDeleteRoutineMutation,
+  useSetMainRoutineMutation,
+  useClearDraftMutation,
+} from "@/hooks";
 import { Toast } from "@/components/common/Toast";
+// ⚠️ BE 연동 시 아래 import 삭제
+import { IS_MOCK_DATA } from "@/constants/_mock/routine";
 
-// ── 스타일 상수 ───────────────────────────────────────────────────────
-const SCORE_RING_TRACK_COLOR = "var(--color-border-subtle)";
-const SCORE_RING_SIZE = { width: 56, height: 56 };
-const ROUTINE_HEADER_BTN_STYLE = {
-  fontSize: "12px",
-  padding: "5px 10px",
-  borderRadius: "20px",
-  backgroundColor: "transparent",
-};
+// SVG 점수 링 둘레 상수
 const CIRCUMFERENCE = 138;
 
 // 드래그 상태 타입 — 스텝 간 이동 지원
@@ -49,7 +50,6 @@ interface RoutineTabProps {
   showToast?: (msg: string) => void;
 }
 
-
 export default function RoutineTab({
   routine,
   onOpenModal,
@@ -65,13 +65,37 @@ export default function RoutineTab({
     saveRoutine,
     loadSavedRoutine,
     deleteSavedRoutine,
-    savedRoutines,
+    savedRoutines: localSavedRoutines,
     currentRoutineName,
   } = useLocalRoutineStore();
+
+  // ── 루틴 서버 API 훅 ──────────────────────────────────────────────
+  // ⚠️ API 연동 시: 목업 → 실제 데이터로 자동 교체 (훅 내부에서 처리)
+  const { data: serverRoutineList = [] } = useRoutineListQuery();
+  const { mutate: createRoutine, isPending: isCreating } = useCreateRoutineMutation();
+  const { mutate: deleteRoutine } = useDeleteRoutineMutation();
+  const { mutate: setMainRoutine } = useSetMainRoutineMutation();
+  const { mutate: clearDraft } = useClearDraftMutation();
 
   // 저장 모달 상태
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveModalName, setSaveModalName] = useState("");
+
+  // 저장된 루틴 슬라이더 스크롤 상태 — 도트 인디케이터 연동
+  const savedRoutineScrollRef = useRef<HTMLDivElement>(null);
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+
+  // 스크롤 위치 기준으로 활성 카드 인덱스 갱신
+  const handleSavedRoutineScroll = () => {
+    const container = savedRoutineScrollRef.current;
+    if (!container) return;
+    const firstCard = container.firstElementChild as HTMLElement | null;
+    if (!firstCard) return;
+    // 카드 너비 + gap(8px) 기준으로 인덱스 계산
+    const cardWidth = firstCard.offsetWidth + 8;
+    const index = Math.round(container.scrollLeft / cardWidth);
+    setActiveCardIndex(Math.min(index, savedRoutines.length - 1));
+  };
 
   // 드래그 상태 — 스텝 코드 + 이동 전/후 인덱스
   const [dragState, setDragState] = useState<DragState | null>(null);
@@ -116,6 +140,7 @@ export default function RoutineTab({
 
   const evaluation = getRoutineEvaluation(averageScore, routineScores.length);
   const scoreColor = getScoreBarColor(averageScore);
+  // strokeDash는 JS 계산값이므로 인라인 style 유지
   const strokeDash =
     routineScores.length > 0 ? (averageScore / 100) * CIRCUMFERENCE : 0;
 
@@ -194,50 +219,181 @@ export default function RoutineTab({
     setShowSaveModal(true);
   };
 
+  /**
+   * 루틴 저장 — 서버 API(POST /api/v1/routines) 호출
+   * ⚠️ API 연동 시: createRoutine mutationFn 내부에서 routineService.createRoutine()으로 교체
+   */
   const handleSaveRoutine = () => {
     const trimmedName = saveModalName.trim();
     if (!trimmedName) return;
-    saveRoutine(trimmedName);
-    setShowSaveModal(false);
-    setSaveModalName("");
-    notify(`"${trimmedName}" 루틴이 저장되었습니다!`);
+
+    // 서버에 루틴 생성 요청 (draft → 최종 루틴 전환)
+    createRoutine(
+      { title: trimmedName },
+      {
+        onSuccess: () => {
+          // 로컬 스토어에도 저장 (화면 즉시 반영용)
+          saveRoutine(trimmedName);
+          setShowSaveModal(false);
+          setSaveModalName("");
+          notify(`"${trimmedName}" 루틴이 저장되었습니다!`);
+        },
+        onError: () => {
+          notify("루틴 저장에 실패했습니다. 다시 시도해주세요.");
+        },
+      },
+    );
   };
 
+  /**
+   * 루틴 불러오기 — 로컬 스토어에서 복원
+   * ⚠️ API 연동 시: 서버 루틴 ID로 상세 조회 후 루틴 복원
+   */
   const handleLoadRoutine = (id: string) => {
-    const found = savedRoutines.find((r) => r.id === id);
-    if (!found) return;
-    loadSavedRoutine(id);
-    notify(`"${found.name}" 루틴을 불러왔습니다.`);
+    // 로컬 스토어에서 먼저 찾기
+    const localFound = localSavedRoutines.find((r) => r.id === id);
+    if (localFound) {
+      loadSavedRoutine(id);
+      notify(`"${localFound.name}" 루틴을 불러왔습니다.`);
+      return;
+    }
+    // 서버 루틴 목록에서 이름만 확인 (불러오기는 로컬 동기화된 항목만 지원)
+    // ⚠️ API 연동 시: 서버 루틴 상세 조회 후 setRoutine()으로 복원
+    const serverFound = serverRoutineList.find((r) => String(r.routineId) === id);
+    if (serverFound) notify(`"${serverFound.title}" 루틴은 아직 불러오기를 지원하지 않습니다.`);
   };
 
+  /**
+   * 루틴 삭제 — 로컬 스토어 삭제 + 서버 루틴이면 서버 API도 호출
+   * ⚠️ API 연동 시: deleteRoutine mutationFn 내부에서 routineService.deleteRoutine()으로 교체
+   */
   const handleDeleteRoutine = (id: string) => {
-    const found = savedRoutines.find((r) => r.id === id);
-    deleteSavedRoutine(id);
-    if (found) notify(`"${found.name}" 루틴이 삭제되었습니다.`);
+    const parsedId = parseInt(id, 10);
+    const isServerRoutine = !isNaN(parsedId);
+
+    if (isServerRoutine) {
+      // 서버 루틴 삭제 — TanStack Query 낙관적 업데이트로 목록에서 즉시 제거
+      const serverFound = serverRoutineList.find((r) => r.routineId === parsedId);
+      deleteRoutine(parsedId, {
+        onSuccess: () => notify(serverFound ? `"${serverFound.title}" 루틴이 삭제되었습니다.` : "루틴이 삭제되었습니다."),
+        onError: () => notify("루틴 삭제에 실패했습니다."),
+      });
+    } else {
+      // 로컬 스토어 루틴 삭제
+      const found = localSavedRoutines.find((r) => r.id === id);
+      deleteSavedRoutine(id);
+      if (found) notify(`"${found.name}" 루틴이 삭제되었습니다.`);
+    }
   };
 
+  /**
+   * 메인 루틴 선택 — 서버 API(PATCH /api/v1/routines/{routineId}/main) 호출
+   * ⚠️ API 연동 시: setMainRoutine mutationFn 내부에서 routineService.setMainRoutine()으로 교체
+   */
+  const handleSetMainRoutine = (routineId: number) => {
+    setMainRoutine(routineId, {
+      onSuccess: () => notify("메인 루틴이 변경되었습니다."),
+      onError: () => notify("메인 루틴 변경에 실패했습니다."),
+    });
+  };
+
+  /**
+   * 루틴 초기화 — 서버 API(DELETE /api/v1/routines/draft) 호출 + 로컬 초기화
+   * ⚠️ API 연동 시: clearDraft mutationFn 내부에서 routineService.clearDraft()로 교체
+   */
+  const handleClearRoutine = () => {
+    clearRoutine(); // 로컬 상태 즉시 초기화
+    clearDraft();   // 서버 draft 비우기 (Redis 초기화)
+  };
+
+  // 화면에 표시할 루틴 목록
+  // 로컬 저장 루틴을 기본으로 표시하고, 서버 루틴(목업)은 별도 병합
+  // ⚠️ API 연동 시: localSavedRoutines 제거하고 serverRoutineList만 사용하도록 교체
+  const savedRoutines = [
+    // 로컬 스토어 루틴 — 저장 즉시 반영됨
+    ...localSavedRoutines.map((savedRoutine) => ({
+      id: savedRoutine.id,
+      name: savedRoutine.name,
+      routine: savedRoutine.routine,
+      productCount: savedRoutine.productCount,
+      savedAt: savedRoutine.savedAt,
+      isMain: false,
+    })),
+    // 서버 루틴 — 로컬에 없는 항목만 추가 (이름 기준 중복 제거)
+    // ⚠️ API 연동 시: 이 병합 로직 삭제하고 serverRoutineList만 사용
+    ...serverRoutineList
+      .filter((serverRoutine) => !localSavedRoutines.some((local) => local.name === serverRoutine.title))
+      .map((serverRoutine) => ({
+        id: String(serverRoutine.routineId),
+        name: serverRoutine.title,
+        routine: {} as ReturnType<typeof useLocalRoutineStore.getState>["routine"],
+        productCount: serverRoutine.productCount,
+        savedAt: 0,
+        isMain: serverRoutine.isMain,
+      })),
+  ];
 
   return (
     <div className="px-5 pt-4 flex flex-col gap-2 pb-10">
+
+      {/* ── 목업 데이터 사용 중 알림 배너 — BE 연동 시 삭제 ── */}
+      {IS_MOCK_DATA && serverRoutineList.length > 0 && (
+        <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-[#FFF8E7] border border-[#F5C842] text-[#8A6A00]">
+          <Wrench size={12} />
+          <span>목업 데이터 사용 중 — BE 연동 시 자동으로 실제 데이터로 교체됩니다</span>
+        </div>
+      )}
 
       {/* ── 저장된 루틴 슬라이더 — 3개씩 가로 스와이프 ── */}
       {savedRoutines.length > 0 && (
         <div className="mb-2">
           <p className="text-xs font-semibold text-text-muted mb-2">저장된 루틴</p>
+          {/* scrollbarWidth: none, WebkitOverflowScrolling은 Tailwind 불가 — style 유지 */}
           <div
-            className="flex gap-2 overflow-x-auto pb-1"
-            style={{ scrollbarWidth: "none", scrollSnapType: "x mandatory" }}
+            ref={savedRoutineScrollRef}
+            className="flex gap-2 overflow-x-scroll pb-1"
+            onScroll={handleSavedRoutineScroll}
+            style={{
+              scrollbarWidth: "none",
+              scrollSnapType: "x mandatory",
+              WebkitOverflowScrolling: "touch",
+            }}
           >
             {savedRoutines.map((saved) => (
               <SavedRoutineCard
                 key={saved.id}
                 saved={saved}
-                isActive={currentRoutineName === saved.name}
+                // 이름 기준으로 활성 카드 판별 — 불러오기 시 currentRoutineName이 갱신됨
+                isActive={currentRoutineName === saved.name && currentRoutineName !== "내 루틴"}
+                isMain={saved.isMain}
+                // ⚠️ BE 연동 시 isMock prop 전달 제거
+                isMock={IS_MOCK_DATA && serverRoutineList.length > 0}
                 onLoad={() => handleLoadRoutine(saved.id)}
                 onDelete={() => handleDeleteRoutine(saved.id)}
+                // ⚠️ API 연동 시: saved.id가 서버 숫자 ID로 확정되면 parseInt 제거 가능
+                onSetMain={() => {
+                  const serverId = parseInt(saved.id, 10);
+                  if (!isNaN(serverId)) handleSetMainRoutine(serverId);
+                }}
               />
             ))}
           </div>
+
+          {/* 스크롤 도트 인디케이터 — 카드가 2개 이상일 때 표시 */}
+          {savedRoutines.length > 1 && (
+            <div className="flex justify-center gap-1 mt-2">
+              {savedRoutines.map((_, index) => (
+                <div
+                  key={index}
+                  className={`rounded-full transition-all duration-200 ${
+                    index === activeCardIndex
+                      ? "w-3 h-1.5 bg-[#A69D92]"
+                      : "w-1.5 h-1.5 bg-[#D9D5D0]"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -249,10 +405,10 @@ export default function RoutineTab({
             <p className="text-base font-bold text-text-primary truncate max-w-[140px]">
               {currentRoutineName}
             </p>
-            {/* ⚠️ API 연동 시 서버 루틴 메인 설정 API로 교체 */}
+            {/* ⚠️ API 연동 시: handleSetMainRoutine(routineId)으로 교체 */}
             <button
               onClick={toggleMainRoutine}
-              className={`flex items-center gap-1 px-2 py-1 rounded-full border text-[12px] font-semibold cursor-pointer transition-all active:scale-95 shrink-0 ${
+              className={`flex items-center gap-1 px-2 py-1 rounded-full border text-xs font-semibold cursor-pointer transition-all active:scale-95 shrink-0 ${
                 isMainRoutine
                   ? "bg-amber-200 border-amber-200 text-[#8a827a]"
                   : "bg-transparent border-[#D9D5D0] text-[#B8A99A]"
@@ -267,28 +423,24 @@ export default function RoutineTab({
           </p>
         </div>
         <div className="flex gap-1.5">
-          {/* 초기화 — ⚠️ API 연동 시 루틴 초기화 API 호출로 교체 */}
+          {/* 초기화 — 로컬 상태 + 서버 draft(Redis) 동시 초기화 */}
           <button
-            onClick={clearRoutine}
-            className="flex items-center gap-1 font-medium border border-border text-text-secondary cursor-pointer bg-transparent"
-            style={ROUTINE_HEADER_BTN_STYLE}
+            onClick={handleClearRoutine}
+            className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent"
           >
             <RotateCcw size={12} /> 초기화
           </button>
           {/* OCR */}
-          <button
-            className="flex items-center gap-1 font-medium border border-border text-text-secondary cursor-pointer bg-transparent"
-            style={ROUTINE_HEADER_BTN_STYLE}
-          >
+          <button className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent">
             ⇄ OCR
           </button>
-          {/* 저장 — 클릭 시 루틴 이름 입력 모달 */}
+          {/* 저장 — 클릭 시 루틴 이름 입력 모달 → POST /api/v1/routines */}
           <button
             onClick={handleOpenSaveModal}
-            className="flex items-center gap-1 font-medium border border-border text-text-secondary cursor-pointer bg-transparent"
-            style={ROUTINE_HEADER_BTN_STYLE}
+            disabled={isCreating}
+            className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent disabled:opacity-50"
           >
-            📋 저장
+            {isCreating ? "저장 중..." : "저장"}
           </button>
         </div>
       </div>
@@ -296,6 +448,7 @@ export default function RoutineTab({
       {/* ── 루틴 스텝별 섹션 ── */}
       {ROUTINE_STEPS.map((step) => {
         const products = routine[step.code] ?? [];
+        const isDropTarget = dragState?.toStepCode === step.code;
         return (
           <div key={step.code} className="mt-3">
             {/* 스텝 섹션 헤더 — 아이콘, 라벨, + 추가 버튼 */}
@@ -316,32 +469,26 @@ export default function RoutineTab({
 
             {products.length === 0 ? (
               // 빈 상태 플레이스홀더 — 클릭 시 추가 모달 오픈, 드래그 드롭존
+              // 드롭 여부에 따라 배경·테두리 동적 변경은 JS 값이므로 style 유지
               <button
                 data-drop-zone
                 data-step-code={step.code}
                 data-drop-index="0"
                 onClick={() => onOpenModal(step.code)}
-                className="w-full rounded-2xl px-4 py-3 flex items-center gap-3 cursor-pointer border-none text-left transition-colors"
+                className="w-full rounded-2xl px-4 py-3 flex items-center gap-3 cursor-pointer border-none text-left"
                 style={{
-                  backgroundColor: dragState?.toStepCode === step.code
-                    ? "rgba(166,157,146,0.12)"
-                    : "var(--color-warm-bg)",
-                  border: dragState?.toStepCode === step.code
-                    ? "2px dashed #A69D92"
-                    : "1px solid var(--color-border-subtle)",
+                  backgroundColor: isDropTarget ? "rgba(166,157,146,0.12)" : "var(--color-warm-bg)",
+                  border: isDropTarget ? "2px dashed #A69D92" : "1px solid var(--color-border-subtle)",
                   transition: "background-color 0.1s, border 0.1s",
                 }}
               >
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold text-text-muted shrink-0"
-                  style={{ backgroundColor: "var(--color-bg-muted-warm)" }}
-                >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold text-text-muted shrink-0 bg-bg-muted-warm">
                   {step.code}
                 </div>
                 <p className="flex-1 text-sm font-medium text-text-muted">
                   아직 추가된 제품이 없어요
                 </p>
-                <Plus size={14} color="#A69D92" className="shrink-0" />
+                <Plus size={14} className="shrink-0 text-[#A69D92]" />
               </button>
             ) : (
               // 드래그 정렬 가능한 제품 목록
@@ -350,7 +497,7 @@ export default function RoutineTab({
                   const isDraggingThis =
                     dragState?.fromStepCode === step.code &&
                     dragState.fromIndex === index;
-                  const isDropTarget =
+                  const isProductDropTarget =
                     !!dragState &&
                     dragState.toStepCode === step.code &&
                     dragState.toIndex === index &&
@@ -365,12 +512,11 @@ export default function RoutineTab({
                       data-drag-item
                       data-step-code={step.code}
                       data-item-index={index}
-                      className="flex items-stretch h-25 rounded-[10px] overflow-hidden"
+                      className="flex items-stretch h-25 rounded-[10px] overflow-hidden bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
                       style={{
+                        // isDraggingThis, isProductDropTarget는 JS 동적 값 — style 유지
                         opacity: isDraggingThis ? 0.4 : 1,
-                        border: isDropTarget ? "2px solid #A69D92" : "1px solid #E2DDD8",
-                        boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-                        backgroundColor: "#FFFFFF",
+                        border: isProductDropTarget ? "2px solid #A69D92" : "1px solid #E2DDD8",
                         transition: "opacity 0.15s, border-color 0.1s",
                       }}
                     >
@@ -405,12 +551,13 @@ export default function RoutineTab({
                       >
                         {/* 브랜드 + 카테고리 태그 한 줄 */}
                         <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                          <span className="text-[12px] font-medium text-[#BFB6AA] uppercase tracking-[0.08em]">
+                          <span className="text-xs font-medium text-[#BFB6AA] uppercase tracking-[0.08em]">
                             {product.brand}
                           </span>
                           {product.category && categoryColor && (
+                            // 카테고리 색상은 동적 객체값 — style 유지
                             <span
-                              className="text-[11px] px-1.5 py-[1px] rounded-[3px] font-semibold"
+                              className="text-[11px] px-1.5 py-px rounded-[3px] font-semibold"
                               style={{
                                 backgroundColor: categoryColor.chip,
                                 color: categoryColor.accent,
@@ -420,19 +567,20 @@ export default function RoutineTab({
                             </span>
                           )}
                         </div>
-                        <p className="m-0 text-[16px] font-medium text-[#2A2118] leading-[1.4] line-clamp-2">
+                        <p className="m-0 text-base font-medium text-[#2A2118] leading-snug line-clamp-2">
                           {product.name}
                         </p>
                         {/* 피부타입 태그 */}
                         {(product.skinTypes ?? []).length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
                             {(product.skinTypes ?? []).map((skinType) => {
-                              const tc = SKIN_TYPE_TAG_COLORS[skinType];
-                              return tc ? (
+                              const tagColor = SKIN_TYPE_TAG_COLORS[skinType];
+                              return tagColor ? (
+                                // 피부타입 색상은 동적 객체값 — style 유지
                                 <span
                                   key={skinType}
                                   className="text-[11px] px-1.5 py-px rounded-[3px] font-semibold"
-                                  style={{ backgroundColor: tc.bg, color: tc.text }}
+                                  style={{ backgroundColor: tagColor.bg, color: tagColor.text }}
                                 >
                                   {skinType}
                                 </span>
@@ -443,15 +591,16 @@ export default function RoutineTab({
                         {/* 기능 태그 */}
                         {(product.effects ?? []).length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-0.5">
-                            {(product.effects ?? []).slice(0, 3).map((fn) => {
-                              const fc = SKIN_FUNCTION_COLORS[fn];
-                              return fc ? (
+                            {(product.effects ?? []).slice(0, 3).map((effect) => {
+                              const effectColor = SKIN_FUNCTION_COLORS[effect];
+                              return effectColor ? (
+                                // 기능 색상은 동적 객체값 — style 유지
                                 <span
-                                  key={fn}
+                                  key={effect}
                                   className="text-[11px] px-1.5 py-px rounded-[3px] font-medium"
-                                  style={{ backgroundColor: fc.chip, color: fc.accent }}
+                                  style={{ backgroundColor: effectColor.chip, color: effectColor.accent }}
                                 >
-                                  {fn}
+                                  {effect}
                                 </span>
                               ) : null;
                             })}
@@ -468,7 +617,7 @@ export default function RoutineTab({
                         }}
                         className="shrink-0 flex items-start justify-center w-9 pt-2 border-none bg-transparent cursor-pointer"
                       >
-                        <X size={14} color="#C4BEB7" />
+                        <X size={14} className="text-[#C4BEB7]" />
                       </button>
                     </div>
                   );
@@ -480,34 +629,25 @@ export default function RoutineTab({
       })}
 
       {/* ── 루틴 종합 점수 카드 ── */}
+      {/* 테두리 색상이 JS scoreColor 변수 기반 — style 유지 */}
       <div
-        className="mt-10 p-4 rounded-2xl"
-        style={{
-          backgroundColor: "var(--color-warm-bg)",
-          border: `1px solid ${filledCount > 0 ? scoreColor + "40" : "var(--color-border-subtle)"}`,
-        }}
+        className="mt-10 p-4 rounded-2xl bg-(--color-warm-bg)"
+        style={{ border: `1px solid ${filledCount > 0 ? scoreColor + "40" : "var(--color-border-subtle)"}` }}
       >
         <div className="flex items-center gap-3">
-          {/* 점수 링 */}
-          <div
-            className="relative shrink-0 flex items-center justify-center"
-            style={SCORE_RING_SIZE}
-          >
+          {/* 점수 링 — SVG strokeDash는 JS 계산값 */}
+          <div className="relative w-14 h-14 shrink-0 flex items-center justify-center">
             <svg width="56" height="56" className="absolute">
               <circle
-                cx="28"
-                cy="28"
-                r="22"
+                cx="28" cy="28" r="22"
                 fill="none"
-                stroke={SCORE_RING_TRACK_COLOR}
+                stroke="var(--color-border-subtle)"
                 strokeWidth="4"
               />
               <circle
-                cx="28"
-                cy="28"
-                r="22"
+                cx="28" cy="28" r="22"
                 fill="none"
-                stroke={filledCount > 0 ? scoreColor : SCORE_RING_TRACK_COLOR}
+                stroke={filledCount > 0 ? scoreColor : "var(--color-border-subtle)"}
                 strokeWidth="4"
                 strokeDasharray={`${strokeDash} ${CIRCUMFERENCE}`}
                 strokeLinecap="round"
@@ -515,23 +655,18 @@ export default function RoutineTab({
                 style={{ transition: "stroke-dasharray 0.6s ease" }}
               />
             </svg>
+            {/* 점수 텍스트 색상도 JS 변수 — style 유지 */}
             <span
-              className="relative z-[1] text-[13px] font-bold"
-              style={{
-                color: filledCount > 0 ? scoreColor : "var(--color-text-muted)",
-              }}
+              className="relative z-10 text-[13px] font-bold"
+              style={{ color: filledCount > 0 ? scoreColor : "var(--color-text-muted)" }}
             >
               {averageScore}
             </span>
           </div>
           {/* 텍스트 */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="text-sm font-bold text-text-primary">
-                내 루틴 종합 점수
-              </span>
-            </div>
-            <p className="text-xs text-text-muted leading-[1.6] break-keep">
+            <p className="text-sm font-bold text-text-primary mb-1">내 루틴 종합 점수</p>
+            <p className="text-xs text-text-muted leading-relaxed break-keep">
               {evaluation.text}
             </p>
           </div>
@@ -544,33 +679,21 @@ export default function RoutineTab({
       {/* ── 루틴 저장 이름 입력 모달 ── */}
       {showSaveModal && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center pb-8"
-          style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+          className="fixed inset-0 z-50 flex items-end justify-center pb-8 bg-black/45"
           onClick={() => setShowSaveModal(false)}
         >
           <div
             className="bg-white rounded-2xl p-6 mx-5 w-full max-w-sm"
             onClick={(event) => event.stopPropagation()}
           >
-            <h3
-              className="text-base font-bold text-[#2A2118] mb-1"
-              style={{ fontFamily: "var(--font-pretendard), sans-serif" }}
-            >
-              루틴 이름 저장
-            </h3>
-            <p className="text-xs text-[#A69D92] mb-4">
-              저장하면 목록에서 불러올 수 있어요
-            </p>
+            <h3 className="text-base font-bold text-[#2A2118] mb-1">루틴 이름 저장</h3>
+            <p className="text-xs text-[#A69D92] mb-4">저장하면 목록에서 불러올 수 있어요</p>
             <input
               type="text"
               value={saveModalName}
               onChange={(event) => setSaveModalName(event.target.value)}
               placeholder="예) 아침 루틴, 데일리 케어"
               className="w-full px-3 py-2.5 text-sm rounded-xl border border-[#E2DDD8] outline-none mb-4"
-              style={{
-                fontFamily: "var(--font-pretendard), sans-serif",
-              }}
-              // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
               onKeyDown={(event) => {
                 if (event.key === "Enter") handleSaveRoutine();
@@ -581,18 +704,13 @@ export default function RoutineTab({
               <button
                 onClick={() => setShowSaveModal(false)}
                 className="flex-1 py-2.5 text-sm font-medium rounded-xl border border-[#E2DDD8] text-[#8A8278] bg-transparent cursor-pointer"
-                style={{ fontFamily: "var(--font-pretendard), sans-serif" }}
               >
                 취소
               </button>
               <button
                 onClick={handleSaveRoutine}
                 disabled={!saveModalName.trim()}
-                className="flex-1 py-2.5 text-sm font-bold rounded-xl text-white cursor-pointer disabled:opacity-40"
-                style={{
-                  backgroundColor: "#A69D92",
-                  fontFamily: "var(--font-pretendard), sans-serif",
-                }}
+                className="flex-1 py-2.5 text-sm font-bold rounded-xl text-white bg-[#A69D92] cursor-pointer disabled:opacity-40"
               >
                 저장
               </button>
@@ -604,70 +722,72 @@ export default function RoutineTab({
   );
 }
 
-// ── 저장된 루틴 카드 — 3개씩 가로로 나열, 스와이프 ──────────────────────
+// ── 저장된 루틴 카드 — 카드 클릭으로 불러오기, 3개씩 가로 나열 ──────────────────────
 function SavedRoutineCard({
   saved,
   isActive,
+  isMain,
+  isMock,
   onLoad,
   onDelete,
 }: {
-  saved: SavedRoutine;
+  saved: SavedRoutine & { isMain?: boolean };
   isActive: boolean;
+  isMain?: boolean;
+  /** 목업 데이터 여부 — ⚠️ BE 연동 시 prop 제거 */
+  isMock?: boolean;
   onLoad: () => void;
   onDelete: () => void;
+  // ⚠️ API 연동 시: PATCH /api/v1/routines/{routineId}/main 호출
+  onSetMain?: () => void;
 }) {
+  // 활성 카드 테두리 색상 — JS 조건 분기 (Tailwind arbitrary value로 불가)
+  const activeBorderColor = isMock ? "#F5C842" : isMain ? "#C8A96E" : "#A69D92";
+  const activeBgColor = isMock ? "#FFFBEF" : isMain ? "#FBF7EF" : "#F5F2EC";
+
   return (
     <div
-      className="relative shrink-0 flex flex-col gap-1 p-2.5 rounded-xl"
+      role="button"
+      tabIndex={0}
+      onClick={onLoad}
+      onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") onLoad(); }}
+      className="relative shrink-0 flex flex-col gap-1 pt-7 pb-3 rounded-xl cursor-pointer transition-all active:scale-95"
       style={{
-        // 3개 동시 표시 — 양쪽 gap(8px)을 고려한 너비
-        minWidth: "calc(33.33% - 5.5px)",
-        maxWidth: "calc(33.33% - 5.5px)",
+        // 2.5개 동시 표시 — 다음 카드가 살짝 보여 스와이프 유도, calc()는 Tailwind 불가
+        minWidth: "calc(38% - 4px)",
+        maxWidth: "calc(38% - 4px)",
         scrollSnapAlign: "start",
-        border: isActive ? "1.5px solid #A69D92" : "1px solid #E2DDD8",
-        backgroundColor: isActive ? "#F5F2EC" : "#FFFFFF",
+        // 활성 카드만 테두리 강조, 비활성은 테두리 없음
+        border: isActive ? `1.5px solid ${activeBorderColor}` : "none",
+        backgroundColor: isActive ? activeBgColor : "#F8F6F2",
       }}
     >
+      {/* 메인 표시 — 좌상단 별표 아이콘 */}
+      {isMain && (
+        <span className="absolute top-1.5 left-1.5 text-xs leading-none text-[#C8A96E]">★</span>
+      )}
+
       {/* 삭제 버튼 — 우측 상단 */}
       <button
-        onClick={onDelete}
-        className="absolute top-1.5 right-1.5 w-4 h-4 flex items-center justify-center rounded-full border-none cursor-pointer"
-        style={{ backgroundColor: "#E8E4DF" }}
+        onClick={(event) => { event.stopPropagation(); onDelete(); }}
+        className="absolute top-1.5 right-1.5 w-4 h-4 flex items-center justify-center rounded-full border-none cursor-pointer bg-[#E8E4DF]"
       >
-        <X size={9} color="#8A8278" />
+        <X size={11} className="text-[#8A8278]" />
       </button>
 
-      {/* 루틴 이모지 */}
-      <div className="text-base text-center mt-0.5">📋</div>
-
-      {/* 루틴 이름 */}
-      <p
-        className="text-[11px] font-bold text-[#2A2118] truncate text-center leading-tight"
-        style={{ fontFamily: "var(--font-pretendard), sans-serif" }}
-      >
-        {saved.name}
-      </p>
+      {/* 루틴 이름 — 목업 아이콘이 있으면 왼쪽에 표시 */}
+      <div className="flex items-center justify-center gap-0.5 px-1">
+        {/* 목업 아이콘 — ⚠️ BE 연동 시 isMock prop과 함께 제거 */}
+        {isMock && <Wrench size={10} className="shrink-0 text-[#8A6A00]" />}
+        <p className="text-sm font-bold text-[#2A2118] truncate leading-tight">
+          {saved.name}
+        </p>
+      </div>
 
       {/* 제품 수 */}
-      <p
-        className="text-[10px] text-[#A69D92] text-center"
-        style={{ fontFamily: "var(--font-pretendard), sans-serif" }}
-      >
+      <p className="text-[10px] text-[#A69D92] text-center">
         {saved.productCount}개 제품
       </p>
-
-      {/* 불러오기 버튼 */}
-      <button
-        onClick={onLoad}
-        className="w-full text-[11px] font-semibold py-1 rounded-lg cursor-pointer border-none mt-0.5"
-        style={{
-          backgroundColor: isActive ? "#D9D5D0" : "#F2EFE9",
-          color: "#6B6258",
-          fontFamily: "var(--font-pretendard), sans-serif",
-        }}
-      >
-        {isActive ? "현재 루틴" : "불러오기"}
-      </button>
     </div>
   );
 }
