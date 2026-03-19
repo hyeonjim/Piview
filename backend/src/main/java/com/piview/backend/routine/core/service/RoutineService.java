@@ -63,24 +63,6 @@ public class RoutineService {
     redisDraftService.saveDraftItems(userId, currentDraft);
   }
 
-  // 제품을 루틴(redis)에서 삭제
-  public void removeProductFromDraft(Long userId, Long productId) {
-    // 기존 장바구니 불러오기
-    List<DraftItemDto> currentDraft = redisDraftService.getDraftItems(userId);
-
-    if (currentDraft == null || currentDraft.isEmpty()) {
-      return; // 장바구니가 비어있으면 무시
-    }
-
-    // 삭제하려는 productId와 일치하지 않는 제품들만 남기기 (필터링)
-    List<DraftItemDto> updatedDraft = currentDraft.stream()
-        .filter(item -> !item.product().getProductId().equals(productId))
-        .toList();
-
-    // 업데이트된 리스트를 다시 Redis에 저장 (해당 제품만 쏙 빠진 채로 덮어쓰기)
-    redisDraftService.saveDraftItems(userId, updatedDraft);
-  }
-
   // 루틴 생성 및 저장
   @Transactional
   public Long createRoutine(Long userId, String title) {
@@ -103,7 +85,11 @@ public class RoutineService {
         .build();
 
     List<Integer> columnIds = draftItems.stream().map(DraftItemDto::columnId).toList();
-    List<Long> productIds = draftItems.stream().map(item -> item.product().getProductId()).toList();
+    // product가 null이 아닌 것들만 꺼내기
+    List<Long> productIds = draftItems.stream()
+        .filter(item -> item.product() != null)
+        .map(item -> item.product().getProductId())
+        .toList();
 
     // 조회한 엔티티를 Map으로 변환하여 O(1) 성능으로 매칭 준비
     Map<Integer, RoutineColumn> columnMap = routineColumnRepository.findAllById(columnIds).stream()
