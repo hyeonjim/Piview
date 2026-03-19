@@ -136,6 +136,11 @@ services:
     container_name: prod-frontend
     build:
       context: ./frontend
+<<<<<<< Updated upstream
+=======
+      args:
+        - NEXT_PUBLIC_API_URL=https://j14e101.p.ssafy.io
+>>>>>>> Stashed changes
     networks:
       - app-network
 
