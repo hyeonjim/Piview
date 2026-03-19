@@ -77,10 +77,12 @@ export default function WelcomePage() {
   /**
    * 카카오 로그인 버튼 클릭 핸들러
    * window.location.href로 이동 → 백엔드가 카카오 인증 서버로 리다이렉트
-   * ⚠️ API 연동 시 NEXT_PUBLIC_API_URL 환경변수 설정 필요
+   * redirect_uri로 현재 환경의 프론트 URL을 넘겨서 로컬/배포 자동 분기
    */
   const handleKakaoLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/oauth2/authorization/kakao`;
+    const frontendUrl = window.location.origin; // 로컬: http://localhost:3000, 배포: https://j14e101.p.ssafy.io:3000
+    const redirectUri = `${frontendUrl}/oauth2/redirect`;
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/oauth2/authorization/kakao?redirect_uri=${encodeURIComponent(redirectUri)}`;
   };
 
   /**
