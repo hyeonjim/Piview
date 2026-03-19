@@ -1,5 +1,6 @@
 package com.piview.backend.user.controller;
 
+import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.user.dto.response.TokenDto;
 import com.piview.backend.user.dto.response.TokenResponseDto;
 import com.piview.backend.user.service.AuthService;
@@ -7,6 +8,7 @@ import com.piview.backend.global.config.AppProperties;
 import com.piview.backend.global.security.TokenProvider;
 import com.piview.backend.global.security.UserPrincipal;
 import com.piview.backend.global.util.CookieUtil;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,6 +35,7 @@ public class AuthController {
   private final CookieUtil cookieUtil;
 
   // 토큰 재발급 API
+  @Operation(summary = "토큰 재발급", description = "만료된 Access Token을 Refresh Token을 이용해 재발급받습니다.")
   @PostMapping("/refresh")
   public ResponseEntity<?> refreshToken(
       @Parameter(description = "리프레시 토큰값 (앞뒤 따옴표 없이 쌩 텍스트만)", in = ParameterIn.COOKIE, name = "refreshToken")
@@ -53,9 +56,11 @@ public class AuthController {
   }
 
   // 로그아웃 API
+  @Operation(summary = "로그아웃", description = "현재 사용자의 Access Token을 무효화하고(Redis) 브라우저의 Refresh Token 쿠키를 삭제합니다.")
   @PostMapping("/logout")
-  public ResponseEntity<?> logout(@RequestHeader(value = "Authorization", required = false) String authorizationHeader,
-      @AuthenticationPrincipal UserPrincipal userPrincipal,
+  public ApiResponse<Void> logout(
+      @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+      @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
       HttpServletRequest request,
       HttpServletResponse response) {
 
@@ -70,6 +75,6 @@ public class AuthController {
     // 브라우저 속 refresh token 제거
     cookieUtil.deleteCookie(request, response, "refreshToken");
 
-    return ResponseEntity.ok("로그아웃 되었습니다.");
+    return ApiResponse.success("로그아웃 되었습니다.", null);
   }
 }
