@@ -25,13 +25,11 @@ public class ProductSummaryResponse {
 
         List<String> skinTypes = new ArrayList<>();
 
-        if (product.getSkinScore() != null) {
-            if (product.getSkinScore().getTopSkinType() != null) {
-                skinTypes.add(product.getSkinScore().getTopSkinType().name());
-            }
-            if (product.getSkinScore().getTop2SkinType() != null) {
-                skinTypes.add(product.getSkinScore().getTop2SkinType().name());
-            }
+        if (product.getTopSkinType() != null) {
+            skinTypes.add(product.getTopSkinType().name());
+        }
+        if (product.getTop2SkinType() != null) {
+            skinTypes.add(product.getTop2SkinType().name());
         }
 
         return ProductSummaryResponse.builder()
