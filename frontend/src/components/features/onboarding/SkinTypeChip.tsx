@@ -27,7 +27,7 @@ export function SkinTypeChip({ label, isActive, danger = false, onClick }: Props
         padding: "8px 16px",
         borderRadius: "30px",
         fontSize: "14px",
-        fontWeight: 500,
+        fontWeight: 600,
         cursor: "pointer",
         transition: "all 0.2s",
         border: `1px solid ${isActive ? activeColor : "#E0D6C8"}`,

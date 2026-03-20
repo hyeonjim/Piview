@@ -46,3 +46,24 @@ export function toggleSet<T>(prev: Set<T>, value: T): Set<T> {
   next.has(value) ? next.delete(value) : next.add(value);
   return next;
 }
+
+/**
+ * 카테고리 표시명 매핑
+ * 백엔드 데이터는 "클렌징폼" 등으로 유지하되, 화면에는 축약형으로 표시
+ */
+const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
+  클렌징폼: "폼",
+  클렌징젤: "젤",
+  클렌징밤: "밤",
+  클렌징오일: "오일",
+  클렌징워터: "워터",
+  클렌징로션: "밀크",
+};
+
+/**
+ * 카테고리명을 화면 표시용으로 변환
+ * 매핑에 없으면 원래 이름 반환
+ */
+export function getCategoryDisplayName(category: string): string {
+  return CATEGORY_DISPLAY_NAMES[category] ?? category;
+}

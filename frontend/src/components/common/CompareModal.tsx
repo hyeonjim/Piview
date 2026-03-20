@@ -16,20 +16,9 @@ import { X, Sparkles } from "lucide-react";
 import { SKIN_FUNCTION_COLORS } from "@/constants/categoryColors";
 import { formatPrice } from "@/utils/format";
 import { SkinTypeTag } from "@/components/common/ProductCard";
+import type { CompareProduct } from "@/types/common";
 
-/** 비교용 제품 정보 인터페이스 */
-export interface CompareProduct {
-  id: string | number;
-  name: string;
-  brand: string;
-  imageUrl?: string;
-  emoji?: string;
-  price?: number;
-  skinTypes?: string[];
-  effects?: string[];
-  /** 피부기능별 수치 점수 0~100 — ⚠️ API 연동 시 서버 값으로 교체 */
-  effectScores?: Record<string, number>;
-}
+export type { CompareProduct };
 
 interface CompareModalProps {
   /** 비교할 2개 제품 */
@@ -38,35 +27,8 @@ interface CompareModalProps {
   onClose: () => void;
 }
 
-// ── 피부기능 막대 색상 — 두 제품 구분용 ────────────────────────────
-const LEFT_BAR_COLOR = "#A69D92";  // 왼쪽 제품 — 웜 그레이
-const RIGHT_BAR_COLOR = "#8A9468"; // 오른쪽 제품 — 올리브 그린
-
 // ── 우위 항목 강조색 ─────────────────────────────────────────────────
 const HIGHLIGHT_COLOR = "#5A5248";
-
-// ── 피부기능 수치 기본값 (effectScores 없을 때) ──────────────────────
-// ⚠️ API 연동 시 제품 데이터에 포함된 서버 값으로 교체
-const FALLBACK_EFFECT_SCORES: Record<string, number> = {
-  수분: 70, 진정: 60, 미백: 50, 안티에이징: 55,
-  여드름: 65, 피지: 58, 영양: 62, 색소침착: 48, 아토피: 45,
-};
-
-/** 피부기능 점수 반환 — effectScores 없으면 fallback 사용 */
-function getEffectScore(product: CompareProduct, effectName: string): number {
-  return product.effectScores?.[effectName] ?? FALLBACK_EFFECT_SCORES[effectName] ?? 50;
-}
-
-/** 두 제품에 등장하는 모든 피부기능 이름 합집합 */
-function mergeEffectNames(
-  leftProduct: CompareProduct,
-  rightProduct: CompareProduct,
-): string[] {
-  return Array.from(new Set([
-    ...(leftProduct.effects ?? []),
-    ...(rightProduct.effects ?? []),
-  ]));
-}
 
 // ── 서브컴포넌트: 제품 헤더 (이미지·브랜드·제품명) ────────────────────
 function ProductHeader({ product }: { product: CompareProduct }) {
@@ -75,30 +37,20 @@ function ProductHeader({ product }: { product: CompareProduct }) {
       {/* 제품 이미지 또는 이모지 */}
       <div
         className="flex items-center justify-center overflow-hidden rounded-xl bg-[#F5F2EC]"
-        style={{ width: 72, height: 72, flexShrink: 0 }}
+        style={{ width: 100, height: 100, flexShrink: 0}}
       >
         {product.imageUrl ? (
           <Image
             src={product.imageUrl}
             alt={product.name}
-            width={72}
-            height={72}
+            width={100}
+            height={100}
             className="object-cover"
           />
         ) : (
           <span className="text-4xl">{product.emoji ?? "🧴"}</span>
         )}
       </div>
-
-      {/* 브랜드 */}
-      <span className="text-sm font-medium text-[#BFB6AA] uppercase tracking-widest">
-        {product.brand}
-      </span>
-
-      {/* 제품명 */}
-      <p className="m-0 text-sm font-semibold text-[#2A2118] text-center leading-snug line-clamp-2 px-1">
-        {product.name}
-      </p>
     </div>
   );
 }
@@ -153,6 +105,103 @@ function CompareTable({
       ),
       highlightIndex: null,
     },
+    {
+      label: "피부기능",
+      // 피부기능 태그 — SKIN_FUNCTION_COLORS로 컬러 배지 표시
+      leftContent: (
+        <div className="flex flex-wrap gap-1 justify-center">
+          {leftProduct.effects && leftProduct.effects.length > 0
+            ? leftProduct.effects.map((effect) => {
+                const colorConfig = SKIN_FUNCTION_COLORS[effect];
+                return colorConfig ? (
+                  <span
+                    key={effect}
+                    className="text-[10px] px-1.5 py-px rounded-[4px] font-bold"
+                    style={{ backgroundColor: colorConfig.chip, color: colorConfig.accent }}
+                  >
+                    {effect}
+                  </span>
+                ) : (
+                  <span key={effect} className="text-[10px] px-1.5 py-px rounded-[4px] font-bold bg-[#F2EFE9] text-[#5A5248]">
+                    {effect}
+                  </span>
+                );
+              })
+            : <span className="text-sm text-[#C4BEB7]">-</span>}
+        </div>
+      ),
+      rightContent: (
+        <div className="flex flex-wrap gap-1 justify-center">
+          {rightProduct.effects && rightProduct.effects.length > 0
+            ? rightProduct.effects.map((effect) => {
+                const colorConfig = SKIN_FUNCTION_COLORS[effect];
+                return colorConfig ? (
+                  <span
+                    key={effect}
+                    className="text-[10px] px-1.5 py-px rounded-[4px] font-bold"
+                    style={{ backgroundColor: colorConfig.chip, color: colorConfig.accent }}
+                  >
+                    {effect}
+                  </span>
+                ) : (
+                  <span key={effect} className="text-[10px] px-1.5 py-px rounded-[4px] font-bold bg-[#F2EFE9] text-[#5A5248]">
+                    {effect}
+                  </span>
+                );
+              })
+            : <span className="text-sm text-[#C4BEB7]">-</span>}
+        </div>
+      ),
+      highlightIndex: null,
+    },
+    {
+      label: "성분 위험도",
+      // 안전/주의/위험 성분 수를 컬러 도트 + 숫자로 한 줄 표시
+      leftContent: (
+        <div className="flex items-center gap-1.5 flex-wrap justify-center">
+          <span className="flex items-center gap-0.5 text-xs">
+            <span className="w-2 h-2 rounded-full bg-ewg-safe inline-block shrink-0" />
+            {leftProduct.ewgSafe ?? 0}
+          </span>
+          <span className="flex items-center gap-0.5 text-xs">
+            <span className="w-2 h-2 rounded-full bg-ewg-caution inline-block shrink-0" />
+            {leftProduct.ewgCaution ?? 0}
+          </span>
+          <span className="flex items-center gap-0.5 text-xs">
+            <span className="w-2 h-2 rounded-full bg-ewg-danger inline-block shrink-0" />
+            {leftProduct.ewgDanger ?? 0}
+          </span>
+        </div>
+      ),
+      rightContent: (
+        <div className="flex items-center gap-1.5 flex-wrap justify-center">
+          <span className="flex items-center gap-0.5 text-xs">
+            <span className="w-2 h-2 rounded-full bg-ewg-safe inline-block shrink-0" />
+            {rightProduct.ewgSafe ?? 0}
+          </span>
+          <span className="flex items-center gap-0.5 text-xs">
+            <span className="w-2 h-2 rounded-full bg-ewg-caution inline-block shrink-0" />
+            {rightProduct.ewgCaution ?? 0}
+          </span>
+          <span className="flex items-center gap-0.5 text-xs">
+            <span className="w-2 h-2 rounded-full bg-ewg-danger inline-block shrink-0" />
+            {rightProduct.ewgDanger ?? 0}
+          </span>
+        </div>
+      ),
+      // 위험 성분 적을수록 우위 — 동점 시 주의 성분 비교
+      highlightIndex: (() => {
+        const leftDanger = leftProduct.ewgDanger ?? 0;
+        const rightDanger = rightProduct.ewgDanger ?? 0;
+        const leftCaution = leftProduct.ewgCaution ?? 0;
+        const rightCaution = rightProduct.ewgCaution ?? 0;
+        if (leftDanger !== rightDanger)
+          return leftDanger < rightDanger ? 0 : 1;
+        if (leftCaution !== rightCaution)
+          return leftCaution < rightCaution ? 0 : 1;
+        return null;
+      })(),
+    },
   ];
 
   return (
@@ -160,9 +209,9 @@ function CompareTable({
       {/* 헤더 행 — 제품명으로 두 제품 구분 */}
       <div
         className="grid bg-[#F2EFE9]"
-        style={{ gridTemplateColumns: "76px 1fr 1fr" }}
+        style={{ gridTemplateColumns: "90px 1fr 1fr" }}
       >
-        <div className="px-3 py-2 text-sm font-semibold text-[#A69D92]">항목</div>
+        <div className="px-3 py-2 text-sm font-semibold text-[#A69D92] text-center">항목</div>
         <div className="px-2 py-2 text-sm font-semibold text-center text-[#A69D92] leading-tight line-clamp-2">
           {leftProduct.name}
         </div>
@@ -177,11 +226,11 @@ function CompareTable({
           key={row.label}
           className="grid"
           style={{
-            gridTemplateColumns: "76px 1fr 1fr",
+            gridTemplateColumns: "90px 1fr 1fr",
             borderTop: rowIndex === 0 ? "1px solid #E8E4DF" : "1px solid #F2EFE9",
           }}
         >
-          <div className="px-3 py-3 text-sm font-medium text-[#8A8278] bg-[#FAFAF8] flex items-center">
+          <div className="px-3 py-3 text-sm font-semibold text-[#8A8278] bg-[#FAFAF8] flex items-center">
             {row.label}
           </div>
           <div
@@ -208,82 +257,6 @@ function CompareTable({
   );
 }
 
-// ── 서브컴포넌트: 피부기능 가로 막대 수치 비교 ───────────────────────
-function EffectBars({
-  leftProduct,
-  rightProduct,
-}: {
-  leftProduct: CompareProduct;
-  rightProduct: CompareProduct;
-}) {
-  const effectNames = mergeEffectNames(leftProduct, rightProduct);
-  if (effectNames.length === 0) return null;
-
-  return (
-    <div className="flex flex-col gap-4">
-      {effectNames.map((effectName) => {
-        const leftScore = getEffectScore(leftProduct, effectName);
-        const rightScore = getEffectScore(rightProduct, effectName);
-        const colorConfig = SKIN_FUNCTION_COLORS[effectName];
-
-        return (
-          <div key={effectName}>
-            {/* 기능명 태그 + 수치 */}
-            <div className="flex items-center justify-between mb-1.5">
-              {colorConfig ? (
-                <span
-                  className="text-sm font-medium px-2 py-0.5 rounded"
-                  style={{ backgroundColor: colorConfig.chip, color: colorConfig.accent }}
-                >
-                  {effectName}
-                </span>
-              ) : (
-                <span className="text-sm font-medium text-[#5A5248]">{effectName}</span>
-              )}
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold" style={{ color: LEFT_BAR_COLOR }}>
-                  {leftScore}
-                </span>
-                <span className="text-sm text-[#C4BEB7]">/</span>
-                <span className="text-sm font-bold" style={{ color: RIGHT_BAR_COLOR }}>
-                  {rightScore}
-                </span>
-              </div>
-            </div>
-
-            {/* 왼쪽 제품 막대 */}
-            <div className="h-1.5 rounded-full bg-[#F2EFE9] overflow-hidden mb-1">
-              <div
-                className="h-full rounded-full transition-[width] duration-500"
-                style={{ width: `${leftScore}%`, backgroundColor: LEFT_BAR_COLOR }}
-              />
-            </div>
-
-            {/* 오른쪽 제품 막대 */}
-            <div className="h-1.5 rounded-full bg-[#F2EFE9] overflow-hidden">
-              <div
-                className="h-full rounded-full transition-[width] duration-500"
-                style={{ width: `${rightScore}%`, backgroundColor: RIGHT_BAR_COLOR }}
-              />
-            </div>
-          </div>
-        );
-      })}
-
-      {/* 범례 */}
-      <div className="flex items-center gap-4 mt-1">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-2 rounded-full" style={{ backgroundColor: LEFT_BAR_COLOR }} />
-          <span className="text-sm text-[#A69D92]">{leftProduct.brand}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-2 rounded-full" style={{ backgroundColor: RIGHT_BAR_COLOR }} />
-          <span className="text-sm text-[#A69D92]">{rightProduct.brand}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── 메인 컴포넌트 ────────────────────────────────────────────────────
 export default function CompareModal({ compareItems, onClose }: CompareModalProps) {
@@ -292,7 +265,7 @@ export default function CompareModal({ compareItems, onClose }: CompareModalProp
   return (
     // 배경 딤 — 클릭 시 모달 닫기
     <div
-      className="fixed inset-0 z-50 flex flex-col justify-end items-center"
+      className="fixed inset-0 z-60 flex flex-col justify-end items-center"
       style={{ backgroundColor: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
       onClick={onClose}
     >
@@ -323,10 +296,11 @@ export default function CompareModal({ compareItems, onClose }: CompareModalProp
           className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-6 pb-8"
           style={{ scrollbarWidth: "none" }}
         >
-          {/* ① 제품 이미지 · 브랜드 · 제품명 */}
-          <div className="flex gap-3">
+          {/* ① 제품 이미지 — 표의 90px 라벨 컬럼에 맞춰 그리드 정렬 */}
+          <div style={{ display: "grid", gridTemplateColumns: "90px 1fr 1px 1fr" }}>
+            <div /> {/* 표 라벨 컬럼 90px 빈 공간 */}
             <ProductHeader product={leftProduct} />
-            <div className="w-px bg-[#EDEBE8] self-stretch" />
+            <div className="bg-[#EDEBE8] self-stretch" />
             <ProductHeader product={rightProduct} />
           </div>
 
@@ -335,15 +309,7 @@ export default function CompareModal({ compareItems, onClose }: CompareModalProp
             <CompareTable leftProduct={leftProduct} rightProduct={rightProduct} />
           </div>
 
-          {/* ③ 피부기능 가로 막대 수치 비교 */}
-          <div>
-            <p className="m-0 mb-3 text-sm font-semibold text-[#8A8278] uppercase tracking-wider">
-              피부기능 비교
-            </p>
-            <EffectBars leftProduct={leftProduct} rightProduct={rightProduct} />
-          </div>
-
-          {/* ④ AI 비교 설명 — ⚠️ API 연동 시 compareService.getAiComment(ids) 응답으로 교체 */}
+          {/* ③ AI 비교 설명 — ⚠️ API 연동 시 compareService.getAiComment(ids) 응답으로 교체 */}
           <div className="rounded-xl bg-[#F8F6F2] border border-[#E8E4DF] p-4">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles size={14} className="text-[#A69D92]" />

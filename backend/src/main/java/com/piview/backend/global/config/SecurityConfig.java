@@ -1,6 +1,6 @@
 package com.piview.backend.global.config;
 
-import com.piview.backend.user.service.CustomOAuth2UserService;
+import com.piview.backend.domain.user.login.service.CustomOAuth2UserService;
 import com.piview.backend.global.security.JwtAuthenticationFilter;
 import com.piview.backend.global.security.handler.OAuth2FailureHandler;
 import com.piview.backend.global.security.handler.OAuth2SuccessHandler;

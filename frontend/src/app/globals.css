@@ -1,34 +1,45 @@
+/* ═══════════════════════════════════════════════════════════════
+   SkinFit Global Styles
+   ═══════════════════════════════════════════════════════════════ */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
-/* ── 디자인 토큰 (피그마 ThemeContext 원본값) ── */
-@theme {
-  --max-width-app: 500px;
+/* ───────────────────────────────────────────────────────────────
+   🎨 디자인 토큰 (Figma ThemeContext 원본)
+   ─────────────────────────────────────────────────────────────── */
 
-  /* Primary — Beige-5 (#A69D92) */
+@theme {
+  /* 레이아웃 */
+  --max-width-app: 500px;
+  --shadow-app: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 20px 80px rgba(0, 0, 0, 0.08);
+
+  /* ─── 브랜드 컬러: Primary Beige (#A69D92) ─── */
   --color-brand: #a69d92;
   --color-brand-light: #bfb6aa;
   --color-brand-dark: #8c8277;
   --color-brand-bg: #f2efe9;
   --color-brand-pale: #f7f5f1;
 
-  /* Warm — Beige 팔레트로 통일 */
+  /* ─── Warm 톤: Beige 팔레트 ─── */
   --color-warm: #a69d92;
   --color-warm-bg: #f2efe9;
   --color-warm-beige: #bfb6aa;
   --color-warm-amber: #c4b5a0;
 
-  /* 배경 — Beige-1 (#F2EFE9) */
+  /* ─── 배경 컬러: Beige Base (#F2EFE9) ─── */
   --color-bg-base: #f2efe9;
   --color-bg-surface: #ece8e2;
   --color-bg-card: #ffffff;
   --color-bg-beige: #f2efe9;
   --color-bg-chip: #ece8e2;
+  --color-bg-muted-warm: #e8e3dd;
+  --color-bg-like: #fff0f0;
 
-  /* 텍스트 */
+  /* ─── 텍스트 컬러: 농도별 계층 ─── */
   --color-text-primary: #2a2118;
   --color-text-secondary: #7a7268;
   --color-text-sub: #6e6358;
@@ -36,22 +47,57 @@
   --color-text-hint: #8c8277;
   --color-text-faint: #bfb6aa;
   --color-text-disabled: #d9d5d0;
+  --color-text-warm: #8c7e6e;
+  --color-text-stone: #a09080;
 
-  /* 보더 — Beige 팔레트 */
+  /* ─── 보더 컬러: Beige 팔레트 ─── */
   --color-border: #e2ddd8;
   --color-border-warm: #d9d1c7;
   --color-border-dash: #d9d5d0;
+  --color-border-subtle: #ddd9d3;
 
-  /* 추가 토큰 — 컴포넌트 공통 하드코딩값 추출 */
-  --color-bg-muted-warm: #e8e3dd; /* 배지 bg, 점수링 트랙, X버튼 bg */
-  --color-text-warm: #8c7e6e; /* 카테고리 accent, 설명 텍스트 */
-  --color-text-stone: #a09080; /* 검색 아이콘, muted stone */
-  --color-border-subtle: #ddd9d3; /* 카드 border */
-  --color-chip-base: #f2efe9; /* 칩 inactive bg */
-  --color-bg-like: #fff0f0; /* 찜 / 피해야 할 제품 연빨간 bg */
-  --color-danger: #ef4444; /* 피해야 할 제품 아이콘 */
+  /* ─── 시스템 컬러 ─── */
+  --color-chip-base: #f2efe9;
+  --color-danger: #ef4444;
 
-  /* EWG */
+  /* ─── 🏷️ CategoryFilter 컴포넌트 ─── */
+  --color-category-active-text: #6b5445;
+  --color-category-inactive-text: #a8a39d;
+  --color-category-active-pill: #9b7d6a;
+  --color-category-sub-bg: #f5f1eb;
+  --color-category-pill-default-bg: #f2efe9;
+  --color-category-pill-default-text: #8a8278;
+  --color-category-pill-default-border: #e2ddd8;
+
+  /* ─── 🧭 BottomNav 컴포넌트 ─── */
+  --color-nav-bg: #fdfcfb;
+  --color-nav-active: #5a504a;
+  --color-nav-inactive: #c4beb7;
+  --color-nav-home-active-bg: #5a504a;
+  --color-nav-home-inactive-bg: #eae5df;
+  --color-nav-home-active-icon: #fdfcfb;
+  --color-nav-home-inactive-icon: #8c847c;
+  --shadow-nav-home-active: 0 2px 8px rgba(90, 80, 74, 0.3);
+  --shadow-nav-home-inactive: 0 1px 4px rgba(90, 80, 74, 0.12);
+
+  /* ─── 📦 ProductListItem 컴포넌트 ─── */
+  --color-product-card-bg-default: #fafafa;
+  --color-product-card-border-default: #f0f0f0;
+  --color-product-brand: #9e9e9e;
+  --color-product-name: #1a1a1a;
+  --color-product-price: #1a1a1a;
+  --color-product-volume: #9e9e9e;
+  --color-product-routine-badge-bg: #f0f2e8;
+  --color-product-action-bg: #f5f5f5;
+  --color-product-action-text: #9e9e9e;
+  --color-product-routine-active-bg: #e8f0e0;
+  --color-product-like-active-text: #e57373;
+  --color-product-compare-active-bg: #e8f5e9;
+  --color-product-compare-active-text: #4caf50;
+  --color-product-tag-default-bg: #f8f6f0;
+  --shadow-product-thumb: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  /* ─── ⚠️ EWG 안전도 등급 ─── */
   --color-ewg-safe: #6b9e6b;
   --color-ewg-safe-bg: #e8f5e9;
   --color-ewg-caution: #d4a84b;
@@ -59,7 +105,7 @@
   --color-ewg-danger: #d94f3d;
   --color-ewg-danger-bg: #ffebee;
 
-  /* 반경 — 피그마 원본 */
+  /* ─── 📐 Border Radius ─── */
   --radius-card: 16px;
   --radius-button: 32px;
   --radius-chip: 30px;
@@ -68,14 +114,18 @@
   --radius-icon: 12px;
   --radius-xs: 4px;
 
-  /* 그림자 */
+  /* ─── 🌑 Shadows ─── */
   --shadow-card: 0px 5px 16px 0px rgba(166, 157, 146, 0.15);
   --shadow-nav: 0 8px 32px rgba(166, 157, 146, 0.08);
   --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.06);
 
-  /* 높이 */
+  /* ─── 📏 Heights ─── */
   --height-header: 56px;
 }
+
+/* ───────────────────────────────────────────────────────────────
+   🔗 Inline Theme (Shadcn 호환)
+   ─────────────────────────────────────────────────────────────── */
 
 @theme inline {
   --color-background: var(--background);
@@ -91,62 +141,91 @@
   --radius-lg: var(--radius);
 }
 
+/* ───────────────────────────────────────────────────────────────
+   🌐 Root Variables (Shadcn UI System)
+   ─────────────────────────────────────────────────────────────── */
+
 :root {
+  /* Radius */
   --radius: 0.625rem;
+
+  /* Background & Foreground */
   --background: #ffffff;
   --foreground: #2a2118;
+
+  /* Card */
   --card: #ffffff;
   --card-foreground: #2a2118;
+
+  /* Popover */
   --popover: #ffffff;
   --popover-foreground: #2a2118;
+
+  /* Primary */
   --primary: #a69d92;
   --primary-foreground: #ffffff;
+
+  /* Secondary */
   --secondary: #f2efe9;
   --secondary-foreground: #2a2118;
+
+  /* Muted */
   --muted: #ece8e2;
   --muted-foreground: #a69d92;
+
+  /* Accent */
   --accent: #f2efe9;
   --accent-foreground: #2a2118;
+
+  /* Destructive */
   --destructive: #d94f3d;
+
+  /* Border & Input */
   --border: #e2ddd8;
   --input: #e2ddd8;
+
+  /* Ring (Focus) */
   --ring: #a69d92;
 }
 
+/* ───────────────────────────────────────────────────────────────
+   🎯 Base Styles
+   ─────────────────────────────────────────────────────────────── */
+
 @layer base {
+  /* ─── Global Defaults ─── */
   * {
     @apply border-border outline-ring/50;
   }
 
+  /* ─── HTML & Font Setup ─── */
   html {
-    /* next/font/local이 주입하는 CSS 변수 사용 */
-    /* 영어: Google Sans Flex → 한국어: HCRDotum → 시스템 폰트 순으로 폴백 */
+    /* 폰트: 영어(SortsMillGoudy) → 한글(MaruBuri) → 시스템 폰트 폴백 */
     font-family:
       var(--font-english),
-      var(--font-pretendard),
+      var(--font-korean),
       -apple-system,
       BlinkMacSystemFont,
       system-ui,
-      sans-serif;
+      serif;
     font-size: 16px;
   }
 
+  /* ─── Body Background ─── */
   body {
-    /* Beige-1 (#F2EFE9) 기반 배경 */
-    background-color: #f2efe9;
+    background-color: #f2efe9; /* Beige-1 */
     color: #2a2118;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* 모바일(767px 이하)에서도 베이지 배경 유지 */
   @media (max-width: 767px) {
     body {
       background-color: #f2efe9;
     }
   }
 
-  /* 스크롤바 숨기기 */
+  /* ─── Scrollbar Hidden ─── */
   ::-webkit-scrollbar {
     display: none;
   }
@@ -155,42 +234,403 @@
     -ms-overflow-style: none;
   }
 
-  /* BottomNav 높이 보정용 유틸 클래스 */
-  /* (main)/layout.tsx 의 <main className="pb-nav"> 에서 사용 */
+  /* ─── 🛠️ Utility Classes ─── */
+
+  /* BottomNav 높이 보정 ((main)/layout.tsx에서 사용) */
   .pb-nav {
-    padding-bottom: 92px; /* BottomNav 60px + bottom 16px + 여백 16px */
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* 피그마 MobileFrame: 13px 미만 폰트 강제 최소화 방지 */
+  /* 피그마 기준 최소 폰트 크기 (13px) */
   .text-xs {
     font-size: 13px !important;
   }
 
+  /* ─── 📝 Typography ─── */
   h1 {
     font-size: 24px;
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1.3;
     letter-spacing: -0.5px;
   }
+
   h2 {
     font-size: 18px;
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1.4;
     letter-spacing: -0.3px;
   }
+
   h3 {
     font-size: 16px;
     font-weight: 600;
     line-height: 1.4;
   }
+
   p {
     line-height: 1.6;
   }
 
-  button {
-    font-family: inherit;
-  }
+  button,
   input {
     font-family: inherit;
+  }
+
+  /* ───────────────────────────────────────────────────────────
+     🏷️ CategoryFilter Component
+     ─────────────────────────────────────────────────────────── */
+
+  /* 대분류 탭 버튼 */
+  .category-tab-button {
+    flex-shrink: 0;
+    height: 44px;
+    padding: 0 14px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    position: relative;
+    transition: color 0.15s;
+    color: var(--color-category-inactive-text);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+
+  .category-tab-button[data-active="true"] {
+    color: var(--color-category-active-text);
+    border-bottom-color: var(--color-category-active-text);
+  }
+
+  /* 소분류 pill 버튼 (기본 스타일) */
+  .category-pill-button {
+    height: 30px;
+    padding: 0 12px;
+    border-radius: var(--radius-modal);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid;
+    transition: all 0.15s;
+    background-color: var(--color-category-pill-default-bg);
+    color: var(--color-category-pill-default-text);
+    border-color: var(--color-category-pill-default-border);
+  }
+
+  /* 소분류 pill 버튼 (활성) */
+  .category-pill-button[data-active="true"] {
+    background-color: var(--color-category-active-pill);
+    color: #ffffff;
+    border-color: var(--color-category-active-pill);
+  }
+
+  /* 소분류 pill 버튼 (카테고리별 동적 색상) */
+  .category-pill-button[data-has-color="true"]:not([data-active="true"]) {
+    background-color: var(--pill-bg);
+    color: var(--pill-color);
+    border-color: var(--pill-border);
+  }
+
+  /* ───────────────────────────────────────────────────────────
+     🧭 BottomNav Component
+     ─────────────────────────────────────────────────────────── */
+
+  /* 네비게이션 컨테이너 */
+  .bottom-nav-container {
+    width: 100%;
+    max-width: var(--max-width-app);
+    height: var(--height-header);
+    background-color: var(--color-nav-bg);
+    border-top: 1px solid var(--color-border);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+
+  /* 공통 탭 버튼 */
+  .bottom-nav-button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    transition: opacity 0.15s;
+  }
+
+  /* 홈 버튼 원형 배경 */
+  .bottom-nav-home-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2px;
+    background-color: var(--color-nav-home-inactive-bg);
+    box-shadow: var(--shadow-nav-home-inactive);
+    transition:
+      background-color 0.15s,
+      box-shadow 0.15s;
+  }
+
+  .bottom-nav-home-circle[data-active="true"] {
+    background-color: var(--color-nav-home-active-bg);
+    box-shadow: var(--shadow-nav-home-active);
+  }
+
+  /* 일반 탭 아이콘 */
+  .bottom-nav-icon {
+    transition: color 0.15s;
+    color: var(--color-nav-inactive);
+  }
+
+  .bottom-nav-icon[data-active="true"] {
+    color: var(--color-nav-active);
+  }
+
+  /* 홈 탭 아이콘 */
+  .bottom-nav-home-icon {
+    transition: color 0.15s;
+    color: var(--color-nav-home-inactive-icon);
+  }
+
+  .bottom-nav-home-icon[data-active="true"] {
+    color: var(--color-nav-home-active-icon);
+  }
+
+  /* 활성 표시 선 */
+  .bottom-nav-indicator {
+    position: absolute;
+    bottom: 0;
+    width: 20px;
+    height: 2px;
+    background-color: var(--color-brand);
+  }
+
+  /* ───────────────────────────────────────────────────────────
+     📦 ProductListItem Component
+     ─────────────────────────────────────────────────────────── */
+
+  /* 카드 컨테이너 */
+  .product-list-card {
+    padding: 14px;
+    border-radius: 14px;
+    transition: all 0.2s;
+    background-color: var(--color-product-card-bg-default);
+    border: 1.5px solid var(--color-product-card-border-default);
+  }
+
+  .product-list-card[data-has-color="true"] {
+    background-color: var(--card-bg);
+    border-color: var(--card-border);
+  }
+
+  /* 썸네일 */
+  .product-list-thumb {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-product-thumb);
+    border: 1px solid var(--color-product-card-border-default);
+    font-size: 32px;
+  }
+
+  .product-list-thumb[data-has-color="true"] {
+    border-color: var(--card-border);
+  }
+
+  .product-list-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* 텍스트 요소 */
+  .product-list-brand {
+    font-size: 10px;
+    color: var(--color-product-brand);
+    font-weight: 600;
+  }
+
+  .product-list-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-product-name);
+  }
+
+  .product-list-price {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-product-price);
+  }
+
+  .product-list-volume {
+    font-size: 11px;
+    color: var(--color-product-volume);
+  }
+
+  /* 배지 */
+  .product-list-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+
+  .product-list-badge-routine {
+    background-color: var(--color-product-routine-badge-bg);
+    color: var(--color-brand);
+  }
+
+  .product-list-badge-category {
+    background-color: var(--badge-bg);
+    color: var(--badge-color);
+  }
+
+  /* 태그 */
+  .product-list-tag {
+    font-size: 9px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+    background-color: var(--tag-bg);
+    color: var(--tag-color);
+  }
+
+  /* 액션 버튼 (기본) */
+  .product-list-action-btn {
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: none;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: var(--color-product-action-bg);
+    color: var(--color-product-action-text);
+  }
+
+  .product-list-action-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* 액션 버튼 (루틴) */
+  .product-list-action-btn[data-variant="routine"] {
+    background-color: var(--color-product-routine-badge-bg);
+    color: var(--color-brand);
+  }
+
+  .product-list-action-btn[data-variant="routine"][data-active="true"] {
+    background-color: var(--color-product-routine-active-bg);
+  }
+
+  /* 액션 버튼 (찜) */
+  .product-list-action-btn[data-variant="like"][data-active="true"] {
+    background-color: var(--color-bg-like);
+    color: var(--color-product-like-active-text);
+  }
+
+  /* 액션 버튼 (비교) */
+  .product-list-action-btn[data-variant="compare"] {
+    padding: 0 10px;
+  }
+
+  .product-list-action-btn[data-variant="compare"][data-active="true"] {
+    background-color: var(--color-product-compare-active-bg);
+    color: var(--color-product-compare-active-text);
+  }
+
+  /* ───────────────────────────────────────────────────────────
+     📄 Pagination Component
+     ─────────────────────────────────────────────────────────── */
+
+  /* 페이지네이션 컨테이너 */
+  .pagination-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 16px 0 20px;
+  }
+
+  /* 이전/다음 버튼 */
+  .pagination-nav-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-bg-card);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .pagination-nav-button[data-disabled="true"] {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .pagination-nav-button:not([data-disabled="true"]):hover {
+    opacity: 0.8;
+  }
+
+  .pagination-nav-button:not([data-disabled="true"]):active {
+    transform: scale(0.95);
+  }
+
+  /* 페이지 번호 버튼 */
+  .pagination-page-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-bg-card);
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .pagination-page-button[data-active="true"] {
+    border-color: var(--color-text-primary);
+    background-color: var(--color-text-primary);
+    color: var(--color-bg-card);
+    font-weight: 700;
+  }
+
+  .pagination-page-button:not([data-active="true"]):hover {
+    border-color: var(--color-brand);
+    background-color: var(--color-brand-pale);
+  }
+
+  .pagination-page-button:active {
+    transform: scale(0.95);
+  }
+
+  /* 아이콘 */
+  .pagination-icon {
+    color: var(--color-text-hint);
   }
 }

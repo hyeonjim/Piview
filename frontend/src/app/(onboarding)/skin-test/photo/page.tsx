@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, SwitchCamera, ImagePlus } from "lucide-react";
+import { useOcr } from "@/hooks";
+
 
 // ── 스타일 상수 ──────────────────────────────────────────────────────
 const CAMERA_Z_INDEX = { zIndex: 1 };
@@ -39,7 +41,7 @@ const HINT_BOX_STYLE = {
 const HINT_TEXT_STYLE = {
   fontSize: "13px",
   color: "#fff",
-  fontWeight: 500,
+  fontWeight: 600,
   textAlign: "center" as const,
   margin: 0,
 };
@@ -82,7 +84,7 @@ const SHUTTER_INNER_STYLE = {
 const HINT_BOTTOM_TEXT = {
   fontSize: "13px",
   color: "rgba(255,255,255,0.5)",
-  fontWeight: 500,
+  fontWeight: 600,
 };
 const UPLOAD_BTN_STYLE = {
   height: 44,
@@ -100,7 +102,7 @@ const RETRY_BTN_STYLE = {
   backgroundColor: "rgba(255,255,255,0.1)",
   color: "rgba(255,255,255,0.55)",
   fontSize: "13px",
-  fontWeight: 500,
+  fontWeight: 600,
 };
 
 /* ── 얼굴 가이드 SVG 오버레이 ── */
@@ -230,9 +232,12 @@ export default function PhotoAnalysisPage() {
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [capturedFile, setCapturedFile] = useState<File | null>(null);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [scanning, setScanning] = useState(true);
   const [flash, setFlash] = useState(false);
+
+  const { mutate: recognize, isPending: isAnalyzing } = useOcr();
 
   /* ── 카메라 시작 ── */
   const startCamera = useCallback(async (facing: "user" | "environment") => {
@@ -292,6 +297,10 @@ export default function PhotoAnalysisPage() {
     setFlash(true);
     setTimeout(() => setFlash(false), 150);
     setPreview(canvas.toDataURL("image/jpeg", 0.9));
+    // canvas → File 변환
+    canvas.toBlob((blob) => {
+      if (blob) setCapturedFile(new File([blob], "capture.jpg", { type: "image/jpeg" }));
+    }, "image/jpeg", 0.9);
     setScanning(false);
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
@@ -302,6 +311,7 @@ export default function PhotoAnalysisPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setCapturedFile(file);
     const reader = new FileReader();
     reader.onload = (ev) => {
       setPreview(ev.target?.result as string);
@@ -316,6 +326,7 @@ export default function PhotoAnalysisPage() {
   /* ── 다시 촬영 ── */
   const retake = () => {
     setPreview(null);
+    setCapturedFile(null);
     setScanning(true);
     startCamera(facingMode);
   };
@@ -325,9 +336,25 @@ export default function PhotoAnalysisPage() {
     else if (cameraError) fileRef.current?.click();
   };
 
-  /* ── AI 분석 시작 → skin-test/select로 이동 (TODO: 실제 AI 분석 연동) ── */
+  /* ── AI 분석 시작 ── */
   const handleAnalysisStart = () => {
-    router.push("/mypage");
+    if (!capturedFile || isAnalyzing) return;
+    recognize(capturedFile, {
+      onSuccess: (result) => {
+        if (result.success && result.productId) {
+          // OCR 성공 → 제품 상세 페이지로 이동
+          // ⚠️ GET /products/{id} 미구현 시 mock 유지
+          router.push(`/product/${result.productId}`);
+        } else {
+          // 인식 실패 → 직접 선택 페이지로 이동
+          router.push("/skin-test/select");
+        }
+      },
+      onError: () => {
+        // API 오류 → 직접 선택 페이지로 이동
+        router.push("/skin-test/select");
+      },
+    });
   };
 
   return (
@@ -506,18 +533,22 @@ export default function PhotoAnalysisPage() {
           <div className="flex flex-col items-center pt-5 pb-3 gap-3 px-6">
             <button
               onClick={handleAnalysisStart}
+              disabled={isAnalyzing}
               className="w-full transition-all active:scale-[0.97] cursor-pointer border-none"
               style={{
                 height: 52,
                 borderRadius: "16px",
-                background: "linear-gradient(135deg, #A2AA7B, #8a9468)",
+                background: isAnalyzing
+                  ? "rgba(162,170,123,0.5)"
+                  : "linear-gradient(135deg, #A2AA7B, #8a9468)",
                 color: "#fff",
                 fontSize: "15px",
                 fontWeight: 600,
-                boxShadow: "0 4px 16px rgba(162,170,123,0.4)",
+                boxShadow: isAnalyzing ? "none" : "0 4px 16px rgba(162,170,123,0.4)",
+                cursor: isAnalyzing ? "default" : "pointer",
               }}
             >
-              🤖 AI 분석 시작하기
+              {isAnalyzing ? "🔍 분석 중..." : "🤖 AI 분석 시작하기"}
             </button>
             <div className="flex gap-3 w-full">
               <button

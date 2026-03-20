@@ -10,7 +10,6 @@
  * → "이 import가 mock인가 아닌가"를 경로만 봐도 알 수 있도록 분리 유지.
  */
 
-export * from "./categories";
 export * from "./categoryColors";
 export * from "./skinTypes";
 export * from "./skinTypeInfo";
@@ -21,5 +20,5 @@ export * from "./skinTestOptions";
 export * from "./insights";
 export * from "./userSettings";
 export * from "./productCategories";
-export * from "./filterDefaults";
 export * from "./allergens";
+export * from "./pagination";

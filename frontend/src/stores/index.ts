@@ -8,8 +8,33 @@ export {
   selectSkinType,
   selectGender,
   selectUserName,
+  selectAccessToken,
 } from "./useUserStore";
-export { useRoutineStore } from "./useRoutineStore";
-export { useLocalRoutineStore } from "./useLocalRoutineStore";
+
+export {
+  useRoutineStore,
+  selectConflicts,
+  selectMissingSteps,
+  selectRoutineCount,
+  selectLocalRoutine,
+  selectIsMainRoutine,
+  selectCurrentRoutineName,
+  selectSavedRoutines,
+} from "./useRoutineStore";
+
+// ⚠️ API 연동 시 삭제 예정 — 하위 호환성 유지를 위한 alias
+export { useRoutineStore as useLocalRoutineStore } from "./useRoutineStore";
+
+// 타입 re-export (기존 import 경로 유지)
+export type {
+  LocalProduct,
+  LocalRoutineMap,
+  SavedRoutine,
+  RoutineStepMeta,
+} from "./useRoutineStore";
+export { ROUTINE_STEP_META } from "./useRoutineStore";
+
 export { useFilterStore, selectActiveFilterCount } from "./useFilterStore";
 export { useSurveyStore } from "./useSurveyStore";
+export { useOwnedStore } from "./useOwnedStore";
+export { useLikeStore } from "./useLikeStore";
