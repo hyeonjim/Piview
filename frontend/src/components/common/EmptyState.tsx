@@ -2,14 +2,11 @@
 // 검색 결과 없음, 루틴 없음 등 빈 상태 표시
 import { type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Button from "./Button";
 
 interface EmptyStateProps {
   icon?: LucideIcon;
   title: string;
   description?: string;
-  actionLabel?: string;
-  onAction?: () => void;
   className?: string;
 }
 
@@ -17,15 +14,13 @@ export default function EmptyState({
   icon: Icon,
   title,
   description,
-  actionLabel,
-  onAction,
   className,
 }: EmptyStateProps) {
   return (
     <div
       className={cn(
         "flex flex-col items-center justify-center gap-3 py-16 text-center",
-        className
+        className,
       )}
     >
       {Icon && (
@@ -38,11 +33,6 @@ export default function EmptyState({
         <p className="text-sm text-text-muted max-w-[240px] leading-relaxed">
           {description}
         </p>
-      )}
-      {actionLabel && onAction && (
-        <Button variant="primary" size="sm" onClick={onAction} className="mt-2">
-          {actionLabel}
-        </Button>
       )}
     </div>
   );

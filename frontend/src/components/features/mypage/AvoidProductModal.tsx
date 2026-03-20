@@ -25,6 +25,7 @@ import { X, Search, ShieldAlert, Minus, Plus } from "lucide-react";
 import { CATEGORY_COLORS } from "@/constants/categoryColors";
 import { MOCK_SEARCH_PRODUCTS } from "@/constants/_mock/searchProducts";
 import type { OwnedProduct } from "@/stores/useOwnedStore";
+import { getCategoryDisplayName } from "@/utils/format";
 
 interface AvoidProductModalProps {
   avoidProducts: OwnedProduct[];
@@ -130,7 +131,7 @@ export default function AvoidProductModal({
                           color: CATEGORY_COLORS[product.category].accent,
                         }}
                       >
-                        {product.category}
+                        {getCategoryDisplayName(product.category)}
                       </span>
                     )}
                   </div>

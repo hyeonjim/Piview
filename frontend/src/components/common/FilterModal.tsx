@@ -40,9 +40,8 @@ export function FilterModal({
   onChange,
   onReset,
   resultCount,
-  availableBrands,
 }: FilterModalProps) {
-  const { filterSkin, filterFns, filterChosung, filterBrands, priceRange } =
+  const { filterSkin, filterFns, priceRange } =
     state;
 
   useEffect(() => {

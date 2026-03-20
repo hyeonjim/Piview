@@ -1,6 +1,7 @@
 "use client";
 
 import { Search, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
   value: string;
@@ -9,46 +10,43 @@ interface SearchBarProps {
   className?: string;
 }
 
-export default function SearchBar({ value, onChange, placeholder = "검색...", className = "" }: SearchBarProps) {
+export default function SearchBar({
+  value,
+  onChange,
+  placeholder = "검색...",
+  className,
+}: SearchBarProps) {
   return (
-    <div className={`relative w-full ${className}`}>
-      <Search size={14} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#C4BEB7", pointerEvents: "none" }} />
+    <div className={cn("relative w-full", className)}>
+      {/* 검색 아이콘 */}
+      <Search
+        size={14}
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+      />
+
+      {/* 입력 필드 */}
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        style={{
-          width: "100%",
-          height: "38px",
-          paddingLeft: "36px",
-          paddingRight: value ? "34px" : "12px",
-          borderRadius: "8px",
-          border: `1px solid ${value ? "#C4BEB7" : "#EDEBE8"}`,
-          backgroundColor: "#FAFAF8",
-          fontSize: "13px",
-          color: "#1C1C1E",
-          outline: "none",
-          boxSizing: "border-box",
-          transition: "border-color 0.15s",
-        }}
+        className={cn(
+          "w-full h-[38px] pl-9",
+          "rounded-lg border text-sm text-text-primary",
+          "outline-none transition-colors duration-150",
+          "bg-[#FAFAF8]",
+          value ? "pr-[34px] border-[#C4BEB7]" : "pr-3 border-border"
+        )}
       />
+
+      {/* 지우기 버튼 */}
       {value && (
         <button
           onClick={() => onChange("")}
-          className="flex items-center justify-center cursor-pointer border-none"
-          style={{
-            position: "absolute",
-            right: "10px",
-            top: "50%",
-            transform: "translateY(-50%)",
-            width: "18px",
-            height: "18px",
-            borderRadius: "50%",
-            backgroundColor: "#D9D5D0",
-          }}
+          className="absolute right-[10px] top-1/2 -translate-y-1/2 w-[18px] h-[18px] rounded-full bg-border-dash flex items-center justify-center"
+          aria-label="검색어 지우기"
         >
-          <X size={10} style={{ color: "#FFFFFF" }} strokeWidth={2.5} />
+          <X size={10} className="text-white" strokeWidth={2.5} />
         </button>
       )}
     </div>

@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useRef } from "react";
-import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
+import { useRoutineStore } from "@/stores";
 import { routineService } from "@/services/routine";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
 import type { DraftItem } from "@/types/routine";
@@ -26,7 +26,7 @@ const DEBOUNCE_DELAY_MS = 500;
 
 export function useSyncRoutineDraft(): void {
   // routine이 바뀔 때만 이 훅이 재실행됨
-  const routine = useLocalRoutineStore((state) => state.routine);
+  const routine = useRoutineStore((state) => state.localRoutine);
 
   // setTimeout ID 보관 — cleanup 시 취소용
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

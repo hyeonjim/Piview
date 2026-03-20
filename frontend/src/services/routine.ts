@@ -1,22 +1,6 @@
 /**
  * services/routine.ts
  * 루틴 관련 API 서비스
- *
- * 담당 엔드포인트 (현지):
- *  - GET    /api/v1/routines/draft          임시 루틴 조회
- *  - DELETE /api/v1/routines/draft          임시 루틴 비우기 (초기화)
- *  - DELETE /api/v1/routines/draft/{id}     임시 루틴에서 제품 삭제
- *  - POST   /api/v1/routines                (최종) 루틴 생성 및 저장
- *  - GET    /api/v1/routines                루틴 전체 목록 조회
- *  - GET    /api/v1/routines/main           메인 루틴 조회
- *  - GET    /api/v1/routines/{routineId}    루틴 상세 조회
- *  - PATCH  /api/v1/routines/{routineId}/main   메인 루틴 선택
- *  - PATCH  /api/v1/routines/{routineId}/order  루틴 내 제품 순서 수정
- *  - DELETE /api/v1/routines/{routineId}    루틴 삭제
- *
- * 기존 연결 완료 항목:
- *  - POST /api/v1/routines/draft (addDraft)
- *  - PUT  /api/v1/routines/draft (syncDraft)
  */
 
 import client from "./client";
@@ -30,8 +14,6 @@ import type {
 } from "@/types/routine";
 
 export const routineService = {
-  // ── 임시 루틴(Draft) ────────────────────────────────────────────
-
   /**
    * 임시 루틴(draft)에 제품 추가
    * POST /api/v1/routines/draft
@@ -52,24 +34,21 @@ export const routineService = {
    *
    * @param items - 현재 루틴의 전체 제품 목록 (순서 포함)
    */
-  syncDraft: (items: DraftItem[]) =>
-    client.put("/routines/draft", items),
+  syncDraft: (items: DraftItem[]) => client.put("/routines/draft", items),
 
   /**
    * 임시 루틴(draft) 조회
    * GET /api/v1/routines/draft
    * 이전에 담다가 나갔던 화장품 목록이 있다면 화면에 그대로 복원
    */
-  getDraft: () =>
-    client.get<DraftItemDto[]>("/routines/draft"),
+  getDraft: () => client.get<DraftItemDto[]>("/routines/draft"),
 
   /**
    * 임시 루틴(draft) 전체 비우기 (초기화)
    * DELETE /api/v1/routines/draft
    * Redis 공간을 깔끔하게 비워줌
    */
-  clearDraft: () =>
-    client.delete("/routines/draft"),
+  clearDraft: () => client.delete("/routines/draft"),
 
   /**
    * 임시 루틴(draft)에서 특정 제품 삭제
@@ -96,16 +75,14 @@ export const routineService = {
    * GET /api/v1/routines
    * 사용자가 저장한 전체 루틴 목록을 불러옴
    */
-  getUserRoutines: () =>
-    client.get<RoutineListResponse[]>("/routines"),
+  getUserRoutines: () => client.get<RoutineListResponse[]>("/routines"),
 
   /**
    * 메인 루틴 조회
    * GET /api/v1/routines/main
    * 현재 메인 화면에 노출할 루틴 1개 조회
    */
-  getMainRoutine: () =>
-    client.get<RoutineResponse>("/routines/main"),
+  getMainRoutine: () => client.get<RoutineResponse>("/routines/main"),
 
   /**
    * 루틴 상세 조회
@@ -141,6 +118,5 @@ export const routineService = {
    * 저장한 루틴을 삭제
    * @param routineId - 삭제할 루틴 ID
    */
-  deleteRoutine: (routineId: number) =>
-    client.delete(`/routines/${routineId}`),
+  deleteRoutine: (routineId: number) => client.delete(`/routines/${routineId}`),
 };

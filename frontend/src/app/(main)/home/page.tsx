@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { Leaf, Sun, Moon, Droplets, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { SKINCARE_INSIGHTS } from "@/constants";
-import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
+import { useRoutineStore } from "@/stores";
 import { useUserStore } from "@/stores/useUserStore";
 import { useUserQuery } from "@/hooks";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
@@ -30,11 +30,11 @@ export default function HomePage() {
   // store.user 없을 때 /users/me 재조회 — 새로고침·직접 진입 시 이름 복원
   useUserQuery();
   const greeting = getGreeting();
-  const nickname = useUserStore((s) => s.user?.name ?? "User");
-  const { routine, isMainRoutine } = useLocalRoutineStore();
+  const nickname = useUserStore((state) => state.user?.name ?? "User");
+  const { localRoutine: routine, isMainRoutine } = useRoutineStore();
 
   // 로컬 루틴 스토어 rehydrate (localStorage → zustand)
-  useEffect(() => { useLocalRoutineStore.persist.rehydrate(); }, []);
+  useEffect(() => { useRoutineStore.persist.rehydrate(); }, []);
 
   // 각 스텝별 제품 배열을 flat — 스텝당 여러 제품이 있을 수 있음
   const mainRoutineItems = ROUTINE_STEPS.flatMap((step) =>

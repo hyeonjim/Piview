@@ -8,13 +8,12 @@ import { FilterModal, FilterState, FILTER_INITIAL_STATE } from "@/components/com
 import { CategoryFilter } from "@/components/common/CategoryFilter";
 import ProductCard from "@/components/common/ProductCard";
 import { Pagination } from "@/components/common/Pagination";
-import { Toast } from "@/components/common/Toast";
 import EmptyState from "@/components/common/EmptyState";
 import SearchBar from "@/components/common/SearchBar";
 import CompareModal, { type CompareProduct } from "@/components/common/CompareModal";
 import { useToast, useCompare, useProductSearch } from "@/hooks";
 import { useOwnedStore } from "@/stores/useOwnedStore";
-import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
+import { useRoutineStore } from "@/stores";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
 
 import { toSkinTypeParam } from "@/utils/enumConvert";
@@ -44,8 +43,8 @@ export default function RecommendPage() {
   });
 
   // 루틴 상태
-  const routineMap = useLocalRoutineStore((state) => state.routine);
-  const addStepProduct = useLocalRoutineStore((state) => state.addStepProduct);
+  const routineMap = useRoutineStore((state) => state.localRoutine);
+  const addStepProduct = useRoutineStore((state) => state.addStepProduct);
   const isInRoutine = (productId: number) =>
     Object.values(routineMap).flat().filter(Boolean).some((p) => p.id === String(productId));
 
@@ -53,7 +52,6 @@ export default function RecommendPage() {
   const { toggleOwned, ownedProducts } = useOwnedStore();
   const isOwned = (id: number) => ownedProducts.some((p) => p.id === String(id));
 
-  const { toastMessage } = useToast();
   const { compareItems, showCompare, toggleCompare, clearCompare, openCompare, closeCompare, canCompare } =
     useCompare<CompareProduct>();
 
@@ -95,7 +93,6 @@ export default function RecommendPage() {
 
   return (
     <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
-      <Toast msg={toastMessage} />
 
       {showCompare && canCompare && (
         <CompareModal compareItems={compareItems as [CompareProduct, CompareProduct]} onClose={closeCompare} />
