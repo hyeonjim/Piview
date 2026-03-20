@@ -14,7 +14,7 @@ import com.piview.backend.domain.product.catalog.dto.ProductSummaryResponse;
 import com.piview.backend.domain.product.catalog.repository.ProductRepository;
 import com.piview.backend.domain.product.entity.Product;
 import com.piview.backend.domain.product.like.repository.ProductLikeRepository;
-import com.piview.backend.routine.core.dto.*;
+import com.piview.backend.domain.routine.core.dto.*;
 import com.piview.backend.domain.routine.core.entity.MyRoutine;
 import com.piview.backend.domain.routine.core.entity.RoutineColumn;
 import com.piview.backend.domain.routine.core.entity.RoutineDetail;
