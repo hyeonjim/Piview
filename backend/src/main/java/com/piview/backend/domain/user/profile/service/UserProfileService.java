@@ -5,16 +5,17 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
+import com.piview.backend.domain.skin.common.SkinTypeEnum;
 import com.piview.backend.domain.skin.survey.entity.MySkin;
 import com.piview.backend.domain.skin.survey.entity.SurveyAgeGroup;
 import com.piview.backend.domain.skin.survey.entity.SurveyGender;
-import com.piview.backend.domain.skin.survey.entity.SurveySkinType;
 import com.piview.backend.domain.skin.survey.repository.MySkinRepository;
 import com.piview.backend.domain.user.login.entity.User;
 import com.piview.backend.domain.user.profile.dto.request.UserProfileUpdateRequest;
@@ -63,7 +64,7 @@ public class UserProfileService {
             user.setAgeGroup(parseEnum(request.getAgeGroup(), SurveyAgeGroup.class, ErrorCode.INVALID_AGE_GROUP));
         }
         if (request.isMySkinTypePresent()) {
-            user.setMySkinType(parseEnum(request.getMySkinType(), SurveySkinType.class, ErrorCode.INVALID_MY_SKIN_TYPE));
+            user.setMySkinType(parseSkinType(request.getMySkinType()));
         }
         if (request.isSkinProblemsPresent()) {
             List<String> skinProblems = readSkinProblems(request.getSkinProblems());
@@ -153,6 +154,23 @@ public class UserProfileService {
             return Enum.valueOf(enumType, value.trim());
         } catch (IllegalArgumentException exception) {
             throw new CustomException(errorCode);
+        }
+    }
+
+    private SkinTypeEnum parseSkinType(String value) {
+        if (value == null || value.isBlank()) {
+            throw new CustomException(ErrorCode.INVALID_MY_SKIN_TYPE);
+        }
+
+        String normalizedValue = value.trim();
+        if ("DEHYDRATED_OILY".equalsIgnoreCase(normalizedValue)) {
+            return SkinTypeEnum.subuji;
+        }
+
+        try {
+            return SkinTypeEnum.valueOf(normalizedValue.toLowerCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new CustomException(ErrorCode.INVALID_MY_SKIN_TYPE);
         }
     }
 

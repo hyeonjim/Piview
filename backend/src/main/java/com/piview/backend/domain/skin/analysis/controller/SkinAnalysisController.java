@@ -1,6 +1,7 @@
 package com.piview.backend.domain.skin.analysis.controller;
 
 import com.piview.backend.global.exception.ApiResponse;
+import com.piview.backend.global.exception.ErrorResponse;
 import com.piview.backend.global.security.UserPrincipal;
 import com.piview.backend.domain.skin.analysis.dto.response.SkinAnalysisCaptureResponse;
 import com.piview.backend.domain.skin.analysis.dto.response.SkinAnalysisStatusResponse;
@@ -62,8 +63,31 @@ public class SkinAnalysisController {
                             )
                     )
             ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패", content = @Content(schema = @Schema(hidden = true))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content(schema = @Schema(hidden = true)))
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Unauthorized",
+                                    summary = "인증되지 않은 요청",
+                                    value = "{\"timestamp\":\"2026-03-20T03:00:00.000+00:00\",\"status\":401,\"error\":\"Unauthorized\",\"path\":\"/api/v1/skin/analysis/capture\"}"
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "서버 내부 오류",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "InternalServerError",
+                                    summary = "예상하지 못한 서버 오류",
+                                    value = "{\"status\":500,\"error\":\"INTERNAL_SERVER_ERROR\",\"code\":\"INTERNAL_SERVER_ERROR\",\"message\":\"서버 내부 오류가 발생했습니다.\"}"
+                            )
+                    )
+            )
     })
     @PostMapping(value = "/capture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<SkinAnalysisCaptureResponse> captureAnalysis(
@@ -108,7 +132,18 @@ public class SkinAnalysisController {
                             }
                     )
             ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패", content = @Content(schema = @Schema(hidden = true))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Unauthorized",
+                                    summary = "인증되지 않은 요청",
+                                    value = "{\"timestamp\":\"2026-03-20T03:00:00.000+00:00\",\"status\":401,\"error\":\"Unauthorized\",\"path\":\"/api/v1/skin/analysis/35e9064f-7c69-48ee-be1f-5a4a600ad88d\"}"
+                            )
+                    )
+            ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "403",
                     description = "다른 사용자의 analysisId 접근",

@@ -40,14 +40,14 @@ public class UserProfileUpdateRequest {
 
     @Schema(
         description = "수정할 피부타입입니다. 필드를 보내면 허용된 enum 값만 사용할 수 있습니다. 필드를 생략하면 기존 값을 유지합니다.",
-        allowableValues = {"DRY", "OILY", "COMBINATION", "DEHYDRATED_OILY"},
-        example = "DEHYDRATED_OILY"
+        allowableValues = {"dry", "oily", "combination", "subuji"},
+        example = "subuji"
     )
     private String mySkinType;
 
     @ArraySchema(
         schema = @Schema(
-            description = "피부 고민 항목입니다. 설문 문구(`홍조`, `속건조`, `기미/주근깨/잡티`)와 저장 태그(`진정`, `수분`, `색소침착`)를 모두 허용합니다. 필드를 생략하면 기존 목록을 유지하고, 빈 배열 `[]`을 보내면 전체 삭제합니다. `null`은 허용하지 않습니다.",
+            description = "피부 고민 항목입니다. 설문 선택 문구(`홍조`, `속건조`, `기미/주근깨/잡티`)와 현재 프로필 조회 응답에서 받은 값(`진정`, `수분`, `색소침착`)을 모두 보낼 수 있습니다. 필드를 생략하면 기존 목록을 유지하고, 빈 배열 `[]`을 보내면 전체 삭제합니다. `null`은 허용하지 않습니다.",
             example = "홍조"
         ),
         arraySchema = @Schema(

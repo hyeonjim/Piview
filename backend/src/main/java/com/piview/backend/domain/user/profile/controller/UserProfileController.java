@@ -1,5 +1,6 @@
 package com.piview.backend.domain.user.profile.controller;
 
+import com.piview.backend.global.exception.ErrorResponse;
 import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.global.security.UserPrincipal;
 import com.piview.backend.domain.user.profile.dto.request.UserProfileUpdateRequest;
@@ -41,12 +42,35 @@ public class UserProfileController {
                 examples = @ExampleObject(
                     name = "GetMyProfileSuccess",
                     summary = "내 정보 조회 성공",
-                    value = "{\"status\":200,\"message\":\"요청에 성공했습니다.\",\"data\":{\"name\":\"김준\",\"email\":\"test@example.com\",\"imageUrl\":\"https://k.kakaocdn.net/dn/profile.jpg\",\"gender\":\"WOMEN\",\"ageGroup\":\"TWENTIES\",\"mySkinType\":\"DEHYDRATED_OILY\",\"skinProblems\":[\"수분\",\"진정\",\"피지\"]}}"
+                    value = "{\"status\":200,\"message\":\"요청에 성공했습니다.\",\"data\":{\"name\":\"김준\",\"email\":\"test@example.com\",\"imageUrl\":\"https://k.kakaocdn.net/dn/profile.jpg\",\"gender\":\"WOMEN\",\"ageGroup\":\"TWENTIES\",\"mySkinType\":\"subuji\",\"skinProblems\":[\"수분\",\"진정\",\"피지\"]}}"
                 )
             )
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패", content = @Content(schema = @Schema(hidden = true))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음", content = @Content(schema = @Schema(hidden = true)))
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "인증 실패",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    name = "Unauthorized",
+                    summary = "인증되지 않은 요청",
+                    value = "{\"timestamp\":\"2026-03-20T03:00:00.000+00:00\",\"status\":401,\"error\":\"Unauthorized\",\"path\":\"/api/v1/users/me\"}"
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "사용자를 찾을 수 없음",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(
+                    name = "UserNotFound",
+                    summary = "사용자를 찾을 수 없음",
+                    value = "{\"status\":404,\"error\":\"NOT_FOUND\",\"code\":\"USER_NOT_FOUND\",\"message\":\"해당 사용자를 찾을 수 없습니다.\"}"
+                )
+            )
+        )
     })
     @GetMapping("/me")
     public ApiResponse<UserProfileResponse> getMyProfile(
@@ -69,7 +93,7 @@ public class UserProfileController {
                 examples = @ExampleObject(
                     name = "UpdateMyProfileSuccess",
                     summary = "내 정보 수정 성공",
-                    value = "{\"status\":200,\"message\":\"요청에 성공했습니다.\",\"data\":{\"name\":\"김준\",\"email\":\"test@example.com\",\"imageUrl\":\"https://k.kakaocdn.net/dn/profile.jpg\",\"gender\":\"WOMEN\",\"ageGroup\":\"TWENTIES\",\"mySkinType\":\"OILY\",\"skinProblems\":[\"진정\",\"피지\"]}}"
+                    value = "{\"status\":200,\"message\":\"요청에 성공했습니다.\",\"data\":{\"name\":\"김준\",\"email\":\"test@example.com\",\"imageUrl\":\"https://k.kakaocdn.net/dn/profile.jpg\",\"gender\":\"WOMEN\",\"ageGroup\":\"TWENTIES\",\"mySkinType\":\"oily\",\"skinProblems\":[\"진정\",\"피지\"]}}"
                 )
             )
         ),
@@ -97,8 +121,31 @@ public class UserProfileController {
                 }
             )
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패", content = @Content(schema = @Schema(hidden = true))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음", content = @Content(schema = @Schema(hidden = true)))
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "인증 실패",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    name = "Unauthorized",
+                    summary = "인증되지 않은 요청",
+                    value = "{\"timestamp\":\"2026-03-20T03:00:00.000+00:00\",\"status\":401,\"error\":\"Unauthorized\",\"path\":\"/api/v1/users/me\"}"
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "사용자를 찾을 수 없음",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(
+                    name = "UserNotFound",
+                    summary = "사용자를 찾을 수 없음",
+                    value = "{\"status\":404,\"error\":\"NOT_FOUND\",\"code\":\"USER_NOT_FOUND\",\"message\":\"해당 사용자를 찾을 수 없습니다.\"}"
+                )
+            )
+        )
     })
     @PatchMapping("/me")
     public ApiResponse<UserProfileResponse> updateMyProfile(
@@ -113,7 +160,7 @@ public class UserProfileController {
                     @ExampleObject(
                         name = "PartialUpdate",
                         summary = "일부 필드만 수정",
-                        value = "{\"name\":\"김준\",\"mySkinType\":\"OILY\"}"
+                        value = "{\"name\":\"김준\",\"mySkinType\":\"oily\"}"
                     ),
                     @ExampleObject(
                         name = "ReplaceSkinProblems",
