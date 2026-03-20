@@ -2,15 +2,13 @@
 
 import { Heart } from "lucide-react";
 
-
 import { useOwnedStore } from "@/stores/useOwnedStore";
-import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
-import { useToast, useLike, useCompare } from "@/hooks";
+import { useRoutineStore } from "@/stores";
+import { useLike, useCompare } from "@/hooks";
 import ProductCard from "@/components/common/ProductCard";
 import CompareModal, {
   type CompareProduct,
 } from "@/components/common/CompareModal";
-import { Toast } from "@/components/common/Toast";
 import { MOCK_SEARCH_PRODUCTS } from "@/constants/_mock/searchProducts";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
 
@@ -20,8 +18,8 @@ export default function LikesPage() {
   const likedProducts = MOCK_SEARCH_PRODUCTS.filter((p) => likedIds[p.id]);
 
   // 루틴 상태 — 전역 store (상세 페이지와 동기화)
-  const routineMap = useLocalRoutineStore((state) => state.routine);
-  const addStepProduct = useLocalRoutineStore((state) => state.addStepProduct);
+  const routineMap = useRoutineStore((state) => state.localRoutine);
+  const addStepProduct = useRoutineStore((state) => state.addStepProduct);
   const isInRoutine = (productId: string) =>
     Object.values(routineMap)
       .flat()
@@ -32,13 +30,10 @@ export default function LikesPage() {
   const { toggleOwned, ownedProducts } = useOwnedStore();
   const isOwned = (id: string) => ownedProducts.some((p) => p.id === id);
 
-  const { toastMessage } = useToast();
-
   const {
     compareItems,
     showCompare,
     toggleCompare,
-    clearCompare,
     openCompare,
     closeCompare,
     canCompare,
@@ -77,8 +72,6 @@ export default function LikesPage() {
 
   return (
     <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
-      <Toast msg={toastMessage} />
-
       {showCompare && canCompare && (
         <CompareModal
           compareItems={compareItems as [CompareProduct, CompareProduct]}

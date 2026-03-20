@@ -5,8 +5,6 @@
  * 순수 UI 훅
  */
 
-export { useToast } from "./useToast";
-export { useScroll } from "./useScroll";
 export { useCompare } from "./useCompare";
 
 // TanStack Query / 스토어 래퍼 훅 (queries/ 폴더)

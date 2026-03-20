@@ -138,3 +138,46 @@ export interface RoutineDetailOrderDto {
 export interface RoutineOrderUpdateRequest {
   updatedOrders: RoutineDetailOrderDto[];
 }
+
+// ═══════════════════════════════════════════════════════════════
+// ⚠️ API 연동 시 삭제 예정 — 로컬 전용 타입 (퍼블리싱 단계)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * 로컬 전용 제품 타입 (mock)
+ * ⚠️ API 연동 시 ProductSummaryResponse로 교체 후 삭제
+ */
+export interface LocalProduct {
+  id: string;
+  brand: string;
+  name: string;
+  category: string;
+  emoji: string;
+  skinTypes: string[];
+  effects: string[];
+  matchScore: number;
+  imageUrl?: string;
+  price?: number;
+  ewgSafe?: number;
+  ewgCaution?: number;
+  ewgDanger?: number;
+}
+
+/**
+ * 로컬 루틴 맵 (스텝 코드 → 제품 배열)
+ * ⚠️ API 연동 시 RoutineStepGroupDto로 교체 후 삭제
+ */
+export type LocalRoutineMap = Record<string, LocalProduct[]>;
+
+/**
+ * 저장된 루틴 타입 (localStorage 전용)
+ * ⚠️ API 연동 시 RoutineListResponse로 교체 후 삭제
+ */
+export interface SavedRoutine {
+  id: string;
+  name: string;
+  routine: LocalRoutineMap;
+  productCount: number;
+  savedAt: number;
+  isMain: boolean;
+}

@@ -40,9 +40,8 @@ export function FilterModal({
   onChange,
   onReset,
   resultCount,
-  availableBrands,
 }: FilterModalProps) {
-  const { filterSkin, filterFns, filterChosung, filterBrands, priceRange } =
+  const { filterSkin, filterFns, priceRange } =
     state;
 
   useEffect(() => {
@@ -105,7 +104,6 @@ export function FilterModal({
                 fontWeight: 700,
                 color: "#1C1C1E",
                 letterSpacing: "-0.2px",
-                fontFamily: "var(--font-pretendard), sans-serif",
               }}
             >
               필터
@@ -117,7 +115,6 @@ export function FilterModal({
                 style={{
                   fontSize: "12px",
                   color: "#A8A39D",
-                  fontFamily: "var(--font-pretendard), sans-serif",
                 }}
               >
                 <RotateCcw size={12} /> 초기화
@@ -299,7 +296,6 @@ export function FilterModal({
                   style={{
                     fontSize: "11px",
                     color: "#C4BEB7",
-                    fontFamily: "var(--font-pretendard), sans-serif",
                   }}
                 >
                   0원
@@ -308,7 +304,6 @@ export function FilterModal({
                   style={{
                     fontSize: "11px",
                     color: "#C4BEB7",
-                    fontFamily: "var(--font-pretendard), sans-serif",
                   }}
                 >
                   1,000,000원+
@@ -336,7 +331,6 @@ export function FilterModal({
                 color: "#FFFFFF",
                 fontSize: "14px",
                 fontWeight: 700,
-                fontFamily: "var(--font-pretendard), sans-serif",
                 letterSpacing: "0.01em",
               }}
             >
@@ -371,7 +365,6 @@ function FilterSection({
             fontWeight: 700,
             color: "#1C1C1E",
             letterSpacing: "-0.1px",
-            fontFamily: "var(--font-pretendard), sans-serif",
           }}
         >
           {title}
@@ -382,7 +375,6 @@ function FilterSection({
               margin: 0,
               fontSize: "11px",
               color: "#B0A99F",
-              fontFamily: "var(--font-pretendard), sans-serif",
             }}
           >
             {rightLabel}
@@ -439,7 +431,6 @@ function FilterChip({
         fontSize: "12px",
         fontWeight: active ? 600 : 400,
         cursor: disabled ? "not-allowed" : "pointer",
-        fontFamily: "var(--font-pretendard), sans-serif",
         transition: "all 0.15s",
         opacity: disabled ? 0.5 : 1,
       }}

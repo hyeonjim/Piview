@@ -46,13 +46,13 @@ export const useUserStore = create<UserStore>((set) => ({
   // accessToken + user + avoidContents 모두 초기화
   clearUser: () => set({ user: null, accessToken: null, avoidContents: [], skinType: null, concerns: [] }),
 
-  // skinType 독립 필드 + user 내 두 필드(구버전 호환) 동시 업데이트
+  // skinType 독립 필드 + user 내 mySkinType 필드 동시 업데이트
   // user가 null이어도 독립 필드에 저장되므로 설정 페이지에서 항상 반영됨
   setSkinType: (skinType) =>
     set((state) => ({
       skinType,
       user: state.user
-        ? { ...state.user, skinType, mySkinType: skinType }
+        ? { ...state.user, mySkinType: skinType }
         : null,
     })),
 
@@ -72,10 +72,9 @@ export const useUserStore = create<UserStore>((set) => ({
 }));
 
 // ── 자주 쓰는 selector (컴포넌트에서 import해서 사용) ──
-// mySkinType 우선, 없으면 skinType 폴백 (구버전 호환)
-// mySkinType → skinType(user) → skinType(독립 필드) 순으로 폴백
+// mySkinType(user) 우선, 없으면 skinType(독립 필드) 폴백
 export const selectSkinType = (s: UserStore) =>
-  s.user?.mySkinType ?? s.user?.skinType ?? s.skinType ?? null;
+  s.user?.mySkinType ?? s.skinType ?? null;
 export const selectGender = (s: UserStore) => s.user?.gender ?? null;
 export const selectUserName = (s: UserStore) => s.user?.name ?? "User";
 export const selectAccessToken = (s: UserStore) => s.accessToken;

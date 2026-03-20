@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useCallback } from "react";
+import { use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   GENDER_QUESTION,
@@ -185,7 +185,7 @@ export default function SurveyPage({ params }: { params: Promise<{ id: string }>
 
       {/* 하단 네비게이션 */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-107.5 px-6 pb-6 pt-3 flex items-center justify-between bg-white border-t border-border">
-        <button onClick={goPrev} className="bg-transparent border-none cursor-pointer px-4 py-3 hover:opacity-70 transition-opacity text-text-hint font-medium" style={PREV_BTN_STYLE}>← 이전</button>
+        <button onClick={goPrev} className="bg-transparent border-none cursor-pointer px-4 py-3 hover:opacity-70 transition-opacity text-text-hint font-semibold" style={PREV_BTN_STYLE}>← 이전</button>
         <button onClick={goNext} disabled={isPending} className="px-6 py-2.5 transition-all duration-200 border-none font-semibold" style={{ ...NEXT_BTN_BASE, backgroundColor: selectedAnswer && !isPending ? "var(--color-brand)" : "#F0F0F0", color: selectedAnswer && !isPending ? "#FFFFFF" : "var(--color-text-disabled)", cursor: selectedAnswer && !isPending ? "pointer" : "default", boxShadow: selectedAnswer && !isPending ? "0 2px 8px rgba(162,170,123,0.3)" : "none" }}>
           {isPending ? "제출 중..." : isLast ? "완료 ✓" : "다음 →"}
         </button>

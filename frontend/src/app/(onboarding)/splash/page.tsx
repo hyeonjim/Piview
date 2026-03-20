@@ -100,7 +100,7 @@ export default function SplashPage() {
         <p
           style={{
             ...BRAND_TITLE_STYLE,
-            fontWeight: 500,
+            fontWeight: 600,
             color: "#1A1A1A",
             letterSpacing: "-0.5px",
             margin: 0,

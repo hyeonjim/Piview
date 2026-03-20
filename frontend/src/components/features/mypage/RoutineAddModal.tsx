@@ -38,7 +38,7 @@ import {
 } from "@/constants/categoryColors";
 import { MYPAGE_ROUTINE_STEPS, ROUTINE_STEPS } from "@/constants/routineSteps";
 import { STEP_PRODUCTS } from "@/constants/_mock/mypageProducts";
-import type { LocalProduct } from "@/stores/useLocalRoutineStore";
+import type { LocalProduct } from "@/stores";
 
 interface RoutineAddModalProps {
   openStep: string;
@@ -259,7 +259,7 @@ export default function RoutineAddModal({
                                 return fc ? (
                                   <span
                                     key={fn}
-                                    className="text-[11px] px-2 py-[2px] rounded-[4px] font-medium"
+                                    className="text-[11px] px-2 py-[2px] rounded-[4px] font-bold"
                                     style={{
                                       backgroundColor: fc.chip,
                                       color: fc.accent,
