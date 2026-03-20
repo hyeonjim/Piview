@@ -16,16 +16,16 @@ public class Ingredient {
     @Column(name = "ingredient_id")
     private Long ingredientId;
 
-    @Column(name = "name_en", nullable = false, length = 2000)
+    @Column(name = "name_en", nullable = false, columnDefinition = "TEXT")
     private String nameEn;
 
-    @Column(name = "name_ko", length = 500)
+    @Column(name = "name_ko", columnDefinition = "TEXT")
     private String nameKo;
 
     @Column(name = "has_allergen")
     private Boolean hasAllergen;
 
-    @Column(name = "coos_functions")
+    @Column(name = "coos_functions", columnDefinition = "TEXT")
     private String coosFunctions;
 
     @Column(name = "ewg_score_min")
