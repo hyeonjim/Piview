@@ -3,6 +3,7 @@ package com.piview.backend.skin.survey.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.piview.backend.domain.skin.survey.service.SurveySkinProblemMapper;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;

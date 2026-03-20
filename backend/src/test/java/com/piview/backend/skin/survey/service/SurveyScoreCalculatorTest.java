@@ -3,12 +3,13 @@ package com.piview.backend.skin.survey.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.piview.backend.domain.skin.common.SkinTypeEnum;
+import com.piview.backend.domain.skin.survey.service.SurveyScoreCalculator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.piview.backend.skin.survey.entity.SurveyChoice;
-import com.piview.backend.skin.survey.entity.SurveySkinType;
-import com.piview.backend.skin.survey.service.support.AiSkinSurveySignals;
+import com.piview.backend.domain.skin.survey.entity.SurveyChoice;
+import com.piview.backend.domain.skin.survey.service.support.AiSkinSurveySignals;
 
 class SurveyScoreCalculatorTest {
 
@@ -21,7 +22,7 @@ class SurveyScoreCalculatorTest {
     @Test
     @DisplayName("AI regional 차이 신호가 있으면 복합성이 우선 계산된다.")
     void calculateSkinTypeReturnsHighestScoreType() {
-        SurveySkinType result = surveyScoreCalculator.calculateSkinType(
+        SkinTypeEnum result = surveyScoreCalculator.calculateSkinType(
             SurveyChoice.B,
             SurveyChoice.B,
             SurveyChoice.D,
@@ -29,13 +30,13 @@ class SurveyScoreCalculatorTest {
             DRY_COMBINATION_SIGNALS
         );
 
-        assertEquals(SurveySkinType.COMBINATION, result);
+        assertEquals(SkinTypeEnum.combination, result);
     }
 
     @Test
     @DisplayName("Q5가 A 또는 B이고 수분 low면 수부지 점수가 강화된다.")
     void calculateSkinTypeReturnsDehydratedOilyWhenMoistureAndQuestion5SupportIt() {
-        SurveySkinType result = surveyScoreCalculator.calculateSkinType(
+        SkinTypeEnum result = surveyScoreCalculator.calculateSkinType(
             SurveyChoice.D,
             SurveyChoice.B,
             SurveyChoice.A,
@@ -43,7 +44,7 @@ class SurveyScoreCalculatorTest {
             OILY_LOW_MOISTURE_SIGNALS
         );
 
-        assertEquals(SurveySkinType.DEHYDRATED_OILY, result);
+        assertEquals(SkinTypeEnum.subuji, result);
     }
 
     @Test
