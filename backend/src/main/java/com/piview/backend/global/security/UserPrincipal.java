@@ -1,6 +1,6 @@
 package com.piview.backend.global.security;
 
-import com.piview.backend.user.entity.User;
+import com.piview.backend.domain.user.login.entity.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
