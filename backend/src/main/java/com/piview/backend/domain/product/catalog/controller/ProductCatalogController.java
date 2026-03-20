@@ -9,7 +9,7 @@ import com.piview.backend.domain.product.catalog.dto.ProductFilterMetaResponse;
 import com.piview.backend.domain.product.catalog.dto.ProductPageResponse;
 import com.piview.backend.domain.product.catalog.dto.ProductSearchCondition;
 import com.piview.backend.domain.product.catalog.service.ProductCatalogService;
-import com.piview.backend.domain.product.entity.SkinTypeEnum;
+import com.piview.backend.domain.skin.common.SkinTypeEnum;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

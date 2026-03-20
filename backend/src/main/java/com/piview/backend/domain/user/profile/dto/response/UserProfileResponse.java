@@ -2,9 +2,9 @@ package com.piview.backend.domain.user.profile.dto.response;
 
 import java.util.List;
 
+import com.piview.backend.domain.skin.common.SkinTypeEnum;
 import com.piview.backend.domain.skin.survey.entity.SurveyAgeGroup;
 import com.piview.backend.domain.skin.survey.entity.SurveyGender;
-import com.piview.backend.domain.skin.survey.entity.SurveySkinType;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -47,9 +47,9 @@ public class UserProfileResponse {
     @Schema(
         description = "현재 저장된 피부타입입니다. 아직 설정되지 않았다면 null일 수 있습니다.",
         nullable = true,
-        example = "DEHYDRATED_OILY"
+        example = "subuji"
     )
-    private SurveySkinType mySkinType;
+    private SkinTypeEnum mySkinType;
 
     @ArraySchema(
         schema = @Schema(description = "현재 설정된 피부 고민 항목입니다.", example = "수분"),

@@ -5,8 +5,8 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
+import com.piview.backend.domain.skin.common.SkinTypeEnum;
 import com.piview.backend.domain.skin.survey.entity.SurveyChoice;
-import com.piview.backend.domain.skin.survey.entity.SurveySkinType;
 import com.piview.backend.domain.skin.survey.service.support.AiSkinSurveySignals;
 
 @Component
@@ -17,7 +17,7 @@ public class SurveyScoreCalculator {
     private static final String DRY_SIDE = "dry_side";
     private static final String OILY_SIDE = "oily_side";
 
-    public SurveySkinType calculateSkinType(
+    public SkinTypeEnum calculateSkinType(
         SurveyChoice question3,
         SurveyChoice question4,
         SurveyChoice question5,
@@ -28,8 +28,8 @@ public class SurveyScoreCalculator {
         // AI 신호는 global/regional/moisture 를 보조 가중치로 붙이는 구조다.
         validateQuestions(question3, question4, question5, question6, aiSignals);
 
-        Map<SurveySkinType, Integer> scoreMap = new EnumMap<>(SurveySkinType.class);
-        for (SurveySkinType type : SurveySkinType.values()) {
+        Map<SkinTypeEnum, Integer> scoreMap = new EnumMap<>(SkinTypeEnum.class);
+        for (SkinTypeEnum type : SkinTypeEnum.values()) {
             scoreMap.put(type, 0);
         }
 
@@ -40,23 +40,23 @@ public class SurveyScoreCalculator {
 
         // 최종 점수는 문서 합의대로 설문 점수를 기본값으로 두고
         // AI는 타입을 완전히 뒤집기보다는 특정 방향으로 보정하는 정도로만 가중한다.
-        int dryFinalScore = scoreMap.get(SurveySkinType.DRY) * 2
+        int dryFinalScore = scoreMap.get(SkinTypeEnum.dry) * 2
             + (DRY_SIDE.equals(aiSignals.globalAxis()) ? 2 : 0)
             + (aiSignals.cheekMeanMoistureLow() ? 1 : 0);
-        int combinationFinalScore = scoreMap.get(SurveySkinType.COMBINATION) * 2
+        int combinationFinalScore = scoreMap.get(SkinTypeEnum.combination) * 2
             + (aiSignals.regionalDifferenceExists() ? 1 : 0);
-        int oilyFinalScore = scoreMap.get(SurveySkinType.OILY) * 2
+        int oilyFinalScore = scoreMap.get(SkinTypeEnum.oily) * 2
             + (OILY_SIDE.equals(aiSignals.globalAxis()) ? 2 : 0);
-        int dehydratedOilyFinalScore = scoreMap.get(SurveySkinType.DEHYDRATED_OILY)
+        int dehydratedOilyFinalScore = scoreMap.get(SkinTypeEnum.subuji)
             + (isQuestion5Affirmative(question5) ? 2 : 0)
             + (OILY_SIDE.equals(aiSignals.globalAxis()) ? 2 : 0)
             + (aiSignals.cheekMeanMoistureLow() ? 1 : 0);
 
-        Map<SurveySkinType, Integer> finalScoreMap = new EnumMap<>(SurveySkinType.class);
-        finalScoreMap.put(SurveySkinType.DRY, dryFinalScore);
-        finalScoreMap.put(SurveySkinType.COMBINATION, combinationFinalScore);
-        finalScoreMap.put(SurveySkinType.OILY, oilyFinalScore);
-        finalScoreMap.put(SurveySkinType.DEHYDRATED_OILY, dehydratedOilyFinalScore);
+        Map<SkinTypeEnum, Integer> finalScoreMap = new EnumMap<>(SkinTypeEnum.class);
+        finalScoreMap.put(SkinTypeEnum.dry, dryFinalScore);
+        finalScoreMap.put(SkinTypeEnum.combination, combinationFinalScore);
+        finalScoreMap.put(SkinTypeEnum.oily, oilyFinalScore);
+        finalScoreMap.put(SkinTypeEnum.subuji, dehydratedOilyFinalScore);
 
         return resolveTie(finalScoreMap, question5, aiSignals);
     }
@@ -74,63 +74,63 @@ public class SurveyScoreCalculator {
         }
     }
 
-    private void applyQuestion3(Map<SurveySkinType, Integer> scoreMap, SurveyChoice question3) {
+    private void applyQuestion3(Map<SkinTypeEnum, Integer> scoreMap, SurveyChoice question3) {
         // Q3: 세안 직후 당김/유분 체감 문항.
         // 문서 기준으로 건성/복합성/수부지 초기 점수에 직접 반영한다.
         switch (question3) {
-            case A -> increaseScore(scoreMap, SurveySkinType.DRY, 2);
+            case A -> increaseScore(scoreMap, SkinTypeEnum.dry, 2);
             case B -> { }
-            case C -> increaseScore(scoreMap, SurveySkinType.COMBINATION, 1);
+            case C -> increaseScore(scoreMap, SkinTypeEnum.combination, 1);
             case D -> {
-                increaseScore(scoreMap, SurveySkinType.DRY, 1);
-                increaseScore(scoreMap, SurveySkinType.DEHYDRATED_OILY, 1);
+                increaseScore(scoreMap, SkinTypeEnum.dry, 1);
+                increaseScore(scoreMap, SkinTypeEnum.subuji, 1);
             }
         }
     }
 
-    private void applyQuestion4(Map<SurveySkinType, Integer> scoreMap, SurveyChoice question4) {
+    private void applyQuestion4(Map<SkinTypeEnum, Integer> scoreMap, SurveyChoice question4) {
         // Q4: 시간 경과 후 번들거림과 부위 차이 문항.
         // 복합성/지성 분리에 특히 영향을 주는 질문이라 가중치를 크게 둔다.
         switch (question4) {
-            case A -> increaseScore(scoreMap, SurveySkinType.DRY, 1);
+            case A -> increaseScore(scoreMap, SkinTypeEnum.dry, 1);
             case B -> { }
-            case C -> increaseScore(scoreMap, SurveySkinType.COMBINATION, 2);
-            case D -> increaseScore(scoreMap, SurveySkinType.OILY, 2);
+            case C -> increaseScore(scoreMap, SkinTypeEnum.combination, 2);
+            case D -> increaseScore(scoreMap, SkinTypeEnum.oily, 2);
         }
     }
 
-    private void applyQuestion5(Map<SurveySkinType, Integer> scoreMap, SurveyChoice question5) {
+    private void applyQuestion5(Map<SkinTypeEnum, Integer> scoreMap, SurveyChoice question5) {
         // Q5: 속당김/겉번들 같은 수부지 성향 문항.
         // 수부지 판단과 tie-break 에서 가장 중요한 설문 신호다.
         switch (question5) {
-            case A -> increaseScore(scoreMap, SurveySkinType.DEHYDRATED_OILY, 2);
-            case B -> increaseScore(scoreMap, SurveySkinType.DEHYDRATED_OILY, 1);
-            case C -> increaseScore(scoreMap, SurveySkinType.OILY, 1);
+            case A -> increaseScore(scoreMap, SkinTypeEnum.subuji, 2);
+            case B -> increaseScore(scoreMap, SkinTypeEnum.subuji, 1);
+            case C -> increaseScore(scoreMap, SkinTypeEnum.oily, 1);
             case D -> { }
         }
     }
 
-    private void applyQuestion6(Map<SurveySkinType, Integer> scoreMap, SurveyChoice question6) {
+    private void applyQuestion6(Map<SkinTypeEnum, Integer> scoreMap, SurveyChoice question6) {
         // Q6: 모공/번들/균일성 관련 보조 문항.
         // 지성/복합성 보정에 쓰되, 단독으로 타입을 결정하지는 않도록 가중치를 제한한다.
         switch (question6) {
-            case A -> increaseScore(scoreMap, SurveySkinType.DRY, 1);
-            case B -> increaseScore(scoreMap, SurveySkinType.OILY, 2);
+            case A -> increaseScore(scoreMap, SkinTypeEnum.dry, 1);
+            case B -> increaseScore(scoreMap, SkinTypeEnum.oily, 2);
             case C -> {
-                increaseScore(scoreMap, SurveySkinType.OILY, 1);
-                increaseScore(scoreMap, SurveySkinType.COMBINATION, 1);
+                increaseScore(scoreMap, SkinTypeEnum.oily, 1);
+                increaseScore(scoreMap, SkinTypeEnum.combination, 1);
             }
-            case D -> increaseScore(scoreMap, SurveySkinType.COMBINATION, 2);
+            case D -> increaseScore(scoreMap, SkinTypeEnum.combination, 2);
         }
     }
 
-    private void increaseScore(Map<SurveySkinType, Integer> scoreMap, SurveySkinType type, int score) {
+    private void increaseScore(Map<SkinTypeEnum, Integer> scoreMap, SkinTypeEnum type, int score) {
         // 모든 가중치는 이 헬퍼로만 누적해 규칙 변경 시 추적 지점을 단순화한다.
         scoreMap.put(type, scoreMap.get(type) + score);
     }
 
-    private SurveySkinType resolveTie(
-        Map<SurveySkinType, Integer> finalScoreMap,
+    private SkinTypeEnum resolveTie(
+        Map<SkinTypeEnum, Integer> finalScoreMap,
         SurveyChoice question5,
         AiSkinSurveySignals aiSignals
     ) {
@@ -141,10 +141,10 @@ public class SurveyScoreCalculator {
             .max()
             .orElseThrow(() -> new IllegalStateException("피부 타입 점수 계산에 실패했습니다."));
 
-        boolean dryTied = finalScoreMap.get(SurveySkinType.DRY) == maxScore;
-        boolean combinationTied = finalScoreMap.get(SurveySkinType.COMBINATION) == maxScore;
-        boolean oilyTied = finalScoreMap.get(SurveySkinType.OILY) == maxScore;
-        boolean dehydratedOilyTied = finalScoreMap.get(SurveySkinType.DEHYDRATED_OILY) == maxScore;
+        boolean dryTied = finalScoreMap.get(SkinTypeEnum.dry) == maxScore;
+        boolean combinationTied = finalScoreMap.get(SkinTypeEnum.combination) == maxScore;
+        boolean oilyTied = finalScoreMap.get(SkinTypeEnum.oily) == maxScore;
+        boolean dehydratedOilyTied = finalScoreMap.get(SkinTypeEnum.subuji) == maxScore;
 
         if (dehydratedOilyTied && !isQuestion5Affirmative(question5)) {
             // Q5가 수부지 성향을 지지하지 않으면 수부지는 동점 후보에서 먼저 제외한다.
@@ -154,42 +154,42 @@ public class SurveyScoreCalculator {
         if (oilyTied && dehydratedOilyTied) {
             // 지성과 수부지가 붙으면 "이마 지성 + 볼 건조" 또는 "수분 부족" 신호가 있는 쪽을 수부지로 본다.
             return aiSignals.foreheadOilyCheekDry() || aiSignals.cheekMeanMoistureLow()
-                ? SurveySkinType.DEHYDRATED_OILY
-                : SurveySkinType.OILY;
+                ? SkinTypeEnum.subuji
+                : SkinTypeEnum.oily;
         }
 
         if (dryTied && oilyTied && !combinationTied && !dehydratedOilyTied) {
             // 건성/지성만 정면 충돌하면 얼굴 전체 축(global axis)으로 마지막 결정을 내린다.
-            return DRY_SIDE.equals(aiSignals.globalAxis()) ? SurveySkinType.DRY : SurveySkinType.OILY;
+            return DRY_SIDE.equals(aiSignals.globalAxis()) ? SkinTypeEnum.dry : SkinTypeEnum.oily;
         }
 
         if (isQuestion5Affirmative(question5)) {
             // Q5가 속건조 쪽이면 동점 상황에서도 건성/복합성/수부지를 먼저 검토한다.
             if (dehydratedOilyTied) {
-                return SurveySkinType.DEHYDRATED_OILY;
+                return SkinTypeEnum.subuji;
             }
             if (combinationTied) {
-                return SurveySkinType.COMBINATION;
+                return SkinTypeEnum.combination;
             }
             if (dryTied) {
-                return SurveySkinType.DRY;
+                return SkinTypeEnum.dry;
             }
             if (oilyTied) {
-                return SurveySkinType.OILY;
+                return SkinTypeEnum.oily;
             }
         }
 
         if (combinationTied) {
-            return SurveySkinType.COMBINATION;
+            return SkinTypeEnum.combination;
         }
         if (dryTied) {
-            return SurveySkinType.DRY;
+            return SkinTypeEnum.dry;
         }
         if (oilyTied) {
-            return SurveySkinType.OILY;
+            return SkinTypeEnum.oily;
         }
         if (dehydratedOilyTied) {
-            return SurveySkinType.DEHYDRATED_OILY;
+            return SkinTypeEnum.subuji;
         }
 
         throw new IllegalStateException("피부 타입 동점 해소에 실패했습니다.");
