@@ -23,4 +23,15 @@ export const authService = {
    * 백엔드가 httpOnly 쿠키를 maxAge=0으로 만료 처리
    */
   logout: () => client.post("/auth/logout"),
+
+  /**
+   * 개발용 로그인 (테스트 전용)
+   * 이메일을 전달하면 해당 유저의 Access Token을 발급
+   * 유저가 없으면 새로 생성
+   * 반환: JWT 토큰 문자열
+   */
+  devLogin: (email: string = "test@kakao.com") =>
+    client
+      .get<ApiResponse<string>>(`/auth/dev/login?email=${encodeURIComponent(email)}`)
+      .then((response) => response.data.data),
 };

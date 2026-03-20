@@ -6,11 +6,6 @@ export { default as ProductCard } from "./ProductCard";
 export { default as EWGIndicator } from "./EWGIndicator";
 export { default as EmptyState } from "./EmptyState";
 export { default as CompareModal } from "./CompareModal";
-export {
-  ProductCardSkeleton,
-  ProductCardHorizontalSkeleton,
-  RoutineCardSkeleton,
-} from "./Skeletons";
 
 export { Pagination } from "./Pagination";
 export { CategoryFilter } from "./CategoryFilter";
