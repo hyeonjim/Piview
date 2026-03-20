@@ -13,17 +13,28 @@ import { ROUTINE_STEPS } from "@/constants/routineSteps";
 function getGreeting(): { text: string; icon: React.ReactNode } {
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 12)
-    return { text: "Morning Glow", icon: <Sun size={13} className="text-[#C8A96E]" /> };
+    return {
+      text: "Morning Glow",
+      icon: <Sun size={13} className="text-[#C8A96E]" />,
+    };
   if (hour >= 12 && hour < 18)
-    return { text: "Afternoon Care", icon: <Sun size={13} className="text-[#C8A96E]" /> };
-  return { text: "Evening Ritual", icon: <Moon size={13} className="text-[#A8A39D]" /> };
+    return {
+      text: "Afternoon Care",
+      icon: <Sun size={13} className="text-[#C8A96E]" />,
+    };
+  return {
+    text: "Evening Ritual",
+    icon: <Moon size={13} className="text-[#A8A39D]" />,
+  };
 }
 
 // 아이콘 이름 → JSX 컴포넌트 매핑 (SKINCARE_INSIGHTS.iconName에 대응)
 const ICON_MAP = {
-  droplets: (size: number) => <Droplets size={size} className="text-[#8A9468]" />,
-  sun:      (size: number) => <Sun size={size} className="text-[#C8A96E]" />,
-  leaf:     (size: number) => <Leaf size={size} className="text-[#8A9468]" />,
+  droplets: (size: number) => (
+    <Droplets size={size} className="text-[#8A9468]" />
+  ),
+  sun: (size: number) => <Sun size={size} className="text-[#C8A96E]" />,
+  leaf: (size: number) => <Leaf size={size} className="text-[#8A9468]" />,
 };
 
 export default function HomePage() {
@@ -34,11 +45,13 @@ export default function HomePage() {
   const { localRoutine: routine, isMainRoutine } = useRoutineStore();
 
   // 로컬 루틴 스토어 rehydrate (localStorage → zustand)
-  useEffect(() => { useRoutineStore.persist.rehydrate(); }, []);
+  useEffect(() => {
+    useRoutineStore.persist.rehydrate();
+  }, []);
 
   // 각 스텝별 제품 배열을 flat — 스텝당 여러 제품이 있을 수 있음
   const mainRoutineItems = ROUTINE_STEPS.flatMap((step) =>
-    (routine[step.code] ?? []).map((product) => ({ step, product }))
+    (routine[step.code] ?? []).map((product) => ({ step, product })),
   );
 
   // isMainRoutine이 off면 홈에서 루틴 미표시
@@ -46,10 +59,8 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 bg-[#F5F2EC]">
-
       {/* ── 상단 헤더 ──────────────────────────────────────────── */}
       <div className="bg-[#F5F2EC] pt-3.75 pb-5 px-5">
-
         {/* 인사말 — Cormorant 폰트 (기본 폰트 아님) */}
         <div className="flex items-center gap-1.5">
           {greeting.icon}
@@ -72,10 +83,9 @@ export default function HomePage() {
       {/* ── 나의 루틴 ─────────────────────────────────────────── */}
       <div className="py-5 px-4">
         <div className="bg-white rounded-xl border border-[#E2DDD8] overflow-hidden">
-
           {/* 섹션 헤더 */}
           <div className="flex items-center justify-between py-3.5 px-4 border-b border-[#EDE9E3]">
-            <span className="text-[16px] font-semibold text-[#2A2118] tracking-[-0.2px]">
+            <span className="text-[16px] font-bold text-[#2A2118] tracking-[-0.2px]">
               나의 메인루틴
             </span>
 
@@ -99,7 +109,9 @@ export default function HomePage() {
                 <div
                   key={`${step.code}-${product.name}`}
                   className={`flex items-center gap-3 py-3${
-                    index < mainRoutineItems.length - 1 ? " border-b border-[#EDE9E3]" : ""
+                    index < mainRoutineItems.length - 1
+                      ? " border-b border-[#EDE9E3]"
+                      : ""
                   }`}
                 >
                   {/* 스텝 번호 — SortsMillGoudy 폰트 (영어 숫자용) */}
@@ -108,7 +120,9 @@ export default function HomePage() {
                   </span>
 
                   {/* 이모지 */}
-                  <span className="text-[20px] w-7 text-center shrink-0">{product.emoji}</span>
+                  <span className="text-[20px] w-7 text-center shrink-0">
+                    {product.emoji}
+                  </span>
 
                   {/* 스텝 정보 */}
                   <div className="flex-1 min-w-0">
@@ -144,7 +158,6 @@ export default function HomePage() {
 
       {/* ── Skincare Tips ──────────────────────────────────────── */}
       <div className="pt-5 px-4 pb-6">
-
         {/* 섹션 타이틀 */}
         <div className="flex items-baseline gap-2 mb-3.75">
           <h2 className="text-[18px] font-bold text-[#2A2118] tracking-[-0.3px]">

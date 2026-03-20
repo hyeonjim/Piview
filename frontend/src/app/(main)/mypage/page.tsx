@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Settings, LogOut } from "lucide-react";
+import { Settings, LogOut, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import {
   useSyncRoutineDraft,
@@ -15,11 +15,8 @@ import RoutineTab from "@/components/features/mypage/RoutineTab";
 import RoutineAddModal from "@/components/features/mypage/RoutineAddModal";
 import OwnedTab from "@/components/features/mypage/OwnedTab";
 import AvoidProductModal from "@/components/features/mypage/AvoidProductModal";
-import {
-  useRoutineStore,
-  type LocalProduct,
-} from "@/stores";
-import { useUserStore, selectSkinType } from "@/stores";
+import { useRoutineStore, type LocalProduct } from "@/stores";
+import { useUserStore, selectSkinType, selectGender } from "@/stores";
 import { authService } from "@/services/auth";
 import type { OwnedProduct } from "@/stores/useOwnedStore";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
@@ -32,6 +29,10 @@ export default function MyPage() {
   useUserQuery();
   const userName = useUserStore((store) => store.user?.name ?? "User");
   const profileImageUrl = useUserStore((store) => store.user?.imageUrl ?? null);
+
+  // 개발 도구 - 성별별 루틴 확인용 (나중에 삭제 예정)
+  const currentGender = useUserStore(selectGender);
+  const toggleGender = useUserStore((store) => store.toggleGenderForTest);
 
   const savedSkinType = useUserStore(selectSkinType);
   const savedConcerns = useUserStore((store) => store.concerns);
@@ -156,10 +157,22 @@ export default function MyPage() {
           <div className="flex-1 min-w-0">
             {/* 이름 + 설정/로그아웃 버튼 행 */}
             <div className="flex items-center justify-between">
-              {/* 20px → font-semibold: 디스플레이 크기, 세리프는 600이 더 균형적 */}
-              <p className="text-[20px] font-bold text-text-primary tracking-[-0.3px]">
-                {userName}님
-              </p>
+              {/* 이름 + 성별 토글 버튼 */}
+              <div className="flex items-center gap-2">
+                {/* 20px → font-semibold: 디스플레이 크기, 세리프는 600이 더 균형적 */}
+                <p className="text-[20px] font-bold text-text-primary tracking-[-0.3px]">
+                  {userName}님
+                </p>
+                {/* 개발 도구 - 성별 스위칭 버튼 (나중에 삭제 예정) */}
+                <button
+                  onClick={toggleGender}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-50 border border-amber-200 text-[12px] font-semibold text-amber-700 hover:bg-amber-100 transition-colors"
+                  aria-label="성별 토글 (개발용)"
+                >
+                  <Wrench size={12} />
+                  {currentGender === "men" ? "Men" : "Women"}
+                </button>
+              </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Link href="/mypage/settings">
                   <button
@@ -188,23 +201,23 @@ export default function MyPage() {
             ) : (
               <div className="flex flex-wrap gap-1 mt-4">
                 {/* 피부 타입 배지 */}
-                <span className="text-sm py-0.5 px-2 rounded-full bg-[#E8E3DC] text-[#5A504A] font-semibold">
+                <span className="text-[16px] py-0.5 px-2 rounded-full bg-[#E8E3DC] text-[#5A504A] font-semibold">
                   {savedSkinType}
                 </span>
-                {/* 피부 고민 배지 — text-sm(14px) 배지: font-semibold로 선명하게 */}
+                {/* 피부 고민 배지 */}
                 {savedConcerns.map((concern, index) => (
                   <span
                     key={`${concern}-${index}`}
-                    className="text-sm font-semibold py-0.5 px-2 rounded-full bg-[#EEF0E8] text-[#6B7257]"
+                    className="text-[14px] py-0.5 px-2 rounded-full bg-[#EEF0E8] text-[#6B7257] font-medium"
                   >
                     {concern}
                   </span>
                 ))}
-                {/* 기피 성분 배지 — text-sm(14px) 배지: font-semibold로 선명하게 */}
+                {/* 기피 성분 배지 */}
                 {savedAvoidContents.map((item, index) => (
                   <span
                     key={`${item.avoidContent}-${index}`}
-                    className="text-sm font-semibold py-0.5 px-2 rounded-full bg-[#F5EDE8] text-[#8C5A4A]"
+                    className="text-sm font-medium py-0.5 px-2 rounded-full bg-[#F5EDE8] text-[#8C5A4A]"
                   >
                     {item.avoidContent}
                   </span>
@@ -216,7 +229,7 @@ export default function MyPage() {
       </div>
 
       {/* 탭 스위처 */}
-      <div className="bg-[#F5F2EC] sticky top-0 z-10 border-b border-border flex">
+      <div className="bg-[#fbfaf8] sticky top-0 z-10 border-b border-border flex">
         {(["routine", "owned"] as const).map((tabType) => (
           <button
             key={tabType}
