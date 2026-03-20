@@ -16,6 +16,7 @@ public class ProductDetailResponse {
     private String imageUrl;
     private String brandName;
     private String productName;
+    private String description;
     private List<String> skinTypes;
     private List<String> tags;
     private Integer price;

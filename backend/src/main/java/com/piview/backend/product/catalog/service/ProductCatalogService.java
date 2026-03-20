@@ -250,6 +250,7 @@ public class ProductCatalogService {
                 .imageUrl(product.getImage() != null ? product.getImage().getUrl() : null)
                 .brandName(product.getBrand() != null ? product.getBrand().getBrandName() : null)
                 .productName(product.getName())
+                .description(product.getDescription())
                 .skinTypes(skinTypes)
                 .tags(null)
                 .price(product.getPrice())

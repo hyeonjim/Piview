@@ -36,6 +36,9 @@ public class Product {
     @Column(name = "name", length = 70)
     private String name;
 
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
     @Column(name = "volume")
     private String volume;
 
