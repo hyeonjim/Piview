@@ -30,6 +30,9 @@ export const queryKeys = {
   // 루틴 상세 — GET /api/v1/routines/{routineId}
   routineDetail: (routineId: number) => ["routineDetail", routineId] as const,
 
+  // 제품 상세 — GET /products/{productId}
+  productDetail: (productId: number) => ["productDetail", productId] as const,
+
   // 피부 분석 상태 — GET /skin/analysis/{analysisId}
   analysisStatus: (analysisId: string) =>
     ["analysisStatus", analysisId] as const,

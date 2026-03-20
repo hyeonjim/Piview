@@ -13,6 +13,7 @@ export { useLike } from "./queries/useLike";
 export { useSyncRoutineDraft } from "./queries/useSyncRoutineDraft";
 export { useMyCosQuery, useAddMyCos, useRemoveMyCos } from "./queries/useMyCos";
 export { useProductSearch } from "./queries/useProductSearch";
+export { useProductDetail } from "./queries/useProductDetail";
 export { useSurveySubmit } from "./queries/useSurveySubmit";
 export { useOcr } from "./queries/useOcr";
 export {
