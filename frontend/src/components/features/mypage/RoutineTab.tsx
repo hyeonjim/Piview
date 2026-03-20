@@ -1,4 +1,5 @@
 "use client";
+import { toast } from "sonner";
 
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -9,25 +10,24 @@ import {
 } from "@/constants/routineEvaluation";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
 import {
-  useLocalRoutineStore,
+  useRoutineStore,
   type LocalProduct,
   type LocalRoutineMap,
   type SavedRoutine,
-} from "@/stores/useLocalRoutineStore";
+} from "@/stores";
 import {
   CATEGORY_COLORS,
   SKIN_TYPE_TAG_COLORS,
   SKIN_FUNCTION_COLORS,
 } from "@/constants/categoryColors";
 import {
-  useToast,
   useRoutineListQuery,
   useCreateRoutineMutation,
   useDeleteRoutineMutation,
   useSetMainRoutineMutation,
   useClearDraftMutation,
 } from "@/hooks";
-import { Toast } from "@/components/common/Toast";
+import { getCategoryDisplayName } from "@/utils/format";
 // ⚠️ BE 연동 시 아래 import 삭제
 import { IS_MOCK_DATA } from "@/constants/_mock/routine";
 
@@ -58,27 +58,25 @@ interface RoutineTabProps {
   // productId 추가: 같은 스텝 내 특정 제품 제거
   onRemove: (code: string, productId: string) => void;
   // 마이페이지 레벨 토스트 — 저장 성공 등 알림
-  showToast?: (msg: string) => void;
 }
 
 export default function RoutineTab({
   routine,
   onOpenModal,
   onRemove,
-  showToast: showParentToast,
 }: RoutineTabProps) {
   const {
     isMainRoutine,
     toggleMainRoutine,
-    clearRoutine,
-    setRoutine,
+    clearLocalRoutine,
+    setLocalRoutine,
     reorderStepProducts,
     saveRoutine,
     loadSavedRoutine,
     deleteSavedRoutine,
     savedRoutines: localSavedRoutines,
     currentRoutineName,
-  } = useLocalRoutineStore();
+  } = useRoutineStore();
 
   // ── 루틴 서버 API 훅 ──────────────────────────────────────────────
   // ⚠️ API 연동 시: 목업 → 실제 데이터로 자동 교체 (훅 내부에서 처리)
@@ -168,11 +166,9 @@ export default function RoutineTab({
   // 드래그 상태 — 스텝 코드 + 이동 전/후 인덱스
   const [dragState, setDragState] = useState<DragState | null>(null);
 
-  // 로컬 토스트 (저장 완료 등)
-  const { toastMessage, showToast: showLocalToast } = useToast();
+  // 토스트 알림 (저장 완료 등)
   const notify = (msg: string) => {
-    if (showParentToast) showParentToast(msg);
-    else showLocalToast(msg);
+    toast(msg);
   };
 
   // 1개 이상 제품이 있는 스텝 수 — null 방어 (localStorage 구버전 호환)
@@ -267,7 +263,7 @@ export default function RoutineTab({
         reorderStepProducts(fromStepCode, products);
       }
     } else {
-      // 다른 스텝으로 이동 — setRoutine으로 원자적 업데이트
+      // 다른 스텝으로 이동 — setLocalRoutine으로 원자적 업데이트
       const newRoutine = { ...routine };
       const fromProducts = [...(newRoutine[fromStepCode] ?? [])];
       const [removed] = fromProducts.splice(fromIndex, 1);
@@ -275,7 +271,7 @@ export default function RoutineTab({
       const toProducts = [...(newRoutine[toStepCode] ?? [])];
       toProducts.splice(toIndex, 0, removed);
       newRoutine[toStepCode] = toProducts;
-      setRoutine(newRoutine);
+      setLocalRoutine(newRoutine);
     }
 
     setDragState(null);
@@ -370,7 +366,7 @@ export default function RoutineTab({
    * ⚠️ API 연동 시: clearDraft mutationFn 내부에서 routineService.clearDraft()로 교체
    */
   const handleClearRoutine = () => {
-    clearRoutine(); // 로컬 상태 즉시 초기화
+    clearLocalRoutine(); // 로컬 상태 즉시 초기화
     clearDraft();   // 서버 draft 비우기 (Redis 초기화)
   };
 
@@ -643,7 +639,7 @@ export default function RoutineTab({
                                 color: categoryColor.accent,
                               }}
                             >
-                              {product.category}
+                              {getCategoryDisplayName(product.category)}
                             </span>
                           )}
                         </div>
@@ -756,9 +752,6 @@ export default function RoutineTab({
           </div>
         </div>
       </div>
-
-      {/* 로컬 토스트 (부모 showToast 없을 때 fallback) */}
-      {!showParentToast && <Toast msg={toastMessage} />}
 
       {/* ── 루틴 저장 이름 입력 모달 ── */}
       {showSaveModal && (

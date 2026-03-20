@@ -3,65 +3,59 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationProps {
+  /** 현재 페이지 번호 (1부터 시작) */
   page: number;
+  /** 전체 페이지 수 */
   totalPages: number;
+  /** 페이지 변경 핸들러 */
   onChange: (page: number) => void;
 }
 
+/**
+ * 페이지네이션 컴포넌트
+ * - 1페이지 이하일 경우 렌더링하지 않음
+ * - 이전/다음 버튼과 페이지 번호 버튼으로 구성
+ */
 export function Pagination({ page, totalPages, onChange }: PaginationProps) {
+  // 페이지가 1개 이하면 페이지네이션 숨김
   if (totalPages <= 1) return null;
+
   return (
-    <div className="flex items-center justify-center gap-1" style={{ padding: "16px 0 20px" }}>
+    <div className="pagination-container">
+      {/* 이전 페이지 버튼 */}
       <button
         onClick={() => onChange(Math.max(1, page - 1))}
         disabled={page === 1}
-        style={{
-          display: "flex", alignItems: "center", justifyContent: "center",
-          width: "32px", height: "32px",
-          borderRadius: "6px",
-          border: "1px solid #EDEBE8",
-          backgroundColor: "#FFFFFF",
-          cursor: "pointer",
-          opacity: page === 1 ? 0.3 : 1,
-        }}
+        className="pagination-nav-button"
+        data-disabled={page === 1}
+        aria-label="이전 페이지"
       >
-        <ChevronLeft size={14} style={{ color: "#8A8278" }} />
+        <ChevronLeft className="pagination-icon" size={14} />
       </button>
 
-      {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+      {/* 페이지 번호 버튼들 */}
+      {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
         <button
-          key={n}
-          onClick={() => onChange(n)}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: "32px", height: "32px",
-            borderRadius: "6px",
-            border: `1px solid ${page === n ? "#1C1C1E" : "#EDEBE8"}`,
-            backgroundColor: page === n ? "#1C1C1E" : "#FFFFFF",
-            color: page === n ? "#FFFFFF" : "#8A8278",
-            fontSize: "12px",
-            fontWeight: page === n ? 700 : 400,
-            cursor: "pointer",
-          }}
+          key={pageNumber}
+          onClick={() => onChange(pageNumber)}
+          className="pagination-page-button"
+          data-active={page === pageNumber}
+          aria-label={`${pageNumber}페이지`}
+          aria-current={page === pageNumber ? "page" : undefined}
         >
-          {n}
+          {pageNumber}
         </button>
       ))}
 
+      {/* 다음 페이지 버튼 */}
       <button
         onClick={() => onChange(Math.min(totalPages, page + 1))}
         disabled={page === totalPages}
-        style={{
-          display: "flex", alignItems: "center", justifyContent: "center",
-          width: "32px", height: "32px",
-          borderRadius: "6px",
-          border: "1px solid #EDEBE8",
-          backgroundColor: "#FFFFFF",
-          cursor: "pointer",
-          opacity: page === totalPages ? 0.3 : 1,
-        }}
+        className="pagination-nav-button"
+        data-disabled={page === totalPages}
+        aria-label="다음 페이지"
       >
-        <ChevronRight size={14} style={{ color: "#8A8278" }} />
+        <ChevronRight className="pagination-icon" size={14} />
       </button>
     </div>
   );

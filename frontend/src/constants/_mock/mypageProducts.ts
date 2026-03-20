@@ -8,7 +8,7 @@
  * 사용처:
  *   - src/app/(main)/mypage/page.tsx → STEP_PRODUCTS
  */
-import { LocalProduct } from "@/stores/useLocalRoutineStore";
+import { LocalProduct } from "@/stores";
 
 /** 🔧 스텝별 추천 제품 목록 — ⚠️ API 연동 시 삭제 */
 export const STEP_PRODUCTS: LocalProduct[] = [

@@ -47,6 +47,7 @@ const PRODUCT_THUMB_IMG = {
 
 import { X, Check, Plus } from "lucide-react";
 import { ROUTINE_STEPS, type RoutineStepKey } from "@/constants/routineSteps";
+import { getCategoryDisplayName } from "@/utils/format";
 
 export type { RoutineStepKey };
 
@@ -169,7 +170,7 @@ export function AddToRoutineModal({
                 marginTop: 2,
               }}
             >
-              {product.category}
+              {getCategoryDisplayName(product.category)}
             </p>
           </div>
         </div>
@@ -263,7 +264,11 @@ export function AddToRoutineModal({
                       marginTop: 2,
                     }}
                   >
-                    {step.code} · {step.categories.slice(0, 3).join(", ")}
+                    {step.code} ·{" "}
+                    {step.categories
+                      .slice(0, 3)
+                      .map(getCategoryDisplayName)
+                      .join(", ")}
                   </p>
                 </div>
 

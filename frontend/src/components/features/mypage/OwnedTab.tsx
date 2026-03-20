@@ -47,8 +47,9 @@ import {
   CATEGORY_COLORS,
   SKIN_TYPE_TAG_COLORS,
 } from "@/constants/categoryColors";
-import type { LocalProduct } from "@/stores/useLocalRoutineStore";
+import type { LocalProduct } from "@/stores";
 import type { OwnedProduct } from "@/stores/useOwnedStore";
+import { getCategoryDisplayName } from "@/utils/format";
 
 interface OwnedTabProps {
   routine: Record<string, LocalProduct[]>;
@@ -115,7 +116,7 @@ export default function OwnedTab({
                           color: CATEGORY_COLORS[product.category].accent,
                         }}
                       >
-                        {product.category}
+                        {getCategoryDisplayName(product.category)}
                       </span>
                     )}
                     {/* 루틴 등록 여부 표시 */}
@@ -223,7 +224,7 @@ export default function OwnedTab({
                           color: CATEGORY_COLORS[product.category].accent,
                         }}
                       >
-                        {product.category}
+                        {getCategoryDisplayName(product.category)}
                       </span>
                     )}
                   </div>

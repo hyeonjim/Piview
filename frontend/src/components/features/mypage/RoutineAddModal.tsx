@@ -38,7 +38,7 @@ import {
 } from "@/constants/categoryColors";
 import { MYPAGE_ROUTINE_STEPS, ROUTINE_STEPS } from "@/constants/routineSteps";
 import { STEP_PRODUCTS } from "@/constants/_mock/mypageProducts";
-import type { LocalProduct } from "@/stores/useLocalRoutineStore";
+import type { LocalProduct } from "@/stores";
 
 interface RoutineAddModalProps {
   openStep: string;
