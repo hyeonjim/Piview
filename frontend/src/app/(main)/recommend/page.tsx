@@ -11,7 +11,7 @@ import { Pagination } from "@/components/common/Pagination";
 import EmptyState from "@/components/common/EmptyState";
 import SearchBar from "@/components/common/SearchBar";
 import CompareModal, { type CompareProduct } from "@/components/common/CompareModal";
-import { useToast, useCompare, useProductSearch } from "@/hooks";
+import { useCompare, useProductSearch } from "@/hooks";
 import { useOwnedStore } from "@/stores/useOwnedStore";
 import { useRoutineStore } from "@/stores";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";

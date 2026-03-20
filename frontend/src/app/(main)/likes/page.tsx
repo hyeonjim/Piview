@@ -2,10 +2,9 @@
 
 import { Heart } from "lucide-react";
 
-
 import { useOwnedStore } from "@/stores/useOwnedStore";
 import { useRoutineStore } from "@/stores";
-import { useToast, useLike, useCompare } from "@/hooks";
+import { useLike, useCompare } from "@/hooks";
 import ProductCard from "@/components/common/ProductCard";
 import CompareModal, {
   type CompareProduct,
@@ -31,12 +30,10 @@ export default function LikesPage() {
   const { toggleOwned, ownedProducts } = useOwnedStore();
   const isOwned = (id: string) => ownedProducts.some((p) => p.id === id);
 
-
   const {
     compareItems,
     showCompare,
     toggleCompare,
-    clearCompare,
     openCompare,
     closeCompare,
     canCompare,
@@ -75,7 +72,6 @@ export default function LikesPage() {
 
   return (
     <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
-
       {showCompare && canCompare && (
         <CompareModal
           compareItems={compareItems as [CompareProduct, CompareProduct]}
