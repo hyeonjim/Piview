@@ -31,6 +31,9 @@ interface UserStore {
 
   // 피부 고민
   setConcerns: (concerns: string[]) => void;
+
+  // 개발 도구 - 성별별 루틴 확인용 (나중에 삭제 예정)
+  toggleGenderForTest: () => void;
 }
 
 export const useUserStore = create<UserStore>((set) => ({
@@ -68,6 +71,17 @@ export const useUserStore = create<UserStore>((set) => ({
       avoidContents: state.avoidContents.filter(
         (avoidContent) => avoidContent.id !== id,
       ),
+    })),
+
+  // 개발 도구 - 성별 토글 (성별별 루틴 확인용, 나중에 삭제 예정)
+  toggleGenderForTest: () =>
+    set((state) => ({
+      user: state.user
+        ? {
+            ...state.user,
+            gender: state.user.gender === "men" ? "women" : "men",
+          }
+        : null,
     })),
 }));
 

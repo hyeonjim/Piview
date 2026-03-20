@@ -166,7 +166,7 @@ export default function RecommendPage() {
             <EmptyState icon={Search} title="해당하는 제품이 없어요" description="검색어나 필터를 바꿔보세요" />
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", alignItems: "start" }}>
+          <div className="grid grid-cols-2 gap-6 items-start">
             {products.map((product) => (
               <ProductCard
                 key={product.id}

@@ -15,7 +15,7 @@
 @theme {
   /* 레이아웃 */
   --max-width-app: 500px;
-  --shadow-app: 0 0 0 1px rgba(0,0,0,0.04), 0 20px 80px rgba(0,0,0,0.08);
+  --shadow-app: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 20px 80px rgba(0, 0, 0, 0.08);
 
   /* ─── 브랜드 컬러: Primary Beige (#A69D92) ─── */
   --color-brand: #a69d92;
@@ -238,7 +238,7 @@
 
   /* BottomNav 높이 보정 ((main)/layout.tsx에서 사용) */
   .pb-nav {
-    padding-bottom: 92px; /* BottomNav 60px + 여백 32px */
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
   }
 
   /* 피그마 기준 최소 폰트 크기 (13px) */
@@ -286,7 +286,7 @@
     height: 44px;
     padding: 0 14px;
     font-size: 18px;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.01em;
     cursor: pointer;
     border: none;
@@ -308,8 +308,8 @@
     height: 30px;
     padding: 0 12px;
     border-radius: var(--radius-modal);
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
     border: 1px solid;
     transition: all 0.15s;
@@ -374,7 +374,9 @@
     margin-bottom: 2px;
     background-color: var(--color-nav-home-inactive-bg);
     box-shadow: var(--shadow-nav-home-inactive);
-    transition: background-color 0.15s, box-shadow 0.15s;
+    transition:
+      background-color 0.15s,
+      box-shadow 0.15s;
   }
 
   .bottom-nav-home-circle[data-active="true"] {

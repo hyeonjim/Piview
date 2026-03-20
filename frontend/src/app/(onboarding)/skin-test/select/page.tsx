@@ -11,48 +11,6 @@ import {
   ALLERGIES,
 } from "@/constants";
 
-// ── 스타일 상수 ──────────────────────────────────────────────────────
-const BACK_BTN_TEXT = { fontSize: "15px" };
-const PAGE_TITLE_STYLE = {
-  fontSize: "22px",
-  letterSpacing: "-0.3px",
-  lineHeight: 1.3,
-};
-const PAGE_DESC_STYLE = { fontSize: "14px" };
-const SECTION_TITLE_STYLE = { fontSize: "15px" };
-const GENDER_BTN_BASE = { height: "52px", borderRadius: "12px" };
-const GENDER_ICON_STYLE = { fontSize: "22px" };
-const AGE_BTN_BASE = { height: "42px", borderRadius: "10px" };
-const SKIN_BTN_BASE = { height: "90px", borderRadius: "16px" };
-const SKIN_ICON_STYLE = { fontSize: "26px" };
-const CONCERN_HINT_STYLE = { fontSize: "14px" };
-const CONCERN_BTN_BASE = {
-  height: "36px",
-  padding: "0 16px",
-  borderRadius: "30px",
-};
-const ALLERGY_SECTION_TITLE = { fontSize: "15px" };
-const ALLERGY_HINT_STYLE = { fontSize: "14px" };
-const ALLERGY_INPUT_STYLE = {
-  height: "44px",
-  paddingLeft: "38px",
-  paddingRight: "16px",
-  borderRadius: "10px",
-  fontSize: "15px",
-};
-const ALLERGY_CHIP_BASE = {
-  height: "32px",
-  padding: "0 12px",
-  borderRadius: "16px",
-};
-const BOTTOM_BG_SELECT = "linear-gradient(transparent, white 30%)";
-const CONFIRM_BTN_BASE = {
-  height: "52px",
-  borderRadius: "32px",
-  fontSize: "15px",
-};
-const SKIN_TYPE_TEXT_BASE = { fontSize: "15px", lineHeight: 1.4 };
-
 export default function SelectPage() {
   const router = useRouter();
   const [selectedGender, setSelectedGender] = useState<string>("women");
@@ -62,79 +20,76 @@ export default function SelectPage() {
   const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const toggleConcern = (c: string) =>
-    setSelectedConcerns((prev) =>
-      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
+  const toggleConcern = (concern: string) =>
+    setSelectedConcerns((previous) =>
+      previous.includes(concern)
+        ? previous.filter((item) => item !== concern)
+        : [...previous, concern],
     );
-  const toggleAllergy = (a: string) =>
-    setSelectedAllergies((prev) =>
-      prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a],
+
+  const toggleAllergy = (allergy: string) =>
+    setSelectedAllergies((previous) =>
+      previous.includes(allergy)
+        ? previous.filter((item) => item !== allergy)
+        : [...previous, allergy],
     );
 
   const isValid = selectedType !== null;
   const filteredAllergies = searchQuery
-    ? ALLERGIES.filter((t) => t.includes(searchQuery))
+    ? ALLERGIES.filter((tag) => tag.includes(searchQuery))
     : ALLERGIES;
 
   return (
     <div className="flex flex-col min-h-full bg-white">
-      <div className="px-6 pt-4 pb-28 overflow-y-auto">
-        {/* 뒤로가기 */}
+      {/* 스크롤 가능한 콘텐츠 영역 */}
+      <div className="flex-1 overflow-y-auto px-6 pt-4 pb-6">
+        {/* 뒤로가기 버튼 */}
         <button
           onClick={() => router.push("/skin-test")}
-          className="flex items-center gap-1.5 border-none bg-transparent cursor-pointer mb-6 text-text-hint"
+          className="flex items-center gap-1.5 mb-6 text-text-hint bg-transparent border-none cursor-pointer"
         >
-          <ArrowLeft size={18} /> <span style={BACK_BTN_TEXT}>뒤로</span>
+          <ArrowLeft size={20} />
         </button>
 
-        <h1 className="text-text-primary font-bold" style={PAGE_TITLE_STYLE}>
+        {/* 페이지 제목 */}
+        <h1 className="text-text-primary font-bold text-[22px] leading-[1.3] tracking-[-0.3px]">
           피부 정보를
           <br />
           입력해주세요
         </h1>
 
-        {/* 성별 */}
-        <div className="mt-6">
-          <p
-            className="text-text-primary font-semibold"
-            style={SECTION_TITLE_STYLE}
-          >
-            성별
-          </p>
+        {/* 성별 선택 */}
+        <section className="mt-8">
+          <h2 className="text-text-primary font-semibold text-[15px]">성별</h2>
           <div className="flex gap-3 mt-3">
-            {GENDER_OPTIONS.map((g) => {
-              const isSelected = selectedGender === g.id;
+            {GENDER_OPTIONS.map((gender) => {
+              const isSelected = selectedGender === gender.id;
               return (
                 <button
-                  key={g.id}
-                  onClick={() => setSelectedGender(g.id)}
-                  className="flex-1 flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer"
+                  key={gender.id}
+                  onClick={() => setSelectedGender(gender.id)}
+                  className="flex-1 h-[52px] rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer text-[16px]"
                   style={{
-                    ...GENDER_BTN_BASE,
                     backgroundColor: isSelected
                       ? "var(--color-brand-bg)"
                       : "#FFFFFF",
                     border: `1.5px solid ${isSelected ? "var(--color-brand)" : "#F0F0F0"}`,
-                    fontSize: "16px",
-                    fontWeight: isSelected ? 600 : 400,
+                    fontWeight: 800,
                     color: isSelected ? "#1A1A1A" : "#616161",
                   }}
                 >
-                  <span style={GENDER_ICON_STYLE}>{g.icon}</span> {g.label}
+                  {gender.label}
                 </button>
               );
             })}
           </div>
-        </div>
+        </section>
 
-        {/* 연령대 */}
-        <div className="mt-6">
-          <p
-            className="text-text-primary font-semibold"
-            style={SECTION_TITLE_STYLE}
-          >
+        {/* 연령대 선택 */}
+        <section className="mt-8">
+          <h2 className="text-text-primary font-semibold text-[15px]">
             연령대
-          </p>
+          </h2>
           <div className="flex gap-2 mt-3">
             {AGE_GROUPS.map((age) => {
               const isSelected = selectedAge === age.id;
@@ -142,16 +97,14 @@ export default function SelectPage() {
                 <button
                   key={age.id}
                   onClick={() => setSelectedAge(age.id)}
-                  className="flex-1 transition-all duration-200 cursor-pointer"
+                  className="flex-1 h-[42px] rounded-[10px] transition-all duration-200 cursor-pointer text-[16px]"
                   style={{
-                    ...AGE_BTN_BASE,
                     backgroundColor: isSelected
                       ? "var(--color-brand-bg)"
                       : "#FFFFFF",
                     border: `1.5px solid ${isSelected ? "var(--color-brand)" : "#F0F0F0"}`,
                     color: isSelected ? "#1A1A1A" : "#616161",
-                    fontSize: "15px",
-                    fontWeight: isSelected ? 600 : 400,
+                    fontWeight: 800,
                   }}
                 >
                   {age.label}
@@ -159,16 +112,13 @@ export default function SelectPage() {
               );
             })}
           </div>
-        </div>
+        </section>
 
-        {/* 피부 타입 */}
-        <div className="mt-6">
-          <p
-            className="text-text-primary font-semibold"
-            style={SECTION_TITLE_STYLE}
-          >
+        {/* 피부 타입 선택 */}
+        <section className="mt-8">
+          <h2 className="text-text-primary font-semibold text-[15px]">
             피부 타입
-          </p>
+          </h2>
           <div className="grid grid-cols-2 gap-3 mt-3">
             {SKIN_TYPES.map((type) => {
               const isSelected = selectedType === type.id;
@@ -176,43 +126,30 @@ export default function SelectPage() {
                 <button
                   key={type.id}
                   onClick={() => setSelectedType(type.id)}
-                  className="flex flex-col items-center justify-center gap-2 transition-all duration-200 cursor-pointer"
+                  className="h-[50px] rounded-2xl flex items-center justify-center transition-all duration-200 cursor-pointer text-[16px] leading-[1.4]"
                   style={{
-                    ...SKIN_BTN_BASE,
                     backgroundColor: isSelected
                       ? "var(--color-brand-bg)"
                       : "#FFFFFF",
                     border: `1.5px solid ${isSelected ? "var(--color-brand)" : "#F0F0F0"}`,
+                    fontWeight: 800,
+                    color: isSelected ? "#1A1A1A" : "#616161",
                   }}
                 >
-                  <span style={SKIN_ICON_STYLE}>{type.icon}</span>
-                  <span
-                    style={{
-                      ...SKIN_TYPE_TEXT_BASE,
-                      fontWeight: isSelected ? 600 : 400,
-                      color: isSelected ? "#1A1A1A" : "#616161",
-                    }}
-                  >
-                    {type.label}
-                  </span>
+                  {type.label}
                 </button>
               );
             })}
           </div>
-        </div>
+        </section>
 
-        {/* 피부 고민 */}
-        <div className="mt-6">
+        {/* 피부 고민 선택 */}
+        <section className="mt-8">
           <div className="flex items-baseline gap-2">
-            <p
-              className="text-text-primary font-semibold"
-              style={SECTION_TITLE_STYLE}
-            >
+            <h2 className="text-text-primary font-semibold text-[15px]">
               피부 고민
-            </p>
-            <span className="text-text-hint" style={CONCERN_HINT_STYLE}>
-              복수 선택 가능
-            </span>
+            </h2>
+            <span className="text-text-hint text-[14px]">복수 선택 가능</span>
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
             {SKIN_CONCERNS.map((concern) => {
@@ -221,16 +158,14 @@ export default function SelectPage() {
                 <button
                   key={concern}
                   onClick={() => toggleConcern(concern)}
-                  className="transition-all duration-150 cursor-pointer"
+                  className="h-9 px-4 rounded-[30px] transition-all duration-150 cursor-pointer text-[14px]"
                   style={{
-                    ...CONCERN_BTN_BASE,
                     backgroundColor: isSelected
                       ? "var(--color-brand-bg)"
                       : "#FFFFFF",
                     border: `1.5px solid ${isSelected ? "var(--color-brand)" : "#E0E0E0"}`,
                     color: isSelected ? "#1A1A1A" : "#616161",
-                    fontSize: "14px",
-                    fontWeight: isSelected ? 600 : 400,
+                    fontWeight: 600,
                   }}
                 >
                   {concern}
@@ -238,45 +173,42 @@ export default function SelectPage() {
               );
             })}
           </div>
-        </div>
+        </section>
 
-        {/* 알레르기 성분 */}
-        <div className="mt-6">
+        {/* 알레르기 성분 선택 */}
+        <section className="mt-8">
           <div className="flex items-baseline gap-2">
-            <p
-              className="text-text-primary font-semibold"
-              style={ALLERGY_SECTION_TITLE}
-            >
+            <h2 className="text-text-primary font-semibold text-[15px]">
               알레르기 성분
-            </p>
-            <span className="text-text-hint" style={ALLERGY_HINT_STYLE}>
-              선택 사항
-            </span>
+            </h2>
+            <span className="text-text-hint text-[14px]">선택 사항</span>
           </div>
+
+          {/* 검색 입력창 */}
           <div className="relative mt-3">
             <Search
               size={16}
-              className="text-text-muted absolute left-3.5 top-1/2 -translate-y-1/2"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted"
             />
             <input
               type="text"
               placeholder="성분명 검색..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full outline-none bg-bg-chip border-none text-text-primary"
-              style={ALLERGY_INPUT_STYLE}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              className="w-full h-11 pl-[38px] pr-4 rounded-[10px] bg-bg-chip border-none text-text-primary text-[15px] outline-none"
             />
           </div>
-          <div className="flex flex-wrap gap-2 mt-3">
+
+          {/* 알레르기 성분 태그 */}
+          <div className="flex flex-wrap gap-2 mt-5">
             {filteredAllergies.map((tag) => {
               const isSelected = selectedAllergies.includes(tag);
               return (
                 <button
                   key={tag}
                   onClick={() => toggleAllergy(tag)}
-                  className="transition-all duration-150 cursor-pointer"
+                  className="h-8 px-3 rounded-2xl transition-all duration-150 cursor-pointer text-[14px]"
                   style={{
-                    ...ALLERGY_CHIP_BASE,
                     backgroundColor: isSelected
                       ? "var(--color-brand-bg)"
                       : "#F5F5F5",
@@ -284,8 +216,7 @@ export default function SelectPage() {
                       ? "1.5px solid var(--color-brand)"
                       : "1.5px solid transparent",
                     color: isSelected ? "#1A1A1A" : "#616161",
-                    fontSize: "14px",
-                    fontWeight: isSelected ? 600 : 400,
+                    fontWeight: 600,
                   }}
                 >
                   #{tag}
@@ -293,21 +224,17 @@ export default function SelectPage() {
               );
             })}
           </div>
-        </div>
+        </section>
       </div>
 
-      {/* 하단 버튼 */}
-      <div
-        className="w-full px-20 pb-8 pt-4">
+      {/* 하단 고정 버튼 영역 */}
+      <div className="w-[250px] mx-auto px-6 pb-8 pt-4">
         <button
           onClick={() =>
             isValid && router.push(`/skin-test/result?type=${selectedType}`)
           }
-          className="w-full transition-all duration-200 border-none font-semibold"
+          className="w-full h-[52px] rounded-[32px] font-bold text-[18px] transition-all duration-200 border-none"
           style={{
-            height: "52px",
-            borderRadius: "32px",
-            fontSize: "15px",
             backgroundColor: isValid ? "var(--color-brand)" : "#F5F5F5",
             color: isValid ? "#FFFFFF" : "var(--color-text-disabled)",
             cursor: isValid ? "pointer" : "default",
