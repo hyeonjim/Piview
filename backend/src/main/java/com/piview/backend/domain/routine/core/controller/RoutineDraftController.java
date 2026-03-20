@@ -2,8 +2,7 @@ package com.piview.backend.domain.routine.core.controller;
 
 import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.global.security.UserPrincipal;
-import com.piview.backend.domain.routine.core.dto.AddDraftItemRequest;
-import com.piview.backend.domain.routine.core.dto.DraftItemDto;
+import com.piview.backend.domain.routine.core.dto.RoutineDraftDto;
 import com.piview.backend.domain.routine.core.service.RedisDraftService;
 import com.piview.backend.domain.routine.core.service.RoutineService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,9 +23,9 @@ public class RoutineDraftController {
 
   @Operation(summary = "임시 장바구니 단일 제품 추가", description = "제품 ID를 받아 DB에서 상세 정보를 조회한 후 Redis 임시 장바구니에 추가합니다.")
   @PostMapping
-  public ApiResponse<Void> addProductToDraft(
+  public ApiResponse<List<RoutineDraftDto.DraftItemDto>> addProductToDraft(
       @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
-      @RequestBody AddDraftItemRequest request) {
+      @RequestBody RoutineDraftDto.AddDraftItemRequest request) {
 
     Long userId = userPrincipal.getId();
     routineService.addProductToDraft(userId, request);
@@ -38,22 +37,21 @@ public class RoutineDraftController {
   @PutMapping
   public ApiResponse<Void> saveDraft(
       @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
-      @RequestBody List<DraftItemDto> draftItems) {
+      @RequestBody List<RoutineDraftDto.DraftItemDto> draftItems) {
 
     Long userId = userPrincipal.getId();
     redisDraftService.saveDraftItems(userId, draftItems);
-    List<DraftItemDto> currentDraft = redisDraftService.getDraftItems(userId);
 
     return ApiResponse.success("임시 루틴 변경사항이 저장되었습니다.", null);
   }
 
   @Operation(summary = "임시 장바구니 조회", description = "현재 Redis에 임시 저장되어 있는 루틴 작성 중인 제품 목록을 조회합니다.")
   @GetMapping
-  public ApiResponse<List<DraftItemDto>> getDraft(
+  public ApiResponse<List<RoutineDraftDto.DraftItemDto>> getDraft(
       @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
     Long userId = userPrincipal.getId();
-    List<DraftItemDto> currentDraft = redisDraftService.getDraftItems(userId);
+    List<RoutineDraftDto.DraftItemDto> currentDraft = redisDraftService.getDraftItems(userId);
 
     return ApiResponse.success(currentDraft);
   }
