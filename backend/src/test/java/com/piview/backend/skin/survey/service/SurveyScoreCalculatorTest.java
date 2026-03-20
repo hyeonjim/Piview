@@ -3,12 +3,13 @@ package com.piview.backend.skin.survey.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.piview.backend.domain.skin.survey.service.SurveyScoreCalculator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.piview.backend.skin.survey.entity.SurveyChoice;
-import com.piview.backend.skin.survey.entity.SurveySkinType;
-import com.piview.backend.skin.survey.service.support.AiSkinSurveySignals;
+import com.piview.backend.domain.skin.survey.entity.SurveyChoice;
+import com.piview.backend.domain.skin.survey.entity.SurveySkinType;
+import com.piview.backend.domain.skin.survey.service.support.AiSkinSurveySignals;
 
 class SurveyScoreCalculatorTest {
 
