@@ -1,6 +1,6 @@
 package com.piview.backend.domain.routine.item.dto;
 
-import com.piview.backend.domain.product.entity.SkinTypeEnum;
+import com.piview.backend.domain.skin.common.SkinTypeEnum;
 import lombok.Builder;
 
 @Builder

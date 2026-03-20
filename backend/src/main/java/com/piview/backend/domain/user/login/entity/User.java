@@ -3,9 +3,9 @@ package com.piview.backend.domain.user.login.entity;
 import java.time.LocalDateTime;
 
 import com.piview.backend.global.util.BaseEntity;
+import com.piview.backend.domain.skin.common.SkinTypeEnum;
 import com.piview.backend.domain.skin.survey.entity.SurveyAgeGroup;
 import com.piview.backend.domain.skin.survey.entity.SurveyGender;
-import com.piview.backend.domain.skin.survey.entity.SurveySkinType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -72,7 +72,7 @@ public class User extends BaseEntity {
     // 사용자 피부 타입 값을 저장한다.
     @Enumerated(EnumType.STRING)
     @Column(name = "my_skin_type", length = 20)
-    private SurveySkinType mySkinType;
+    private SkinTypeEnum mySkinType;
 
     // 사용자 활성 여부를 저장한다.
     @Builder.Default
@@ -87,7 +87,7 @@ public class User extends BaseEntity {
     public void updateSurveyProfile(
         SurveyGender gender,
         SurveyAgeGroup ageGroup,
-        SurveySkinType mySkinType
+        SkinTypeEnum mySkinType
     ) {
         this.gender = gender;
         this.ageGroup = ageGroup;
