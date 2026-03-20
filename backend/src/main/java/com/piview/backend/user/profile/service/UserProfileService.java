@@ -34,12 +34,14 @@ public class UserProfileService {
     private final MySkinRepository mySkinRepository;
 
     @Transactional(readOnly = true)
+    // 마이페이지 GET 로직이다. User 기본 정보와 MySkin 태그를 합쳐 응답 DTO를 만든다.
     public UserProfileResponse getMyProfile(Long userId) {
         User user = findUser(userId);
         return buildResponse(user, mySkinRepository.findAllByUserId(userId));
     }
 
     @Transactional
+    // 마이페이지 PATCH 로직이다. 요청에 포함된 필드만 부분 수정하고 응답은 최신 상태로 다시 조립한다.
     public UserProfileResponse updateMyProfile(Long userId, UserProfileUpdateRequest request) {
         if (request == null) {
             throw new CustomException(ErrorCode.INVALID_USER_PROFILE_REQUEST);
@@ -80,13 +82,17 @@ public class UserProfileService {
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
+    // 마이페이지 응답 조립 로직이다. User와 MySkin을 UserProfileResponse 하나로 합친다.
     private UserProfileResponse buildResponse(User user, List<MySkin> mySkins) {
         return UserProfileResponse.builder()
             .name(user.getName())
             .email(user.getEmail())
+            // 카카오 로그인에서 저장한 imageUrl을 마이페이지 조회 응답에 그대로 포함한다.
+            .imageUrl(user.getImageUrl())
             .gender(user.getGender())
             .ageGroup(user.getAgeGroup())
             .mySkinType(user.getMySkinType())
+            // skinProblems는 설문 원문이 아니라 현재 DB에 저장된 내부 태그 목록을 그대로 내려준다.
             .skinProblems(mySkins.stream().map(MySkin::getSkinProblem).toList())
             .build();
     }

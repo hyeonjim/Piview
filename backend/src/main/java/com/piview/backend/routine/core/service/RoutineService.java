@@ -1,5 +1,7 @@
 package com.piview.backend.routine.core.service;
 
+import com.piview.backend.global.exception.CustomException;
+import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.product.catalog.dto.ProductSummaryResponse;
 import com.piview.backend.product.catalog.repository.ProductRepository;
 import com.piview.backend.product.entity.Product;
@@ -38,8 +40,8 @@ public class RoutineService {
     List<DraftItemDto> currentDraft = new ArrayList<>(redisDraftService.getDraftItems(userId));
 
     // 추가할 상품 정보 DB에서 조회
-    Product product = productRepository.findById(request.productId())
-        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
+    Product product = productRepository.findByProductId(request.productId())
+        .orElseThrow(() -> new CustomException(ErrorCode.COSMETICS_NOT_FOUND));
 
     // 새로운 stepOrder 계산 (현재 장바구니에 있는 stepOrder 중 가장 큰 값 + 1)
     int nextOrder = currentDraft.stream()
@@ -61,37 +63,19 @@ public class RoutineService {
     redisDraftService.saveDraftItems(userId, currentDraft);
   }
 
-  // 제품을 루틴(redis)에서 삭제
-  public void removeProductFromDraft(Long userId, Long productId) {
-    // 기존 장바구니 불러오기
-    List<DraftItemDto> currentDraft = redisDraftService.getDraftItems(userId);
-
-    if (currentDraft == null || currentDraft.isEmpty()) {
-      return; // 장바구니가 비어있으면 무시
-    }
-
-    // 삭제하려는 productId와 일치하지 않는 제품들만 남기기 (필터링)
-    List<DraftItemDto> updatedDraft = currentDraft.stream()
-        .filter(item -> !item.product().getProductId().equals(productId))
-        .toList();
-
-    // 업데이트된 리스트를 다시 Redis에 저장 (해당 제품만 쏙 빠진 채로 덮어쓰기)
-    redisDraftService.saveDraftItems(userId, updatedDraft);
-  }
-
   // 루틴 생성 및 저장
   @Transactional
   public Long createRoutine(Long userId, String title) {
     long routineCount = routineRepository.countByUserId(userId);
     if (routineCount >= 6) {
-      throw new IllegalStateException("루틴은 최대 6개까지만 생성할 수 있습니다.");
+      throw new CustomException(ErrorCode.ROUTINE_LIMIT_EXCEEDED);
     }
 
     // redis에서 임시 루틴 데이터 불러오기
     List<DraftItemDto> draftItems = redisDraftService.getDraftItems(userId);
 
     if (draftItems == null || draftItems.isEmpty()) {
-      throw new IllegalArgumentException("루틴에 추가된 화장품이 없습니다.");
+      throw new CustomException(ErrorCode.EMPTY_ROUTINE_DRAFT);
     }
 
     MyRoutine routine = MyRoutine.builder()
@@ -101,12 +85,16 @@ public class RoutineService {
         .build();
 
     List<Integer> columnIds = draftItems.stream().map(DraftItemDto::columnId).toList();
-    List<Long> productIds = draftItems.stream().map(item -> item.product().getProductId()).toList();
+    // product가 null이 아닌 것들만 꺼내기
+    List<Long> productIds = draftItems.stream()
+        .filter(item -> item.product() != null)
+        .map(item -> item.product().getProductId())
+        .toList();
 
     // 조회한 엔티티를 Map으로 변환하여 O(1) 성능으로 매칭 준비
     Map<Integer, RoutineColumn> columnMap = routineColumnRepository.findAllById(columnIds).stream()
         .collect(Collectors.toMap(RoutineColumn::getId, c -> c));
-    Map<Long, Product> productMap = productRepository.findAllById(productIds).stream()
+    Map<Long, Product> productMap = productRepository.findByProductIdIn(productIds).stream()
         .collect(Collectors.toMap(Product::getProductId, p -> p));
 
     for (DraftItemDto item : draftItems) {
@@ -114,8 +102,11 @@ public class RoutineService {
       RoutineColumn column = columnMap.get(item.columnId());
       Product product = productMap.get(item.product().getProductId());
 
-      if (column == null || product == null) {
-        throw new IllegalArgumentException("존재하지 않는 단계이거나 상품입니다.");
+      if (column == null) {
+        throw new CustomException(ErrorCode.ROUTINE_COLUMN_NOT_FOUND);
+      }
+      if (product == null) {
+        throw new CustomException(ErrorCode.COSMETICS_NOT_FOUND);
       }
 
       RoutineDetail detail = RoutineDetail.builder()
@@ -140,7 +131,7 @@ public class RoutineService {
     routineRepository.updateIsMainFalseByUserId(userId); // 벌크 연산
 
     MyRoutine targetRoutine = routineRepository.findByIdWithDetails(targetRoutineId)
-        .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
+        .orElseThrow(() -> new CustomException(ErrorCode.ROUTINE_NOT_FOUND));
 
     targetRoutine.changeMainStatus(true);
   }
@@ -153,10 +144,10 @@ public class RoutineService {
   // 메인 루틴 조회
   public RoutineResponse getMainRoutine(Long userId) {
     MyRoutine mainRoutine = routineRepository.findByUserIdAndIsMainTrue(userId)
-        .orElseThrow(() -> new IllegalArgumentException("설정된 메인 루틴이 없습니다."));
+        .orElseThrow(() -> new CustomException(ErrorCode.MAIN_ROUTINE_NOT_FOUND));
 
     if (!mainRoutine.getUserId().equals(userId)) {
-      throw new IllegalArgumentException("본인의 루틴만 조회할 수 있습니다.");
+      throw new CustomException(ErrorCode.ACCESS_DENIED);
     }
 
     return convertToRoutineResponse(mainRoutine, userId);
@@ -165,10 +156,10 @@ public class RoutineService {
   // 루틴 상세 조회
   public RoutineResponse getRoutineDetails(Long userId, Long routineId) {
     MyRoutine routine = routineRepository.findByIdWithDetails(routineId)
-        .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
+        .orElseThrow(() -> new CustomException(ErrorCode.ROUTINE_NOT_FOUND));
 
     if (!routine.getUserId().equals(userId)) {
-      throw new IllegalArgumentException("본인의 루틴만 조회할 수 있습니다.");
+      throw new CustomException(ErrorCode.ACCESS_DENIED);
     }
 
     return convertToRoutineResponse(routine, userId);
@@ -211,10 +202,10 @@ public class RoutineService {
   public void updateRoutineOrders(Long userId, Long routineId, RoutineOrderUpdateRequest request) {
     // 해당 루틴이 본인 소유가 맞는지 검증
     MyRoutine routine = routineRepository.findByIdWithDetails(routineId)
-        .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
+        .orElseThrow(() -> new CustomException(ErrorCode.ROUTINE_NOT_FOUND));
 
     if (!routine.getUserId().equals(userId)) {
-      throw new IllegalArgumentException("본인의 루틴만 수정할 수 있습니다.");
+      throw new CustomException(ErrorCode.ACCESS_DENIED);
     }
 
     // 요청받은 ID 목록을 Map으로 변환하여 매칭 속도 향상 (routineDetailId -> stepOrder)
@@ -238,7 +229,8 @@ public class RoutineService {
   public void deleteRoutine(Long userId, Long routineId) {
     // 루틴 조회
     MyRoutine routine = routineRepository.findByIdWithDetails(routineId)
-        .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
+        .orElseThrow(() -> new CustomException(ErrorCode.ACCESS_DENIED));
+
 
     // 권한 검증
     if (!routine.getUserId().equals(userId)) {

@@ -44,14 +44,14 @@ public class MyCosService {
     }
 
     @Transactional
-    public Long saveMyCos(Long userId, MyCosCreateRequestDto requestDto) {
+    public Long saveMyCos(Long userId, Long productId) {
 
         // 유저 유효성 검사 및 엔티티 조회
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 상품 유효성 검사 및 엔티티 조회
-        Product product = productRepository.findById(requestDto.productId())
+        Product product = productRepository.findByProductId(productId)
             .orElseThrow(() -> new CustomException(ErrorCode.COSMETICS_NOT_FOUND));
 
         // 중복 저장 방지: 이미 보관함에 있는 상품이면 409 에러 발생
