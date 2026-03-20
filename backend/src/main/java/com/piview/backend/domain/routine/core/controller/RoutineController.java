@@ -1,10 +1,10 @@
 package com.piview.backend.domain.routine.core.controller;
 
+import com.piview.backend.domain.routine.core.dto.RoutineListResponse;
 import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.global.security.UserPrincipal;
-import com.piview.backend.domain.routine.core.dto.RoutineListResponse;
-import com.piview.backend.domain.routine.core.dto.RoutineOrderUpdateRequest;
-import com.piview.backend.domain.routine.core.dto.RoutineResponse;
+import com.piview.backend.domain.routine.core.dto.RoutineRequestDto;
+import com.piview.backend.domain.routine.core.dto.RoutineResponseDto;
 import com.piview.backend.domain.routine.core.service.RoutineService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,7 +41,7 @@ public class RoutineController {
   public ApiResponse<Void> updateRoutineOrder(
       @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
       @PathVariable Long routineId,
-      @RequestBody RoutineOrderUpdateRequest request) {
+      @RequestBody RoutineRequestDto.RoutineOrderUpdateRequest request) {
 
     Long userId = userPrincipal.getId();
     routineService.updateRoutineOrders(userId, routineId, request);
@@ -51,11 +51,11 @@ public class RoutineController {
 
   @Operation(summary = "메인 루틴 조회", description = "사용자가 메인으로 설정한 단일 루틴의 상세 정보(제품 목록 포함)를 조회합니다.")
   @GetMapping("/main")
-  public ApiResponse<RoutineResponse> getMainRoutine(
+  public ApiResponse<RoutineResponseDto.RoutineResponse> getMainRoutine(
       @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
     Long userId = userPrincipal.getId();
-    RoutineResponse response = routineService.getMainRoutine(userId);
+    RoutineResponseDto.RoutineResponse response = routineService.getMainRoutine(userId);
 
     return ApiResponse.success(response);
   }
@@ -84,12 +84,12 @@ public class RoutineController {
 
   @Operation(summary = "루틴 상세정보 조회", description = "특정 루틴에 포함된 단계별 화장품 목록과 상세 정보를 조회합니다.")
   @GetMapping("/{routineId}")
-  public ApiResponse<RoutineResponse> getRoutineDetails(
+  public ApiResponse<RoutineResponseDto.RoutineResponse> getRoutineDetails(
       @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
       @PathVariable Long routineId) {
 
     Long userId = userPrincipal.getId();
-    RoutineResponse response = routineService.getRoutineDetails(userId, routineId);
+    RoutineResponseDto.RoutineResponse response = routineService.getRoutineDetails(userId, routineId);
     return ApiResponse.success(response);
   }
 
