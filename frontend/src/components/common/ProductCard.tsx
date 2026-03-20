@@ -105,7 +105,7 @@ function EffectTag({ label }: { label: string }) {
 // ── PICK 배지 — 고정 색상이므로 Tailwind만 사용
 function PickBadge() {
   return (
-    <span className="text-[9px] font-semibold px-[7px] py-[3px] rounded-[10px] uppercase tracking-[0.06em] bg-[#3D3028] text-[#F2EFE9]">
+    <span className="text-[11px] font-semibold px-[7px] py-[3px] rounded-[10px] uppercase tracking-[0.06em] bg-[#3D3028] text-[#F2EFE9]">
       PICK
     </span>
   );
@@ -114,7 +114,7 @@ function PickBadge() {
 // ── 브랜드 라벨 — 공통 스타일
 function BrandLabel({ brand }: { brand: string }) {
   return (
-    <span className="text-[12px] font-medium text-[#BFB6AA] uppercase tracking-[0.08em]">
+    <span className="text-[12px] font-bold text-[#BFB6AA] uppercase tracking-[0.08em]">
       {brand}
     </span>
   );
@@ -191,7 +191,7 @@ function OwnedButton({
       className={`flex items-center justify-center cursor-pointer transition-all active:scale-[0.97] shrink-0 ${
         isSmall
           ? "h-7 w-9 rounded-[6px]"
-          : "gap-1 h-8 px-2.5 rounded-[6px] text-xs font-medium"
+          : "gap-1 h-8 px-2.5 rounded-[6px] text-xs font-bold"
       }`}
       style={isOwned ? ACTION_BUTTON_ACTIVE : ACTION_BUTTON_INACTIVE}
       title={isOwned ? "보유 중" : "보유추가"}
@@ -372,7 +372,7 @@ export default function ProductCard({
                 />
               )}
             </div>
-            <p className="mt-0.75 m-0 text-[17px] font-medium text-[#2A2118] leading-[1.4] line-clamp-2 overflow-hidden">
+            <p className="mt-0.75 m-0 text-[17px] font-semibold text-[#2A2118] leading-[1.4] line-clamp-2 overflow-hidden">
               {name}
             </p>
             {(skinTypes.length > 0 || effects.length > 0) && (
@@ -410,7 +410,7 @@ export default function ProductCard({
 
           <div className="flex-1 px-3 py-2 min-w-0">
             <BrandLabel brand={brand} />
-            <p className="mt-0.75 m-0 text-[13px] font-medium text-[#2A2118] leading-[1.4]">
+            <p className="mt-0.75 m-0 text-[13px] font-bold text-[#2A2118] leading-[1.4]">
               {name}
             </p>
             {showEwg ? (
@@ -489,7 +489,7 @@ export default function ProductCard({
                 )}
                 {showPickBadge && <PickBadge />}
               </div>
-              <p className="m-0 text-[13px] font-medium text-[#2A2118] truncate">
+              <p className="m-0 text-[13px] font-bold text-[#2A2118] truncate">
                 {name}
               </p>
               <div className="flex flex-wrap gap-0.75 mt-1.25">

@@ -8,13 +8,12 @@ import { FilterModal, FilterState, FILTER_INITIAL_STATE } from "@/components/com
 import { CategoryFilter } from "@/components/common/CategoryFilter";
 import ProductCard from "@/components/common/ProductCard";
 import { Pagination } from "@/components/common/Pagination";
-import { Toast } from "@/components/common/Toast";
 import EmptyState from "@/components/common/EmptyState";
 import SearchBar from "@/components/common/SearchBar";
 import CompareModal, { type CompareProduct } from "@/components/common/CompareModal";
-import { useToast, useCompare, useProductSearch } from "@/hooks";
+import { useCompare, useProductSearch } from "@/hooks";
 import { useOwnedStore } from "@/stores/useOwnedStore";
-import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
+import { useRoutineStore } from "@/stores";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
 
 import { toSkinTypeParam } from "@/utils/enumConvert";
@@ -44,8 +43,8 @@ export default function RecommendPage() {
   });
 
   // 루틴 상태
-  const routineMap = useLocalRoutineStore((state) => state.routine);
-  const addStepProduct = useLocalRoutineStore((state) => state.addStepProduct);
+  const routineMap = useRoutineStore((state) => state.localRoutine);
+  const addStepProduct = useRoutineStore((state) => state.addStepProduct);
   const isInRoutine = (productId: number) =>
     Object.values(routineMap).flat().filter(Boolean).some((p) => p.id === String(productId));
 
@@ -53,7 +52,6 @@ export default function RecommendPage() {
   const { toggleOwned, ownedProducts } = useOwnedStore();
   const isOwned = (id: number) => ownedProducts.some((p) => p.id === String(id));
 
-  const { toastMessage } = useToast();
   const { compareItems, showCompare, toggleCompare, clearCompare, openCompare, closeCompare, canCompare } =
     useCompare<CompareProduct>();
 
@@ -95,7 +93,6 @@ export default function RecommendPage() {
 
   return (
     <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
-      <Toast msg={toastMessage} />
 
       {showCompare && canCompare && (
         <CompareModal compareItems={compareItems as [CompareProduct, CompareProduct]} onClose={closeCompare} />
@@ -115,7 +112,7 @@ export default function RecommendPage() {
               onClick={() => setShowFilter(true)}
               className="flex items-center gap-1.5 cursor-pointer border transition-all active:scale-[0.96] shrink-0"
               style={{
-                height: "38px", padding: "0 12px", borderRadius: "10px", fontSize: "14px", fontWeight: 500,
+                height: "38px", padding: "0 12px", borderRadius: "10px", fontSize: "14px", fontWeight: 600,
                 borderColor: filterCount > 0 ? "#A69D92" : "#E2DDD8",
                 backgroundColor: filterCount > 0 ? "#A69D92" : "#FFFFFF",
                 color: filterCount > 0 ? "#FFFFFF" : "#8A8278",
@@ -140,7 +137,7 @@ export default function RecommendPage() {
         <div className="flex items-center justify-between mx-4 mt-3 px-3 py-2.5 rounded-xl" style={{ backgroundColor: "#F2EFE9", border: "1px solid #D9D5D0" }}>
           <div className="flex items-center gap-2">
             <Scale size={13} style={{ color: "#8A8278" }} />
-            <span style={{ fontSize: "12px", color: "#6B6258", fontWeight: 500 }}>비교할 제품을 1개 더 선택하세요</span>
+            <span style={{ fontSize: "12px", color: "#6B6258", fontWeight: 600 }}>비교할 제품을 1개 더 선택하세요</span>
           </div>
           <button onClick={clearCompare} style={{ fontSize: "11px", color: "#A69D92", border: "none", background: "none", cursor: "pointer" }}>취소</button>
         </div>
@@ -149,7 +146,7 @@ export default function RecommendPage() {
         <div className="flex items-center justify-between mx-4 mt-3 px-3 py-2.5 rounded-xl" style={{ backgroundColor: "#3D3028" }}>
           <div className="flex items-center gap-2">
             <Scale size={13} style={{ color: "#F2EFE9" }} />
-            <span style={{ fontSize: "12px", color: "#F2EFE9", fontWeight: 500 }}>2개 제품 선택 완료</span>
+            <span style={{ fontSize: "12px", color: "#F2EFE9", fontWeight: 600 }}>2개 제품 선택 완료</span>
           </div>
           <div className="flex gap-2">
             <button onClick={clearCompare} style={{ fontSize: "11px", color: "#BFB6AA", border: "none", background: "none", cursor: "pointer" }}>취소</button>

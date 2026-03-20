@@ -3,23 +3,58 @@ import localFont from "next/font/local";
 import { Providers } from "@/lib/providers";
 import "./globals.css";
 
-// ── Google Sans Flex — 영어 본문 폰트 (variable font) ──────────────
-// preload: false — 한국어 앱 특성상 초기 렌더링에 사용되지 않아 preload 경고 방지
-const googleSansFlex = localFont({
-  src: "../../public/fonts/GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf",
+// ── MaruBuri — 한국어 기본 폰트 (여러 굵기) ──────────────────────
+const maruBuri = localFont({
+  src: [
+    {
+      path: "../../public/fonts/MaruBuri-ExtraLight.ttf",
+      weight: "200",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/MaruBuri-Light.ttf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/MaruBuri-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/MaruBuri-SemiBold.ttf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/MaruBuri-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  display: "swap",
+  variable: "--font-korean",
+});
+
+// ── SortsMillGoudy — 영어 기본 폰트 ───────────────────────────────
+const sortsMillGoudy = localFont({
+  src: [
+    {
+      path: "../../public/fonts/SortsMillGoudy-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/SortsMillGoudy-Italic.ttf",
+      weight: "400",
+      style: "italic",
+    },
+  ],
   display: "swap",
   variable: "--font-english",
-  preload: false,
 });
 
-// ── RIDIBatang — 한국어 바탕 폰트 (본문 + 디스플레이 공용) ─────────
-const ridiBatang = localFont({
-  src: "../../public/fonts/RIDIBatang.otf",
-  display: "swap",
-  variable: "--font-pretendard", // 기존 변수명 유지 — 다른 파일 수정 불필요
-});
-
-// ── Hanken Grotesk — 성분 영어명 전용 폰트 (로컬) ─────────────────
+// ── HankenGrotesk — 제품 성분 영어명 전용 폰트 ────────────────────
 const hankenGrotesk = localFont({
   src: [
     {
@@ -35,13 +70,6 @@ const hankenGrotesk = localFont({
   variable: "--font-hanken",
 });
 
-// ── RIDIBatang (세리프 디스플레이용 별칭) ─────────────────────────
-const ridiBatangSerif = localFont({
-  src: "../../public/fonts/RIDIBatang.otf",
-  display: "swap",
-  variable: "--font-cormorant", // 기존 변수명 유지 — 다른 파일 수정 불필요
-});
-
 export const metadata: Metadata = {
   title: "Piview",
   description: "나만의 스킨케어 루틴",
@@ -49,7 +77,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className={`${googleSansFlex.variable} ${ridiBatang.variable} ${ridiBatangSerif.variable} ${hankenGrotesk.variable}`}>
+    <html
+      lang="ko"
+      className={`${maruBuri.variable} ${sortsMillGoudy.variable} ${hankenGrotesk.variable}`}
+    >
       <body>
         <div className="min-h-screen bg-[#F2EFE9]">
           <div

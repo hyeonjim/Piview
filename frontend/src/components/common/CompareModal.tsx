@@ -116,13 +116,13 @@ function CompareTable({
                 return colorConfig ? (
                   <span
                     key={effect}
-                    className="text-[10px] px-1.5 py-px rounded-[4px] font-medium"
+                    className="text-[10px] px-1.5 py-px rounded-[4px] font-bold"
                     style={{ backgroundColor: colorConfig.chip, color: colorConfig.accent }}
                   >
                     {effect}
                   </span>
                 ) : (
-                  <span key={effect} className="text-[10px] px-1.5 py-px rounded-[4px] font-medium bg-[#F2EFE9] text-[#5A5248]">
+                  <span key={effect} className="text-[10px] px-1.5 py-px rounded-[4px] font-bold bg-[#F2EFE9] text-[#5A5248]">
                     {effect}
                   </span>
                 );
@@ -138,13 +138,13 @@ function CompareTable({
                 return colorConfig ? (
                   <span
                     key={effect}
-                    className="text-[10px] px-1.5 py-px rounded-[4px] font-medium"
+                    className="text-[10px] px-1.5 py-px rounded-[4px] font-bold"
                     style={{ backgroundColor: colorConfig.chip, color: colorConfig.accent }}
                   >
                     {effect}
                   </span>
                 ) : (
-                  <span key={effect} className="text-[10px] px-1.5 py-px rounded-[4px] font-medium bg-[#F2EFE9] text-[#5A5248]">
+                  <span key={effect} className="text-[10px] px-1.5 py-px rounded-[4px] font-bold bg-[#F2EFE9] text-[#5A5248]">
                     {effect}
                   </span>
                 );
@@ -230,7 +230,7 @@ function CompareTable({
             borderTop: rowIndex === 0 ? "1px solid #E8E4DF" : "1px solid #F2EFE9",
           }}
         >
-          <div className="px-3 py-3 text-sm font-medium text-[#8A8278] bg-[#FAFAF8] flex items-center">
+          <div className="px-3 py-3 text-sm font-semibold text-[#8A8278] bg-[#FAFAF8] flex items-center">
             {row.label}
           </div>
           <div

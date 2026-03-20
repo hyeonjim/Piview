@@ -14,8 +14,7 @@ import {
   Scale,
   Sparkles,
 } from "lucide-react";
-import { Toast } from "@/components/common/Toast";
-import { useToast } from "@/hooks";
+import { toast } from "sonner";
 import { useLikeStore } from "@/stores/useLikeStore";
 import { getMockProductById } from "@/constants/_mock/product";
 import { getEwgColor } from "@/constants/categoryColors";
@@ -24,7 +23,7 @@ import { ROUTINE_STEPS } from "@/constants/routineSteps";
 import CompareModal, {
   type CompareProduct,
 } from "@/components/common/CompareModal";
-import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
+import { useRoutineStore } from "@/stores";
 import { useOwnedStore } from "@/stores/useOwnedStore";
 
 // 알레르기 성분 아이콘 — 빨간 원형 경고 스타일
@@ -79,9 +78,9 @@ function ProductDetailInner() {
   const [showCompareModal, setShowCompareModal] = useState(false);
 
   // 루틴 store — routineMap 구독 + addStepProduct 모두 여기서 한 번에 구독
-  const routineMap = useLocalRoutineStore((state) => state.routine);
-  const addStepProduct = useLocalRoutineStore((state) => state.addStepProduct);
-  const removeStepProduct = useLocalRoutineStore(
+  const routineMap = useRoutineStore((state) => state.localRoutine);
+  const addStepProduct = useRoutineStore((state) => state.addStepProduct);
+  const removeStepProduct = useRoutineStore(
     (state) => state.removeStepProduct,
   );
   // flat() 후 null/undefined 제거 (persist 복원 시 null이 섞일 수 있음)
@@ -139,11 +138,10 @@ function ProductDetailInner() {
 
   // EWG 카드가 화면 상단에 도달하면 위로가기 버튼 표시
   const ewgSectionRef = useRef<HTMLDivElement>(null);
-  const { toastMessage, showToast } = useToast();
 
-  // useLocalRoutineStore는 persist + skipHydration 설정이므로 클라이언트에서 수동 hydrate
+  // useRoutineStore는 persist + skipHydration 설정이므로 클라이언트에서 수동 hydrate
   useEffect(() => {
-    useLocalRoutineStore.persist.rehydrate();
+    useRoutineStore.persist.rehydrate();
   }, []);
   useEffect(() => {
     const handleScroll = () => {
@@ -180,7 +178,7 @@ function ProductDetailInner() {
           }
         });
       });
-      showToast(`✓ ${productData.name} 루틴에서 제거됨`);
+      toast(`✓ ${productData.name} 루틴에서 제거됨`);
       return;
     }
     const matchedStep = ROUTINE_STEPS.find((step) =>
@@ -203,7 +201,7 @@ function ProductDetailInner() {
       ewgCaution: productData.ewg.caution,
       ewgDanger: productData.ewg.danger,
     });
-    showToast(`✓ ${productData.name} 루틴에 추가됨!`);
+    toast(`✓ ${productData.name} 루틴에 추가됨!`);
   };
 
   const handleToggleOwned = () => {
@@ -238,8 +236,6 @@ function ProductDetailInner() {
 
   return (
     <div className="flex flex-col min-h-full relative bg-bg-beige">
-      <Toast msg={toastMessage} />
-
       {/* 내루틴 비교 모달 — 루틴에 동일 카테고리 제품 있을 때 CompareModal 사용 */}
       {showCompareModal && selectedRoutineCompare && (
         <CompareModal
@@ -418,7 +414,7 @@ function ProductDetailInner() {
           {/* 브랜드·제품명 + 내루틴 비교하기 버튼 */}
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="flex-1 min-w-0">
-              <p className="text-[16px] text-text-muted font-medium mb-0.5">
+              <p className="text-[16px] text-text-muted font-semibold mb-0.5">
                 {productData.brand}
               </p>
               <h1 className="text-[20px] font-semibold text-text-primary leading-[1.35]">
@@ -671,7 +667,7 @@ function ProductDetailInner() {
                 className={`flex-1 h-9 rounded-[10px] border-none cursor-pointer transition-all text-[16px] ${
                   activeTab === key
                     ? "bg-white text-text-primary font-bold shadow-[0_1px_4px_rgba(0,0,0,0.1)]"
-                    : "bg-transparent text-text-muted font-medium"
+                    : "bg-transparent text-text-muted font-semibold"
                 }`}
               >
                 {label}

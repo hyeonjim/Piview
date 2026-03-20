@@ -17,10 +17,9 @@ export interface User {
   providerId: string;
   email: string | null;
   name: string | null;
+  imageUrl: string | null; // 카카오 프로필 이미지 URL
   gender: Gender | null;
-  ageRange: string | null;     // 구버전 호환 — 제거 예정
   ageGroup: AgeGroup | null;
-  skinType: SkinType | null;   // 구버전 호환 — 제거 예정
   mySkinType: SkinType | null;
   exist: boolean;
   mySkinProblems: MySkinProblem[]; // ⚠️ 승찬님 ERD 확정 후 구조 수정 필요

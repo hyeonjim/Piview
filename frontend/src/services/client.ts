@@ -9,7 +9,7 @@
 
 import axios, { type InternalAxiosRequestConfig } from "axios";
 import { useUserStore } from "@/stores/useUserStore";
-import { useLocalRoutineStore } from "@/stores/useLocalRoutineStore";
+import { useRoutineStore } from "@/stores/useRoutineStore";
 
 // _retry 플래그 타입 확장 (TypeScript 에러 방지)
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
@@ -49,7 +49,7 @@ client.interceptors.response.use(
     // refresh 요청 자체가 401이면 무한루프 방지 — 바로 로그아웃
     if (originalRequest.url?.includes("/auth/refresh")) {
       useUserStore.getState().clearUser();
-      useLocalRoutineStore.getState().clearRoutine();
+      useRoutineStore.getState().clearLocalRoutine();
       localStorage.removeItem("piview-routine");
       window.location.href = "/splash";
       return Promise.reject(error);
@@ -58,7 +58,7 @@ client.interceptors.response.use(
     // _retry 플래그가 이미 있으면 refresh도 실패한 것 → 무한루프 방지
     if (originalRequest._retry) {
       useUserStore.getState().clearUser();
-      useLocalRoutineStore.getState().clearRoutine();
+      useRoutineStore.getState().clearLocalRoutine();
       localStorage.removeItem("piview-routine");
       window.location.href = "/splash";
       return Promise.reject(error);
@@ -83,7 +83,7 @@ client.interceptors.response.use(
     } catch {
       // refresh도 실패 → 세션 만료, 로그아웃 처리
       useUserStore.getState().clearUser();
-      useLocalRoutineStore.getState().clearRoutine();
+      useRoutineStore.getState().clearLocalRoutine();
       localStorage.removeItem("piview-routine");
       window.location.href = "/splash";
       return Promise.reject(error);
@@ -96,17 +96,17 @@ client.interceptors.response.use(
  * accessToken은 일반 쿠키(httpOnly: false)라 JS로 접근 가능
  */
 function getCookieAndClear(cookieName: string): string | null {
-  const match = document.cookie.match(
+  const cookieMatch = document.cookie.match(
     new RegExp("(?:^|; )" + cookieName + "=([^;]*)"),
   );
-  if (!match) return null;
+  if (!cookieMatch) return null;
 
-  const value = decodeURIComponent(match[1]);
+  const cookieValue = decodeURIComponent(cookieMatch[1]);
 
   // 보안을 위해 즉시 삭제 (Max-Age=0)
   document.cookie = `${cookieName}=; Max-Age=0; path=/`;
 
-  return value;
+  return cookieValue;
 }
 
 export { getCookieAndClear };

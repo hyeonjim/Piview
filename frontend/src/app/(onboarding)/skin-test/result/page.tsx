@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
-import { X, Lightbulb, ArrowRight } from "lucide-react";
+import { Lightbulb} from "lucide-react";
 import { SKIN_TYPE_INFO, DEFAULT_SKIN_TYPE } from "@/constants";
 
 // ── 스타일 상수 ──────────────────────────────────────────────────────
@@ -63,16 +63,7 @@ function ResultContent() {
 
   return (
     <div className="flex flex-col min-h-full bg-white">
-      <div className="flex justify-end px-6 pt-4">
-        <button
-          onClick={() => router.push("/home")}
-          className="p-2 bg-transparent border-none cursor-pointer"
-        >
-          <X size={22} color="#2C2C2C" />
-        </button>
-      </div>
-
-      <div className="flex-1 px-6 pb-8 overflow-y-auto">
+      <div className="flex-1 px-6 pb-8 mt-15 overflow-y-auto">
         {/* 아이콘 */}
         <div className="flex justify-center mt-4">
           <div
@@ -98,7 +89,7 @@ function ResultContent() {
           <p className="text-text-muted" style={TYPE_DESC_STYLE}>
             회원님의 피부 타입은
           </p>
-          <p className="text-brand font-bold" style={TYPE_LABEL_STYLE}>
+          <p className="font-bold" style={TYPE_LABEL_STYLE}>
             {typeInfo.label}
           </p>
           {ageGroup && (
@@ -160,7 +151,7 @@ function ResultContent() {
         </div>
 
         {/* 인사이트 카드 (디자인 고유색 유지) */}
-        <div className="mt-4 p-5" style={INSIGHT_CARD_STYLE}>
+        <div className="mt-10 p-5" style={INSIGHT_CARD_STYLE}>
           <div className="flex items-center gap-2 mb-3">
             <Lightbulb size={17} color="#2196F3" />
             <p style={INSIGHT_TITLE}>맞춤 인사이트</p>
@@ -172,7 +163,7 @@ function ResultContent() {
       </div>
 
       {/* 하단 CTA */}
-      <div className="px-6 pb-10 pt-3 flex flex-col gap-3">
+      <div className="px-26 pb-10 pt-23 flex flex-col gap-3">
         <button
           onClick={() => router.push("/mypage")}
           className="w-full flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer border-none bg-brand text-white font-semibold"
@@ -183,7 +174,7 @@ function ResultContent() {
             boxShadow: "0px 4px 16px rgba(162,170,123,0.35)",
           }}
         >
-          내 제품 등록하러 가기 <ArrowRight size={18} color="white" />
+          내 루틴 설정하기
         </button>
       </div>
     </div>
