@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.piview.backend.domain.user.profile.service.UserProfileService;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,16 +17,16 @@ import org.mockito.Mockito;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
-import com.piview.backend.skin.survey.entity.MySkin;
-import com.piview.backend.skin.survey.entity.SurveyAgeGroup;
-import com.piview.backend.skin.survey.entity.SurveyGender;
-import com.piview.backend.skin.survey.entity.SurveySkinType;
-import com.piview.backend.skin.survey.repository.MySkinRepository;
-import com.piview.backend.user.entity.AuthProvider;
-import com.piview.backend.user.entity.User;
-import com.piview.backend.user.profile.dto.request.UserProfileUpdateRequest;
-import com.piview.backend.user.profile.dto.response.UserProfileResponse;
-import com.piview.backend.user.repository.UserRepository;
+import com.piview.backend.domain.skin.survey.entity.MySkin;
+import com.piview.backend.domain.skin.survey.entity.SurveyAgeGroup;
+import com.piview.backend.domain.skin.survey.entity.SurveyGender;
+import com.piview.backend.domain.skin.survey.entity.SurveySkinType;
+import com.piview.backend.domain.skin.survey.repository.MySkinRepository;
+import com.piview.backend.domain.user.login.entity.AuthProvider;
+import com.piview.backend.domain.user.login.entity.User;
+import com.piview.backend.domain.user.profile.dto.request.UserProfileUpdateRequest;
+import com.piview.backend.domain.user.profile.dto.response.UserProfileResponse;
+import com.piview.backend.domain.user.login.repository.UserRepository;
 
 class UserProfileServiceTest {
 
