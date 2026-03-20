@@ -32,13 +32,23 @@ public class DevAuthController {
       @RequestParam(defaultValue = "test@kakao.com") String email) {
 
     // DB에서 유저 찾기 (없으면 테스트용 가짜 유저 강제 생성)
-    User user = userRepository.findByEmail(email)
+    User user = userRepository.findByEmailIncludingDeleted(email)
+        .map(existingUser -> {
+          // 탈퇴한 유저(`exist = false`)라면 개발 테스트를 위해 다시 살려냅니다.
+          if (existingUser.getExist() == null || !existingUser.getExist()) {
+            existingUser.setExist(true);
+            existingUser.setDeletedAt(null);
+            return userRepository.save(existingUser);
+          }
+          return existingUser;
+        })
         .orElseGet(() -> {
           User newUser = User.builder()
               .email(email)
               .name("개발테스트유저")
               .provider(AuthProvider.KAKAO)
               .providerId("dev_" + email)
+              .exist(true)
               .build();
           return userRepository.save(newUser);
         });

@@ -18,6 +18,7 @@ public interface ProductLikeRepository extends JpaRepository<ProductLike, Long> 
   @Query("SELECT pl.product.productId FROM ProductLike pl WHERE pl.user.id = :userId")
   List<Long> findLikedProductIdsByUserId(@Param("userId") Long userId);
 
-  @Query("SELECT pl.product FROM ProductLike pl WHERE pl.user.id = :userId")
+  // 사용자가 좋아요를 누른 제품 객체(Product) 전체 목록 조회
+  @Query("SELECT pl.product FROM ProductLike pl JOIN pl.product p WHERE pl.user.id = :userId")
   List<Product> findProductsByUserId(@Param("userId") Long userId);
 }

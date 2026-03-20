@@ -31,6 +31,7 @@ import org.hibernate.annotations.SQLRestriction;
 @NoArgsConstructor
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE users SET exist = false, deleted_at = CURRENT_TIMESTAMP WHERE user_id = ?")
+@SQLRestriction("exist = true")
 public class User extends BaseEntity {
 
     @Id
@@ -55,6 +56,8 @@ public class User extends BaseEntity {
     @Column(name = "provider_id", nullable = false)
     private String providerId;
 
+    private String imageUrl;
+
     // 설문 응답으로 갱신되는 사용자 기본 프로필 값들이다.
     // 성별 값을 저장한다.
     @Enumerated(EnumType.STRING)
@@ -72,8 +75,9 @@ public class User extends BaseEntity {
     private SurveySkinType mySkinType;
 
     // 사용자 활성 여부를 저장한다.
+    @Builder.Default
     @Column(name = "exist")
-    private Boolean exist;
+    private Boolean exist = true;
 
     // 탈퇴 유저 복구(Soft Delete) 처리를 위한 타임스탬프
     @Column(name = "deleted_at")

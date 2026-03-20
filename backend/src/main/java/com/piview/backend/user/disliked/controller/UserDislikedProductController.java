@@ -52,7 +52,7 @@ public class UserDislikedProductController {
                 examples = @ExampleObject(
                     name = "GetDislikedProductsSuccess",
                     summary = "목록 조회 성공",
-                    value = "{\"status\":200,\"message\":\"요청에 성공했습니다.\",\"data\":[{\"dislikedProductId\":1,\"productId\":161485,\"productName\":\"판테토인 에센스 토너\",\"brandName\":\"마녀공장\",\"categoryName\":\"스킨/토너\",\"imageUrl\":\"161485.jpg\",\"volume\":\"200ml\",\"price\":32000,\"topSkinType\":\"combination\",\"top2SkinType\":\"oily\"}]}"
+                    value = "{\"status\":200,\"message\":\"요청에 성공했습니다.\",\"data\":[{\"dislikedProductId\":1,\"productId\":161485,\"productName\":\"판테토인 에센스 토너\",\"brandName\":\"마녀공장\",\"categoryName\":\"스킨/토너\",\"imageUrl\":\"https://piview-products-images.s3.ap-northeast-2.amazonaws.com/products/glowpick_images/161485.jpg\",\"volume\":\"200ml\",\"price\":32000,\"topSkinType\":\"combination\",\"top2SkinType\":\"oily\"}]}"
                 )
             )
         ),
@@ -161,7 +161,7 @@ public class UserDislikedProductController {
     // 안 맞는 제품 등록 문서
     @Operation(
         summary = "안 맞는 제품 등록",
-        description = "기존 상품 검색 결과에서 선택한 `productId`를 기준으로 로그인 사용자의 안 맞는 제품 목록에 상품을 등록합니다. 상품 자체의 표시 정보는 저장하지 않고 `productId`만 저장합니다."
+        description = "기존 상품 검색 결과에서 선택한 `productId`를 기준으로 로그인 사용자의 안 맞는 제품 목록에 상품을 등록합니다. 상품 자체의 표시 정보는 저장하지 않고 상품 ID만 저장합니다."
     )
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -248,7 +248,7 @@ public class UserDislikedProductController {
                 examples = @ExampleObject(
                     name = "CreateDislikedProductRequest",
                     summary = "등록 요청 예시",
-                    value = "{\"productId\":123}"
+                    value = "{\"productId\":161485}"
                 )
             )
         )
