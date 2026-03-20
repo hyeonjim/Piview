@@ -15,6 +15,10 @@ export { useMyCosQuery, useAddMyCos, useRemoveMyCos } from "./queries/useMyCos";
 export { useProductSearch } from "./queries/useProductSearch";
 export { useSurveySubmit } from "./queries/useSurveySubmit";
 export { useOcr } from "./queries/useOcr";
+export {
+  useCaptureAnalysis,
+  useAnalysisStatus,
+} from "./queries/useSkinAnalysis";
 
 // 루틴 쿼리 훅
 export {
