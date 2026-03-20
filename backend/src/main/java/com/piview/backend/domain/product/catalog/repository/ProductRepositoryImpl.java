@@ -1,8 +1,10 @@
 package com.piview.backend.domain.product.catalog.repository;
 
+import java.util.List;
+
 import com.piview.backend.domain.product.catalog.dto.ProductSearchCondition;
 import com.piview.backend.domain.product.entity.Product;
-import com.piview.backend.domain.product.entity.SkinTypeEnum;
+import com.piview.backend.domain.skin.common.SkinTypeEnum;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -11,8 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 import static com.piview.backend.domain.product.entity.QBigCategory.bigCategory;
 import static com.piview.backend.domain.product.entity.QBrand.brand;

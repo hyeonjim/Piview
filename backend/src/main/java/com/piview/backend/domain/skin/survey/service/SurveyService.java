@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.domain.skin.analysis.service.SkinAnalysisCacheService;
+import com.piview.backend.domain.skin.common.SkinTypeEnum;
 import com.piview.backend.domain.skin.survey.dto.request.SurveySubmitRequest;
 import com.piview.backend.domain.skin.survey.dto.response.SurveyAiResultResponse;
 import com.piview.backend.domain.skin.survey.dto.response.SurveyAxisResponse;
@@ -29,7 +30,6 @@ import com.piview.backend.domain.skin.survey.dto.response.SurveySubmitResponse;
 import com.piview.backend.domain.skin.survey.dto.response.SurveyWarningResponse;
 import com.piview.backend.domain.skin.survey.entity.MySkin;
 import com.piview.backend.domain.skin.survey.entity.SurveyAgeGroup;
-import com.piview.backend.domain.skin.survey.entity.SurveySkinType;
 import com.piview.backend.domain.skin.survey.repository.MySkinRepository;
 import com.piview.backend.domain.skin.survey.service.support.AiSkinSurveySignals;
 import com.piview.backend.domain.user.login.entity.User;
@@ -76,7 +76,7 @@ public class SurveyService {
 
             // Redis에 저장된 AI 원본 JSON에서 최종 피부타입 계산에 필요한 신호만 추출한다.
             AiSkinSurveySignals aiSignals = extractAiSignals(cachedState.path("result"));
-            SurveySkinType mySkinType = calculateSkinType(request, aiSignals);
+            SkinTypeEnum mySkinType = calculateSkinType(request, aiSignals);
             // Q7 원문은 프론트 문구이고, DB에는 서비스에서 쓰는 내부 태그 문자열로 저장한다.
             // 여기에 연령대(40대 이상) 기반 파생 태그도 함께 합친다.
             List<String> mappedSkinProblems = addDerivedSkinProblems(
@@ -118,7 +118,7 @@ public class SurveyService {
         }
     }
 
-    private SurveySkinType calculateSkinType(SurveySubmitRequest request, AiSkinSurveySignals aiSignals) {
+    private SkinTypeEnum calculateSkinType(SurveySubmitRequest request, AiSkinSurveySignals aiSignals) {
         try {
             // 점수 계산 규칙은 SurveyScoreCalculator 에 모아두고,
             // 서비스는 요청/AI 신호를 그 계산기로 전달하는 역할만 맡는다.

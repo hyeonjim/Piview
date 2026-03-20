@@ -15,12 +15,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.piview.backend.domain.skin.common.SkinTypeEnum;
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.domain.skin.survey.entity.MySkin;
 import com.piview.backend.domain.skin.survey.entity.SurveyAgeGroup;
 import com.piview.backend.domain.skin.survey.entity.SurveyGender;
-import com.piview.backend.domain.skin.survey.entity.SurveySkinType;
 import com.piview.backend.domain.skin.survey.repository.MySkinRepository;
 import com.piview.backend.domain.user.login.entity.AuthProvider;
 import com.piview.backend.domain.user.login.entity.User;
@@ -51,7 +51,7 @@ class UserProfileServiceTest {
         assertThat(response.getImageUrl()).isEqualTo("http://k.kakaocdn.net/dn/profile.jpg");
         assertThat(response.getGender()).isEqualTo(SurveyGender.WOMEN);
         assertThat(response.getAgeGroup()).isEqualTo(SurveyAgeGroup.TWENTIES);
-        assertThat(response.getMySkinType()).isEqualTo(SurveySkinType.OILY);
+        assertThat(response.getMySkinType()).isEqualTo(SkinTypeEnum.oily);
         assertThat(response.getSkinProblems()).containsExactly("수분", "진정");
     }
 
@@ -66,7 +66,7 @@ class UserProfileServiceTest {
         UserProfileUpdateRequest request = objectMapper.readValue("""
             {
               "name": "새이름",
-              "mySkinType": "DRY"
+              "mySkinType": "dry"
             }
             """, UserProfileUpdateRequest.class);
 
@@ -74,7 +74,7 @@ class UserProfileServiceTest {
 
         assertThat(response.getName()).isEqualTo("새이름");
         assertThat(response.getImageUrl()).isEqualTo("http://k.kakaocdn.net/dn/profile.jpg");
-        assertThat(response.getMySkinType()).isEqualTo(SurveySkinType.DRY);
+        assertThat(response.getMySkinType()).isEqualTo(SkinTypeEnum.dry);
         assertThat(response.getGender()).isEqualTo(SurveyGender.WOMEN);
         assertThat(response.getAgeGroup()).isEqualTo(SurveyAgeGroup.TWENTIES);
         assertThat(response.getSkinProblems()).containsExactly("수분");
@@ -166,7 +166,7 @@ class UserProfileServiceTest {
             .imageUrl("http://k.kakaocdn.net/dn/profile.jpg")
             .gender(SurveyGender.WOMEN)
             .ageGroup(SurveyAgeGroup.TWENTIES)
-            .mySkinType(SurveySkinType.OILY)
+            .mySkinType(SkinTypeEnum.oily)
             .build();
     }
 }

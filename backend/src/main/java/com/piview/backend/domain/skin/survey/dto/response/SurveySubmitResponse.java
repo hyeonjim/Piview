@@ -2,7 +2,7 @@ package com.piview.backend.domain.skin.survey.dto.response;
 
 import java.util.List;
 
-import com.piview.backend.domain.skin.survey.entity.SurveySkinType;
+import com.piview.backend.domain.skin.common.SkinTypeEnum;
 
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -17,16 +17,16 @@ public class SurveySubmitResponse {
     @Schema(description = "이번 최종 제출에 사용된 피부 분석 작업 식별자", example = "35e9064f-7c69-48ee-be1f-5a4a600ad88d")
     private String analysisId;
 
-    @Schema(description = "설문 응답과 AI 분석 결과를 합산해 계산한 최종 피부 타입", implementation = SurveySkinType.class, example = "COMBINATION")
-    private SurveySkinType mySkinType;
+    @Schema(description = "설문 응답과 AI 분석 결과를 합산해 계산한 최종 피부 타입", implementation = SkinTypeEnum.class, example = "combination")
+    private SkinTypeEnum mySkinType;
 
     @ArraySchema(
         schema = @Schema(
-            description = "최종 피부 고민 저장 태그입니다. 응답은 설문 원문이 아니라 내부 저장 태그 기준으로 내려갑니다.",
+            description = "최종 피부 고민 항목입니다. 응답은 설문 선택 문구를 앱에서 공통으로 사용하는 값으로 정리한 결과입니다.",
             example = "진정"
         ),
         arraySchema = @Schema(
-            description = "문항 7 입력값을 내부 저장 태그 기준으로 변환한 최종 피부 고민 목록입니다. ageGroup이 FORTIES_PLUS면 `안티에이징` 태그가 자동 추가될 수 있습니다.",
+            description = "문항 7 응답을 기준으로 정리한 최종 피부 고민 목록입니다. ageGroup이 FORTIES_PLUS면 `안티에이징` 항목이 자동 추가될 수 있습니다.",
             example = "[\"진정\", \"수분\", \"피지\"]"
         )
     )
