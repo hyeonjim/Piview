@@ -71,9 +71,9 @@ export function RoutineStepCard({
 
           {/* 제품 정보 */}
           <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-medium text-brand m-0">{stepLabel}</p>
+            <p className="text-[12px] font-bold text-brand m-0">{stepLabel}</p>
             <Link href={`/product/${product.id}`}>
-              <p className="truncate text-[16px] font-medium text-[#1A1A1A] mt-0.5">{product.name}</p>
+              <p className="truncate text-[16px] font-semibold text-[#1A1A1A] mt-0.5">{product.name}</p>
             </Link>
             <p className="text-[12px] text-[#B8A99A] m-0">{product.brand}</p>
           </div>
@@ -95,7 +95,7 @@ export function RoutineStepCard({
 
           {/* 안내 텍스트 */}
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-medium text-brand m-0">{stepLabel}</p>
+            <p className="text-[11px] font-bold text-brand m-0">{stepLabel}</p>
             <p className="text-[13px] text-[#B8A99A] mt-0.5">제품을 추가해보세요</p>
           </div>
 

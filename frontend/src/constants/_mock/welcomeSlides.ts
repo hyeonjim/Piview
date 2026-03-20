@@ -1,6 +1,6 @@
 /**
- * _mock/welcomeSlides.ts
- * 웰컴 페이지 슬라이드 이미지 및 텍스트
+ * 🔧 _mock/welcomeSlides.ts
+ * 🔧 웰컴 페이지 슬라이드 이미지 및 텍스트 — 임시 하드코딩, 실제 데이터 아님
  *
  * ⚠️  API 교체 대상 (이미지 URL을 CMS/백엔드에서 관리할 경우)
  *     텍스트만 고정이라면 constants/로 이동해도 됨
@@ -15,6 +15,7 @@ export interface WelcomeSlide {
   subtitle: string;
 }
 
+// 🔧 웰컴 슬라이드 목업 — ⚠️ CMS/API 연동 시 삭제
 export const WELCOME_SLIDES: WelcomeSlide[] = [
   {
     image:    "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",

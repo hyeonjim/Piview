@@ -4,31 +4,27 @@
  *
  * 사용처:
  *   - src/app/(onboarding)/skin-test/select/page.tsx  → SKIN_TYPES, AGE_GROUPS, GENDER_OPTIONS, SKIN_CONCERNS, ALLERGIES
- *   - src/app/(main)/recommend/page.tsx               → SKIN_TYPE_LABELS
  */
 
-/** 피부 타입 레이블 (필터 칩용 — 짧은 이름) */
-export const SKIN_TYPE_LABELS = ["건성", "지성", "복합성", "수부지"] as const;
-
-/** 피부 타입 선택 옵션 (아이콘 포함) */
+/** 피부 타입 선택 옵션 */
 export const SKIN_TYPES = [
-  { id: "dry",         icon: "💧", label: "건성"   },
-  { id: "oily",        icon: "💦", label: "지성"   },
-  { id: "combination", icon: "🔀", label: "복합성" },
-  { id: "dehydrated",  icon: "💧💦", label: "수부지" },
+  { id: "dry", label: "건성" },
+  { id: "oily", label: "지성" },
+  { id: "combination", label: "복합성" },
+  { id: "dehydrated", label: "수부지" },
 ] as const;
 
 /** 성별 선택 옵션 */
 export const GENDER_OPTIONS = [
-  { id: "women", icon: "👩", label: "여성" },
-  { id: "men",   icon: "👨", label: "남성" },
+  { id: "women", label: "여성" },
+  { id: "men", label: "남성" },
 ] as const;
 
 /** 연령대 선택 옵션 */
 export const AGE_GROUPS = [
-  { id: "10s",  label: "10대"    },
-  { id: "20s",  label: "20대"    },
-  { id: "30s",  label: "30대"    },
+  { id: "10s", label: "10대" },
+  { id: "20s", label: "20대" },
+  { id: "30s", label: "30대" },
   { id: "40s+", label: "40대 이상" },
 ] as const;
 

@@ -1,7 +1,7 @@
 package com.piview.backend.global.security;
 
-import com.piview.backend.user.entity.User;
-import com.piview.backend.user.repository.UserRepository;
+import com.piview.backend.domain.user.login.entity.User;
+import com.piview.backend.domain.user.login.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

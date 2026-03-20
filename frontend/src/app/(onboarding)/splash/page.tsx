@@ -3,34 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-// ── 스타일 상수 ──────────────────────────────────────────────────────
-const SPLASH_BG = "linear-gradient(160deg, #D4C8BC 4.5%, #ECEADE 50%)";
-const RING_INNER_STYLE = {
-  width: "300px",
-  height: "300px",
-  borderRadius: "50%",
-  border: "1px solid #A2AA7B",
-  opacity: 0.08,
-};
-const RING_OUTER_STYLE = {
-  width: "450px",
-  height: "450px",
-  borderRadius: "50%",
-  border: "1px solid #A2AA7B",
-  opacity: 0.05,
-};
-const LOGO_CIRCLE_STYLE = {
-  width: "48px",
-  height: "48px",
-  borderRadius: "50%",
-  backgroundColor: "#A2AA7B",
-};
-const BRAND_TITLE_STYLE = {
-  fontFamily: "'Playfair Display', serif",
-  fontSize: "32px",
-};
-const DOT_BASE_STYLE = { width: "4px", height: "4px" };
-
 export default function SplashPage() {
   const router = useRouter();
   const [visible, setVisible] = useState(true);
@@ -45,36 +17,33 @@ export default function SplashPage() {
 
   return (
     <div
-      className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
+      className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden transition-opacity duration-[600ms] ease-in-out"
       style={{
-        background: SPLASH_BG,
+        background: "linear-gradient(160deg, #D4C8BC 4.5%, #ECEADE 50%)",
         opacity: visible ? 1 : 0,
-        transition: "opacity 0.6s ease",
       }}
     >
-      {/* Decorative circles */}
+      {/* Decorative circles - Inner ring */}
       <div
-        className="absolute"
+        className="absolute w-[300px] h-[300px] rounded-full border border-[#A2AA7B] opacity-[0.08]"
         style={{
-          ...RING_INNER_STYLE,
           animation: "splashScaleIn 1.2s ease both",
         }}
       />
+
+      {/* Decorative circles - Outer ring */}
       <div
-        className="absolute"
+        className="absolute w-[450px] h-[450px] rounded-full border border-[#A2AA7B] opacity-[0.05]"
         style={{
-          ...RING_OUTER_STYLE,
           animation: "splashScaleIn 1.4s 0.15s ease both",
         }}
       />
 
-      {/* Leaf icon */}
+      {/* Leaf icon with circle background */}
       <div
-        className="flex items-center justify-center"
+        className="flex items-center justify-center w-12 h-12 rounded-full bg-[#A2AA7B] opacity-0"
         style={{
-          ...LOGO_CIRCLE_STYLE,
           animation: "splashFadeUp 0.7s 0.2s ease both",
-          opacity: 0,
         }}
       >
         <svg
@@ -98,26 +67,16 @@ export default function SplashPage() {
         style={{ animation: "splashFadeUp 0.6s 0.4s ease both" }}
       >
         <p
-          style={{
-            ...BRAND_TITLE_STYLE,
-            fontWeight: 500,
-            color: "#1A1A1A",
-            letterSpacing: "-0.5px",
-            margin: 0,
-          }}
+          className="text-[32px] font-semibold text-[#1A1A1A] tracking-[-0.5px] m-0"
+          style={{ fontFamily: "var(--font-english)" }}
         >
           PiView
         </p>
         <p
+          className="mt-2 text-[11px] text-[#8A8A7A] tracking-[3.5px] uppercase font-normal opacity-0"
           style={{
-            marginTop: "8px",
-            fontSize: "11px",
-            color: "#8A8A7A",
-            letterSpacing: "3.5px",
-            textTransform: "uppercase",
-            fontWeight: 400,
+            fontFamily: "var(--font-english)",
             animation: "splashFadeIn 0.5s 0.7s ease both",
-            opacity: 0,
           }}
         >
           Natural Skincare
@@ -126,22 +85,21 @@ export default function SplashPage() {
 
       {/* Loading dots */}
       <div
-        className="absolute bottom-16 flex gap-1.5"
-        style={{ animation: "splashFadeIn 0.4s 1.0s ease both", opacity: 0 }}
+        className="absolute bottom-16 flex gap-1.5 opacity-0"
+        style={{ animation: "splashFadeIn 0.4s 1.0s ease both" }}
       >
-        {[0, 1, 2].map((i) => (
+        {[0, 1, 2].map((index) => (
           <div
-            key={i}
+            key={index}
+            className="w-1 h-1 rounded-full bg-[#A2AA7B]"
             style={{
-              ...DOT_BASE_STYLE,
-              borderRadius: "50%",
-              backgroundColor: "#A2AA7B",
-              animation: `pulse 1.2s infinite ${i * 0.2}s`,
+              animation: `pulse 1.2s infinite ${index * 0.2}s`,
             }}
           />
         ))}
       </div>
 
+      {/* Animations */}
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 0.3; }
