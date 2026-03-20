@@ -28,7 +28,7 @@ public interface RoutineRepository extends JpaRepository<MyRoutine, Long> {
   // 사용자의 모든 루틴 리스트 조회
   List<MyRoutine> findAllByUserId(Long userId);
 
-  @Query("SELECT new com.piview.backend.routine.core.dto.RoutineListResponse(" +
+  @Query("SELECT new com.piview.backend.domain.routine.core.dto.RoutineListResponse(" +
       "r.id, r.title, r.isMain, CAST(COUNT(rd.id) AS int)) " +
       "FROM MyRoutine r LEFT JOIN r.details rd " +
       "WHERE r.userId = :userId " +

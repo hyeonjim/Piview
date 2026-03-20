@@ -14,12 +14,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-import static com.piview.backend.product.entity.QBigCategory.bigCategory;
-import static com.piview.backend.product.entity.QBrand.brand;
-import static com.piview.backend.product.entity.QCategory.category;
-import static com.piview.backend.product.entity.QImage.image;
-import static com.piview.backend.product.entity.QProduct.product;
-import static com.piview.backend.product.entity.QProductTagScore.productTagScore;
+import static com.piview.backend.domain.product.entity.QBigCategory.bigCategory;
+import static com.piview.backend.domain.product.entity.QBrand.brand;
+import static com.piview.backend.domain.product.entity.QCategory.category;
+import static com.piview.backend.domain.product.entity.QImage.image;
+import static com.piview.backend.domain.product.entity.QProduct.product;
+import static com.piview.backend.domain.product.entity.QProductTagScore.productTagScore;
 
 @Repository
 @RequiredArgsConstructor
