@@ -16,6 +16,7 @@ public class ProductSummaryResponse {
     private Long productId;
     private String name;
     private String brandName;
+    private Long categoryId;
     private String categoryName;
     private String imageUrl;
     private List<String> skinTypes;
@@ -37,6 +38,7 @@ public class ProductSummaryResponse {
                 .productId(product.getProductId())
                 .name(product.getName())
                 .brandName(product.getBrand() != null ? product.getBrand().getBrandName() : null)
+                .categoryId(product.getCategory() != null ? product.getCategory().getCategoryId() : null)
                 .categoryName(product.getCategory() != null ? product.getCategory().getCategoryName() : null)
                 .imageUrl(product.getImage() != null ? product.getImage().getUrl() : null)
                 .skinTypes(skinTypes)
