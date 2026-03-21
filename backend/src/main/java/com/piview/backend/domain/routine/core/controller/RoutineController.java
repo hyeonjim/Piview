@@ -38,15 +38,15 @@ public class RoutineController {
 
   @Operation(summary = "루틴 순서 수정", description = "특정 루틴 내에 포함된 화장품들의 사용 순서를 변경합니다.")
   @PatchMapping("/{routineId}/order")
-  public ApiResponse<Void> updateRoutineOrder(
+  public ApiResponse<RoutineResponseDto.RoutineResponse> updateRoutineOrder(
       @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
       @PathVariable Long routineId,
       @RequestBody RoutineRequestDto.RoutineOrderUpdateRequest request) {
 
     Long userId = userPrincipal.getId();
-    routineService.updateRoutineOrders(userId, routineId, request);
+    RoutineResponseDto.RoutineResponse updatedRoutine = routineService.updateRoutineOrders(userId, routineId, request);
 
-    return ApiResponse.success("루틴 순서가 성공적으로 변경되었습니다.", null);
+    return ApiResponse.success("루틴 순서가 성공적으로 변경되었습니다.", updatedRoutine);
   }
 
   @Operation(summary = "메인 루틴 조회", description = "사용자가 메인으로 설정한 단일 루틴의 상세 정보(제품 목록 포함)를 조회합니다.")
@@ -62,13 +62,13 @@ public class RoutineController {
 
   @Operation(summary = "메인 루틴으로 설정", description = "특정 루틴을 사용자의 메인 루틴으로 지정합니다. (기존 메인 루틴은 해제됨)")
   @PatchMapping("/{routineId}/main")
-  public ApiResponse<Void> setMainRoutine(
+  public ApiResponse<RoutineResponseDto.RoutineResponse> setMainRoutine(
       @PathVariable Long routineId,
       @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
     Long userId = userPrincipal.getId();
-    routineService.setMainRoutine(userId, routineId);
-    return ApiResponse.success("메인 루틴으로 설정되었습니다.", null);
+    RoutineResponseDto.RoutineResponse newMainRoutine = routineService.setMainRoutine(userId, routineId);
+    return ApiResponse.success("메인 루틴으로 설정되었습니다.", newMainRoutine);
   }
 
   @Operation(summary = "루틴 전체 목록 조회", description = "사용자가 생성한 모든 루틴의 요약 리스트를 조회합니다.")
