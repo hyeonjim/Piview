@@ -43,7 +43,9 @@ public class ProductCatalogService {
     private final BrandRepository brandRepository;
     private final ProductLikeRepository productLikeRepository;
     private final SkinConcernsRepository skinConcernsRepository;
-    private final ProductConcernCacheRepository productConcernCacheRepository;
+
+    // concern 가져오기 위한 service
+    private final ProductConcernQueryService productConcernQueryService;
 
     // filter MetaData 제공 service
     public ProductFilterMetaResponse getFilterMeta() {
@@ -128,7 +130,7 @@ public class ProductCatalogService {
                 .map(Product::getProductId)
                 .toList();
 
-        Map<Long, List<String>> concernsByProductId = buildConcernsByProductIds(productIds);
+        Map<Long, List<String>> concernsByProductId = productConcernQueryService.buildConcernsByProductIds(productIds);
 
         List<ProductSummaryResponse> responses = productSlice.getContent().stream()
             .map(product -> {
@@ -274,7 +276,7 @@ public class ProductCatalogService {
                 .productName(product.getName())
                 .description(product.getDescription())
                 .skinTypes(skinTypes)
-                .concerns(resolveConcernsForProduct(productId))
+                .concerns(productConcernQueryService.resolveConcernsForProduct(productId))
                 .price(product.getPrice())
                 .volume(product.getVolume())
                 .lowCount(lowCount)
@@ -311,29 +313,5 @@ public class ProductCatalogService {
             return null;
         }
         return value.intValue();
-    }
-
-    private Map<Long, List<String>> buildConcernsByProductIds(List<Long> productIds) {
-        if (productIds == null || productIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        List<ProductConcernCacheRepository.ConcernView> rows = productConcernCacheRepository.findConcernViewsByProductIds(productIds);
-
-        Map<Long, List<String>> result = new LinkedHashMap<>();
-        for(ProductConcernCacheRepository.ConcernView row : rows) {
-            result.computeIfAbsent(row.getProductId(), key -> new ArrayList<>());
-            List<String> concerns = result.get(row.getProductId());
-
-            if (!concerns.contains(row.getConcernName())) {
-                concerns.add(row.getConcernName());
-            }
-        }
-        return result;
-    }
-
-    private List<String> resolveConcernsForProduct(Long productId) {
-        return buildConcernsByProductIds(List.of(productId))
-                .getOrDefault(productId, List.of());
     }
 }
