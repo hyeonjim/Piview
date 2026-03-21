@@ -46,7 +46,7 @@ public class RoutineService {
 
   // 제품을 루틴(redis)에 추가
   @Transactional(readOnly = true) // DB에서 Product만 조회하므로 readOnly
-  public void addProductToDraft(Long userId, AddDraftItemRequest request) {
+  public List<DraftItemDto> addProductToDraft(Long userId, AddDraftItemRequest request) {
     // 기존 장바구니 리스트 불러오기
     List<DraftItemDto> currentDraft = new ArrayList<>(redisDraftService.getDraftItems(userId));
 
@@ -72,6 +72,7 @@ public class RoutineService {
 
     // 업데이트된 리스트를 다시 Redis에 저장
     redisDraftService.saveDraftItems(userId, currentDraft);
+    return currentDraft;
   }
 
   // 루틴 생성 및 저장
@@ -138,13 +139,15 @@ public class RoutineService {
 
   // 메인 루틴 변경
   @Transactional
-  public void setMainRoutine(Long userId, Long targetRoutineId) {
+  public RoutineResponse setMainRoutine(Long userId, Long targetRoutineId) {
     routineRepository.updateIsMainFalseByUserId(userId); // 벌크 연산
 
     MyRoutine targetRoutine = routineRepository.findByIdWithDetails(targetRoutineId)
         .orElseThrow(() -> new CustomException(ErrorCode.ROUTINE_NOT_FOUND));
 
     targetRoutine.changeMainStatus(true);
+
+    return convertToRoutineResponse(targetRoutine, userId);
   }
 
   // 루틴 전체 목록 조회
@@ -210,7 +213,7 @@ public class RoutineService {
 
   // 루틴 순서 변경
   @Transactional
-  public void updateRoutineOrders(Long userId, Long routineId, RoutineOrderUpdateRequest request) {
+  public RoutineResponse updateRoutineOrders(Long userId, Long routineId, RoutineOrderUpdateRequest request) {
     // 해당 루틴이 본인 소유가 맞는지 검증
     MyRoutine routine = routineRepository.findByIdWithDetails(routineId)
         .orElseThrow(() -> new CustomException(ErrorCode.ROUTINE_NOT_FOUND));
@@ -233,6 +236,7 @@ public class RoutineService {
         detail.updateStepOrder(newOrder);
       }
     });
+    return convertToRoutineResponse(routine, userId);
   }
 
   // 루틴 삭제

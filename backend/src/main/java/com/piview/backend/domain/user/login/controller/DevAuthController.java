@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
-@Tag(name = "🚨 개발용 인증 (Dev) API", description = "Swagger 테스트 전용 토큰 발급 API (운영 배포 시 삭제 필수!)")
+@Tag(name = "1. 🚨 개발용 인증 (Dev) API", description = "Swagger 테스트 전용 토큰 발급 API (운영 배포 시 삭제 필수!)")
 @RestController
 @RequestMapping("/auth/dev")
 @RequiredArgsConstructor

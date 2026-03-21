@@ -32,6 +32,7 @@ public class MyCosService {
         return myCosList.stream()
             .map(mc -> MyCosResponseDto.builder()
                 .id(mc.getId())
+                .productId(mc.getProduct().getProductId())
                 .brand(mc.getProduct().getBrand().getBrandName())      // Product -> Brand 접근
                 .productName(mc.getProduct().getName())           // Product 이름
                 .category(mc.getProduct().getCategory().getCategoryName()) // Product -> Category 접근
@@ -74,7 +75,6 @@ public class MyCosService {
     @Transactional
     public void deleteMyCos(Long userId, Long myCosId) {
 
-        // 지우려는 MyCos 데이터를 찾기
         MyCos myCos = myCosRepository.findById(myCosId)
             .orElseThrow(() -> new CustomException(ErrorCode.MY_COS_NOT_FOUND));
 

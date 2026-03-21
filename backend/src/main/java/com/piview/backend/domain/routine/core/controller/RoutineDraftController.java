@@ -21,28 +21,28 @@ public class RoutineDraftController {
   private final RedisDraftService redisDraftService;
   private final RoutineService routineService;
 
-  @Operation(summary = "임시 장바구니 단일 제품 추가", description = "제품 ID를 받아 DB에서 상세 정보를 조회한 후 Redis 임시 장바구니에 추가합니다.")
+  @Operation(summary = "임시 장바구니 단일 제품 추가", description = "루킨 카테고리 id(예: 클렌저:1, 쉐이빙:2, 스킨/토너/패드/미스트:3, 세럼/에센스/앰플:4, 로션/에멀전/올인원:5, 크림/오일:6, 선크림:7)와 제품 ID를 받아 DB에서 상세 정보를 조회한 후 Redis 임시 장바구니에 추가합니다.")
   @PostMapping
   public ApiResponse<List<RoutineDraftDto.DraftItemDto>> addProductToDraft(
       @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
       @RequestBody RoutineDraftDto.AddDraftItemRequest request) {
 
     Long userId = userPrincipal.getId();
-    routineService.addProductToDraft(userId, request);
+    List<RoutineDraftDto.DraftItemDto> updatedDraft = routineService.addProductToDraft(userId, request);
 
-    return ApiResponse.success("임시 루틴에 단일 제품이 저장되었습니다.", null);
+    return ApiResponse.success("임시 루틴에 단일 제품이 저장되었습니다.", updatedDraft);
   }
 
   @Operation(summary = "임시 장바구니 전체 덮어쓰기", description = "프론트엔드에서 제품 추가, 삭제, 순서 변경 시 현재 화면의 전체 리스트를 받아 Redis 데이터를 덮어씌웁니다.")
   @PutMapping
-  public ApiResponse<Void> saveDraft(
+  public ApiResponse<List<RoutineDraftDto.DraftItemDto>> saveDraft(
       @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
       @RequestBody List<RoutineDraftDto.DraftItemDto> draftItems) {
 
     Long userId = userPrincipal.getId();
     redisDraftService.saveDraftItems(userId, draftItems);
 
-    return ApiResponse.success("임시 루틴 변경사항이 저장되었습니다.", null);
+    return ApiResponse.success("임시 루틴 변경사항이 저장되었습니다.", draftItems);
   }
 
   @Operation(summary = "임시 장바구니 조회", description = "현재 Redis에 임시 저장되어 있는 루틴 작성 중인 제품 목록을 조회합니다.")
@@ -58,14 +58,16 @@ public class RoutineDraftController {
 
   @Operation(summary = "임시 장바구니 단일 제품 삭제", description = "Redis 임시 장바구니 목록에서 특정 화장품(productId) 하나만 삭제합니다.")
   @DeleteMapping("/{productId}")
-  public ApiResponse<Void> removeProductFromDraft(
+  public ApiResponse<List<RoutineDraftDto.DraftItemDto>> removeProductFromDraft(
       @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
       @PathVariable Long productId) {
 
     Long userId = userPrincipal.getId();
     redisDraftService.removeProductFromDraft(userId, productId);
 
-    return ApiResponse.success("제품이 임시 루틴에서 삭제되었습니다.", null);
+    List<RoutineDraftDto.DraftItemDto> updatedDraft = redisDraftService.getDraftItems(userId);
+
+    return ApiResponse.success("제품이 임시 루틴에서 삭제되었습니다.", updatedDraft);
   }
 
   @Operation(summary = "임시 장바구니 초기화", description = "루틴 작성을 취소하거나 완료했을 때, 해당 유저의 Redis 임시 데이터를 모두 지웁니다.")
