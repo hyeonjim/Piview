@@ -8,8 +8,8 @@
  */
 
 import axios, { type InternalAxiosRequestConfig } from "axios";
-import { useUserStore } from "@/stores/useUserStore";
-import { useRoutineStore } from "@/stores/useRoutineStore";
+import { useUserStore } from "@/stores";
+import { useRoutineStore } from "@/stores";
 
 // _retry 플래그 타입 확장 (TypeScript 에러 방지)
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {

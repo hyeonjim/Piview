@@ -123,12 +123,13 @@ export function FilterModal({
             {/* 피부고민 태그 — API */}
             <FilterSection
               title="피부고민"
-              rightLabel={tagIds.size > 0 ? `${tagIds.size}/4` : undefined}
+              rightLabel={Object.values(tagIds).filter(Boolean).length > 0 ? `${Object.values(tagIds).filter(Boolean).length}/4` : undefined}
             >
               <div className="flex flex-wrap gap-2">
                 {tags.map((t) => {
-                  const isActive = tagIds.has(t.tagId);
-                  const isDisabled = !isActive && tagIds.size >= 4;
+                  const isActive = tagIds[t.tagId] === true;
+                  const activeCount = Object.values(tagIds).filter(Boolean).length;
+                  const isDisabled = !isActive && activeCount >= 4;
                   return (
                     <FilterChip
                       key={t.tagId}
@@ -137,13 +138,7 @@ export function FilterModal({
                       disabled={isDisabled}
                       onClick={() => {
                         if (isDisabled) return;
-                        const newSet = new Set(tagIds);
-                        if (newSet.has(t.tagId)) {
-                          newSet.delete(t.tagId);
-                        } else {
-                          newSet.add(t.tagId);
-                        }
-                        onChange({ tagIds: newSet });
+                        onChange({ tagIds: { ...tagIds, [t.tagId]: !tagIds[t.tagId] } });
                       }}
                     />
                   );

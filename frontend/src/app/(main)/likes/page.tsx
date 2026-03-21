@@ -90,7 +90,7 @@ export default function LikesPage() {
   };
 
   return (
-    <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
+    <div className="flex-1 bg-[var(--color-bg-base)]">
       {showCompare && canCompare && (
         <CompareModal
           compareItems={compareItems as [CompareProduct, CompareProduct]}
@@ -98,78 +98,35 @@ export default function LikesPage() {
         />
       )}
 
-      <div style={{ backgroundColor: "#F5F2EC", padding: "15px 20px 16px" }}>
-        <h1
-          style={{
-            margin: "3px 0 0",
-            fontSize: "22px",
-            fontWeight: 700,
-            color: "#2A2118",
-            letterSpacing: "-0.4px",
-          }}
-        >
+      {/* 헤더 */}
+      <div className="bg-[var(--color-bg-base)] px-5 pt-[15px] pb-4">
+        <h1 className="mt-[3px] text-[22px] font-bold text-[var(--color-text-primary)] tracking-[-0.4px]">
           찜한 제품
         </h1>
         {likedProducts.length > 0 && (
-          <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#BFB6AA" }}>
+          <p className="mt-0.5 text-[12px] text-[var(--color-text-faint)]">
             {likedProducts.length}개 저장됨
           </p>
         )}
       </div>
 
-      <div style={{ padding: "16px 16px 24px" }}>
+      <div className="px-4 pb-6 pt-0">
         {isLoading ? (
-          <div
-            className="flex items-center justify-center"
-            style={{ padding: "48px 20px" }}
-          >
-            <p style={{ fontSize: "14px", color: "#A69D92" }}>불러오는 중...</p>
+          <div className="flex items-center justify-center py-12 px-5">
+            <p className="text-[14px] text-[var(--color-text-muted)]">불러오는 중...</p>
           </div>
         ) : likedProducts.length === 0 ? (
-          <div
-            className="flex flex-col items-center justify-center"
-            style={{
-              backgroundColor: "#FFFFFF",
-              borderRadius: "12px",
-              border: "1px solid #E2DDD8",
-              padding: "48px 20px",
-              marginTop: "8px",
-            }}
-          >
-            <Heart
-              size={32}
-              style={{ color: "#D9D5D0", marginBottom: "12px" }}
-            />
-            <p
-              style={{
-                margin: 0,
-                fontSize: "14px",
-                fontWeight: 600,
-                color: "#A69D92",
-              }}
-            >
+          <div className="flex flex-col items-center justify-center bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] px-5 py-12 mt-2">
+            <Heart size={32} className="text-[var(--color-text-disabled)] mb-3" />
+            <p className="m-0 text-[14px] font-semibold text-[var(--color-text-muted)]">
               찜한 제품이 없어요
             </p>
-            <p
-              style={{
-                margin: "6px 0 0",
-                fontSize: "12px",
-                color: "#BFB6AA",
-                textAlign: "center",
-              }}
-            >
+            <p className="mt-1.5 mb-0 text-[12px] text-[var(--color-text-faint)] text-center">
               마음에 드는 제품을 찜해보세요
             </p>
           </div>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "24px",
-              alignItems: "start",
-            }}
-          >
+          <div className="grid grid-cols-2 gap-6 items-start">
             {pagedProducts.map((product) => {
               const productId = String(product.productId);
               return (

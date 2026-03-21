@@ -17,7 +17,6 @@ import CompareModal, {
   type CompareProduct,
 } from "@/components/common/CompareModal";
 import { useCompare, useProductSearch } from "@/hooks";
-import { useOwnedStore } from "@/stores/useOwnedStore";
 import { useAddMyCos, useRemoveMyCos, useMyCosQuery } from "@/hooks";
 import { useRoutineStore } from "@/stores";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
@@ -47,9 +46,12 @@ export default function RecommendPage() {
       skinType: filter.filterSkin
         ? toSkinTypeParam(filter.filterSkin as SkinType)
         : undefined,
-      tagIds: filter.tagIds.size > 0 ? Array.from(filter.tagIds) : undefined,
-      brandIds:
-        filter.brandIds.size > 0 ? Array.from(filter.brandIds) : undefined,
+      tagIds: Object.keys(filter.tagIds).filter((k) => filter.tagIds[Number(k)]).length > 0
+        ? Object.keys(filter.tagIds).filter((k) => filter.tagIds[Number(k)]).map(Number)
+        : undefined,
+      brandIds: Object.keys(filter.brandIds).filter((k) => filter.brandIds[Number(k)]).length > 0
+        ? Object.keys(filter.brandIds).filter((k) => filter.brandIds[Number(k)]).map(Number)
+        : undefined,
       minPrice: filter.priceRange[0] > 0 ? filter.priceRange[0] : undefined,
       maxPrice:
         filter.priceRange[1] < PRICE_MAX ? filter.priceRange[1] : undefined,
@@ -91,8 +93,8 @@ export default function RecommendPage() {
 
   const filterCount =
     (filter.filterSkin ? 1 : 0) +
-    (filter.tagIds.size > 0 ? 1 : 0) +
-    (filter.brandIds.size > 0 ? 1 : 0) +
+    (Object.values(filter.tagIds).some(Boolean) ? 1 : 0) +
+    (Object.values(filter.brandIds).some(Boolean) ? 1 : 0) +
     (filter.priceRange[0] > 0 || filter.priceRange[1] < PRICE_MAX ? 1 : 0);
 
   const handleSearchChange = (v: string) => {

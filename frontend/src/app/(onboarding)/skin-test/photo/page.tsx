@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, SwitchCamera, ImagePlus } from "lucide-react";
 import { useCaptureAnalysis, useAnalysisStatus } from "@/hooks";
-import { useSurveyStore } from "@/stores/useSurveyStore";
+import { useSurveyStore } from "@/stores";
 
 // ── 스타일 상수 ──────────────────────────────────────────────────────
 const CAMERA_Z_INDEX = { zIndex: 1 };
