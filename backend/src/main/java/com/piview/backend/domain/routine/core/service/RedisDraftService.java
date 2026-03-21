@@ -47,7 +47,7 @@ public class RedisDraftService {
       // JSON 문자열을 다시 객체 리스트로 변환
       return objectMapper.readValue(json, new TypeReference<List<RoutineDraftDto.DraftItemDto>>() {});
     } catch (Exception e) {
-      throw new CustomException(ErrorCode.REDIS_SAVE_FAILED);
+      throw new CustomException(ErrorCode.REDIS_READ_FAILED);
     }
   }
 
