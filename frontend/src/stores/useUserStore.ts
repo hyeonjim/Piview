@@ -47,16 +47,21 @@ export const useUserStore = create<UserStore>((set) => ({
   setAccessToken: (token) => set({ accessToken: token }),
 
   // accessToken + user + avoidContents 모두 초기화
-  clearUser: () => set({ user: null, accessToken: null, avoidContents: [], skinType: null, concerns: [] }),
+  clearUser: () =>
+    set({
+      user: null,
+      accessToken: null,
+      avoidContents: [],
+      skinType: null,
+      concerns: [],
+    }),
 
   // skinType 독립 필드 + user 내 mySkinType 필드 동시 업데이트
   // user가 null이어도 독립 필드에 저장되므로 설정 페이지에서 항상 반영됨
   setSkinType: (skinType) =>
     set((state) => ({
       skinType,
-      user: state.user
-        ? { ...state.user, mySkinType: skinType }
-        : null,
+      user: state.user ? { ...state.user, mySkinType: skinType } : null,
     })),
 
   setAvoidContents: (list) => set({ avoidContents: list }),
