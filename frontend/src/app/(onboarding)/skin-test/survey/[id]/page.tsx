@@ -9,7 +9,7 @@ import {
   MEN_QUESTIONS,
   ALLERGY_QUESTION,
 } from "@/constants";
-import { useSurveyStore } from "@/stores/useSurveyStore";
+import { useSurveyStore } from "@/stores";
 import { useSurveySubmit } from "@/hooks";
 
 import { toGenderEnum, toAgeGroupEnum } from "@/utils/enumConvert";

@@ -8,7 +8,7 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { authService } from "@/services/auth";
-import { useUserStore } from "@/stores/useUserStore";
+import { useUserStore } from "@/stores";
 import { queryKeys } from "@/lib/queryKeys";
 
 // ── GET /users/me ─────────────────────────────────────────────────

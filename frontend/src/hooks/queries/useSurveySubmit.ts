@@ -11,10 +11,9 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { skinService } from "@/services/skin";
-import { useUserStore } from "@/stores/useUserStore";
+import { useUserStore } from "@/stores";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
-import type { SurveySubmitRequest } from "@/types/user";
-import type { SkinType } from "@/types/user";
+import type { SurveySubmitRequest, SkinType } from "@/types/user";
 
 interface SubmitSurveyParams {
   analysisId: string;
