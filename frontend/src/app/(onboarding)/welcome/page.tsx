@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { WELCOME_SLIDES } from "@/constants/_mock/welcomeSlides";
-import { useUserStore } from "@/stores/useUserStore";
+import { useUserStore } from "@/stores";
 import { authService } from "@/services/auth";
 
 const GRADIENT_OVERLAY =
