@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     libxrender-dev \
     libgomp1 \
+    libegl1 \
+    libopengl0 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
