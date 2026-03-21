@@ -14,16 +14,17 @@ POST /ocr/extract-text  ← 성분표 사진 → EasyOCR 추출 + Gemini 정제
 
 import json
 import os
+import re
 import time
 from pathlib import Path
+from urllib import parse
 
 import numpy as np
 import cv2
 import easyocr
+import httpx
 from dotenv import load_dotenv
 from fastapi import APIRouter, File, UploadFile, HTTPException
-from google import genai
-from google.genai import types
 
 router = APIRouter()
 
@@ -35,12 +36,86 @@ print("✅ EasyOCR 로딩 완료")
 # ai/.env 파일을 먼저 읽어 로컬 개발과 서버 실행 방식을 통일합니다.
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
-# OCR은 Gemini를 쓰므로 서버 시작 시점에 키 유무를 바로 검증합니다.
-gemini_api_key = os.getenv("GEMINI_API_KEY")
-if not gemini_api_key:
-    raise RuntimeError("GEMINI_API_KEY is not set")
+# OCR은 SSAFY GMS 프록시 키를 쓰므로 서버 시작 시점에 키 유무를 바로 검증합니다.
+gms_api_key = os.getenv("GMS_KEY")
+if not gms_api_key:
+    raise RuntimeError("GMS_KEY is not set")
 
-gemini_client = genai.Client(api_key=gemini_api_key)
+gemini_base_url = os.getenv(
+    "GEMINI_API_BASE_URL",
+    "https://gms.ssafy.io/gmsapi/generativelanguage.googleapis.com",
+).rstrip("/")
+gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+
+
+def _generate_gemini_content(prompt: str) -> str:
+    # SSAFY GMS 프록시는 key 쿼리스트링 방식으로 호출하므로 SDK 기본 엔드포인트 대신 HTTP 요청을 직접 구성합니다.
+    endpoint = f"{gemini_base_url}/v1beta/models/{gemini_model}:generateContent"
+    url = f"{endpoint}?{parse.urlencode({'key': gms_api_key})}"
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": prompt,
+                    }
+                ]
+            }
+        ],
+        "generationConfig": {
+            "responseMimeType": "application/json",
+            "temperature": 0.1,
+        },
+    }
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+
+    try:
+        response = httpx.post(
+            url,
+            content=body,
+            headers={"Content-Type": "application/json"},
+            timeout=30.0,
+        )
+        response.raise_for_status()
+        raw_body = response.text
+        response_payload = json.loads(raw_body)
+    except httpx.HTTPStatusError as exc:
+        detail = exc.response.text
+        raise RuntimeError(detail or f"GMS request failed with status {exc.response.status_code}") from exc
+    except httpx.HTTPError as exc:
+        raise RuntimeError(f"GMS request failed: {exc}") from exc
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"Non-JSON GMS response: {raw_body[:500]!r}") from exc
+
+    try:
+        return response_payload["candidates"][0]["content"]["parts"][0]["text"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise RuntimeError(f"Unexpected Gemini response: {response_payload}") from exc
+
+
+def _parse_cleaned_words(response_text: str) -> list[str]:
+    normalized = response_text.strip().lstrip("\ufeff")
+    if normalized.startswith("```json"):
+        normalized = normalized[7:-3].strip()
+    elif normalized.startswith("```"):
+        normalized = normalized[3:-3].strip()
+
+    if normalized:
+        try:
+            parsed = json.loads(normalized)
+            if isinstance(parsed, list):
+                return [str(item).strip() for item in parsed if str(item).strip()]
+        except json.JSONDecodeError:
+            pass
+
+    # 모델이 설명이나 객체를 섞어도 첫 번째 배열 블록만 추출해 재시도합니다.
+    array_match = re.search(r"\[[\s\S]*\]", normalized)
+    if array_match:
+        parsed = json.loads(array_match.group(0))
+        if isinstance(parsed, list):
+            return [str(item).strip() for item in parsed if str(item).strip()]
+
+    raise ValueError(f"Could not parse Gemini JSON array from: {normalized[:500]!r}")
 
 
 # ── 엔드포인트 ────────────────────────────────────
@@ -89,25 +164,12 @@ async def extract_product_name(file: UploadFile = File(...)):
         올바른 응답 예시: ["닥터지", "레드 블레미쉬", "클리어 수딩 크림"]
         """
 
-        response = gemini_client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                temperature=0.1,
-            ),
-        )
+        response_text = _generate_gemini_content(prompt)
         gemini_done = time.perf_counter()
         print(f"⏱️ OCR Gemini 소요: {gemini_done - easyocr_done:.2f}초")
 
         # 5. 마크다운 찌꺼기 제거 후 파싱
-        response_text = response.text.strip()
-        if response_text.startswith("```json"):
-            response_text = response_text[7:-3].strip()
-        elif response_text.startswith("```"):
-            response_text = response_text[3:-3].strip()
-
-        cleaned_words = json.loads(response_text)
+        cleaned_words = _parse_cleaned_words(response_text)
         print(f"✨ Gemini 정제 완료: {cleaned_words}")
 
         # 6. Spring Boot DTO 규격으로 반환
