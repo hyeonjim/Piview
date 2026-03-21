@@ -20,6 +20,7 @@ import static com.piview.backend.domain.product.entity.QBrand.brand;
 import static com.piview.backend.domain.product.entity.QCategory.category;
 import static com.piview.backend.domain.product.entity.QImage.image;
 import static com.piview.backend.domain.product.entity.QProduct.product;
+import static com.piview.backend.domain.product.entity.QProductConcernCache.productConcernCache;
 import static com.piview.backend.domain.product.entity.QProductTagScore.productTagScore;
 
 @Repository
@@ -73,7 +74,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .and(categoryEq(condition.getCategoryId()))
             .and(bigCategoryEqWhenCategoryNull(condition.getCategoryId(), condition.getBigCategoryId()))
             .and(skinTypeEq(condition.getSkinType()))
-            .and(hasAllTags(condition.getTagIds()))
+            .and(hasAllConcerns(condition.getConcernIds()))
             .and(brandIn(condition.getBrandIds()))
             .and(minPriceGoe(condition.getMinPrice()))
             .and(maxPriceLoe(condition.getMaxPrice()));
@@ -108,21 +109,20 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .or(product.top2SkinType.eq(skinType));
   }
 
-  private BooleanExpression hasAllTags(List<Long> tagIds) {
-    if (tagIds == null || tagIds.isEmpty()) {
+  private BooleanExpression hasAllConcerns(List<Long> concernIds) {
+    if (concernIds == null || concernIds.isEmpty()) {
       return null;
     }
-    long tagCount = tagIds.size();
+    long concernCount = concernIds.size();
 
     return JPAExpressions
-            .select(productTagScore.tag.tagId.countDistinct())
-            .from(productTagScore)
+            .select(productConcernCache.skinConcernId.countDistinct())
+            .from(productConcernCache)
             .where(
-                    productTagScore.product.eq(product),
-                    productTagScore.isTagged.isTrue(),
-                    productTagScore.tag.tagId.in(tagIds)
+                    productConcernCache.productId.eq(product.productId),
+                    productConcernCache.skinConcernId.in(concernIds)
             )
-            .eq(tagCount);
+            .eq(concernCount);
   }
 
   private BooleanExpression brandIn(List<Long> brandIds) {
