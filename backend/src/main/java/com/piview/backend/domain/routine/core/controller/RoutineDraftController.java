@@ -21,7 +21,7 @@ public class RoutineDraftController {
   private final RedisDraftService redisDraftService;
   private final RoutineService routineService;
 
-  @Operation(summary = "임시 장바구니 단일 제품 추가", description = "제품 ID를 받아 DB에서 상세 정보를 조회한 후 Redis 임시 장바구니에 추가합니다.")
+  @Operation(summary = "임시 장바구니 단일 제품 추가", description = "루킨 카테고리 id(예: 클렌저:1, 쉐이빙:2, 스킨/토너/패드/미스트:3, 세럼/에센스/앰플:4, 로션/에멀전/올인원:5, 크림/오일:6, 선크림:7)와 제품 ID를 받아 DB에서 상세 정보를 조회한 후 Redis 임시 장바구니에 추가합니다.")
   @PostMapping
   public ApiResponse<List<RoutineDraftDto.DraftItemDto>> addProductToDraft(
       @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
