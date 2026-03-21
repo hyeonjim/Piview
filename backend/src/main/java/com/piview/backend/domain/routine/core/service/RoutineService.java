@@ -1,6 +1,7 @@
 package com.piview.backend.domain.routine.core.service;
 
 
+import com.piview.backend.domain.product.catalog.service.ProductConcernQueryService;
 import com.piview.backend.domain.routine.core.dto.RoutineDraftDto.*;
 import com.piview.backend.domain.routine.core.dto.RoutineDraftDto.AddDraftItemRequest;
 import com.piview.backend.domain.routine.core.dto.RoutineDraftDto.DraftItemDto;
@@ -44,6 +45,9 @@ public class RoutineService {
   private final ProductLikeRepository productLikeRepository;
   private final RedisDraftService redisDraftService;
 
+  // product의 피부고민을 가져오기 위해서 필요합니다.
+  private final ProductConcernQueryService productConcernQueryService;
+
   // 제품을 루틴(redis)에 추가
   @Transactional(readOnly = true) // DB에서 Product만 조회하므로 readOnly
   public List<DraftItemDto> addProductToDraft(Long userId, AddDraftItemRequest request) {
@@ -62,11 +66,14 @@ public class RoutineService {
 
     boolean isLiked = productLikeRepository.findByUserIdAndProductId(userId, product.getProductId()).isPresent();
 
+    // 피부고민을 가져오기 위해서 list를 만들어 줍니다.
+    List<String> concerns = productConcernQueryService.resolveConcernsForProduct(product.getProductId());
+
     // 새로운 DraftItemDto 생성 및 리스트에 추가
     DraftItemDto newItem = new DraftItemDto(
         request.columnId(),
         nextOrder,
-        ProductSummaryResponse.from(product, isLiked)
+        ProductSummaryResponse.from(product, isLiked, concerns)
     );
     currentDraft.add(newItem);
 
@@ -183,6 +190,14 @@ public class RoutineService {
   private RoutineResponse convertToRoutineResponse(MyRoutine routine, Long userId) {
     List<Long> likedProductIds = productLikeRepository.findLikedProductIdsByUserId(userId);
 
+    // concern까지 가져오기 위해 추가해야할 칭구들
+    List<Long> routineProductIds = routine.getDetails().stream()
+            .map(detail -> detail.getProduct().getProductId())
+            .distinct()
+            .toList();
+
+    Map<Long, List<String>> concernsByProductId = productConcernQueryService.buildConcernsByProductIds(routineProductIds);
+
     Map<RoutineColumn, List<RoutineDetail>> groupedDetails = routine.getDetails().stream()
         .collect(Collectors.groupingBy(RoutineDetail::getRoutineColumn));
 
@@ -198,7 +213,9 @@ public class RoutineService {
                 return new RoutineProductDto(
                     detail.getId(),
                     detail.getStepOrder(),
-                    ProductSummaryResponse.from(detail.getProduct(), isLiked)
+                    ProductSummaryResponse.from(detail.getProduct(),
+                            isLiked,
+                            concernsByProductId.getOrDefault(detail.getProduct().getProductId(), List.of()))
                 );
               })
               .toList();
