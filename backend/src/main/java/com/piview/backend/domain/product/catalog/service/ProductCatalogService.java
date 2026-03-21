@@ -130,6 +130,9 @@ public class ProductCatalogService {
         PageRequest pageable = PageRequest.of(normalized.getPage(), normalized.getSize());
         Slice<Product> productSlice = productRepository.search(normalized, pageable);
 
+        // total pages
+        long totalCount = productRepository.count(normalized);
+
         List<Long> likedProductIds = (userId != null)
             ? productLikeRepository.findLikedProductIdsByUserId(userId)
             : Collections.emptyList();
@@ -146,6 +149,7 @@ public class ProductCatalogService {
                 .hasNext(productSlice.hasNext())
                 .page(normalized.getPage())
                 .size(normalized.getSize())
+                .totalCount(totalCount)
                 .build();
     }
 
