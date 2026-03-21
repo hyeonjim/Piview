@@ -12,6 +12,8 @@ import type {
   ProductSearchParams,
   ProductPageResponse,
   ProductDetailResponse,
+  ProductSummaryResponse,
+  ProductFilterMetaResponse,
 } from "@/types/product";
 
 export const productService = {
@@ -25,5 +27,23 @@ export const productService = {
   getDetail: (productId: number): Promise<ProductDetailResponse> =>
     client
       .get<ApiResponse<ProductDetailResponse>>(`/products/${productId}`)
+      .then((res) => res.data.data),
+
+  // POST /products/{productId}/likes/toggle
+  toggleLike: (productId: number): Promise<boolean> =>
+    client
+      .post<ApiResponse<boolean>>(`/products/${productId}/likes/toggle`)
+      .then((res) => res.data.data),
+
+  // GET /products/likes
+  getLiked: (): Promise<ProductSummaryResponse[]> =>
+    client
+      .get<ApiResponse<ProductSummaryResponse[]>>("/products/likes")
+      .then((res) => res.data.data),
+
+  // GET /products/filters
+  getFilters: (): Promise<ProductFilterMetaResponse> =>
+    client
+      .get<ApiResponse<ProductFilterMetaResponse>>("/products/filters")
       .then((res) => res.data.data),
 };

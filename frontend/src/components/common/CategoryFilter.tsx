@@ -1,64 +1,80 @@
 "use client";
 
+import { useEffect } from "react";
 import { CATEGORY_COLORS } from "@/constants/categoryColors";
-import { MAIN_CATEGORIES } from "@/constants/productCategories";
+import { useProductFilters } from "@/hooks";
 import { getCategoryDisplayName } from "@/utils/format";
+import type { BigCategoryFilterDto } from "@/types/product";
 
 interface CategoryFilterProps {
-  selectedMain: string | null;
-  selectedSub: string | null;
-  onMainSelect: (main: string | null) => void;
-  onSubSelect: (sub: string | null) => void;
+  selectedBigCategoryId: number | null;
+  selectedCategoryId: number | null;
+  onBigCategorySelect: (
+    bigCategoryId: number | null,
+    bigCategoryName: string | null,
+  ) => void;
+  onCategorySelect: (categoryId: number | null) => void;
 }
 
-// 카테고리 필터 — 에디토리얼 언더라인 스타일
-// "전체" 버튼 없음 — 대분류 재클릭으로 해제
 export function CategoryFilter({
-  selectedMain,
-  selectedSub,
-  onMainSelect,
-  onSubSelect,
+  selectedBigCategoryId,
+  selectedCategoryId,
+  onBigCategorySelect,
+  onCategorySelect,
 }: CategoryFilterProps) {
-  const mainKeys = Object.keys(MAIN_CATEGORIES);
+  const { data: filterMeta } = useProductFilters();
+  const bigCategories: BigCategoryFilterDto[] = filterMeta?.bigCategories ?? [];
+
+  // API 데이터 로드되면 첫 번째 대분류/소분류 자동 선택
+  useEffect(() => {
+    if (bigCategories.length > 0 && selectedBigCategoryId === null) {
+      const firstBig = bigCategories[0];
+      const firstCat = firstBig.categories[0] ?? null;
+      onBigCategorySelect(firstBig.bigCategoryId, firstBig.bigCategoryName);
+      onCategorySelect(firstCat?.categoryId ?? null);
+    }
+  }, [bigCategories.length]);
+
+  const selectedBig = bigCategories.find(
+    (b) => b.bigCategoryId === selectedBigCategoryId,
+  );
 
   return (
     <div className="bg-white">
-      {/* 대분류 — 언더라인 탭 스타일 */}
+      {/* 대분류 — 항상 선택 유지 */}
       <div className="flex overflow-x-auto border-b border-(--color-border) px-4 scrollbar-none">
-        {mainKeys.map((main) => {
-          const isActive = selectedMain === main;
+        {bigCategories.map((big) => {
+          const isActive = selectedBigCategoryId === big.bigCategoryId;
           return (
             <button
-              key={main}
+              key={big.bigCategoryId}
               onClick={() => {
                 if (!isActive) {
-                  // 새 대분류 선택 → 첫 번째 소분류 자동 선택
-                  onMainSelect(main);
-                  const firstSubCategory = MAIN_CATEGORIES[main]?.[0] ?? null;
-                  onSubSelect(firstSubCategory);
+                  const firstCat = big.categories[0] ?? null;
+                  onBigCategorySelect(big.bigCategoryId, big.bigCategoryName);
+                  onCategorySelect(firstCat?.categoryId ?? null);
                 }
-                // 같은 대분류 재클릭 → 무시 (항상 선택 유지)
               }}
               className="category-tab-button"
               data-active={isActive}
             >
-              {main}
+              {big.bigCategoryName}
             </button>
           );
         })}
       </div>
 
-      {/* 소분류 — flex-wrap pill (다음줄로 넘어가게) */}
-      {selectedMain && MAIN_CATEGORIES[selectedMain] && (
+      {/* 소분류 — 항상 선택 유지 */}
+      {selectedBig && selectedBig.categories.length > 0 && (
         <div className="flex flex-wrap gap-2 p-[10px_16px] bg-category-sub-bg border-b border-(--color-border)">
-          {MAIN_CATEGORIES[selectedMain].map((sub) => {
-            const isActive = selectedSub === sub;
-            const catColor = CATEGORY_COLORS[sub];
+          {selectedBig.categories.map((cat) => {
+            const isActive = selectedCategoryId === cat.categoryId;
+            const catColor = CATEGORY_COLORS[cat.categoryName];
             return (
               <button
-                key={sub}
+                key={cat.categoryId}
                 onClick={() => {
-                  if (!isActive) onSubSelect(sub);
+                  if (!isActive) onCategorySelect(cat.categoryId);
                 }}
                 className="category-pill-button"
                 data-active={isActive}
@@ -73,7 +89,7 @@ export function CategoryFilter({
                     : undefined
                 }
               >
-                {getCategoryDisplayName(sub)}
+                {getCategoryDisplayName(cat.categoryName)}
               </button>
             );
           })}

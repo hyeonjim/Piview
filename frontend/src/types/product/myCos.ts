@@ -8,11 +8,12 @@
 // 실제 응답 예시: { id, brand, productName, category, imageUrl, topSkinType, top2SkinType }
 export interface MyCosItem {
   id: number; // myCosId (보관함 레코드 PK)
+  productId?: number; // 상품 ID — 백엔드 응답에 포함 시 사용
   brand: string;
   productName: string;
   category: string;
   imageUrl: string | null;
-  topSkinType: string | null; // "dry" | "oily" | "combination" | "subuji" 등
+  topSkinType: string | null;
   top2SkinType: string | null;
 }
 

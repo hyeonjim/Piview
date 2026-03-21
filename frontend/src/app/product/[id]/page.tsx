@@ -15,15 +15,19 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useLikeStore } from "@/stores/useLikeStore";
-import { useProductDetail } from "@/hooks";
+import {
+  useProductDetail,
+  useLike,
+  useAddMyCos,
+  useRemoveMyCos,
+  useMyCosQuery,
+} from "@/hooks";
 import { getEwgColor } from "@/constants/categoryColors";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
 import CompareModal, {
   type CompareProduct,
 } from "@/components/common/CompareModal";
 import { useRoutineStore } from "@/stores";
-import { useOwnedStore } from "@/stores/useOwnedStore";
 
 function AllergenIcon() {
   return (
@@ -61,10 +65,27 @@ function ProductDetailInner() {
     isError,
   } = useProductDetail(id ? Number(id) : null);
 
-  const { toggleOwned, isOwned: getIsOwned } = useOwnedStore();
-  const likedIds = useLikeStore((state) => state.likedIds);
-  const toggleLike = useLikeStore((state) => state.toggleLike);
-  const isLiked = productData?.liked ?? !!likedIds[id ?? ""];
+  // 보유 상태 — API 연동
+  const { data: myCosData = [] } = useMyCosQuery();
+  const { mutate: addMyCos } = useAddMyCos();
+  const { mutate: removeMyCos } = useRemoveMyCos();
+  const productIdNum = id ? Number(id) : null;
+  const myCosItem = myCosData.find(
+    (item) => (item.productId ?? item.id) === productIdNum,
+  );
+  const owned = !!myCosItem;
+  const { toggleLike } = useLike();
+  // 초기값은 API 응답의 liked, 토글 시 로컬에서 즉시 반전
+  const [isLiked, setIsLiked] = useState<boolean | null>(null);
+  const resolvedIsLiked =
+    isLiked !== null ? isLiked : (productData?.liked ?? false);
+
+  useEffect(() => {
+    // productData 로드되면 초기값 세팅 (아직 토글 안 한 경우만)
+    if (productData && isLiked === null) {
+      setIsLiked(productData.liked ?? false);
+    }
+  }, [productData?.liked]);
 
   const [showRoutineCompare, setShowRoutineCompare] = useState(false);
   const [selectedRoutineProductIndex, setSelectedRoutineProductIndex] =
@@ -143,7 +164,6 @@ function ProductDetailInner() {
     .flat()
     .filter(Boolean)
     .some((p) => p.id === productIdStr);
-  const owned = getIsOwned(productIdStr);
 
   const handleAddRoutine = () => {
     if (!productData) return;
@@ -177,15 +197,9 @@ function ProductDetailInner() {
   };
 
   const handleToggleOwned = () => {
-    if (!productData) return;
-    toggleOwned({
-      id: productIdStr,
-      brand: productData.brandName ?? "",
-      name: productData.productName ?? "",
-      category: productData.categoryName ?? "",
-      emoji: "🧴",
-      skinTypes: productData.skinTypes,
-    });
+    if (!productIdNum) return;
+    if (myCosItem) removeMyCos(myCosItem.id);
+    else addMyCos(productIdNum);
   };
 
   if (isLoading) {
@@ -203,19 +217,34 @@ function ProductDetailInner() {
     );
   }
 
-  const total =
-    productData.lowCount +
-    productData.mediumCount +
-    productData.highCount +
-    productData.unknownCount;
-  const safe = productData.lowCount;
-  const caution = productData.mediumCount;
-  const danger = productData.highCount;
-  const unknown = productData.unknownCount;
-  const allergenList = productData.allergenIngredients;
-  const dangerIngredients = productData.cautionIngredients;
-  const skinTypeScores = Object.entries(productData.skinTypeScores);
-  const ingredientsKr = productData.ingredients
+  const safe = productData.lowCount ?? 0;
+  const caution = productData.mediumCount ?? 0;
+  const danger = productData.highCount ?? 0;
+  const unknown = productData.unknownCount ?? 0;
+  const total = safe + caution + danger + unknown;
+  const allergenList = productData.allergenIngredients ?? [];
+  const dangerIngredients = productData.cautionIngredients ?? [];
+  // 피부타입별 점수 — 순서 고정(건성/지성/복합성/수부지) + 한글 변환
+  const SKIN_TYPE_ORDER = ["dry", "oily", "combination", "subuji"];
+  const SKIN_TYPE_KO: Record<string, string> = {
+    dry: "건성",
+    oily: "지성",
+    combination: "복합성",
+    subuji: "수부지",
+  };
+  const skinTypeScores = SKIN_TYPE_ORDER.filter(
+    (key) => productData.skinTypeScores?.[key] !== undefined,
+  ).map(
+    (key) =>
+      [SKIN_TYPE_KO[key] ?? key, productData.skinTypeScores[key]] as [
+        string,
+        number,
+      ],
+  );
+  const skinTypes = productData.skinTypes ?? [];
+  const tags = productData.tags ?? [];
+  const ingredients = productData.ingredients ?? [];
+  const ingredientsKr = ingredients
     .map((i) => i.nameKo)
     .filter(Boolean) as string[];
 
@@ -363,31 +392,47 @@ function ProductDetailInner() {
           <ChevronLeft size={22} color="#1A1A1A" />
         </button>
         <button
-          onClick={() => toggleLike(id)}
+          onClick={() => {
+            setIsLiked((prev) => !(prev ?? productData?.liked ?? false));
+            toggleLike(id);
+          }}
           className="size-9 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer transition-all active:scale-[0.93]"
         >
           <Heart
             size={22}
             className="transition-all duration-150"
             style={{
-              color: isLiked ? "#E8715A" : "#C4BEB7",
-              fill: isLiked ? "#E8715A" : "none",
+              color: resolvedIsLiked ? "#E8715A" : "#C4BEB7",
+              fill: resolvedIsLiked ? "#E8715A" : "none",
             }}
           />
         </button>
       </div>
 
       <div className="flex-1 pb-8">
-        <div className="mx-5 mb-4 flex items-center justify-center h-60 rounded-modal bg-[#EDEAE2]">
-          {productData.imageUrl ? (
-            <img
-              src={productData.imageUrl}
-              alt={productData.productName ?? ""}
-              className="h-full w-full object-contain rounded-modal"
-            />
-          ) : (
-            <span className="text-[80px]">🧴</span>
-          )}
+        {/* 이미지 카드 — 아래 섹션과 동일한 스타일, 이미지보다 살짝 큰 패딩 */}
+        <div className="mx-5 mb-3 rounded-2xl bg-white overflow-hidden">
+          <div className="relative w-full aspect-3/2">
+            {productData.imageUrl ? (
+              <img
+                src={productData.imageUrl}
+                alt={productData.productName ?? ""}
+                className="absolute inset-0 w-full h-full object-contain p-4"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                  (
+                    e.target as HTMLImageElement
+                  ).nextElementSibling?.removeAttribute("hidden");
+                }}
+              />
+            ) : null}
+            <span
+              className="absolute inset-0 flex items-center justify-center text-[80px]"
+              hidden={!!productData.imageUrl}
+            >
+              🧴
+            </span>
+          </div>
         </div>
 
         <div className="mx-5 rounded-2xl bg-white p-4 mb-3">
@@ -416,12 +461,11 @@ function ProductDetailInner() {
             </button>
           </div>
 
-          {(productData.skinTypes.length > 0 ||
-            productData.tags.length > 0) && (
+          {(skinTypes.length > 0 || tags.length > 0) && (
             <div className="flex flex-col gap-1.5 mb-7">
-              {productData.skinTypes.length > 0 && (
+              {skinTypes.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
-                  {productData.skinTypes.map((st) => (
+                  {skinTypes.map((st) => (
                     <span
                       key={st}
                       className="text-[14px] px-2 py-0.5 rounded-[6px] bg-brand-bg text-brand"
@@ -431,9 +475,9 @@ function ProductDetailInner() {
                   ))}
                 </div>
               )}
-              {productData.tags.length > 0 && (
+              {tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
-                  {productData.tags.map((tag) => (
+                  {tags.map((tag) => (
                     <span
                       key={tag}
                       className="text-xs px-2.25 py-0.5 rounded-xl bg-bg-chip text-text-hint border border-border-warm"
@@ -636,10 +680,20 @@ function ProductDetailInner() {
                   </p>
                 </div>
               )}
+              {productData.description && (
+                <div className="p-4 border-b border-[#F5F5F5]">
+                  <p className="font-semibold text-text-sub mb-1.5">
+                    제품 설명
+                  </p>
+                  <p className="text-xs text-text-primary leading-[1.6]">
+                    {productData.description}
+                  </p>
+                </div>
+              )}
               <div>
                 {(isIngredientListOpen
-                  ? productData.ingredients
-                  : productData.ingredients.slice(0, 3)
+                  ? ingredients
+                  : ingredients.slice(0, 3)
                 ).map((ingredient) => {
                   const ewgColorInfo = getEwgColor(
                     ingredient.ewgGrade === "low"
@@ -683,7 +737,7 @@ function ProductDetailInner() {
                     </div>
                   );
                 })}
-                {productData.ingredients.length > 3 && (
+                {ingredients.length > 3 && (
                   <button
                     onClick={() => setIsIngredientListOpen((prev) => !prev)}
                     className="flex items-center justify-center gap-1 w-full py-3 border-t border-[#F5F5F5] bg-transparent border-x-0 border-b-0 cursor-pointer text-xs text-text-muted"
@@ -694,7 +748,7 @@ function ProductDetailInner() {
                       </>
                     ) : (
                       <>
-                        전체 {productData.ingredients.length}개 보기{" "}
+                        전체 {ingredients.length}개 보기{" "}
                         <ChevronDown size={13} />
                       </>
                     )}

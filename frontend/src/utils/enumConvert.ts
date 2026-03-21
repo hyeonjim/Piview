@@ -29,7 +29,7 @@ export const toAgeGroupEnum = (
   return map[age];
 };
 
-/** "건성" | "지성" | "복합성" | "수부지" → "dry" | "oily" | "combination" | "dehydrated_oily"
+/** "건성" | "지성" | "복합성" | "수부지" → "dry" | "oily" | "combination" | "subuji"
  *  GET /products skinType 파라미터용 (소문자)
  */
 export const toSkinTypeParam = (skinType: SkinType): string => {
@@ -37,20 +37,20 @@ export const toSkinTypeParam = (skinType: SkinType): string => {
     건성: "dry",
     지성: "oily",
     복합성: "combination",
-    수부지: "dehydrated_oily",
+    수부지: "subuji",
   };
   return map[skinType] ?? skinType;
 };
 
-/** "건성" | "지성" | "복합성" | "수부지" → "DRY" | "OILY" | "COMBINATION" | "DEHYDRATED_OILY"
- *  POST /skin/surveys gender/ageGroup/skinType 필드용 (대문자)
+/** "건성" | "지성" | "복합성" | "수부지" → "dry" | "oily" | "combination" | "subuji"
+ *  POST /skin/surveys gender/ageGroup/skinType 필드용
  */
 export const toSkinTypeEnum = (skinType: SkinType): string => {
   const map: Record<SkinType, string> = {
-    건성: "DRY",
-    지성: "OILY",
-    복합성: "COMBINATION",
-    수부지: "DEHYDRATED_OILY",
+    건성: "dry",
+    지성: "oily",
+    복합성: "combination",
+    수부지: "subuji",
   };
   return map[skinType] ?? skinType;
 };

@@ -1,23 +1,30 @@
 "use client";
 
+import { useState } from "react";
 import { Heart } from "lucide-react";
 
-import { useOwnedStore } from "@/stores/useOwnedStore";
+import { useMyCosQuery, useAddMyCos, useRemoveMyCos } from "@/hooks";
 import { useRoutineStore } from "@/stores";
-import { useLike, useCompare } from "@/hooks";
+import { useLike, useLikedProducts, useCompare } from "@/hooks";
 import ProductCard from "@/components/common/ProductCard";
 import CompareModal, {
   type CompareProduct,
 } from "@/components/common/CompareModal";
-import { MOCK_SEARCH_PRODUCTS } from "@/constants/_mock/searchProducts";
+import { Pagination } from "@/components/common/Pagination";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
+import { PAGE_SIZE } from "@/constants/pagination";
 
 export default function LikesPage() {
-  const { likeList: likedIds } = useLike();
-  // ⚠️ API 연동 시 서버 fetch로 교체
-  const likedProducts = MOCK_SEARCH_PRODUCTS.filter((p) => likedIds[p.id]);
+  const [page, setPage] = useState(1);
+  const { data: likedProducts = [], isLoading } = useLikedProducts();
 
-  // 루틴 상태 — 전역 store (상세 페이지와 동기화)
+  // 페이지네이션 — 프론트에서 slice
+  const totalPages = Math.ceil(likedProducts.length / PAGE_SIZE) || 1;
+  const pagedProducts = likedProducts.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE,
+  );
+
   const routineMap = useRoutineStore((state) => state.localRoutine);
   const addStepProduct = useRoutineStore((state) => state.addStepProduct);
   const isInRoutine = (productId: string) =>
@@ -26,9 +33,19 @@ export default function LikesPage() {
       .filter(Boolean)
       .some((p) => p.id === productId);
 
-  // 보유 상태 — 전역 store로 검색/추천 페이지와 공유
-  const { toggleOwned, ownedProducts } = useOwnedStore();
-  const isOwned = (id: string) => ownedProducts.some((p) => p.id === id);
+  // 보유 상태 — API 연동
+  const { data: myCosData = [] } = useMyCosQuery();
+  const { mutate: addMyCos } = useAddMyCos();
+  const { mutate: removeMyCos } = useRemoveMyCos();
+  const isOwned = (id: string) =>
+    myCosData.some((item) => String(item.productId ?? item.id) === id);
+  const handleToggleOwned = (productId: string) => {
+    const owned = myCosData.find(
+      (item) => String(item.productId ?? item.id) === productId,
+    );
+    if (owned) removeMyCos(owned.id);
+    else addMyCos(Number(productId));
+  };
 
   const {
     compareItems,
@@ -41,24 +58,26 @@ export default function LikesPage() {
 
   const handleAddRoutine = (productId: string) => {
     if (isInRoutine(productId)) return;
-    const product = likedProducts.find((p) => p.id === productId);
+    const product = likedProducts.find(
+      (p) => String(p.productId) === productId,
+    );
     if (!product) return;
     const matchedStep = ROUTINE_STEPS.find((step) =>
-      step.categories.includes(product.category),
+      step.categories.includes(product.categoryName ?? ""),
     );
     addStepProduct(matchedStep?.code ?? "PR", {
-      id: product.id,
-      brand: product.brand,
-      name: product.name,
-      category: product.category,
-      emoji: product.emoji,
+      id: productId,
+      brand: product.brandName ?? "",
+      name: product.name ?? "",
+      category: product.categoryName ?? "",
+      emoji: "🧴",
       skinTypes: product.skinTypes,
-      effects: product.effects,
-      matchScore: product.matchScore,
-      price: product.price,
-      ewgSafe: product.ewgSafe,
-      ewgCaution: product.ewgCaution,
-      ewgDanger: product.ewgDanger,
+      effects: product.tags ?? [],
+      matchScore: 0,
+      price: undefined,
+      ewgSafe: 0,
+      ewgCaution: 0,
+      ewgDanger: 0,
     });
   };
 
@@ -79,7 +98,6 @@ export default function LikesPage() {
         />
       )}
 
-      {/* 헤더 */}
       <div style={{ backgroundColor: "#F5F2EC", padding: "15px 20px 16px" }}>
         <h1
           style={{
@@ -100,7 +118,14 @@ export default function LikesPage() {
       </div>
 
       <div style={{ padding: "16px 16px 24px" }}>
-        {likedProducts.length === 0 ? (
+        {isLoading ? (
+          <div
+            className="flex items-center justify-center"
+            style={{ padding: "48px 20px" }}
+          >
+            <p style={{ fontSize: "14px", color: "#A69D92" }}>불러오는 중...</p>
+          </div>
+        ) : likedProducts.length === 0 ? (
           <div
             className="flex flex-col items-center justify-center"
             style={{
@@ -145,44 +170,57 @@ export default function LikesPage() {
               alignItems: "start",
             }}
           >
-            {likedProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                brand={product.brand}
-                name={product.name}
-                category={product.category}
-                emoji={product.emoji}
-                skinTypes={product.skinTypes}
-                effects={product.effects}
-                layout="grid"
-                showActions={true}
-                inRoutine={isInRoutine(product.id)}
-                onAddRoutine={() => handleAddRoutine(product.id)}
-                isOwned={isOwned(product.id)}
-                onToggleOwned={() => toggleOwned(product)}
-                isInCompare={compareItems.some(
-                  (item) => item.id === product.id,
-                )}
-                onToggleCompare={() =>
-                  handleToggleCompare({
-                    id: product.id,
-                    name: product.name,
-                    brand: product.brand,
-                    emoji: product.emoji,
-                    price: product.price,
-                    skinTypes: product.skinTypes,
-                    effects: product.effects,
-                    ewgSafe: product.ewgSafe,
-                    ewgCaution: product.ewgCaution,
-                    ewgDanger: product.ewgDanger,
-                  })
-                }
-              />
-            ))}
+            {pagedProducts.map((product) => {
+              const productId = String(product.productId);
+              return (
+                <ProductCard
+                  key={productId}
+                  id={productId}
+                  brand={product.brandName ?? ""}
+                  name={product.name ?? ""}
+                  category={product.categoryName ?? ""}
+                  imageUrl={product.imageUrl ?? undefined}
+                  skinTypes={product.skinTypes}
+                  effects={product.tags ?? []}
+                  layout="grid"
+                  showActions={true}
+                  inRoutine={isInRoutine(productId)}
+                  onAddRoutine={() => handleAddRoutine(productId)}
+                  isOwned={isOwned(productId)}
+                  onToggleOwned={() => handleToggleOwned(productId)}
+                  isInCompare={compareItems.some(
+                    (item) => item.id === productId,
+                  )}
+                  onToggleCompare={() =>
+                    handleToggleCompare({
+                      id: productId,
+                      name: product.name ?? "",
+                      brand: product.brandName ?? "",
+                      emoji: "🧴",
+                      skinTypes: product.skinTypes,
+                      effects: product.tags ?? [],
+                      ewgSafe: 0,
+                      ewgCaution: 0,
+                      ewgDanger: 0,
+                    })
+                  }
+                />
+              );
+            })}
           </div>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onChange={(p) => {
+            setPage(p);
+            window.scrollTo(0, 0);
+          }}
+        />
+      )}
     </div>
   );
 }

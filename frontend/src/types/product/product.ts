@@ -3,6 +3,35 @@
  * 제품 도메인 타입
  */
 
+// ── GET /products/filters API ─────────────────────────────────────
+
+export interface CategoryFilterDto {
+  categoryId: number;
+  categoryName: string;
+}
+
+export interface BigCategoryFilterDto {
+  bigCategoryId: number;
+  bigCategoryName: string;
+  categories: CategoryFilterDto[];
+}
+
+export interface BrandFilterDto {
+  brandId: number;
+  brandName: string;
+}
+
+export interface TagFilterDto {
+  tagId: number;
+  tag: string;
+}
+
+export interface ProductFilterMetaResponse {
+  bigCategories: BigCategoryFilterDto[];
+  brands: BrandFilterDto[];
+  tags: TagFilterDto[];
+}
+
 // ── GET /products API ─────────────────────────────────────────────
 
 // GET /products 쿼리 파라미터
@@ -47,7 +76,8 @@ export interface ProductDetailResponse {
   imageUrl: string | null;
   brandName: string | null;
   productName: string | null;
-  categoryName: string | null;
+  categoryName?: string | null; // 스웨거 미정의 — 백엔드 확인 필요
+  description: string | null;
   skinTypes: string[];
   tags: string[];
   price: number | null;
@@ -69,6 +99,7 @@ export interface ProductPageResponse {
   hasNext: boolean;
   page: number;
   size: number;
+  totalCount: number;
 }
 
 // ── UI 공용 타입 ──────────────────────────────────────────────────

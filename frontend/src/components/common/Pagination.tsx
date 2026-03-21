@@ -3,26 +3,31 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationProps {
-  /** 현재 페이지 번호 (1부터 시작) */
   page: number;
-  /** 전체 페이지 수 */
   totalPages: number;
-  /** 페이지 변경 핸들러 */
   onChange: (page: number) => void;
 }
 
-/**
- * 페이지네이션 컴포넌트
- * - 1페이지 이하일 경우 렌더링하지 않음
- * - 이전/다음 버튼과 페이지 번호 버튼으로 구성
- */
 export function Pagination({ page, totalPages, onChange }: PaginationProps) {
-  // 페이지가 1개 이하면 페이지네이션 숨김
   if (totalPages <= 1) return null;
+
+  // 현재 페이지가 속한 10개 묶음 계산
+  const groupSize = 5;
+  const currentGroup = Math.ceil(page / groupSize);
+  const groupStart = (currentGroup - 1) * groupSize + 1;
+  const groupEnd = Math.min(currentGroup * groupSize, totalPages);
+
+  const pageNumbers = Array.from(
+    { length: groupEnd - groupStart + 1 },
+    (_, i) => groupStart + i,
+  );
+
+  const hasPrevGroup = groupStart > 1;
+  const hasNextGroup = groupEnd < totalPages;
 
   return (
     <div className="pagination-container">
-      {/* 이전 페이지 버튼 */}
+      {/* 이전 버튼 */}
       <button
         onClick={() => onChange(Math.max(1, page - 1))}
         disabled={page === 1}
@@ -33,8 +38,8 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
         <ChevronLeft className="pagination-icon" size={14} />
       </button>
 
-      {/* 페이지 번호 버튼들 */}
-      {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
+      {/* 현재 그룹 페이지 번호들 */}
+      {pageNumbers.map((pageNumber) => (
         <button
           key={pageNumber}
           onClick={() => onChange(pageNumber)}
@@ -47,7 +52,7 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
         </button>
       ))}
 
-      {/* 다음 페이지 버튼 */}
+      {/* 다음 버튼 */}
       <button
         onClick={() => onChange(Math.min(totalPages, page + 1))}
         disabled={page === totalPages}
