@@ -7,4 +7,6 @@ import org.springframework.data.domain.Slice;
 
 public interface ProductRepositoryCustom {
   Slice<Product> search(ProductSearchCondition condition, Pageable pageable);
+
+  long count(ProductSearchCondition condition); // total page 받기
 }

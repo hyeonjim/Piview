@@ -126,4 +126,26 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     }
     return product.price.loe(maxPrice);
   }
+
+  public long count(ProductSearchCondition condition) {
+    Long result = queryFactory
+            .select(product.count())
+            .from(product)
+            .join(product.brand, brand)
+            .join(product.category, category)
+            .join(category.bigCategory, bigCategory)
+            .where(
+                    qContains(condition.getQ()),
+                    categoryEq(condition.getCategoryId()),
+                    bigCategoryEqWhenCategoryNull(condition.getCategoryId(), condition.getBigCategoryId()),
+                    skinTypeEq(condition.getSkinType()),
+                    hasAllTags(condition.getTagIds()),
+                    brandIn(condition.getBrandIds()),
+                    minPriceGoe(condition.getMinPrice()),
+                    maxPriceLoe(condition.getMaxPrice())
+            )
+            .fetchOne();
+
+    return result != null ? result : 0L;
+  }
 }
