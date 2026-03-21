@@ -21,7 +21,6 @@ import static com.piview.backend.domain.product.entity.QCategory.category;
 import static com.piview.backend.domain.product.entity.QImage.image;
 import static com.piview.backend.domain.product.entity.QProduct.product;
 import static com.piview.backend.domain.product.entity.QProductConcernCache.productConcernCache;
-import static com.piview.backend.domain.product.entity.QProductTagScore.productTagScore;
 
 @Repository
 @RequiredArgsConstructor
