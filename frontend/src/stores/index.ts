@@ -22,9 +22,6 @@ export {
   selectSavedRoutines,
 } from "./useRoutineStore";
 
-// ⚠️ API 연동 시 삭제 예정 — 하위 호환성 유지를 위한 alias
-export { useRoutineStore as useLocalRoutineStore } from "./useRoutineStore";
-
 // 타입 re-export (기존 import 경로 유지)
 export type {
   LocalProduct,

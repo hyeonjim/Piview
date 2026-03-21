@@ -26,9 +26,9 @@ export function useProductSearch(params: ProductSearchParams) {
 
   return {
     ...query,
-    // 매핑된 제품 목록 — ProductCard props에 바로 spread 가능
     products: query.data ? mapProductSummaryList(query.data.products) : [],
     hasNext: query.data?.hasNext ?? false,
     currentPage: query.data?.page ?? 0,
+    totalCount: query.data?.totalCount ?? null,
   };
 }

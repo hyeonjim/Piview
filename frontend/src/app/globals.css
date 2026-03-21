@@ -555,12 +555,13 @@
     background-color: var(--color-product-compare-active-bg);
     color: var(--color-product-compare-active-text);
   }
+}
 
+@layer components {
   /* ───────────────────────────────────────────────────────────
      📄 Pagination Component
      ─────────────────────────────────────────────────────────── */
 
-  /* 페이지네이션 컨테이너 */
   .pagination-container {
     display: flex;
     align-items: center;
@@ -569,13 +570,12 @@
     padding: 16px 0 20px;
   }
 
-  /* 이전/다음 버튼 */
   .pagination-nav-button {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 38px;
+    height: 38px;
     border-radius: 6px;
     border: 1px solid var(--color-border);
     background-color: var(--color-bg-card);
@@ -596,18 +596,17 @@
     transform: scale(0.95);
   }
 
-  /* 페이지 번호 버튼 */
   .pagination-page-button {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 38px;
+    height: 38px;
     border-radius: 6px;
     border: 1px solid var(--color-border);
     background-color: var(--color-bg-card);
     color: var(--color-text-muted);
-    font-size: 12px;
+    font-size: 22px;
     font-weight: 400;
     cursor: pointer;
     transition: all 0.15s;
@@ -629,7 +628,6 @@
     transform: scale(0.95);
   }
 
-  /* 아이콘 */
   .pagination-icon {
     color: var(--color-text-hint);
   }
