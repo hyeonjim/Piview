@@ -137,6 +137,12 @@ export default function SurveyPage({
     if (!selectedAnswer || isPending) return;
 
     if (isLast) {
+      // analysisId 없으면 photo 페이지로 복귀 (새로고침 등으로 store 유실된 경우)
+      if (!analysisId) {
+        router.replace("/skin-test/photo");
+        return;
+      }
+
       // ── POST /skin/surveys 요청 body 조립 ──
       const request: SurveySubmitRequest = {
         gender: toGenderEnum((answers[-1] as Gender) ?? gender),
@@ -149,7 +155,7 @@ export default function SurveyPage({
       };
 
       submitSurvey(
-        { analysisId: analysisId ?? "", body: request },
+        { analysisId, body: request },
         {
           onSuccess: (data) => {
             resetSurvey();
