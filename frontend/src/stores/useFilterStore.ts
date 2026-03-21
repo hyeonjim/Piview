@@ -30,8 +30,8 @@ export const selectActiveFilterCount = (s: FilterStore): number => {
   const { filter } = s;
   return (
     (filter.filterSkin ? 1 : 0) +
-    (filter.filterFns.size > 0 ? 1 : 0) +
-    (filter.filterBrands.size > 0 ? 1 : 0) +
+    (filter.tagIds.size > 0 ? 1 : 0) +
+    (filter.brandIds.size > 0 ? 1 : 0) +
     (filter.priceRange[0] > 0 || filter.priceRange[1] < 1_000_000 ? 1 : 0)
   );
 };

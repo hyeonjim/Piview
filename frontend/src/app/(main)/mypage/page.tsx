@@ -93,6 +93,7 @@ export default function MyPage() {
     brand: item.brand,
     name: item.productName,
     category: item.category,
+    imageUrl: item.imageUrl,
     skinTypes: [
       item.topSkinType ? fromSkinTypeEnum(item.topSkinType) : null,
       item.top2SkinType ? fromSkinTypeEnum(item.top2SkinType) : null,

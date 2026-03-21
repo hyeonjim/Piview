@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Plus, X, RotateCcw, ArrowUpDown, Wrench } from "lucide-react";
+import OcrModal from "@/components/features/mypage/OcrModal";
 import {
   getRoutineEvaluation,
   getScoreBarColor,
@@ -96,6 +97,7 @@ export default function RoutineTab({
   // 저장 모달 상태
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveModalName, setSaveModalName] = useState("");
+  const [showOcrModal, setShowOcrModal] = useState(false);
 
   // 저장된 루틴 슬라이더 스크롤 상태 — 도트 인디케이터 연동
   const savedRoutineScrollRef = useRef<HTMLDivElement>(null);
@@ -459,6 +461,8 @@ export default function RoutineTab({
 
   return (
     <div className="px-5 pt-4 flex flex-col gap-2 pb-10">
+      {/* OCR 모달 */}
+      {showOcrModal && <OcrModal onClose={() => setShowOcrModal(false)} />}
       {/* ── 목업 데이터 사용 중 알림 배너 — BE 연동 시 삭제 ── */}
       {/* text-xs(12px) → font-semibold: 소형 텍스트 가독성 보완 */}
       {IS_MOCK_DATA && serverRoutineList.length > 0 && (
@@ -567,7 +571,10 @@ export default function RoutineTab({
             <RotateCcw size={12} /> 초기화
           </button>
           {/* OCR — text-xs(12px) → font-semibold */}
-          <button className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent">
+          <button
+            onClick={() => setShowOcrModal(true)}
+            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent"
+          >
             ⇄ OCR
           </button>
           {/* 저장 — text-xs(12px) → font-semibold */}
