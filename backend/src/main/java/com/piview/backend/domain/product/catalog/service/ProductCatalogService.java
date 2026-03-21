@@ -9,26 +9,11 @@ import com.piview.backend.domain.product.catalog.dto.ProductIngredientDetailResp
 import com.piview.backend.domain.product.catalog.dto.ProductPageResponse;
 import com.piview.backend.domain.product.catalog.dto.ProductSearchCondition;
 import com.piview.backend.domain.product.catalog.dto.ProductSummaryResponse;
-import com.piview.backend.domain.product.catalog.dto.TagFilterDto;
-import com.piview.backend.domain.product.catalog.repository.BigCategoryRepository;
-import com.piview.backend.domain.product.catalog.repository.BrandRepository;
-import com.piview.backend.domain.product.catalog.repository.CategoryRepository;
-import com.piview.backend.domain.product.catalog.repository.IngredientRepository;
-import com.piview.backend.domain.product.catalog.repository.ProductIngredientRepository;
-import com.piview.backend.domain.product.catalog.repository.ProductRepository;
-import com.piview.backend.domain.product.catalog.repository.TagRepository;
-import com.piview.backend.domain.product.entity.BigCategory;
-import com.piview.backend.domain.product.entity.Brand;
-import com.piview.backend.domain.product.entity.Category;
-import com.piview.backend.domain.product.entity.EwgGrade;
-import com.piview.backend.domain.product.entity.Ingredient;
-import com.piview.backend.domain.product.entity.Product;
-import com.piview.backend.domain.product.entity.ProductIngredients;
-import com.piview.backend.domain.product.entity.Tag;
+import com.piview.backend.domain.product.catalog.dto.ConcernFilterDto;
+import com.piview.backend.domain.product.catalog.repository.*;
+import com.piview.backend.domain.product.entity.*;
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
-import com.piview.backend.domain.product.catalog.dto.*;
-import com.piview.backend.domain.product.catalog.repository.*;
 import com.piview.backend.domain.product.like.repository.ProductLikeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -56,8 +41,11 @@ public class ProductCatalogService {
     private final BigCategoryRepository bigCategoryRepository;
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
-    private final TagRepository tagRepository;
     private final ProductLikeRepository productLikeRepository;
+    private final SkinConcernsRepository skinConcernsRepository;
+
+    // concern 가져오기 위한 service
+    private final ProductConcernQueryService productConcernQueryService;
 
     // filter MetaData 제공 service
     public ProductFilterMetaResponse getFilterMeta() {
@@ -65,7 +53,7 @@ public class ProductCatalogService {
         List<BigCategory> bigCategories = bigCategoryRepository.findAllByOrderByBigCategoryIdAsc();
         List<Category> categories = categoryRepository.findAllByOrderByBigCategory_BigCategoryIdAscCategoryIdAsc();
         List<Brand> brands = brandRepository.findAllByOrderByBrandNameAsc();
-        List<Tag> tags = tagRepository.findAllByOrderByTagAsc();
+        List<SkinConcerns> concerns = skinConcernsRepository.findAllByOrderByIdAsc();
 
         Map<Integer, List<Category>> categoryMap = categories.stream()
                 .collect(Collectors.groupingBy(category -> category.getBigCategory().getBigCategoryId()));
@@ -92,17 +80,17 @@ public class ProductCatalogService {
                         .build())
                 .toList();
 
-        List<TagFilterDto> tagDtos = tags.stream()
-                .map(tag -> TagFilterDto.builder()
-                        .tagId(tag.getTagId())
-                        .tag(tag.getTag())
+        List<ConcernFilterDto> concernDtos = concerns.stream()
+                .map(concern -> ConcernFilterDto.builder()
+                        .concernId(concern.getId())
+                        .concernName(concern.getConcernName())
                         .build())
                 .toList();
 
         return ProductFilterMetaResponse.builder()
                 .bigCategories(bigCategoryDtos)
                 .brands(brandDtos)
-                .tags(tagDtos)
+                .concerns(concernDtos)
                 .build();
     }
 
@@ -111,7 +99,7 @@ public class ProductCatalogService {
         validate(condition);
 
         String normalizedQ = normalizeQ(condition.getQ());
-        List<Long> normalizedTagIds = distinctOrNull(condition.getTagIds());
+        List<Long> normalizedConcernIds = distinctOrNull(condition.getConcernIds());
         List<Long> normalizedBrandIds = distinctOrNull(condition.getBrandIds());
 
         ProductSearchCondition normalized = ProductSearchCondition.builder()
@@ -119,7 +107,7 @@ public class ProductCatalogService {
                 .bigCategoryId(condition.getBigCategoryId())
                 .categoryId(condition.getCategoryId())
                 .skinType(condition.getSkinType())
-                .tagIds(normalizedTagIds)
+                .concernIds(normalizedConcernIds)
                 .brandIds(normalizedBrandIds)
                 .minPrice(condition.getMinPrice())
                 .maxPrice(condition.getMaxPrice())
@@ -137,10 +125,18 @@ public class ProductCatalogService {
             ? productLikeRepository.findLikedProductIdsByUserId(userId)
             : Collections.emptyList();
 
+        // 상품  별 concerns 조회
+        List<Long> productIds = productSlice.getContent().stream()
+                .map(Product::getProductId)
+                .toList();
+
+        Map<Long, List<String>> concernsByProductId = productConcernQueryService.buildConcernsByProductIds(productIds);
+
         List<ProductSummaryResponse> responses = productSlice.getContent().stream()
             .map(product -> {
                 boolean isLiked = likedProductIds.contains(product.getProductId());
-                return ProductSummaryResponse.from(product, isLiked);
+                List<String> concerns =  concernsByProductId.getOrDefault(product.getProductId(), List.of());
+                return ProductSummaryResponse.from(product, isLiked, concerns);
             })
             .toList();
 
@@ -280,7 +276,7 @@ public class ProductCatalogService {
                 .productName(product.getName())
                 .description(product.getDescription())
                 .skinTypes(skinTypes)
-                .tags(null)
+                .concerns(productConcernQueryService.resolveConcernsForProduct(productId))
                 .price(product.getPrice())
                 .volume(product.getVolume())
                 .lowCount(lowCount)
