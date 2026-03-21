@@ -15,4 +15,5 @@ public class ProductPageResponse {
     private Boolean hasNext;    // 다음 페이지 존재 여부
     private int page;   // 현재 페이지 번호
     private int size;   // 페이지 크기
+    private long totalCount;    // 토탈 페이지 수
 }
