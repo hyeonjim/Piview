@@ -375,7 +375,7 @@ export default function ProductCard({
         style={{ boxShadow: CARD_SHADOW }}
       >
         <Link href={productHref} className="no-underline flex flex-col flex-1">
-          {/* 이미지 — 정사각형 */}
+          {/* 이미지 — 3/2 */}
           <div className="relative w-full aspect-3/2 overflow-hidden">
             <ProductImage
               imageUrl={imageUrl}

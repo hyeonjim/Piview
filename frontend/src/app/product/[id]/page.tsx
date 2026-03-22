@@ -23,6 +23,7 @@ import {
   useMyCosQuery,
 } from "@/hooks";
 import { getEwgColor } from "@/constants/categoryColors";
+import { fromSkinTypeEnum } from "@/utils/enumConvert";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
 import CompareModal from "@/components/common/CompareModal";
 import type { ProductViewModel } from "@/types/product/myCos";
@@ -119,10 +120,14 @@ function ProductDetailInner() {
   const selectedRoutineCompare: ProductViewModel | null =
     sameCategoryRoutineProducts.length > 0
       ? {
-          id: Number(sameCategoryRoutineProducts[selectedRoutineProductIndex].id),
+          id: Number(
+            sameCategoryRoutineProducts[selectedRoutineProductIndex].id,
+          ),
           name: sameCategoryRoutineProducts[selectedRoutineProductIndex].name,
           brand: sameCategoryRoutineProducts[selectedRoutineProductIndex].brand,
-          imageUrl: sameCategoryRoutineProducts[selectedRoutineProductIndex].imageUrl ?? null,
+          imageUrl:
+            sameCategoryRoutineProducts[selectedRoutineProductIndex].imageUrl ??
+            null,
           emoji: sameCategoryRoutineProducts[selectedRoutineProductIndex].emoji,
           price: sameCategoryRoutineProducts[selectedRoutineProductIndex].price,
           skinTypes:
@@ -142,6 +147,7 @@ function ProductDetailInner() {
     "ingredients",
   );
   const [isIngredientListOpen, setIsIngredientListOpen] = useState(false);
+  const [isIngredientTextOpen, setIsIngredientTextOpen] = useState(false);
   const [isScrollTopVisible, setIsScrollTopVisible] = useState(false);
   const ewgSectionRef = useRef<HTMLDivElement>(null);
 
@@ -242,7 +248,7 @@ function ProductDetailInner() {
         number,
       ],
   );
-  const skinTypes = productData.skinTypes ?? [];
+  const skinTypes = (productData.skinTypes ?? []).map(fromSkinTypeEnum);
   const tags = productData.tags ?? [];
   const ingredients = productData.ingredients ?? [];
   const ingredientsKr = ingredients
@@ -673,24 +679,55 @@ function ProductDetailInner() {
         <div className="mx-5 mb-8">
           {activeTab === "ingredients" && (
             <div className="rounded-2xl bg-white overflow-hidden">
-              {ingredientsKr.length > 0 && (
-                <div className="p-4 border-b border-[#F5F5F5]">
-                  <p className="font-semibold text-text-sub mb-1.5">전성분</p>
-                  <p className="text-xs text-text-primary leading-[1.6]">
-                    {ingredientsKr.join(", ")}
-                  </p>
-                </div>
-              )}
+              {/* 제품 설명 — 피그마 순서: 설명 먼저 */}
               {productData.description && (
                 <div className="p-4 border-b border-[#F5F5F5]">
                   <p className="font-semibold text-text-sub mb-1.5">
                     제품 설명
                   </p>
-                  <p className="text-xs text-text-primary leading-[1.6]">
+                  <p className="text-xs text-text-primary leading-[1.7]">
                     {productData.description}
                   </p>
                 </div>
               )}
+              {/* 전성분 — 펼치기/접기 */}
+              {ingredientsKr.length > 0 && (
+                <div className="p-4 border-b border-[#F5F5F5]">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="font-semibold text-text-sub">전성분</p>
+                    <button
+                      onClick={() => setIsIngredientTextOpen((prev) => !prev)}
+                      className="flex items-center gap-0.5 text-xs text-text-muted bg-transparent border-none cursor-pointer"
+                    >
+                      {isIngredientTextOpen ? (
+                        <>
+                          접기 <ChevronUp size={13} />
+                        </>
+                      ) : (
+                        <>
+                          펼치기 <ChevronDown size={13} />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <p
+                    className="text-xs text-text-primary leading-[1.7]"
+                    style={
+                      isIngredientTextOpen
+                        ? undefined
+                        : {
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }
+                    }
+                  >
+                    {ingredientsKr.join(", ")}
+                  </p>
+                </div>
+              )}
+              {/* 성분 상세 리스트 */}
               <div>
                 {(isIngredientListOpen
                   ? ingredients

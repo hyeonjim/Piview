@@ -35,3 +35,5 @@ export { useFilterStore, selectActiveFilterCount } from "./useFilterStore";
 export { useSurveyStore } from "./useSurveyStore";
 export { useOwnedStore } from "./useOwnedStore";
 export { useLikeStore } from "./useLikeStore";
+export { useSearchStore } from "./useSearchStore";
+export { useRecommendStore } from "./useRecommendStore";

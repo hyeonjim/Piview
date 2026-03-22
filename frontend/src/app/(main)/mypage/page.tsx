@@ -18,6 +18,9 @@ import OwnedTab from "@/components/features/mypage/OwnedTab";
 import AvoidProductModal from "@/components/features/mypage/AvoidProductModal";
 import { useRoutineStore } from "@/stores";
 import { useUserStore, selectSkinType, selectGender } from "@/stores";
+import { useSearchStore } from "@/stores/useSearchStore";
+import { useRecommendStore } from "@/stores/useRecommendStore";
+import { useLikeStore } from "@/stores";
 import { authService } from "@/services/auth";
 import type { ProductViewModel } from "@/types/product/myCos";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
@@ -44,7 +47,15 @@ export default function MyPage() {
     try {
       await authService.logout();
     } finally {
+      // 유저
       useUserStore.getState().clearUser();
+      // 검색/추천/찜 — 다른 계정 로그인 시 이전 상태 잔존 방지
+      useSearchStore.getState().setSearchQuery("");
+      useSearchStore.getState().resetFilter();
+      useRecommendStore.getState().setSearchQuery("");
+      useRecommendStore.getState().resetFilter();
+      useLikeStore.getState().initFromServer([]);
+      useLikeStore.getState().setPage(1);
       router.push("/splash");
     }
   };
@@ -122,7 +133,8 @@ export default function MyPage() {
   }));
 
   const handleRemoveOwned = (productId: string | number) => {
-    const myCosId = typeof productId === "number" ? productId : Number(productId);
+    const myCosId =
+      typeof productId === "number" ? productId : Number(productId);
     if (!isNaN(myCosId)) removeMyCos(myCosId);
   };
 
