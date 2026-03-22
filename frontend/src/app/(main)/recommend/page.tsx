@@ -13,9 +13,8 @@ import ProductCard from "@/components/common/ProductCard";
 import { Pagination } from "@/components/common/Pagination";
 import EmptyState from "@/components/common/EmptyState";
 import SearchBar from "@/components/common/SearchBar";
-import CompareModal, {
-  type CompareProduct,
-} from "@/components/common/CompareModal";
+import CompareModal from "@/components/common/CompareModal";
+import type { ProductViewModel } from "@/types/product/myCos";
 import { useCompare, useProductSearch } from "@/hooks";
 import { useAddMyCos, useRemoveMyCos, useMyCosQuery } from "@/hooks";
 import { useRoutineStore } from "@/stores";
@@ -89,7 +88,7 @@ export default function RecommendPage() {
     openCompare,
     closeCompare,
     canCompare,
-  } = useCompare<CompareProduct>();
+  } = useCompare<ProductViewModel>();
 
   const filterCount =
     (filter.filterSkin ? 1 : 0) +
@@ -134,7 +133,7 @@ export default function RecommendPage() {
     });
   };
 
-  const handleToggleCompare = (product: CompareProduct) => {
+  const handleToggleCompare = (product: ProductViewModel) => {
     const isAlreadySelected = compareItems.some(
       (item) => item.id === product.id,
     );
@@ -158,7 +157,7 @@ export default function RecommendPage() {
     <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
       {showCompare && canCompare && (
         <CompareModal
-          compareItems={compareItems as [CompareProduct, CompareProduct]}
+          compareItems={compareItems as [ProductViewModel, ProductViewModel]}
           onClose={closeCompare}
         />
       )}
@@ -364,7 +363,7 @@ export default function RecommendPage() {
                     id: product.id,
                     name: product.name,
                     brand: product.brand,
-                    imageUrl: product.imageUrl ?? undefined,
+                    imageUrl: product.imageUrl ?? null,
                     skinTypes: product.skinTypes,
                     effects: product.effects,
                   })

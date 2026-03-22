@@ -18,7 +18,7 @@ import AvoidProductModal from "@/components/features/mypage/AvoidProductModal";
 import { useRoutineStore, type LocalProduct } from "@/stores";
 import { useUserStore, selectSkinType, selectGender } from "@/stores";
 import { authService } from "@/services/auth";
-import type { OwnedProduct } from "@/stores/useOwnedStore";
+import type { ProductViewModel } from "@/types/product/myCos";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
 
 export default function MyPage() {
@@ -87,9 +87,9 @@ export default function MyPage() {
   const myCosItems = Array.isArray(myCosRawData) ? myCosRawData : [];
   const { mutate: removeMyCos } = useRemoveMyCos();
 
-  // MyCosItem → OwnedProduct 변환 (OwnedTab props 호환)
-  const ownedProducts: OwnedProduct[] = myCosItems.map((item) => ({
-    id: String(item.id),
+  // MyCosItem → ProductViewModel 변환 (OwnedTab props 호환)
+  const ownedProducts: ProductViewModel[] = myCosItems.map((item) => ({
+    id: item.id,
     brand: item.brand,
     name: item.productName,
     category: item.category,
@@ -98,19 +98,20 @@ export default function MyPage() {
       item.topSkinType ? fromSkinTypeEnum(item.topSkinType) : null,
       item.top2SkinType ? fromSkinTypeEnum(item.top2SkinType) : null,
     ].filter(Boolean) as string[],
+    effects: [], // MyCosItem doesn't have effects - will be populated from tags when needed
   }));
 
-  const handleRemoveOwned = (productId: string) => {
-    const myCosId = Number(productId);
+  const handleRemoveOwned = (productId: string | number) => {
+    const myCosId = typeof productId === 'number' ? productId : Number(productId);
     if (!isNaN(myCosId)) removeMyCos(myCosId);
   };
 
   // ── 기피 제품 — ⚠️ API 연동 시 서버 상태로 교체 ──────────────
-  const [avoidProducts, setAvoidProducts] = useState<OwnedProduct[]>([]);
+  const [avoidProducts, setAvoidProducts] = useState<ProductViewModel[]>([]);
   const [openAvoidModal, setOpenAvoidModal] = useState(false);
   const [avoidSearch, setAvoidSearch] = useState("");
 
-  const handleToggleAvoid = (product: OwnedProduct) => {
+  const handleToggleAvoid = (product: ProductViewModel) => {
     setAvoidProducts((previousProducts) =>
       previousProducts.some(
         (previousProduct) => previousProduct.id === product.id,
@@ -171,7 +172,7 @@ export default function MyPage() {
                   aria-label="성별 토글 (개발용)"
                 >
                   <Wrench size={12} />
-                  {currentGender === "men" ? "Men" : "Women"}
+                  {currentGender === "MEN" ? "Men" : "Women"}
                 </button>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -273,13 +274,15 @@ export default function MyPage() {
             ownedProducts={ownedProducts}
             avoidProducts={avoidProducts}
             onRemoveOwned={handleRemoveOwned}
-            onRemoveAvoid={(productId) =>
+            onRemoveAvoid={(productId) => {
+              const numericId =
+                typeof productId === "number" ? productId : Number(productId);
               setAvoidProducts((previousProducts) =>
                 previousProducts.filter(
-                  (previousProduct) => previousProduct.id !== productId,
+                  (previousProduct) => previousProduct.id !== numericId,
                 ),
-              )
-            }
+              );
+            }}
             onOpenAvoidModal={() => {
               setOpenAvoidModal(true);
               setAvoidSearch("");

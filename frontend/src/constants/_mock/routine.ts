@@ -41,6 +41,7 @@ const MOCK_PRODUCT_CLEANSER = {
   imageUrl: "",
   skinTypes: ["건성", "복합성"],
   tags: ["수분", "저자극"],
+  liked: false,
 };
 
 const MOCK_PRODUCT_TONER = {
@@ -51,6 +52,7 @@ const MOCK_PRODUCT_TONER = {
   imageUrl: "",
   skinTypes: ["건성", "복합성"],
   tags: ["수분", "진정"],
+  liked: false,
 };
 
 const MOCK_PRODUCT_SERUM = {
@@ -61,6 +63,7 @@ const MOCK_PRODUCT_SERUM = {
   imageUrl: "",
   skinTypes: ["지성", "복합성"],
   tags: ["미백", "안티에이징"],
+  liked: false,
 };
 
 const MOCK_PRODUCT_CREAM = {
@@ -71,6 +74,7 @@ const MOCK_PRODUCT_CREAM = {
   imageUrl: "",
   skinTypes: ["건성", "수부지"],
   tags: ["수분", "보습"],
+  liked: false,
 };
 
 const MOCK_PRODUCT_LOTION = {
@@ -81,6 +85,7 @@ const MOCK_PRODUCT_LOTION = {
   imageUrl: "",
   skinTypes: ["건성", "수부지"],
   tags: ["보습", "장벽강화"],
+  liked: false,
 };
 
 // ── 🔧 임시 루틴(Draft) 목업 ─────────────────────────────────────────

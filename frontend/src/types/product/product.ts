@@ -61,37 +61,7 @@ export interface ProductSummaryResponse {
 }
 
 // ── GET /products/{productId} API ─────────────────────────────────
-
-export interface ProductIngredientDetailResponse {
-  position: number;
-  nameKo: string | null;
-  nameEn: string | null;
-  ewgGrade: "low" | "medium" | "high" | "unknown" | null;
-  functions: string | null;
-  isAllergen: boolean;
-}
-
-export interface ProductDetailResponse {
-  productId: number;
-  imageUrl: string | null;
-  brandName: string | null;
-  productName: string | null;
-  categoryName?: string | null; // 스웨거 미정의 — 백엔드 확인 필요
-  description: string | null;
-  skinTypes: string[];
-  tags: string[];
-  price: number | null;
-  volume: string | null;
-  lowCount: number;
-  mediumCount: number;
-  highCount: number;
-  unknownCount: number;
-  cautionIngredients: string[];
-  allergenIngredients: string[];
-  ingredients: ProductIngredientDetailResponse[];
-  skinTypeScores: Record<string, number>;
-  liked: boolean;
-}
+// ProductDetailResponse and ProductIngredientDetailResponse moved to detail.ts
 
 // GET /products 응답 전체
 export interface ProductPageResponse {
@@ -100,17 +70,4 @@ export interface ProductPageResponse {
   page: number;
   size: number;
   totalCount: number;
-}
-
-// ── UI 공용 타입 ──────────────────────────────────────────────────
-
-// 보유제품 store + OwnedTab 공용 최소 타입
-// ⚠️ API 연동 시 MyCosItem(types/myCos.ts)으로 교체 예정
-export interface OwnedProduct {
-  id: string;
-  brand: string;
-  name: string;
-  category: string;
-  emoji?: string;
-  skinTypes?: string[];
 }

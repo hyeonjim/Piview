@@ -48,15 +48,15 @@ import {
   SKIN_TYPE_TAG_COLORS,
 } from "@/constants/categoryColors";
 import type { LocalProduct } from "@/stores";
-import type { OwnedProduct } from "@/stores/useOwnedStore";
+import type { ProductViewModel } from "@/types/product/myCos";
 import { getCategoryDisplayName } from "@/utils/format";
 
 interface OwnedTabProps {
   routine: Record<string, LocalProduct[]>;
-  ownedProducts: OwnedProduct[];
-  avoidProducts: OwnedProduct[];
-  onRemoveOwned: (id: string) => void;
-  onRemoveAvoid: (id: string) => void;
+  ownedProducts: ProductViewModel[];
+  avoidProducts: ProductViewModel[];
+  onRemoveOwned: (id: string | number) => void;
+  onRemoveAvoid: (id: string | number) => void;
   onOpenAvoidModal: () => void;
 }
 
@@ -118,7 +118,7 @@ export default function OwnedTab({
                     <span className="text-[11px] text-text-muted">
                       {product.brand}
                     </span>
-                    {CATEGORY_COLORS[product.category] && (
+                    {product.category && CATEGORY_COLORS[product.category] && (
                       <span
                         className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-bold"
                         style={{
@@ -134,7 +134,8 @@ export default function OwnedTab({
                     {Object.values(routine)
                       .flat()
                       .some(
-                        (routineProduct) => routineProduct.id === product.id,
+                        (routineProduct) =>
+                          String(routineProduct.id) === String(product.id),
                       ) && (
                       <span className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-bold bg-brand-bg text-brand">
                         루틴
@@ -228,7 +229,7 @@ export default function OwnedTab({
                     <span className="text-[11px] text-text-muted">
                       {product.brand}
                     </span>
-                    {CATEGORY_COLORS[product.category] && (
+                    {product.category && CATEGORY_COLORS[product.category] && (
                       <span
                         className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-bold"
                         style={{

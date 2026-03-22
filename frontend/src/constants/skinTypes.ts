@@ -16,16 +16,16 @@ export const SKIN_TYPES = [
 
 /** 성별 선택 옵션 */
 export const GENDER_OPTIONS = [
-  { id: "women", label: "여성" },
-  { id: "men", label: "남성" },
+  { id: "WOMEN", label: "여성" },
+  { id: "MEN", label: "남성" },
 ] as const;
 
 /** 연령대 선택 옵션 */
 export const AGE_GROUPS = [
-  { id: "10s", label: "10대" },
-  { id: "20s", label: "20대" },
-  { id: "30s", label: "30대" },
-  { id: "40s+", label: "40대 이상" },
+  { id: "TEENS", label: "10대" },
+  { id: "TWENTIES", label: "20대" },
+  { id: "THIRTIES", label: "30대" },
+  { id: "FORTIES_PLUS", label: "40대 이상" },
 ] as const;
 
 /** 피부 고민 선택지 (복수 선택) */

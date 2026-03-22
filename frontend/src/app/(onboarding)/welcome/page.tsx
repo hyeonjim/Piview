@@ -90,7 +90,7 @@ export default function WelcomePage() {
         email: "admin@test.com",
         name: "User",
         imageUrl: null,
-        gender: "women",
+        gender: "WOMEN",
         ageGroup: null,
         mySkinType: null,
         exist: true,

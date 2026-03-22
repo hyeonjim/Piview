@@ -13,7 +13,7 @@ import {
 
 export default function SelectPage() {
   const router = useRouter();
-  const [selectedGender, setSelectedGender] = useState<string>("women");
+  const [selectedGender, setSelectedGender] = useState<string>("WOMEN");
   const [selectedAge, setSelectedAge] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedConcerns, setSelectedConcerns] = useState<string[]>([]);

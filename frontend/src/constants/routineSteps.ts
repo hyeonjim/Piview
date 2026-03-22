@@ -48,7 +48,7 @@ export const MEN_ROUTINE_STEPS: RoutineStep[] = [
  * 개발 도구용 - 성별별 루틴 확인에 사용
  */
 export function getRoutineSteps(gender: Gender | null): RoutineStep[] {
-  return gender === "men" ? MEN_ROUTINE_STEPS : WOMEN_ROUTINE_STEPS;
+  return gender === "MEN" ? MEN_ROUTINE_STEPS : WOMEN_ROUTINE_STEPS;
 }
 
 /** 루틴 스텝 전체 정의 — 순서가 루틴 순서 (하위 호환용, 여성 기본) */

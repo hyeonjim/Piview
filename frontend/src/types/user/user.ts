@@ -5,8 +5,8 @@
 
 // ── 기본 enum ─────────────────────────────────────────────────────
 export type SkinType = "건성" | "지성" | "복합성" | "수부지";
-export type Gender = "men" | "women";
-export type AgeGroup = "10" | "20" | "30" | "40";
+export type Gender = "MEN" | "WOMEN";
+export type AgeGroup = "TEENS" | "TWENTIES" | "THIRTIES" | "FORTIES_PLUS";
 
 // ── /users/me API 응답 ────────────────────────────────────────────
 // ⚠️ /users/me API 미구현 — 연동 시 실제 응답 기준으로 필드 확인 필요

@@ -24,15 +24,15 @@ import { useMemo } from "react";
 import { X, Search, ShieldAlert, Minus, Plus } from "lucide-react";
 import { CATEGORY_COLORS } from "@/constants/categoryColors";
 import { MOCK_SEARCH_PRODUCTS } from "@/constants/_mock/searchProducts";
-import type { OwnedProduct } from "@/stores/useOwnedStore";
+import type { ProductViewModel } from "@/types/product/myCos";
 import { getCategoryDisplayName } from "@/utils/format";
 
 interface AvoidProductModalProps {
-  avoidProducts: OwnedProduct[];
+  avoidProducts: ProductViewModel[];
   avoidSearch: string;
   onSearchChange: (value: string) => void;
   onClose: () => void;
-  onToggle: (product: OwnedProduct) => void;
+  onToggle: (product: ProductViewModel) => void;
 }
 
 export default function AvoidProductModal({
@@ -105,7 +105,9 @@ export default function AvoidProductModal({
           {/* 검색 결과 */}
           <div className="overflow-y-auto flex-1 px-5 pb-6 flex flex-col gap-2">
             {searchResults.map((product) => {
-              const isAdded = avoidProducts.some((p) => p.id === product.id);
+              const isAdded = avoidProducts.some(
+                (p) => String(p.id) === String(product.id),
+              );
               return (
                 <div
                   key={product.id}
@@ -137,7 +139,22 @@ export default function AvoidProductModal({
                   </div>
                   {/* 추가/제거 토글 버튼 */}
                   <button
-                    onClick={() => onToggle(product)}
+                    onClick={() =>
+                      onToggle({
+                        id: Number(product.id) || 0,
+                        name: product.name,
+                        brand: product.brand,
+                        category: product.category,
+                        imageUrl: product.imageUrl ?? null,
+                        skinTypes: product.skinTypes,
+                        effects: product.effects,
+                        emoji: product.emoji,
+                        ewgSafe: product.ewgSafe,
+                        ewgCaution: product.ewgCaution,
+                        ewgDanger: product.ewgDanger,
+                        price: product.price,
+                      })
+                    }
                     className="shrink-0 flex items-center justify-center"
                     style={{
                       ...AVOID_MINUS_BTN_STYLE,

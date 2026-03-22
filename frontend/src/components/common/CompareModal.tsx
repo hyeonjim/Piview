@@ -16,7 +16,10 @@ import { X, Sparkles } from "lucide-react";
 import { SKIN_FUNCTION_COLORS } from "@/constants/categoryColors";
 import { formatPrice } from "@/utils/format";
 import { SkinTypeTag } from "@/components/common/ProductCard";
-import type { CompareProduct } from "@/types/common";
+import type { ProductViewModel } from "@/types/product/myCos";
+
+// 하위 호환성을 위한 타입 별칭
+type CompareProduct = ProductViewModel;
 
 export type { CompareProduct };
 
