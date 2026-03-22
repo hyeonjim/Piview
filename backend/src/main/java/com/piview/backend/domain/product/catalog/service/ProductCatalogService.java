@@ -239,11 +239,17 @@ public class ProductCatalogService {
                 allergenIngredients.add(nameKo != null ? nameKo : nameEn);
             }
 
+            Integer ewgScore = null;
+            if (ingredient != null && ingredient.getEwgScoreMin() != null && ingredient.getEwgScoreMax() != null) {
+                ewgScore = Math.round((ingredient.getEwgScoreMin() + ingredient.getEwgScoreMax()) / 2.0f);
+            }
+
             ingredients.add(ProductIngredientDetailResponse.builder()
                     .position(i + 1)
                     .nameKo(nameKo)
                     .nameEn(nameEn)
                     .ewgGrade(ewgGrade)
+                    .ewgScore(ewgScore)
                     .functions(null)
                     .isAllergen(isAllergen)
                     .build());
