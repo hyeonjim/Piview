@@ -16,7 +16,7 @@ public class ProductSearchCondition {
     private Long categoryId;
 //    private String skinType;
     private SkinTypeEnum skinType;
-    private List<Long> tagIds;
+    private List<Long> concernIds;
     private List<Long> brandIds;
     private Integer minPrice;
     private Integer maxPrice;
