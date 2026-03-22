@@ -25,4 +25,17 @@ public class ProductIngredientRepository {
 
         return result.stream().findFirst();
     }
+
+    // compare API에서 상품 2개의 원문 성분을 한 번에 가져오기 위한 조회
+    public List<ProductIngredients> findByProductIds(List<Long> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            return List.of();
+        }
+
+        return em.createQuery(
+                "SELECT pi FROM ProductIngredients pi WHERE pi.product.productId IN :productIds",
+                ProductIngredients.class)
+                .setParameter("productIds", productIds)
+                .getResultList();
+    }
 }
