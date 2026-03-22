@@ -85,6 +85,7 @@ public class UserProfileService {
     // 마이페이지 응답 조립 로직이다. User와 MySkin을 UserProfileResponse 하나로 합친다.
     private UserProfileResponse buildResponse(User user, List<MySkin> mySkins) {
         return UserProfileResponse.builder()
+            .userId(user.getId())
             .name(user.getName())
             .email(user.getEmail())
             // 카카오 로그인에서 저장한 imageUrl을 마이페이지 조회 응답에 그대로 포함한다.
