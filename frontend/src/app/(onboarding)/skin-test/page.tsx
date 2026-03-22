@@ -49,7 +49,7 @@ export default function SkinTestPage() {
       </div>
 
       {/* 하단 고정 버튼 영역 */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-107.5 px-5 pb-8 pt-3">
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-107.5 px-5 pb-20 pt-3">
         <button
           onClick={() => router.push("/home")}
           className="w-full h-13 rounded-[32px] text-[18px] transition-all duration-200 border-none font-extrabold bg-border-warm text-gray-800 cursor-pointer"

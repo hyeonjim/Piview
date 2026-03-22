@@ -144,7 +144,7 @@ export default function WelcomePage() {
       <div className="flex-1" />
 
       {/* Bottom content area */}
-      <div className="relative z-10 px-7 pb-10">
+      <div className="relative z-10 px-7 pb-20">
         {/* Slide content */}
         <div className="min-h-[140px]">
           <h1

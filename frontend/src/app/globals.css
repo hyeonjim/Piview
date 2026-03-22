@@ -9,6 +9,74 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ───────────────────────────────────────────────────────────────
+   🔤 폰트 unicode-range 보정
+   next/font/local의 variable 방식은 unicode-range를 지원하지 않음.
+   → 동일한 font-family명으로 @font-face를 재선언해서 덮어씀.
+   → SortsMillGoudy를 라틴 범위만 담당하도록 제한
+   → 한글은 SortsMillGoudy를 건너뛰고 MaruBuri로 바로 처리됨
+   ─────────────────────────────────────────────────────────────── */
+
+@font-face {
+  font-family: "SortsMillGoudy";
+  src: url("/fonts/SortsMillGoudy-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  /* Basic Latin + Latin-1 Supplement + Latin Extended-A 범위만 담당 */
+  unicode-range: U+0020-007F, U+00A0-00FF, U+0100-017F;
+}
+
+@font-face {
+  font-family: "SortsMillGoudy";
+  src: url("/fonts/SortsMillGoudy-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  unicode-range: U+0020-007F, U+00A0-00FF, U+0100-017F;
+}
+
+@font-face {
+  font-family: "MaruBuri";
+  src: url("/fonts/MaruBuri-ExtraLight.ttf") format("truetype");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MaruBuri";
+  src: url("/fonts/MaruBuri-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MaruBuri";
+  src: url("/fonts/MaruBuri-Regular.ttf") format("truetype");
+  /* 400~500 범위: font-medium(500) 요청 시 Regular가 처리 */
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MaruBuri";
+  src: url("/fonts/MaruBuri-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MaruBuri";
+  src: url("/fonts/MaruBuri-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ───────────────────────────────────────────────────────────────
    🎨 디자인 토큰 (Figma ThemeContext 원본)
    ─────────────────────────────────────────────────────────────── */
 
@@ -200,15 +268,28 @@
 
   /* ─── HTML & Font Setup ─── */
   html {
-    /* 폰트: 영어(SortsMillGoudy) → 한글(MaruBuri) → 시스템 폰트 폴백 */
+    /*
+     * 폰트 우선순위:
+     *   1. MaruBuri       — 한글 + 라틴 폴백
+     *   2. SortsMillGoudy — 라틴 문자 전용 (unicode-range로 한글 제외됨)
+     *   3. 시스템 폰트 폴백
+     *
+     * next/font variable 방식은 unicode-range를 지원하지 않아
+     * 위의 @font-face 직접 선언으로 unicode-range를 보정함.
+     * var(--font-english), var(--font-korean)은 기존 페이지 코드 호환용으로 유지
+     */
     font-family:
-      var(--font-english),
+      "MaruBuri",
+      "SortsMillGoudy",
       var(--font-korean),
+      var(--font-english),
       -apple-system,
       BlinkMacSystemFont,
       system-ui,
       serif;
     font-size: 16px;
+    /* 브라우저가 임의로 폰트 굵기/기울임 합성하는 것을 방지 */
+    font-synthesis: none;
   }
 
   /* ─── Body Background ─── */
@@ -222,6 +303,15 @@
   @media (max-width: 767px) {
     body {
       background-color: #f2efe9;
+    }
+  }
+
+  /* ─── 데스크탑에서 앱 영역 확대 (개발 편의용) ─── */
+  /* 768px 이상(데스크탑/태블릿)에서 앱 콘텐츠를 1.3배 확대해서 보여줌  */
+  /* 모바일 기준 px값들이 데스크탑에서도 실제 크기로 보이도록 보정       */
+  @media (min-width: 768px) {
+    body {
+      zoom: 1.2;
     }
   }
 
@@ -239,11 +329,6 @@
   /* BottomNav 높이 보정 ((main)/layout.tsx에서 사용) */
   .pb-nav {
     padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
-  }
-
-  /* 피그마 기준 최소 폰트 크기 (13px) */
-  .text-xs {
-    font-size: 13px !important;
   }
 
   /* ─── 📝 Typography ─── */

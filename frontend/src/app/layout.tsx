@@ -3,7 +3,7 @@ import localFont from "next/font/local";
 import { Providers } from "@/lib/providers";
 import "./globals.css";
 
-// ── MaruBuri — 한국어 기본 폰트 (여러 굵기) ──────────────────────
+// ── MaruBuri — 한글 전용 폰트 (모든 굵기) ────────────────────────
 const maruBuri = localFont({
   src: [
     {
@@ -17,8 +17,9 @@ const maruBuri = localFont({
       style: "normal",
     },
     {
+      // weight 범위 "400 500": font-medium(500) 요청 시 Regular가 처리 (시스템 폰트 폴백 방지)
       path: "../../public/fonts/MaruBuri-Regular.ttf",
-      weight: "400",
+      weight: "400 500",
       style: "normal",
     },
     {
@@ -36,7 +37,7 @@ const maruBuri = localFont({
   variable: "--font-korean",
 });
 
-// ── SortsMillGoudy — 영어 기본 폰트 ───────────────────────────────
+// ── SortsMillGoudy — 영문 전용 폰트 ──────────────────────────────
 const sortsMillGoudy = localFont({
   src: [
     {
@@ -54,32 +55,23 @@ const sortsMillGoudy = localFont({
   variable: "--font-english",
 });
 
-// ── HankenGrotesk — 제품 성분 영어명 전용 폰트 ────────────────────
-const hankenGrotesk = localFont({
-  src: [
-    {
-      path: "../../public/fonts/HankenGrotesk-VariableFont_wght.ttf",
-      style: "normal",
-    },
-    {
-      path: "../../public/fonts/HankenGrotesk-Italic-VariableFont_wght.ttf",
-      style: "italic",
-    },
-  ],
-  display: "swap",
-  variable: "--font-hanken",
-});
-
 export const metadata: Metadata = {
   title: "Piview",
   description: "나만의 스킨케어 루틴",
+};
+
+// viewport는 metadata와 분리해서 export해야 Next.js가 올바르게 처리함
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="ko"
-      className={`${maruBuri.variable} ${sortsMillGoudy.variable} ${hankenGrotesk.variable}`}
+      className={`${maruBuri.variable} ${sortsMillGoudy.variable}`}
     >
       <body>
         <div className="min-h-screen bg-[#F2EFE9]">
