@@ -293,17 +293,17 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     const trimmedName = saveModalName.trim();
     if (!trimmedName) return;
 
-    console.log("🔍 루틴 저장 디버깅:", { user, userId: user?.id });
+    console.log("🔍 루틴 저장 디버깅:", { user, userId: user?.userId });
     console.log("🔍 user 전체 객체 (JSON):", JSON.stringify(user, null, 2));
     console.log("🔍 user의 모든 키:", user ? Object.keys(user) : "user is null");
 
-    if (!user?.id) {
-      console.error("❌ user.id가 없습니다:", user);
+    if (!user?.userId) {
+      console.error("❌ user.userId가 없습니다:", user);
       notify("사용자 정보를 불러올 수 없습니다. 페이지를 새로고침해주세요.");
       return;
     }
 
-    const payload = { userId: user.id, title: trimmedName };
+    const payload = { userId: user.userId, title: trimmedName };
     console.log("📤 루틴 생성 payload:", payload);
 
     createRoutine(payload, {
