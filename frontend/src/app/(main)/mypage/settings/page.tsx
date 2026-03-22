@@ -217,6 +217,22 @@ export default function SettingsPage() {
             저장하기
           </button>
         </div>
+
+        {/* 로그아웃 버튼 */}
+        <div className="mt-20 mb-10 flex justify-center">
+          <button
+            onClick={() => {
+              // TODO: 로그아웃 로직 구현
+              // 예: localStorage.removeItem('token'), router.push('/login')
+              if (confirm('로그아웃 하시겠습니까?')) {
+                router.push('/');
+              }
+            }}
+            className="w-[200px] h-11 rounded-button text-gray-700 font-bold text-[16px] border border-border cursor-pointer transition-all active:scale-[0.98] hover:bg-red-100 hover:text-red-800 hover:border-red-200"
+          >
+            로그아웃
+          </button>
+        </div>
       </div>
     </div>
   );

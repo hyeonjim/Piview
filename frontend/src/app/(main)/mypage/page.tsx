@@ -216,13 +216,6 @@ export default function MyPage() {
                     <Settings size={15} className="text-brand-dark" />
                   </button>
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-1 text-[12px] font-semibold text-text-faint bg-transparent border-none cursor-pointer py-1 px-0.5"
-                >
-                  <LogOut size={13} />
-                  로그아웃
-                </button>
               </div>
             </div>
 
@@ -273,7 +266,7 @@ export default function MyPage() {
                 : "font-normal text-text-faint"
             }`}
           >
-            {tabType === "routine" ? <>내 루틴</> : <>내 화장대</>}
+            {tabType === "routine" ? <>My routine</> : <>Owned</>}
             {/* 선택 인디케이터 — 하단 라인 */}
             <span
               className={`absolute bottom-0 left-0 right-0 h-[2.5px] rounded-t-full transition-all duration-200 ${

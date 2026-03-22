@@ -72,7 +72,7 @@ export default function OwnedTab({
     <div className="px-5 pb-24 pt-4 flex flex-col gap-6">
       {/* ── 보유제품 섹션 ── */}
       <div>
-        <p className="text-base font-bold text-text-primary">보유제품</p>
+        <p className="text-base font-bold text-text-primary">Owned Products</p>
         <p className="text-xs text-text-muted mt-0.5">
           {ownedProducts.length}개 보유 중
         </p>
@@ -182,7 +182,7 @@ export default function OwnedTab({
           <div className="flex items-center gap-1.5">
             <ShieldAlert size={16} style={AVOID_SECTION_HEADER_ICON} />
             <p className="text-base font-bold text-text-primary">
-              피해야 할 제품
+              Avoid Products
             </p>
           </div>
           <button onClick={onOpenAvoidModal} style={AVOID_ADD_BTN_STYLE}>

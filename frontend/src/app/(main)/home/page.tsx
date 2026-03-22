@@ -85,7 +85,7 @@ export default function HomePage() {
           {/* 섹션 헤더 */}
           <div className="flex items-center justify-between py-3.5 px-4 border-b border-[#EDE9E3]">
             <span className="text-[16px] font-bold text-[#2A2118] tracking-[-0.2px]">
-              나의 메인루틴
+              My main routine
             </span>
 
             {hasRoutine ? (

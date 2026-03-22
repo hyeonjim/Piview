@@ -3,10 +3,16 @@
 import { toast } from "sonner";
 import { useMemo, useRef, useState, useEffect } from "react";
 import { Plus, X, RotateCcw, ArrowUpDown } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 import OcrModal from "@/components/features/mypage/OcrModal";
 import { getRoutineSteps } from "@/constants/routineSteps";
 import { useUserStore, selectGender } from "@/stores";
-import { CATEGORY_COLORS } from "@/constants/categoryColors";
+import {
+  CATEGORY_COLORS,
+  SKIN_TYPE_TAG_COLORS,
+  SKIN_FUNCTION_COLORS,
+} from "@/constants/categoryColors";
 import {
   useDraftQuery,
   useRoutineListQuery,
@@ -109,6 +115,13 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveModalName, setSaveModalName] = useState("");
   const [showOcrModal, setShowOcrModal] = useState(false);
+  const [showMainRoutineModal, setShowMainRoutineModal] = useState(false);
+
+  // 메인 루틴 찾기
+  const mainRoutine = useMemo(
+    () => routineList.find((routine) => routine.isMain),
+    [routineList],
+  );
 
   // 저장된 루틴 슬라이더 스크롤 상태 — 도트 인디케이터 연동
   const savedRoutineScrollRef = useRef<HTMLDivElement>(null);
@@ -414,32 +427,48 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       )}
 
       {/* ── 헤더 ── */}
-      <div className="flex items-start justify-between mb-1">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-text-muted mt-0.5">
-            {filledCount}/{routineSteps.length}단계 완성 · 드래그로 순서 변경
-          </p>
+      <div className="flex flex-col gap-2 mb-1">
+        {/* 루틴 이름 & 메인 루틴 설정 버튼 */}
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-bold text-text-primary">
+            {mainRoutine?.title || "메인루틴"}
+          </h2>
+          <button
+            onClick={() => setShowMainRoutineModal(true)}
+            className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent"
+          >
+            변경
+          </button>
         </div>
-        <div className="flex gap-1.5">
-          <button
-            onClick={handleClearRoutine}
-            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent"
-          >
-            <RotateCcw size={12} /> 초기화
-          </button>
-          <button
-            onClick={() => setShowOcrModal(true)}
-            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent"
-          >
-            ⇄ OCR
-          </button>
-          <button
-            onClick={handleOpenSaveModal}
-            disabled={isCreating || filledCount === 0}
-            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent disabled:opacity-50"
-          >
-            {isCreating ? "저장 중..." : "저장"}
-          </button>
+
+        {/* 진행 상황 & 액션 버튼 */}
+        <div className="flex items-start justify-between">
+          <div className="min-w-0 flex-1">
+            <p className="text-[14px] font-bold text-text-muted mt-0.5">
+              {filledCount}/{routineSteps.length}단계 완성 · 드래그로 순서 변경
+            </p>
+          </div>
+          <div className="flex gap-1.5 text-[14px]">
+            <button
+              onClick={handleClearRoutine}
+              className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent"
+            >
+              <RotateCcw size={12} /> Reset
+            </button>
+            <button
+              onClick={() => setShowOcrModal(true)}
+              className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent"
+            >
+              OCR
+            </button>
+            <button
+              onClick={handleOpenSaveModal}
+              disabled={isCreating || filledCount === 0}
+              className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent disabled:opacity-50"
+            >
+              {isCreating ? "저장 중..." : "Save"}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -487,7 +516,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                   {step.code}
                 </div>
                 <p className="flex-1 text-sm font-semibold text-text-muted">
-                  아직 추가된 제품이 없어요
+                  제품을 추가해 주세요
                 </p>
                 <Plus size={14} className="shrink-0 text-[#A69D92]" />
               </button>
@@ -505,112 +534,21 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                       dragState.fromStepCode === step.code &&
                       dragState.fromIndex === index
                     );
-                  const categoryColor = product.categoryName
-                    ? CATEGORY_COLORS[product.categoryName]
-                    : undefined;
 
                   return (
-                    <div
+                    <RoutineProductCard
                       key={`${product.productId}-${index}`}
-                      data-drag-item
-                      data-step-code={step.code}
-                      data-item-index={index}
-                      className="flex items-stretch h-25 rounded-[10px] overflow-hidden bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
-                      style={{
-                        opacity: isDraggingThis ? 0.4 : 1,
-                        border: isProductDropTarget
-                          ? "2px solid #A69D92"
-                          : "1px solid #E2DDD8",
-                        transition: "opacity 0.15s, border-color 0.1s",
-                      }}
-                    >
-                      {/* 제품 이미지 — 드래그 핸들 */}
-                      <div
-                        className="relative w-25 h-full shrink-0 bg-[#F5F2EC] cursor-grab active:cursor-grabbing select-none"
-                        style={{ touchAction: "none" }}
-                        onPointerDown={(event) =>
-                          handleDragHandlePointerDown(event, step.code, index)
-                        }
-                        onPointerMove={handleDragHandlePointerMove}
-                        onPointerUp={handleDragHandlePointerUp}
-                        onPointerCancel={handleDragHandlePointerUp}
-                      >
-                        {product.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={product.imageUrl}
-                            alt={product.name ?? "제품 이미지"}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center text-[26px]">
-                            {step.icon}
-                          </div>
-                        )}
-                        <div className="absolute top-1 left-1">
-                          <ArrowUpDown
-                            size={10}
-                            className="text-[#C4BEB7] opacity-70"
-                          />
-                        </div>
-                      </div>
-
-                      {/* 제품 정보 */}
-                      <div className="flex-1 min-w-0 px-3 py-2.5 flex flex-col justify-between">
-                        <div>
-                          {/* 브랜드 */}
-                          <p className="text-[11px] font-semibold text-text-muted truncate">
-                            {product.brandName ?? ""}
-                          </p>
-                          {/* 카테고리 태그 */}
-                          {product.categoryName && (
-                            <span
-                              className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold"
-                              style={
-                                categoryColor
-                                  ? {
-                                      backgroundColor: categoryColor.bg,
-                                      color: categoryColor.text,
-                                    }
-                                  : {
-                                      backgroundColor: "#F0EDE8",
-                                      color: "#8A8278",
-                                    }
-                              }
-                            >
-                              {product.categoryName}
-                            </span>
-                          )}
-                          {/* 제품명 */}
-                          <p className="text-sm font-semibold text-text-primary line-clamp-2 mt-1 leading-snug">
-                            {product.name ?? ""}
-                          </p>
-                        </div>
-
-                        {/* 태그 목록 */}
-                        {product.tags && product.tags.length > 0 && (
-                          <div className="flex gap-1 flex-wrap mt-1">
-                            {product.tags.slice(0, 2).map((tag) => (
-                              <span
-                                key={tag}
-                                className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#F5F2EC] text-text-muted"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* 삭제 버튼 */}
-                      <button
-                        onClick={() => handleRemoveProduct(product.productId)}
-                        className="w-8 h-full flex items-center justify-center border-l border-[#F0EDE8] bg-transparent cursor-pointer shrink-0"
-                        aria-label="제품 삭제"
-                      >
-                        <X size={14} className="text-[#C4BEB7]" />
-                      </button>
-                    </div>
+                      product={product}
+                      stepCode={step.code}
+                      index={index}
+                      isDragging={isDraggingThis}
+                      isDropTarget={isProductDropTarget}
+                      onDragHandlePointerDown={handleDragHandlePointerDown}
+                      onDragHandlePointerMove={handleDragHandlePointerMove}
+                      onDragHandlePointerUp={handleDragHandlePointerUp}
+                      onRemove={handleRemoveProduct}
+                      stepIcon={step.icon}
+                    />
                   );
                 })}
               </div>
@@ -619,7 +557,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         );
       })}
 
-      {/* ── 루틴 진행도 카드 ── */}
+      {/* ── 루틴 종합 점수 ── */}
       <div className="mt-10 p-4 rounded-2xl bg-(--color-warm-bg) border border-[#E2DDD8]">
         <div className="flex items-center gap-3">
           <div className="relative w-14 h-14 shrink-0 flex items-center justify-center">
@@ -646,12 +584,12 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               />
             </svg>
             <span className="relative z-10 text-[13px] font-semibold text-text-muted">
-              {filledCount}/{routineSteps.length}
+              85점
             </span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-text-primary mb-1">
-              내 루틴 진행 상황
+              루틴 종합 점수
             </p>
             <p className="text-xs font-bold text-text-muted leading-relaxed break-keep">
               {filledCount === 0
@@ -675,17 +613,14 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             onClick={(event) => event.stopPropagation()}
           >
             <h3 className="text-base font-semibold text-[#2A2118] mb-1">
-              루틴 이름 저장
+              루틴 저장
             </h3>
-            <p className="text-xs font-bold text-[#A69D92] mb-4">
-              저장하면 목록에서 확인할 수 있어요
-            </p>
             <input
               type="text"
               value={saveModalName}
               onChange={(event) => setSaveModalName(event.target.value)}
-              placeholder="예) 아침 루틴, 저녁 루틴"
-              className="w-full px-3 py-2.5 text-sm rounded-xl border border-[#E2DDD8] outline-none mb-4"
+              placeholder="예) 루틴1, 루틴2"
+              className="w-full px-3 py-2.5 text-sm rounded-xl border border-[#E2DDD8] outline-none my-4"
               autoFocus
               onKeyDown={(event) => {
                 if (event.key === "Enter") handleSaveRoutine();
@@ -710,6 +645,213 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
           </div>
         </div>
       )}
+
+      {/* ── 메인 루틴 설정 모달 ── */}
+      {showMainRoutineModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45"
+          onClick={() => setShowMainRoutineModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 mx-5 w-full max-w-sm"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 className="text-base font-semibold text-[#2A2118] mb-4">
+              메인 루틴 선택
+            </h3>
+            <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
+              {routineList.length === 0 ? (
+                <p className="text-sm text-text-muted text-center py-4">
+                  저장된 루틴이 없습니다.
+                </p>
+              ) : (
+                routineList.map((routine) => (
+                  <button
+                    key={routine.routineId}
+                    onClick={() => {
+                      handleSetMainRoutine(routine.routineId);
+                      setShowMainRoutineModal(false);
+                    }}
+                    className={`w-full px-4 py-3 text-left rounded-xl border cursor-pointer transition-colors ${
+                      routine.isMain
+                        ? "border-[#C8A96E] bg-[#FBF7EF] text-[#2A2118]"
+                        : "border-[#E2DDD8] bg-white hover:bg-[#F8F6F2] text-text-primary"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold">{routine.title}</p>
+                        <p className="text-xs text-text-muted mt-0.5">
+                          {routine.productCount}개 제품
+                        </p>
+                      </div>
+                      {routine.isMain && (
+                        <span className="text-xs font-bold text-[#C8A96E]">★ 메인</span>
+                      )}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+            <button
+              onClick={() => setShowMainRoutineModal(false)}
+              className="w-full mt-4 py-2.5 text-sm font-semibold rounded-xl border border-[#E2DDD8] text-[#8A8278] bg-transparent cursor-pointer"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── 루틴 제품 카드 ────────────────────────────────────────────────────────
+interface RoutineProductCardProps {
+  product: ProductSummaryResponse;
+  stepCode: string;
+  index: number;
+  isDragging: boolean;
+  isDropTarget: boolean;
+  onDragHandlePointerDown: (
+    event: React.PointerEvent<HTMLDivElement>,
+    stepCode: string,
+    index: number,
+  ) => void;
+  onDragHandlePointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
+  onDragHandlePointerUp: () => void;
+  onRemove: (productId: number) => void;
+  stepIcon: string;
+}
+
+function RoutineProductCard({
+  product,
+  stepCode,
+  index,
+  isDragging,
+  isDropTarget,
+  onDragHandlePointerDown,
+  onDragHandlePointerMove,
+  onDragHandlePointerUp,
+  onRemove,
+  stepIcon,
+}: RoutineProductCardProps) {
+  const categoryColor = product.categoryName
+    ? CATEGORY_COLORS[product.categoryName]
+    : undefined;
+
+  return (
+    <div
+      data-drag-item
+      data-step-code={stepCode}
+      data-item-index={index}
+      className="relative h-22 rounded-[10px] overflow-hidden bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
+      style={{
+        opacity: isDragging ? 0.4 : 1,
+        border: isDropTarget ? "2px solid #A69D92" : "1px solid #E2DDD8",
+        transition: "opacity 0.15s, border-color 0.1s",
+      }}
+    >
+      {/* 삭제 버튼 */}
+      <button
+        onClick={() => onRemove(product.productId)}
+        className="absolute top-1 right-1 z-10 w-5 h-5 flex items-center justify-center cursor-pointer bg-transparent border-none"
+        aria-label="제품 삭제"
+      >
+        <X size={12} className="text-[#C4BEB7]" />
+      </button>
+
+      <div className="flex items-center h-full">
+        {/* 드래그 가능한 이미지 영역 */}
+        <div
+          className="relative shrink-0 w-22 h-full cursor-grab active:cursor-grabbing select-none"
+          style={{ touchAction: "none" }}
+          onPointerDown={(event) => onDragHandlePointerDown(event, stepCode, index)}
+          onPointerMove={onDragHandlePointerMove}
+          onPointerUp={onDragHandlePointerUp}
+          onPointerCancel={onDragHandlePointerUp}
+        >
+          {/* 드래그 아이콘 */}
+          <div className="absolute top-1 left-1 z-10">
+            <ArrowUpDown size={10} className="text-[#C4BEB7] opacity-70" />
+          </div>
+
+          {/* 이미지 */}
+          <div className="absolute inset-0 bg-[#F5F2EC]">
+            {product.imageUrl ? (
+              <Image
+                src={product.imageUrl}
+                alt={product.name ?? ""}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-[26px]">
+                {stepIcon}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 텍스트 영역 */}
+        <Link
+          href={`/product/${product.productId}`}
+          className="flex-1 px-3 py-2 min-w-0 no-underline"
+        >
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[12px] font-bold text-[#BFB6AA] uppercase tracking-[0.08em]">
+              {product.brandName}
+            </span>
+            {categoryColor && (
+              <span
+                className="text-[12px] px-1.5 py-[1px] rounded-[3px] font-semibold"
+                style={{
+                  backgroundColor: categoryColor.chip,
+                  color: categoryColor.accent,
+                }}
+              >
+                {product.categoryName}
+              </span>
+            )}
+          </div>
+          <p className="mt-0.75 m-0 text-[16px] font-bold text-[#2A2118] leading-[1.4] line-clamp-1">
+            {product.name}
+          </p>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {product.skinTypes?.slice(0, 1).map((skinType) => (
+              <span
+                key={skinType}
+                className="inline-block text-[12px] font-semibold px-1.5 py-0.5 rounded-[3px]"
+                style={{
+                  backgroundColor:
+                    SKIN_TYPE_TAG_COLORS[skinType]?.bg ?? "#F0EDE8",
+                  color: SKIN_TYPE_TAG_COLORS[skinType]?.text ?? "#7A7060",
+                }}
+              >
+                {skinType}
+              </span>
+            ))}
+            {product.tags?.slice(0, 2).map((effect) => {
+              const color = SKIN_FUNCTION_COLORS[effect] ?? {
+                chip: "#F0EDE8",
+                accent: "#7A7060",
+              };
+              return (
+                <span
+                  key={effect}
+                  className="inline-block text-[12px] font-semibold px-1.5 py-0.5 rounded-[3px]"
+                  style={{
+                    backgroundColor: color.chip,
+                    color: color.accent,
+                  }}
+                >
+                  {effect}
+                </span>
+              );
+            })}
+          </div>
+        </Link>
+      </div>
     </div>
   );
 }
