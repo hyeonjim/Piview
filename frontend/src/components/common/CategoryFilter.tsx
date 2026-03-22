@@ -70,7 +70,7 @@ export function CategoryFilter({
                   className="category-tab-button"
                   data-active={isActive}
                 >
-                  {big.bigCategoryName}
+                  {getCategoryDisplayName(big.bigCategoryName)}
                 </button>
               );
             })}

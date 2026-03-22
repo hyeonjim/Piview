@@ -100,7 +100,7 @@ export default function LikesPage() {
       {/* 헤더 */}
       <div className="bg-[var(--color-bg-base)] px-5 pt-[15px] pb-4">
         <h1 className="mt-[3px] text-[22px] font-bold text-[var(--color-text-primary)] tracking-[-0.4px]">
-          찜한 제품
+          Liked
         </h1>
         {likedProducts.length > 0 && (
           <p className="mt-0.5 text-[12px] text-[var(--color-text-faint)]">

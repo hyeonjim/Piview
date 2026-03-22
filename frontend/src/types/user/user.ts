@@ -13,6 +13,7 @@ export type AgeGroup = "TEENS" | "TWENTIES" | "THIRTIES" | "FORTIES_PLUS";
 // ⚠️ skinType, ageRange — 구버전 호환 필드. 연동 후 제거 예정
 export interface User {
   id: number;
+  userId: number; // 백엔드 API에서 userId로 반환
   provider: string;
   providerId: string;
   email: string | null;

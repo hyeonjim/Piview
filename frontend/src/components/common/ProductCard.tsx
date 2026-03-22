@@ -463,8 +463,16 @@ export default function ProductCard({
           </div>
 
           <div className="flex-1 px-3 py-2 min-w-0">
-            <BrandLabel brand={brand} />
-            <p className="mt-0.75 m-0 text-[13px] font-bold text-[#2A2118] leading-[1.4]">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <BrandLabel brand={brand} />
+              {categoryColor && (
+                <CategoryChip
+                  category={category!}
+                  categoryColor={categoryColor}
+                />
+              )}
+            </div>
+            <p className="mt-0.75 m-0 text-[16px] font-bold text-[#2A2118] leading-[1.4]">
               {name}
             </p>
             {showEwg ? (

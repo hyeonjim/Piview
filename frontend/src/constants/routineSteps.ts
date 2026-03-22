@@ -24,23 +24,23 @@ export interface RoutineStep {
 
 /** 여성용 루틴 스텝 (기본 6단계) */
 export const WOMEN_ROUTINE_STEPS: RoutineStep[] = [
-  { code: "CL", columnId: 1, key: "cleanser",  label: "클렌저",      icon: "🫧", categories: ["클렌저", "폼/젤/밤/오일", "클렌징폼", "클렌징젤", "클렌징밤", "클렌징오일", "클렌징밀크"] },
-  { code: "PR", columnId: 2, key: "toner",     label: "스킨/토너",   icon: "💧", categories: ["스킨/토너", "토너", "미스트", "패드"] },
-  { code: "SR", columnId: 3, key: "serum",     label: "세럼/에센스", icon: "✨", categories: ["에센스/앰플/세럼", "세럼", "에센스", "세럼/에센스"] },
-  { code: "LT", columnId: 4, key: "lotion",    label: "로션/에멀전", icon: "🧴", categories: ["로션/에멀젼", "로션", "에멀전"] },
-  { code: "CR", columnId: 5, key: "cream",     label: "크림/오일",   icon: "🤍", categories: ["크림", "페이스오일", "아이크림"] },
-  { code: "SC", columnId: 6, key: "sunscreen", label: "선크림",      icon: "☀️", categories: ["선크림/스틱", "선크림", "선스틱", "선케어"] },
+  { code: "CL", columnId: 1, key: "cleanser",  label: "클렌저",            icon: "🫧", categories: ["클렌징폼", "클렌징젤", "클렌징밤", "클렌징오일", "클렌징밀크", "클렌징로션", "클렌징워터"] },
+  { code: "PR", columnId: 3, key: "toner",     label: "스킨/토너/패드/미스트", icon: "💧", categories: ["스킨/토너", "미스트", "토너패드"] },
+  { code: "SR", columnId: 4, key: "serum",     label: "에센스/앰플/세럼",        icon: "✨", categories: ["에센스/앰플/세럼"] },
+  { code: "LT", columnId: 5, key: "lotion",    label: "로션/에멀전",        icon: "🧴", categories: ["로션/에멀젼"] },
+  { code: "CR", columnId: 6, key: "cream",     label: "크림/오일",          icon: "🤍", categories: ["크림", "페이스오일"] },
+  { code: "SC", columnId: 7, key: "sunscreen", label: "선크림",            icon: "☀️", categories: ["선크림", "선스틱"] },
 ];
 
 /** 남성용 루틴 스텝 (7단계 - 쉐이빙 포함) */
 export const MEN_ROUTINE_STEPS: RoutineStep[] = [
-  { code: "CL", columnId: 1, key: "cleanser",  label: "클렌저",              icon: "🫧", categories: ["클렌저", "폼/젤/밤/오일", "클렌징폼", "클렌징젤", "클렌징밤", "클렌징오일", "클렌징밀크"] },
-  { code: "SH", columnId: 7, key: "shaving",   label: "쉐이빙",              icon: "🪒", categories: ["쉐이빙폼", "쉐이빙젤", "쉐이빙크림"] },
-  { code: "PR", columnId: 2, key: "toner",     label: "스킨/토너/패드/미스트", icon: "💧", categories: ["스킨/토너", "토너", "미스트", "패드"] },
-  { code: "SR", columnId: 3, key: "serum",     label: "세럼/에센스/앰플",     icon: "✨", categories: ["에센스/앰플/세럼", "세럼", "에센스", "세럼/에센스", "앰플"] },
-  { code: "LT", columnId: 4, key: "lotion",    label: "로션/에멀젼/올인원",   icon: "🧴", categories: ["로션/에멀젼", "로션", "에멀전", "올인원"] },
-  { code: "CR", columnId: 5, key: "cream",     label: "크림",               icon: "🤍", categories: ["크림", "페이스오일", "아이크림"] },
-  { code: "SC", columnId: 6, key: "sunscreen", label: "선크림",              icon: "☀️", categories: ["선크림/스틱", "선크림", "선스틱", "선케어"] },
+  { code: "CL", columnId: 1, key: "cleanser",  label: "클렌저",              icon: "🫧", categories: ["클렌징폼", "클렌징젤", "클렌징밤", "클렌징오일", "클렌징밀크", "클렌징로션", "클렌징워터"] },
+  { code: "SH", columnId: 2, key: "shaving",   label: "쉐이빙",              icon: "🪒", categories: ["쉐이빙"] },
+  { code: "PR", columnId: 3, key: "toner",     label: "스킨/토너/패드/미스트", icon: "💧", categories: ["스킨/토너", "미스트", "토너패드"] },
+  { code: "SR", columnId: 4, key: "serum",     label: "에센스/앰플/세럼",     icon: "✨", categories: ["에센스/앰플/세럼"] },
+  { code: "LT", columnId: 5, key: "lotion",    label: "로션/에멀젼/올인원",   icon: "🧴", categories: ["로션/에멀젼", "올인원"] },
+  { code: "CR", columnId: 6, key: "cream",     label: "크림",               icon: "🤍", categories: ["크림"] },
+  { code: "SC", columnId: 7, key: "sunscreen", label: "선크림",              icon: "☀️", categories: ["선크림", "선스틱"] },
 ];
 
 /**

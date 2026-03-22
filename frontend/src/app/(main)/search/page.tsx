@@ -186,7 +186,7 @@ export default function SearchPage() {
               lineHeight: 1.2,
             }}
           >
-            전체 제품
+            All
           </h1>
           <div className="flex items-center gap-5">
             <div className="flex-1">
