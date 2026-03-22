@@ -250,7 +250,7 @@ public class ProductCatalogService {
                     .nameEn(nameEn)
                     .ewgGrade(ewgGrade)
                     .ewgScore(ewgScore)
-                    .functions(null)
+                    .functions(ingredient != null ? ingredient.getCoosFunctions() : null)
                     .isAllergen(isAllergen)
                     .build());
         }
