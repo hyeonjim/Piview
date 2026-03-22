@@ -9,7 +9,9 @@
 
 import axios, { type InternalAxiosRequestConfig } from "axios";
 import { useUserStore } from "@/stores";
-import { useRoutineStore } from "@/stores";
+import { useSearchStore } from "@/stores/useSearchStore";
+import { useRecommendStore } from "@/stores/useRecommendStore";
+import { useLikeStore } from "@/stores";
 
 // _retry 플래그 타입 확장 (TypeScript 에러 방지)
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
@@ -25,6 +27,17 @@ const client = axios.create({
   // refreshToken(httpOnly 쿠키) 자동 전송용
   withCredentials: true,
 });
+
+// ── 전체 store 초기화 헬퍼 — 로그아웃/세션 만료 시 호출 ──────────────────
+function clearAllStores() {
+  useUserStore.getState().clearUser();
+  useSearchStore.getState().setSearchQuery("");
+  useSearchStore.getState().resetFilter();
+  useRecommendStore.getState().setSearchQuery("");
+  useRecommendStore.getState().resetFilter();
+  useLikeStore.getState().initFromServer([]);
+  useLikeStore.getState().setPage(1);
+}
 
 // ── 요청 인터셉터: accessToken → Authorization 헤더 주입 ───────────────────
 client.interceptors.request.use((config) => {
@@ -48,18 +61,14 @@ client.interceptors.response.use(
 
     // refresh 요청 자체가 401이면 무한루프 방지 — 바로 로그아웃
     if (originalRequest.url?.includes("/auth/refresh")) {
-      useUserStore.getState().clearUser();
-      useRoutineStore.getState().clearLocalRoutine();
-      localStorage.removeItem("piview-routine");
+      clearAllStores();
       window.location.href = "/splash";
       return Promise.reject(error);
     }
 
     // _retry 플래그가 이미 있으면 refresh도 실패한 것 → 무한루프 방지
     if (originalRequest._retry) {
-      useUserStore.getState().clearUser();
-      useRoutineStore.getState().clearLocalRoutine();
-      localStorage.removeItem("piview-routine");
+      clearAllStores();
       window.location.href = "/splash";
       return Promise.reject(error);
     }
@@ -82,9 +91,7 @@ client.interceptors.response.use(
       return client(originalRequest);
     } catch {
       // refresh도 실패 → 세션 만료, 로그아웃 처리
-      useUserStore.getState().clearUser();
-      useRoutineStore.getState().clearLocalRoutine();
-      localStorage.removeItem("piview-routine");
+      clearAllStores();
       window.location.href = "/splash";
       return Promise.reject(error);
     }

@@ -19,6 +19,7 @@ export interface MappedProduct {
   imageUrl: string | null;
   skinTypes: string[]; // 한글 변환 완료 ["건성", "지성"]
   effects: string[]; // tags (미구현 시 빈 배열)
+  liked: boolean; // API 응답 기준 찜 상태
   // EWG: 목록 API 응답에 없음 — undefined로 두면 ProductCard가 EWG 표시 안 함
   ewgSafe?: number;
   ewgCaution?: number;
@@ -43,6 +44,7 @@ export function mapProductSummary(
     skinTypes: (product.skinTypes ?? []).map(fromSkinTypeEnum),
     // tags 미구현 — null이면 빈 배열
     effects: product.tags ?? [],
+    liked: product.liked ?? false,
   };
 }
 

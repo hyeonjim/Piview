@@ -3,11 +3,7 @@
 import { useState } from "react";
 import { Search, SlidersHorizontal, Scale } from "lucide-react";
 import { PAGE_SIZE } from "@/constants/pagination";
-import {
-  FilterModal,
-  FilterState,
-  FILTER_INITIAL_STATE,
-} from "@/components/common/FilterModal";
+import { FilterModal, FilterState } from "@/components/common/FilterModal";
 import { CategoryFilter } from "@/components/common/CategoryFilter";
 import ProductCard from "@/components/common/ProductCard";
 import { Pagination } from "@/components/common/Pagination";
@@ -18,6 +14,7 @@ import type { ProductViewModel } from "@/types/product/myCos";
 import { useCompare, useProductSearch } from "@/hooks";
 import { useAddMyCos, useRemoveMyCos, useMyCosQuery } from "@/hooks";
 import { useRoutineStore } from "@/stores";
+import { useRecommendStore } from "@/stores/useRecommendStore";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
 
 import { toSkinTypeParam } from "@/utils/enumConvert";
@@ -25,17 +22,22 @@ import { PRICE_MAX } from "@/types/common";
 import type { SkinType } from "@/types/user";
 
 export default function RecommendPage() {
-  const [selectedBigCategoryId, setSelectedBigCategoryId] = useState<
-    number | null
-  >(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
-    null,
-  );
-  const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(1);
-  const [maxKnownPage, setMaxKnownPage] = useState(1);
+  const {
+    searchQuery,
+    selectedBigCategoryId,
+    selectedCategoryId,
+    filter,
+    page,
+    maxKnownPage,
+    setSearchQuery,
+    setSelectedBigCategoryId,
+    setSelectedCategoryId,
+    setFilter,
+    resetFilter,
+    setPage,
+  } = useRecommendStore();
+
   const [showFilter, setShowFilter] = useState(false);
-  const [filter, setFilter] = useState<FilterState>(FILTER_INITIAL_STATE);
 
   const { products, hasNext, totalCount, isLoading, isError } =
     useProductSearch({
@@ -45,12 +47,20 @@ export default function RecommendPage() {
       skinType: filter.filterSkin
         ? toSkinTypeParam(filter.filterSkin as SkinType)
         : undefined,
-      tagIds: Object.keys(filter.tagIds).filter((k) => filter.tagIds[Number(k)]).length > 0
-        ? Object.keys(filter.tagIds).filter((k) => filter.tagIds[Number(k)]).map(Number)
-        : undefined,
-      brandIds: Object.keys(filter.brandIds).filter((k) => filter.brandIds[Number(k)]).length > 0
-        ? Object.keys(filter.brandIds).filter((k) => filter.brandIds[Number(k)]).map(Number)
-        : undefined,
+      tagIds:
+        Object.keys(filter.tagIds).filter((k) => filter.tagIds[Number(k)])
+          .length > 0
+          ? Object.keys(filter.tagIds)
+              .filter((k) => filter.tagIds[Number(k)])
+              .map(Number)
+          : undefined,
+      brandIds:
+        Object.keys(filter.brandIds).filter((k) => filter.brandIds[Number(k)])
+          .length > 0
+          ? Object.keys(filter.brandIds)
+              .filter((k) => filter.brandIds[Number(k)])
+              .map(Number)
+          : undefined,
       minPrice: filter.priceRange[0] > 0 ? filter.priceRange[0] : undefined,
       maxPrice:
         filter.priceRange[1] < PRICE_MAX ? filter.priceRange[1] : undefined,
@@ -98,19 +108,12 @@ export default function RecommendPage() {
 
   const handleSearchChange = (v: string) => {
     setSearchQuery(v);
-    setPage(1);
-    setMaxKnownPage(1);
   };
   const handleBigCategorySelect = (bigCategoryId: number | null) => {
     setSelectedBigCategoryId(bigCategoryId);
-    setSelectedCategoryId(null);
-    setPage(1);
-    setMaxKnownPage(1);
   };
   const handleCategorySelect = (categoryId: number | null) => {
     setSelectedCategoryId(categoryId);
-    setPage(1);
-    setMaxKnownPage(1);
   };
 
   const handleAddRoutine = (productId: number) => {
@@ -149,7 +152,6 @@ export default function RecommendPage() {
         : Math.max(maxKnownPage, page);
   const handlePageChange = (p: number) => {
     setPage(p);
-    setMaxKnownPage((prev) => Math.max(prev, p));
     window.scrollTo(0, 0);
   };
 
@@ -385,15 +387,9 @@ export default function RecommendPage() {
         onClose={() => setShowFilter(false)}
         state={filter}
         onChange={(next) => {
-          setFilter((prev) => ({ ...prev, ...next }));
-          setPage(1);
-          setMaxKnownPage(1);
+          setFilter(next);
         }}
-        onReset={() => {
-          setFilter(FILTER_INITIAL_STATE);
-          setPage(1);
-          setMaxKnownPage(1);
-        }}
+        onReset={resetFilter}
         resultCount={products.length}
       />
     </div>

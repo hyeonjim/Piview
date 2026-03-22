@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { Heart } from "lucide-react";
 
 import { useMyCosQuery, useAddMyCos, useRemoveMyCos } from "@/hooks";
 import { useRoutineStore } from "@/stores";
 import { useLike, useLikedProducts, useCompare } from "@/hooks";
+import { useLikeStore } from "@/stores";
 import ProductCard from "@/components/common/ProductCard";
 import CompareModal from "@/components/common/CompareModal";
 import type { ProductViewModel } from "@/types/product/myCos";
@@ -14,7 +14,7 @@ import { ROUTINE_STEPS } from "@/constants/routineSteps";
 import { PAGE_SIZE } from "@/constants/pagination";
 
 export default function LikesPage() {
-  const [page, setPage] = useState(1);
+  const { page, setPage } = useLikeStore();
   const { data: likedProducts = [], isLoading } = useLikedProducts();
 
   // 페이지네이션 — 프론트에서 slice
@@ -112,11 +112,16 @@ export default function LikesPage() {
       <div className="px-4 pb-6 pt-0">
         {isLoading ? (
           <div className="flex items-center justify-center py-12 px-5">
-            <p className="text-[14px] text-[var(--color-text-muted)]">불러오는 중...</p>
+            <p className="text-[14px] text-[var(--color-text-muted)]">
+              불러오는 중...
+            </p>
           </div>
         ) : likedProducts.length === 0 ? (
           <div className="flex flex-col items-center justify-center bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] px-5 py-12 mt-2">
-            <Heart size={32} className="text-[var(--color-text-disabled)] mb-3" />
+            <Heart
+              size={32}
+              className="text-[var(--color-text-disabled)] mb-3"
+            />
             <p className="m-0 text-[14px] font-semibold text-[var(--color-text-muted)]">
               찜한 제품이 없어요
             </p>
