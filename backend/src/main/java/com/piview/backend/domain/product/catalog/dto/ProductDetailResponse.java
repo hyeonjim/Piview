@@ -1,5 +1,6 @@
 package com.piview.backend.domain.product.catalog.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +19,10 @@ public class ProductDetailResponse {
     private String productName;
     private String description;
     private List<String> skinTypes;
-    private List<String> tags;
+
+    @JsonProperty("tags")
+    private List<String> concerns;
+
     private Integer price;
     private String volume;
 

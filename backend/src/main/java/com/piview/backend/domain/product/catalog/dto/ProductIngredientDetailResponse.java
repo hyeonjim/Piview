@@ -15,6 +15,7 @@ public class ProductIngredientDetailResponse {
     private String nameKo;
     private String nameEn;
     private EwgGrade ewgGrade;  // low, medium, high, null(unknown)
+    private Integer ewgScore;   // (ewg_score_min + ewg_score_max) / 2 반올림, null 이면 null
     private String functions;   // Ingredient.coosFunctions
     private Boolean isAllergen;
 }
