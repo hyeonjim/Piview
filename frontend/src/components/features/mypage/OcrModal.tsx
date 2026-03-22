@@ -177,7 +177,7 @@ export default function OcrModal({ onClose }: OcrModalProps) {
                   name={product.productName ?? ""}
                   category={product.categoryName ?? ""}
                   imageUrl={product.imageUrl ?? undefined}
-                  skinTypes={product.skinTypes ?? []}
+                  skinTypes={(product.skinTypes ?? []).map(fromSkinTypeEnum)}
                   effects={product.tags ?? []}
                   variant="modal"
                   showActions={true}

@@ -14,6 +14,7 @@ export interface ProductIngredientDetailResponse {
   nameKo: string | null;
   nameEn: string | null;
   ewgGrade: "low" | "medium" | "high" | "unknown" | null;
+  ewgScore: number | null; // 실제 EWG 점수 (1~10) — 신규 API 필드
   functions: string | null;
   isAllergen: boolean;
 }
@@ -97,4 +98,60 @@ export interface OcrRecognitionResponse {
   productName: string | null;
   matchAccuracy: number; // 0~100
   success: boolean;
+}
+
+// ── 제품 비교 API ─────────────────────────────────────────────────
+
+/**
+ * EWG 위험도 분류 집계
+ * swagger: EwgRisk
+ */
+export interface EwgRisk {
+  low: number;
+  medium: number;
+  high: number;
+}
+
+/**
+ * 알레르기 유발 성분 정보
+ * swagger: Allergy
+ */
+export interface AllergyInfo {
+  count: number;
+  ingredients: string[];
+}
+
+/**
+ * 비교 대상 제품 데이터
+ * swagger: ComparedProduct
+ * POST /api/v1/products/compare 응답 내 제품 단건
+ */
+export interface ComparedProductData {
+  productId: number;
+  name: string | null;
+  imageUrl: string | null;
+  price: number | null;
+  brand: string | null;
+  skinTypes: string[]; // 영문 소문자 — 렌더링 시 fromSkinTypeEnum 변환 필요
+  skinConcerns: string[];
+  ewgRisk: EwgRisk;
+  allergy: AllergyInfo;
+}
+
+/**
+ * 제품 비교 요청
+ * swagger: ProductCompareRequest
+ * POST /api/v1/products/compare
+ */
+export interface ProductCompareRequest {
+  productIds: [number, number];
+}
+
+/**
+ * 제품 비교 응답
+ * swagger: ProductCompareResponse
+ * POST /api/v1/products/compare
+ */
+export interface ProductCompareResponse {
+  products: ComparedProductData[];
 }

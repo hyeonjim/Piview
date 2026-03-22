@@ -14,6 +14,8 @@ import type {
   ProductDetailResponse,
   ProductSummaryResponse,
   ProductFilterMetaResponse,
+  ProductCompareRequest,
+  ProductCompareResponse,
 } from "@/types/product";
 
 export const productService = {
@@ -45,5 +47,15 @@ export const productService = {
   getFilters: (): Promise<ProductFilterMetaResponse> =>
     client
       .get<ApiResponse<ProductFilterMetaResponse>>("/products/filters")
+      .then((res) => res.data.data),
+
+  // POST /products/compare
+  compareProducts: (
+    productIds: [number, number],
+  ): Promise<ProductCompareResponse> =>
+    client
+      .post<ApiResponse<ProductCompareResponse>>("/products/compare", {
+        productIds,
+      } as ProductCompareRequest)
       .then((res) => res.data.data),
 };

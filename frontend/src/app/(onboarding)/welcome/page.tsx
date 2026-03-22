@@ -85,6 +85,7 @@ export default function WelcomePage() {
       // 실패 시 fallback으로 로컬 스토어에만 설정 (기존 방식)
       useUserStore.getState().setUser({
         id: 999999,
+        userId: 999999,
         provider: "test",
         providerId: "test-admin",
         email: "admin@test.com",

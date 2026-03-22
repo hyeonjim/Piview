@@ -390,7 +390,6 @@ export default function RecommendPage() {
           setFilter(next);
         }}
         onReset={resetFilter}
-        resultCount={products.length}
       />
     </div>
   );

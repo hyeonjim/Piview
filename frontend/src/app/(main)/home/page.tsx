@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
 import { Leaf, Sun, Moon, Droplets, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { SKINCARE_INSIGHTS } from "@/constants";
-import { useRoutineStore, useUserStore } from "@/stores";
-import { useUserQuery } from "@/hooks";
+import { useUserStore } from "@/stores";
+import { useUserQuery, useMainRoutineQuery } from "@/hooks";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
 
 // 시간대별 인사말과 아이콘 반환
@@ -41,20 +40,21 @@ export default function HomePage() {
   useUserQuery();
   const greeting = getGreeting();
   const nickname = useUserStore((state) => state.user?.name ?? "User");
-  const { localRoutine: routine, isMainRoutine } = useRoutineStore();
+  const { data: mainRoutineData } = useMainRoutineQuery();
 
-  // 로컬 루틴 스토어 rehydrate (localStorage → zustand)
-  useEffect(() => {
-    useRoutineStore.persist.rehydrate();
-  }, []);
-
-  // 각 스텝별 제품 배열을 flat — 스텝당 여러 제품이 있을 수 있음
-  const mainRoutineItems = ROUTINE_STEPS.flatMap((step) =>
-    (routine[step.code] ?? []).map((product) => ({ step, product })),
+  // 메인 루틴 제품 목록 — 스텝 순서대로 flat
+  const mainRoutineItems = (mainRoutineData?.steps ?? []).flatMap((step) =>
+    step.products.map((rp) => ({
+      step: ROUTINE_STEPS.find((s) => s.columnId === step.columnId) ?? {
+        code: step.columnId.toString(),
+        label: step.columnName,
+        icon: "🧴",
+      },
+      product: rp.product,
+    })),
   );
 
-  // isMainRoutine이 off면 홈에서 루틴 미표시
-  const hasRoutine = isMainRoutine && mainRoutineItems.length > 0;
+  const hasRoutine = mainRoutineItems.length > 0;
 
   return (
     <div className="flex-1 bg-[#F5F2EC]">
@@ -113,17 +113,17 @@ export default function HomePage() {
                       : ""
                   }`}
                 >
-                  {/* 스텝 번호 — SortsMillGoudy 폰트 (영어 숫자용) */}
+                  {/* 스텝 번호 */}
                   <span className="text-[10px] font-bold text-[#BFB6AA] w-4 shrink-0 [font-family:var(--font-english),serif]">
-                    {String(index + 1).padStart(2, "0")}
+                    {String(index + 1).padStart(2, "00")}
                   </span>
 
-                  {/* 이모지 */}
+                  {/* 스텝 아이콘 */}
                   <span className="text-[20px] w-7 text-center shrink-0">
-                    {product.emoji}
+                    {"icon" in step ? (step as { icon: string }).icon : "🧴"}
                   </span>
 
-                  {/* 스텝 정보 */}
+                  {/* 스텝 + 제품명 */}
                   <div className="flex-1 min-w-0">
                     <p className="m-0 text-xs text-[#A69D92] font-bold tracking-[0.03em]">
                       {step.label}

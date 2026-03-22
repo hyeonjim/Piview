@@ -14,6 +14,7 @@ export { useMyCosQuery, useAddMyCos, useRemoveMyCos } from "./queries/useMyCos";
 export { useProductSearch } from "./queries/useProductSearch";
 export { useProductDetail } from "./queries/useProductDetail";
 export { useProductFilters } from "./queries/useProductFilters";
+export { useProductCompare } from "./queries/useProductCompare";
 export { useSurveySubmit } from "./queries/useSurveySubmit";
 export { useOcr } from "./queries/useOcr";
 export {
