@@ -8,7 +8,7 @@ export default function SkinTestPage() {
   const router = useRouter();
 
   return (
-    <div className="flex flex-col min-h-screen px-6 bg-warm-bg pb-12">
+    <div className="flex flex-col min-h-screen px-10 bg-warm-bg">
       <div className="flex items-center pt-4 pb-2">
         <button
           onClick={() => router.push("/welcome")}
@@ -49,7 +49,7 @@ export default function SkinTestPage() {
       </div>
 
       {/* 하단 버튼 영역 */}
-      <div className="w-[250px] mx-auto px-6 pb-8 pt-4 mt-auto">
+      <div className="w-[250px] mx-auto px-6 pb-10 pt-4 mt-auto">
         <button
           onClick={() => router.push("/home")}
           className="w-full h-[52px] rounded-[32px] font-bold text-[18px] transition-all duration-200 border-none bg-border-warm text-gray-800 cursor-pointer"

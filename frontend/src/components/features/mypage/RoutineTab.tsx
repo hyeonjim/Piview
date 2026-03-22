@@ -47,7 +47,7 @@ function groupDraftByStep(
   const result: Record<string, ProductSummaryResponse[]> = {};
   for (const step of steps) {
     result[step.code] = draftItems
-      .filter((item) => item.columnId === step.columnId)
+      .filter((item) => item.columnId === step.columnId && item.product)
       .sort((a, b) => a.stepOrder - b.stepOrder)
       .map((item) => item.product);
   }
@@ -79,6 +79,7 @@ function buildDraftItems(
 export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   // 성별에 따른 루틴 스텝 가져오기
   const currentGender = useUserStore(selectGender);
+  const user = useUserStore((state) => state.user);
   const routineSteps = getRoutineSteps(currentGender);
 
   // ── 서버 데이터 ────────────────────────────────────────────────────
@@ -279,19 +280,30 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     const trimmedName = saveModalName.trim();
     if (!trimmedName) return;
 
-    createRoutine(
-      { title: trimmedName },
-      {
-        onSuccess: () => {
-          setShowSaveModal(false);
-          setSaveModalName("");
-          notify(`"${trimmedName}" 루틴이 저장되었습니다!`);
-        },
-        onError: () => {
-          notify("루틴 저장에 실패했습니다. 다시 시도해주세요.");
-        },
+    console.log("🔍 루틴 저장 디버깅:", { user, userId: user?.id });
+    console.log("🔍 user 전체 객체 (JSON):", JSON.stringify(user, null, 2));
+    console.log("🔍 user의 모든 키:", user ? Object.keys(user) : "user is null");
+
+    if (!user?.id) {
+      console.error("❌ user.id가 없습니다:", user);
+      notify("사용자 정보를 불러올 수 없습니다. 페이지를 새로고침해주세요.");
+      return;
+    }
+
+    const payload = { userId: user.id, title: trimmedName };
+    console.log("📤 루틴 생성 payload:", payload);
+
+    createRoutine(payload, {
+      onSuccess: () => {
+        setShowSaveModal(false);
+        setSaveModalName("");
+        notify(`"${trimmedName}" 루틴이 저장되었습니다!`);
       },
-    );
+      onError: (error) => {
+        console.error("❌ 루틴 저장 실패:", error);
+        notify("루틴 저장에 실패했습니다. 다시 시도해주세요.");
+      },
+    });
   };
 
   /**

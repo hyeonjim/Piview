@@ -180,7 +180,7 @@ export default function RecommendPage() {
               lineHeight: 1.2,
             }}
           >
-            맞춤 추천
+            Recommend
           </h1>
           <div className="flex items-center gap-5">
             <div className="flex-1">

@@ -94,7 +94,7 @@ export default function SettingsPage() {
           <ChevronLeft size={20} className="text-text-primary" />
         </button>
         <h2 className="text-lg font-semibold text-text-primary tracking-[0.5px]">
-          피부 설정
+          Settings
         </h2>
       </div>
 

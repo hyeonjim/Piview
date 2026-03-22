@@ -52,7 +52,9 @@ export default function MyPage() {
   // ── 루틴 Draft API 연동 ────────────────────────────────────────────
   // 현재 draft에 담긴 productId 목록 — RoutineAddModal 중복 방지용
   const { data: draftItems = [] } = useDraftQuery();
-  const draftProductIds = draftItems.map((item) => item.product.productId);
+  const draftProductIds = draftItems
+    .filter((item) => item.product && item.product.productId)
+    .map((item) => item.product.productId);
 
   // 단일 제품 추가 — POST /api/v1/routines/draft
   const { mutate: addDraftItem } = useAddDraftItemMutation();
@@ -84,6 +86,7 @@ export default function MyPage() {
    */
   const handleAddToRoutine = (productId: number) => {
     if (!openStep) return;
+    console.log("🔍 루틴 추가 요청:", { columnId: openColumnId, productId, stepCode: openStep });
     addDraftItem(
       { columnId: openColumnId, productId },
       {
@@ -91,7 +94,8 @@ export default function MyPage() {
           toast("✓ 루틴에 추가되었습니다!");
           setOpenStep(null);
         },
-        onError: () => {
+        onError: (error) => {
+          console.error("❌ 루틴 추가 실패:", error);
           toast("제품 추가에 실패했습니다. 다시 시도해주세요.");
         },
       },

@@ -12,15 +12,17 @@ const MODAL_ACTION_ICON_BTN = {
   cursor: "pointer",
 };
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { X, Search, Package, Heart, GitCompare, Loader2 } from "lucide-react";
 import {
   SKIN_TYPE_TAG_COLORS,
+  CATEGORY_COLORS,
 } from "@/constants/categoryColors";
-import { MYPAGE_ROUTINE_STEPS } from "@/constants/routineSteps";
-import { useProductSearch } from "@/hooks";
-import { CategoryFilter } from "@/components/common/CategoryFilter";
-import type { ProductSummaryResponse } from "@/types/product/product";
+import { getRoutineSteps } from "@/constants/routineSteps";
+import { useProductSearch, useProductFilters } from "@/hooks";
+import { useUserStore, selectGender } from "@/stores";
+import { getCategoryDisplayName } from "@/utils/format";
+import type { MappedProduct } from "@/utils/productMapper";
 
 interface RoutineAddModalProps {
   /** 현재 열린 스텝 코드 (CL, PR, SR ...) */
@@ -41,20 +43,59 @@ export default function RoutineAddModal({
   onAdd,
 }: RoutineAddModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedBigCategoryId, setSelectedBigCategoryId] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
 
-  const currentLabel =
-    MYPAGE_ROUTINE_STEPS.find((step) => step.code === openStep)?.label ?? "";
+  // 성별에 따른 루틴 스텝 가져오기
+  const currentGender = useUserStore(selectGender);
+  const routineSteps = getRoutineSteps(currentGender);
+
+  // 현재 루틴 단계 정보
+  const currentStep = routineSteps.find((step) => step.code === openStep);
+  const currentLabel = currentStep?.label ?? "";
+  const stepCategories = currentStep?.categories ?? [];
+
+  // 카테고리 필터 메타데이터 가져오기
+  const { data: filterMeta } = useProductFilters();
+  const bigCategories = filterMeta?.bigCategories ?? [];
+
+  // 현재 루틴 단계의 카테고리들을 API 메타데이터와 매칭하여 ID 포함한 정보로 변환
+  const availableCategories = useMemo(() => {
+    if (!filterMeta || stepCategories.length === 0) return [];
+
+    const allSubCategories = bigCategories.flatMap((bc) =>
+      bc.categories.map((cat) => ({
+        ...cat,
+        bigCategoryId: bc.bigCategoryId,
+      }))
+    );
+
+    return stepCategories
+      .map((categoryName) => {
+        // 정확히 일치하는 카테고리 찾기
+        return allSubCategories.find((cat) => cat.categoryName === categoryName);
+      })
+      .filter((cat): cat is NonNullable<typeof cat> => cat !== undefined);
+  }, [filterMeta, stepCategories, bigCategories]);
+
+  // 모달이 열릴 때 첫 번째 카테고리 자동 선택
+  useEffect(() => {
+    if (availableCategories.length > 0) {
+      setSelectedCategoryId(availableCategories[0].categoryId);
+    }
+  }, [availableCategories]);
 
   // 실제 제품 검색 API 연동
   // 검색어와 카테고리 ID로 필터링
+  const selectedCategory = availableCategories.find(
+    (cat) => cat.categoryId === selectedCategoryId
+  );
+
   const searchParams = useMemo(() => ({
     q: searchQuery || undefined,
-    bigCategoryId: selectedBigCategoryId ?? undefined,
+    bigCategoryId: selectedCategory?.bigCategoryId ?? undefined,
     categoryId: selectedCategoryId ?? undefined,
     size: 20,
-  }), [searchQuery, selectedBigCategoryId, selectedCategoryId]);
+  }), [searchQuery, selectedCategory, selectedCategoryId]);
 
   const { products, isLoading } = useProductSearch(searchParams);
 
@@ -110,13 +151,37 @@ export default function RoutineAddModal({
               )}
             </div>
 
-            {/* 카테고리 필터 */}
-            <CategoryFilter
-              selectedBigCategoryId={selectedBigCategoryId}
-              selectedCategoryId={selectedCategoryId}
-              onBigCategorySelect={setSelectedBigCategoryId}
-              onCategorySelect={setSelectedCategoryId}
-            />
+            {/* 카테고리 필터 - 현재 루틴 단계의 소분류만 표시 */}
+            {availableCategories.length > 0 && (
+              <div className="flex flex-wrap gap-2 p-[10px_0px] min-h-[52px] mb-2">
+                {availableCategories.map((cat) => {
+                  const isActive = selectedCategoryId === cat.categoryId;
+                  const catColor = CATEGORY_COLORS[cat.categoryName];
+                  return (
+                    <button
+                      key={cat.categoryId}
+                      onClick={() => {
+                        if (!isActive) setSelectedCategoryId(cat.categoryId);
+                      }}
+                      className="category-pill-button"
+                      data-active={isActive}
+                      data-has-color={!!catColor}
+                      style={
+                        !isActive && catColor
+                          ? ({
+                              "--pill-bg": catColor.chip,
+                              "--pill-color": catColor.accent,
+                              "--pill-border": catColor.border,
+                            } as React.CSSProperties)
+                          : undefined
+                      }
+                    >
+                      {getCategoryDisplayName(cat.categoryName)}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* 로딩 상태 */}
             {isLoading ? (
@@ -133,10 +198,10 @@ export default function RoutineAddModal({
               <div className="flex flex-col gap-3">
                 {products.map((product) => (
                   <ProductCard
-                    key={product.productId}
+                    key={product.id}
                     product={product}
-                    isAdded={draftProductIds.includes(product.productId)}
-                    onAdd={() => onAdd(product.productId)}
+                    isAdded={draftProductIds.includes(product.id)}
+                    onAdd={() => onAdd(product.id)}
                   />
                 ))}
               </div>
@@ -150,7 +215,7 @@ export default function RoutineAddModal({
 
 // ── 제품 카드 ────────────────────────────────────────────────────────────────
 interface ProductCardProps {
-  product: ProductSummaryResponse;
+  product: MappedProduct;
   isAdded: boolean;
   onAdd: () => void;
 }
@@ -182,16 +247,16 @@ function ProductCard({ product, isAdded, onAdd }: ProductCardProps) {
             />
           ) : (
             <span className="text-[11px] font-bold text-text-muted">
-              {product.categoryName?.slice(0, 2) ?? "🧴"}
+              {product.category?.slice(0, 2) ?? "🧴"}
             </span>
           )}
         </div>
 
         {/* 텍스트 */}
         <div className="flex-1 min-w-0">
-          <p className="text-xs text-text-muted mb-0.5">{product.brandName ?? ""}</p>
+          <p className="text-xs text-text-muted mb-0.5">{product.brand}</p>
           <p className="text-sm font-semibold text-text-primary leading-snug line-clamp-2">
-            {product.name ?? ""}
+            {product.name}
           </p>
           {/* 피부타입 칩 */}
           {product.skinTypes.length > 0 && (
@@ -214,9 +279,9 @@ function ProductCard({ product, isAdded, onAdd }: ProductCardProps) {
             </div>
           )}
           {/* 태그 칩 */}
-          {product.tags && product.tags.length > 0 && (
+          {product.effects && product.effects.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
-              {product.tags.slice(0, 3).map((tag) => (
+              {product.effects.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
                   className="text-[11px] px-2 py-[2px] rounded-[4px] font-bold bg-[#F5F2EC] text-text-muted"
