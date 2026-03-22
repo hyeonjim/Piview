@@ -47,7 +47,7 @@ public class SurveyScoreCalculator {
             + (aiSignals.regionalDifferenceExists() ? 1 : 0);
         int oilyFinalScore = scoreMap.get(SkinTypeEnum.oily) * 2
             + (OILY_SIDE.equals(aiSignals.globalAxis()) ? 2 : 0);
-        int dehydratedOilyFinalScore = scoreMap.get(SkinTypeEnum.subuji)
+        int subujiFinalScore = scoreMap.get(SkinTypeEnum.subuji)
             + (isQuestion5Affirmative(question5) ? 2 : 0)
             + (OILY_SIDE.equals(aiSignals.globalAxis()) ? 2 : 0)
             + (aiSignals.cheekMeanMoistureLow() ? 1 : 0);
@@ -56,7 +56,7 @@ public class SurveyScoreCalculator {
         finalScoreMap.put(SkinTypeEnum.dry, dryFinalScore);
         finalScoreMap.put(SkinTypeEnum.combination, combinationFinalScore);
         finalScoreMap.put(SkinTypeEnum.oily, oilyFinalScore);
-        finalScoreMap.put(SkinTypeEnum.subuji, dehydratedOilyFinalScore);
+        finalScoreMap.put(SkinTypeEnum.subuji, subujiFinalScore);
 
         return resolveTie(finalScoreMap, question5, aiSignals);
     }
@@ -144,28 +144,28 @@ public class SurveyScoreCalculator {
         boolean dryTied = finalScoreMap.get(SkinTypeEnum.dry) == maxScore;
         boolean combinationTied = finalScoreMap.get(SkinTypeEnum.combination) == maxScore;
         boolean oilyTied = finalScoreMap.get(SkinTypeEnum.oily) == maxScore;
-        boolean dehydratedOilyTied = finalScoreMap.get(SkinTypeEnum.subuji) == maxScore;
+        boolean subujiTied = finalScoreMap.get(SkinTypeEnum.subuji) == maxScore;
 
-        if (dehydratedOilyTied && !isQuestion5Affirmative(question5)) {
+        if (subujiTied && !isQuestion5Affirmative(question5)) {
             // Q5가 수부지 성향을 지지하지 않으면 수부지는 동점 후보에서 먼저 제외한다.
-            dehydratedOilyTied = false;
+            subujiTied = false;
         }
 
-        if (oilyTied && dehydratedOilyTied) {
+        if (oilyTied && subujiTied) {
             // 지성과 수부지가 붙으면 "이마 지성 + 볼 건조" 또는 "수분 부족" 신호가 있는 쪽을 수부지로 본다.
             return aiSignals.foreheadOilyCheekDry() || aiSignals.cheekMeanMoistureLow()
                 ? SkinTypeEnum.subuji
                 : SkinTypeEnum.oily;
         }
 
-        if (dryTied && oilyTied && !combinationTied && !dehydratedOilyTied) {
+        if (dryTied && oilyTied && !combinationTied && !subujiTied) {
             // 건성/지성만 정면 충돌하면 얼굴 전체 축(global axis)으로 마지막 결정을 내린다.
             return DRY_SIDE.equals(aiSignals.globalAxis()) ? SkinTypeEnum.dry : SkinTypeEnum.oily;
         }
 
         if (isQuestion5Affirmative(question5)) {
             // Q5가 속건조 쪽이면 동점 상황에서도 건성/복합성/수부지를 먼저 검토한다.
-            if (dehydratedOilyTied) {
+            if (subujiTied) {
                 return SkinTypeEnum.subuji;
             }
             if (combinationTied) {
@@ -188,7 +188,7 @@ public class SurveyScoreCalculator {
         if (oilyTied) {
             return SkinTypeEnum.oily;
         }
-        if (dehydratedOilyTied) {
+        if (subujiTied) {
             return SkinTypeEnum.subuji;
         }
 

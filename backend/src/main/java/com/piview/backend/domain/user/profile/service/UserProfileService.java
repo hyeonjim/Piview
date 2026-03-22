@@ -5,7 +5,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Locale;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -162,13 +161,8 @@ public class UserProfileService {
             throw new CustomException(ErrorCode.INVALID_MY_SKIN_TYPE);
         }
 
-        String normalizedValue = value.trim();
-        if ("DEHYDRATED_OILY".equalsIgnoreCase(normalizedValue)) {
-            return SkinTypeEnum.subuji;
-        }
-
         try {
-            return SkinTypeEnum.valueOf(normalizedValue.toLowerCase(Locale.ROOT));
+            return SkinTypeEnum.valueOf(value.trim());
         } catch (IllegalArgumentException exception) {
             throw new CustomException(ErrorCode.INVALID_MY_SKIN_TYPE);
         }
