@@ -80,12 +80,15 @@ public class ProductCatalogService {
                         .build())
                 .toList();
 
-        List<ConcernFilterDto> concernDtos = concerns.stream()
-                .map(concern -> ConcernFilterDto.builder()
-                        .concernId(concern.getId())
-                        .concernName(concern.getConcernName())
-                        .build())
-                .toList();
+        // 5, 6을 "안티에이징" 1개 태그로 병합해서 반환
+        List<ConcernFilterDto> concernDtos = toConcernFilterDtos(concerns);
+
+//        List<ConcernFilterDto> concernDtos = concerns.stream()
+//                .map(concern -> ConcernFilterDto.builder()
+//                        .concernId(concern.getId())
+//                        .concernName(concern.getConcernName())
+//                        .build())
+//                .toList();
 
         return ProductFilterMetaResponse.builder()
                 .bigCategories(bigCategoryDtos)
@@ -99,7 +102,11 @@ public class ProductCatalogService {
         validate(condition);
 
         String normalizedQ = normalizeQ(condition.getQ());
-        List<Long> normalizedConcernIds = distinctOrNull(condition.getConcernIds());
+
+        // 기존 distinct만 하던 concernIds를 안티에이징 linked 규칙을 추가하여 정규화
+        List<Long> normalizedConcernIds = normalizeConcernIds(condition.getConcernIds());
+//        List<Long> normalizedConcernIds = distinctOrNull(condition.getConcernIds());
+
         List<Long> normalizedBrandIds = distinctOrNull(condition.getBrandIds());
 
         ProductSearchCondition normalized = ProductSearchCondition.builder()
@@ -168,6 +175,44 @@ public class ProductCatalogService {
             return null;
         }
         return values.stream().distinct().toList();
+    }
+
+    // search tagIds 정규화 helper
+    private List<Long> normalizeConcernIds(List<Long> concernIds) {
+        List<Long> distinctConcernIds = distinctOrNull(concernIds);
+        return ProductConcernQueryService.normalizeConcernIdsForSearch(distinctConcernIds);
+    }
+
+    // filter meta의 tags를 안티에이징 규칙으로 병합 helper
+    private List<ConcernFilterDto> toConcernFilterDtos(List<SkinConcerns> concerns) {
+        Map<Long, ConcernFilterDto> normalized = new LinkedHashMap<>();
+
+        for (SkinConcerns concern : concerns) {
+            Long concernId = concern.getId();
+            String concernName = concern.getConcernName();
+
+            if (ProductConcernQueryService.isAntiAgingConcern(concernId, concernName)) {
+                normalized.putIfAbsent(
+                        ProductConcernQueryService.ANTI_AGING_LINKED_ID_1,
+                        ConcernFilterDto.builder()
+                                .concernId(ProductConcernQueryService.ANTI_AGING_LINKED_ID_1)
+                                .concernName(ProductConcernQueryService.ANTI_AGING_NAME)
+                                .build()
+                );
+
+                continue;
+            }
+
+            normalized.putIfAbsent(
+                    concernId,
+                    ConcernFilterDto.builder()
+                            .concernId(concernId)
+                            .concernName(concernName)
+                            .build()
+            );
+        }
+
+        return new ArrayList<>(normalized.values());
     }
 
     public ProductDetailResponse getProductDetail(Long productId, Long userId) {
