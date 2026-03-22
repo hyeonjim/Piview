@@ -6,7 +6,8 @@ import Link from "next/link";
 import { Settings, LogOut, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import {
-  useSyncRoutineDraft,
+  useDraftQuery,
+  useAddDraftItemMutation,
   useMyCosQuery,
   useRemoveMyCos,
   useUserQuery,
@@ -15,7 +16,7 @@ import RoutineTab from "@/components/features/mypage/RoutineTab";
 import RoutineAddModal from "@/components/features/mypage/RoutineAddModal";
 import OwnedTab from "@/components/features/mypage/OwnedTab";
 import AvoidProductModal from "@/components/features/mypage/AvoidProductModal";
-import { useRoutineStore, type LocalProduct } from "@/stores";
+import { useRoutineStore } from "@/stores";
 import { useUserStore, selectSkinType, selectGender } from "@/stores";
 import { authService } from "@/services/auth";
 import type { ProductViewModel } from "@/types/product/myCos";
@@ -44,23 +45,22 @@ export default function MyPage() {
       await authService.logout();
     } finally {
       useUserStore.getState().clearUser();
-      useRoutineStore.getState().clearLocalRoutine();
-      localStorage.removeItem("piview-routine");
       router.push("/splash");
     }
   };
 
-  const {
-    localRoutine: routine,
-    addStepProduct,
-    removeStepProduct,
-  } = useRoutineStore();
+  // ── 루틴 Draft API 연동 ────────────────────────────────────────────
+  // 현재 draft에 담긴 productId 목록 — RoutineAddModal 중복 방지용
+  const { data: draftItems = [] } = useDraftQuery();
+  const draftProductIds = draftItems.map((item) => item.product.productId);
 
-  useEffect(() => {
-    useRoutineStore.persist.rehydrate();
-  }, []);
+  // 단일 제품 추가 — POST /api/v1/routines/draft
+  const { mutate: addDraftItem } = useAddDraftItemMutation();
 
+  // ── 모달 상태 ────────────────────────────────────────────────────────
+  // 열린 스텝 코드 + columnId (RoutineTab → RoutineAddModal로 전달)
   const [openStep, setOpenStep] = useState<string | null>(null);
+  const [openColumnId, setOpenColumnId] = useState<number>(0);
 
   useEffect(() => {
     document.body.style.overflow = openStep ? "hidden" : "";
@@ -69,20 +69,36 @@ export default function MyPage() {
     };
   }, [openStep]);
 
-  useSyncRoutineDraft();
-
-  const handleAddToRoutine = (product: LocalProduct) => {
-    if (!openStep) return;
-    addStepProduct(openStep, product);
-    toast(`✓ ${product.name} 루틴에 추가됨!`);
-    setOpenStep(null);
+  /**
+   * RoutineTab에서 + 추가 버튼 클릭 시 호출
+   * stepCode → 모달 타이틀에 사용, columnId → draft API 요청에 사용
+   */
+  const handleOpenModal = (stepCode: string, columnId: number) => {
+    setOpenStep(stepCode);
+    setOpenColumnId(columnId);
   };
 
-  const handleRemoveFromRoutine = (stepCode: string, productId: string) =>
-    removeStepProduct(stepCode, productId);
+  /**
+   * RoutineAddModal에서 제품 선택 시 호출
+   * POST /api/v1/routines/draft → draft 캐시 자동 갱신
+   */
+  const handleAddToRoutine = (productId: number) => {
+    if (!openStep) return;
+    addDraftItem(
+      { columnId: openColumnId, productId },
+      {
+        onSuccess: () => {
+          toast("✓ 루틴에 추가되었습니다!");
+          setOpenStep(null);
+        },
+        onError: () => {
+          toast("제품 추가에 실패했습니다. 다시 시도해주세요.");
+        },
+      },
+    );
+  };
 
-  // ── 보유제품 API 연동 ─────────────────────────────────────────
-  // 서버 응답이 배열이 아닌 경우(래핑된 객체 등) 방어 처리
+  // ── OwnedTab (내 화장대) ────────────────────────────────────────────
   const { data: myCosRawData, isLoading: myCosLoading } = useMyCosQuery();
   const myCosItems = Array.isArray(myCosRawData) ? myCosRawData : [];
   const { mutate: removeMyCos } = useRemoveMyCos();
@@ -98,15 +114,15 @@ export default function MyPage() {
       item.topSkinType ? fromSkinTypeEnum(item.topSkinType) : null,
       item.top2SkinType ? fromSkinTypeEnum(item.top2SkinType) : null,
     ].filter(Boolean) as string[],
-    effects: [], // MyCosItem doesn't have effects - will be populated from tags when needed
+    effects: [],
   }));
 
   const handleRemoveOwned = (productId: string | number) => {
-    const myCosId = typeof productId === 'number' ? productId : Number(productId);
+    const myCosId = typeof productId === "number" ? productId : Number(productId);
     if (!isNaN(myCosId)) removeMyCos(myCosId);
   };
 
-  // ── 기피 제품 — ⚠️ API 연동 시 서버 상태로 교체 ──────────────
+  // ── 기피 제품 — ⚠️ API 연동 시 서버 상태로 교체 ──────────────────────
   const [avoidProducts, setAvoidProducts] = useState<ProductViewModel[]>([]);
   const [openAvoidModal, setOpenAvoidModal] = useState(false);
   const [avoidSearch, setAvoidSearch] = useState("");
@@ -122,6 +138,10 @@ export default function MyPage() {
         : [...previousProducts, product],
     );
   };
+
+  // OwnedTab에서 루틴 props로 사용하는 localRoutine (OwnedTab 인터페이스 호환 유지)
+  // OwnedTab이 LocalProduct[] 기반인 동안만 사용, 이후 OwnedTab API 연동 시 제거
+  const routineForOwnedTab = useRoutineStore((state) => state.localRoutine);
 
   return (
     <div className="flex-1 bg-[#F5F2EC]">
@@ -141,7 +161,6 @@ export default function MyPage() {
             }
           >
             {profileImageUrl ? (
-              // 카카오 프로필 이미지 표시
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={profileImageUrl}
@@ -149,7 +168,6 @@ export default function MyPage() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              // 기본 아바타 — 이름의 첫 글자 표시
               <span className="text-[22px] font-semibold text-white">
                 {userName.charAt(0).toUpperCase()}
               </span>
@@ -159,9 +177,7 @@ export default function MyPage() {
           <div className="flex-1 min-w-0">
             {/* 이름 + 설정/로그아웃 버튼 행 */}
             <div className="flex items-center justify-between">
-              {/* 이름 + 성별 토글 버튼 */}
               <div className="flex items-center gap-2">
-                {/* 20px → font-semibold: 디스플레이 크기, 세리프는 600이 더 균형적 */}
                 <p className="text-[20px] font-bold text-text-primary tracking-[-0.3px]">
                   {userName}님
                 </p>
@@ -184,7 +200,6 @@ export default function MyPage() {
                     <Settings size={15} className="text-brand-dark" />
                   </button>
                 </Link>
-                {/* 12px 소형 텍스트 → font-semibold: 작은 크기 가독성 보완 */}
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-1 text-[12px] font-semibold text-text-faint bg-transparent border-none cursor-pointer py-1 px-0.5"
@@ -257,11 +272,7 @@ export default function MyPage() {
 
       {/* 탭 콘텐츠 */}
       {activeTab === "routine" && (
-        <RoutineTab
-          routine={routine}
-          onOpenModal={(stepCode) => setOpenStep(stepCode)}
-          onRemove={handleRemoveFromRoutine}
-        />
+        <RoutineTab onOpenModal={handleOpenModal} />
       )}
       {activeTab === "owned" &&
         (myCosLoading ? (
@@ -270,7 +281,7 @@ export default function MyPage() {
           </div>
         ) : (
           <OwnedTab
-            routine={routine}
+            routine={routineForOwnedTab}
             ownedProducts={ownedProducts}
             avoidProducts={avoidProducts}
             onRemoveOwned={handleRemoveOwned}
@@ -290,14 +301,17 @@ export default function MyPage() {
           />
         ))}
 
+      {/* 제품 추가 모달 — openStep이 있을 때만 렌더링 */}
       {openStep && (
         <RoutineAddModal
           openStep={openStep}
-          routine={routine}
+          columnId={openColumnId}
+          draftProductIds={draftProductIds}
           onClose={() => setOpenStep(null)}
           onAdd={handleAddToRoutine}
         />
       )}
+
       {openAvoidModal && (
         <AvoidProductModal
           avoidProducts={avoidProducts}

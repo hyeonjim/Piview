@@ -306,15 +306,6 @@
     }
   }
 
-  /* ─── 데스크탑에서 앱 영역 확대 (개발 편의용) ─── */
-  /* 768px 이상(데스크탑/태블릿)에서 앱 콘텐츠를 1.3배 확대해서 보여줌  */
-  /* 모바일 기준 px값들이 데스크탑에서도 실제 크기로 보이도록 보정       */
-  @media (min-width: 768px) {
-    body {
-      zoom: 1.2;
-    }
-  }
-
   /* ─── Scrollbar Hidden ─── */
   ::-webkit-scrollbar {
     display: none;
