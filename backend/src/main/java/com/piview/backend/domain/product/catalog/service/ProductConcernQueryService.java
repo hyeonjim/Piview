@@ -18,6 +18,14 @@ public class ProductConcernQueryService {
     public static final long ANTI_AGING_LINKED_ID_2 = 6L;   // 노화방지-40대이상
     public static final String ANTI_AGING_NAME = "안티에이징";
 
+    // 색소침착
+    public static final long PIGMENTATION_LINKED_ID = 4L;   // 기미/주근깨/잡티
+    public static final String PIGMENTATION_NAME = "색소침착";
+
+    // 수분
+    public static final long HYDRATION_LINKED_ID = 9L;  // 속건조
+    public static final String HYDRATION_NAME = "수분";
+
     private final ProductConcernCacheRepository productConcernCacheRepository;
 
     public Map<Long, List<String>> buildConcernsByProductIds(List<Long> productIds) {
@@ -33,7 +41,7 @@ public class ProductConcernQueryService {
             List<String> concerns = result.get(row.getProductId());
 
             // 5/6(또는 해당 이름)이면 "안티에이징"으로 통합
-            String normalizedConcernName = normalizeConcernName(row.getConcernId(), row.getConcernName());
+            String normalizedConcernName = normalizeConcernNameForResponse(row.getConcernId(), row.getConcernName());
             if (normalizedConcernName == null || normalizedConcernName.isBlank()) {
                 continue;
             }
@@ -69,6 +77,28 @@ public class ProductConcernQueryService {
         return new ArrayList<>(normalized);
     }
 
+    // filter meta에서 대표 id 정규화 -> 안티에이징은 5로 대표(5, 6 중복되면 큰일남)
+    public static Long normalizeConcernIdForFilterMeta(Long concernId, String concernName) {
+        if (isAntiAgingConcern(concernId, concernName)) {
+            return ANTI_AGING_LINKED_ID_1;
+        }
+        return concernId;
+    }
+
+    // 응답 이름 정규화 -> 기미, 수분 이놈들 정규화
+    public static String normalizeConcernNameForResponse(Long concernId, String concernName) {
+        if (isAntiAgingConcern(concernId, concernName)) {
+            return ANTI_AGING_NAME;
+        }
+        if (isPigmentationConcern(concernId, concernName)) {
+            return PIGMENTATION_NAME;
+        }
+        if (isHydrationConcern(concernId, concernName)) {
+            return HYDRATION_NAME;
+        }
+        return concernName;
+    }
+
     // id/이름 기준으로 안티에이징 묶음 여부 판단
     public static boolean isAntiAgingConcern(Long concernId, String concernName) {
         return Objects.equals(concernId, ANTI_AGING_LINKED_ID_1)
@@ -78,11 +108,17 @@ public class ProductConcernQueryService {
                 || ANTI_AGING_NAME.equals(concernName);
     }
 
-    // 응답 concern name 정규화
-    private String normalizeConcernName(Long concernId, String concernName) {
-        if (isAntiAgingConcern(concernId, concernName)) {
-            return ANTI_AGING_NAME;
-        }
-        return concernName;
+    // 색소침착 판별
+    public static boolean isPigmentationConcern(Long concernId, String concernName) {
+        return Objects.equals(concernId, PIGMENTATION_LINKED_ID)
+                || "기미/주근깨/잡티".equals(concernName)
+                || PIGMENTATION_NAME.equals(concernName);
+    }
+
+    // 수분 판별
+    public static boolean isHydrationConcern(Long concernId, String concernName) {
+        return Objects.equals(concernId, HYDRATION_LINKED_ID)
+                || "속건조".equals(concernName)
+                || HYDRATION_NAME.equals(concernName);
     }
 }
