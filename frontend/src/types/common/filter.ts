@@ -1,16 +1,14 @@
 /**
  * types/filter.ts
- * 검색/추천 페이지 필터 상태 타입 — 단일 정의
- *
- * FilterModal.tsx에 있던 FilterState를 여기로 이동
- * — FilterModal.tsx는 이 파일에서 re-export
+ * 검색/추천 페이지 필터 상태 타입
  */
 
 export interface FilterState {
-  filterSkin: string | null;
-  filterFns: Set<string>;
-  filterChosung: string | null;
-  filterBrands: Set<string>;
+  filterSkin: string | null; // 피부타입 — API skinType 파라미터
+  tagIds: Record<number, boolean>; // 피부고민 태그 ID (구: filterFns)
+  brandIds: Record<number, boolean>; // 브랜드 ID (구: filterBrands)
+  bigCategoryId: number | null; // 대분류 ID
+  categoryId: number | null; // 소분류 ID
   priceRange: [number, number];
 }
 
@@ -18,9 +16,10 @@ export const PRICE_MAX = 1_000_000;
 
 export const FILTER_INITIAL_STATE: FilterState = {
   filterSkin: null,
-  filterFns: new Set(),
-  filterChosung: null,
-  filterBrands: new Set(),
+  tagIds: {},
+  brandIds: {},
+  bigCategoryId: null,
+  categoryId: null,
   priceRange: [0, PRICE_MAX],
 };
 

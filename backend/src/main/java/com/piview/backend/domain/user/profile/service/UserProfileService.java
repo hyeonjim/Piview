@@ -5,7 +5,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Locale;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,6 +85,7 @@ public class UserProfileService {
     // 마이페이지 응답 조립 로직이다. User와 MySkin을 UserProfileResponse 하나로 합친다.
     private UserProfileResponse buildResponse(User user, List<MySkin> mySkins) {
         return UserProfileResponse.builder()
+            .userId(user.getId())
             .name(user.getName())
             .email(user.getEmail())
             // 카카오 로그인에서 저장한 imageUrl을 마이페이지 조회 응답에 그대로 포함한다.
@@ -162,13 +162,8 @@ public class UserProfileService {
             throw new CustomException(ErrorCode.INVALID_MY_SKIN_TYPE);
         }
 
-        String normalizedValue = value.trim();
-        if ("DEHYDRATED_OILY".equalsIgnoreCase(normalizedValue)) {
-            return SkinTypeEnum.subuji;
-        }
-
         try {
-            return SkinTypeEnum.valueOf(normalizedValue.toLowerCase(Locale.ROOT));
+            return SkinTypeEnum.valueOf(value.trim());
         } catch (IllegalArgumentException exception) {
             throw new CustomException(ErrorCode.INVALID_MY_SKIN_TYPE);
         }

@@ -96,10 +96,21 @@ export default function OwnedTab({
               >
                 {/* 이미지/코드 배지 */}
                 <div
-                  className="shrink-0 flex items-center justify-center text-text-muted"
+                  className="shrink-0 flex items-center justify-center overflow-hidden text-text-muted"
                   style={PRODUCT_CODE_BADGE}
                 >
-                  {product.emoji}
+                  {product.imageUrl ? (
+                    <img
+                      src={product.imageUrl}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    product.emoji || "🧴"
+                  )}
                 </div>
                 {/* 제품 정보 */}
                 <div className="flex-1 min-w-0">
@@ -120,9 +131,11 @@ export default function OwnedTab({
                       </span>
                     )}
                     {/* 루틴 등록 여부 표시 */}
-                    {Object.values(routine).flat().some(
-                      (routineProduct) => routineProduct.id === product.id,
-                    ) && (
+                    {Object.values(routine)
+                      .flat()
+                      .some(
+                        (routineProduct) => routineProduct.id === product.id,
+                      ) && (
                       <span className="text-[10px] px-1.5 py-[1px] rounded-[4px] font-bold bg-brand-bg text-brand">
                         루틴
                       </span>

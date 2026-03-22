@@ -13,6 +13,7 @@ export interface OwnedProduct {
   name: string;
   category: string;
   emoji?: string;
+  imageUrl?: string | null;
   skinTypes?: string[];
 }
 

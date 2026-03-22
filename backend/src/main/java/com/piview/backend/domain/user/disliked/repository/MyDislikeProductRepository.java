@@ -103,14 +103,12 @@ public interface MyDislikeProductRepository extends JpaRepository<MyDislikeProdu
     )
     List<Long> findProductIdsByUserId(@Param("userId") Long userId);
 
-    // 문제 성분 재계산은 최신 전성분 문자열 한 줄만 있으면 되므로 가장 최근 row 하나만 읽는다.
+    // 실DB product_ingredients 는 product_id 당 한 줄만 가지므로 정렬 없이 바로 읽는다.
     @Query(
         value = "SELECT product_ingredients_ko AS productIngredientsKo, "
             + "product_ingredients_en AS productIngredientsEn "
             + "FROM product_ingredients "
-            + "WHERE product_id = :productId "
-            + "ORDER BY id DESC "
-            + "LIMIT 1",
+            + "WHERE product_id = :productId",
         nativeQuery = true
     )
     Optional<ProductIngredientTextRow> findIngredientTextsByProductId(@Param("productId") Long productId);

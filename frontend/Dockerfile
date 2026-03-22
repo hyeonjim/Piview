@@ -4,6 +4,7 @@ WORKDIR /app
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+RUN apk add --no-cache libc6-compat
 RUN npm install -g pnpm
 
 COPY package.json pnpm-lock.yaml ./
@@ -17,6 +18,7 @@ WORKDIR /app
 
 ENV NODE_ENV production
 
+RUN apk add --no-cache libc6-compat
 RUN npm install -g pnpm
 
 COPY --from=builder /app/public ./public

@@ -43,7 +43,7 @@ public class ProductCatalogController {
             @Parameter(description = "대카테고리 ID", example = "1") @RequestParam(required = false) Integer bigCategoryId,
             @Parameter(description = "카테고리 ID", example = "10") @RequestParam(required = false) Long categoryId,
             @Parameter(description = "피부타입(dry, oily, combination, subuji)", example = "독도") @RequestParam(required = false) String skinType,
-            @Parameter(description = "태그 ID 목록", example = "1, 2, 3") @RequestParam(required = false) List<Long> tagIds,
+            @Parameter(description = "태그 ID 목록(내부 concernId로 처리)", example = "1, 2, 3") @RequestParam(name = "tagIds", required = false) List<Long> concernIds,
             @Parameter(description = "브랜드 ID 목록", example = "4, 5") @RequestParam(required = false) List<Long> brandIds,
             @Parameter(description = "최소 가격", example = "10000") @RequestParam(required = false) Integer minPrice,
             @Parameter(description = "최대 가격", example = "30000") @RequestParam(required = false) Integer maxPrice,
@@ -58,7 +58,7 @@ public class ProductCatalogController {
                 .bigCategoryId(bigCategoryId)
                 .categoryId(categoryId)
                 .skinType(parseSkinType(skinType))
-                .tagIds(tagIds)
+                .concernIds(concernIds)
                 .brandIds(brandIds)
                 .minPrice(minPrice)
                 .maxPrice(maxPrice)
