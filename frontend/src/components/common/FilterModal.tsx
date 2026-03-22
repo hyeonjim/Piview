@@ -13,12 +13,10 @@ const RANGE_SLIDER_BASE_STYLE: React.CSSProperties = {
 
 import React, { useEffect } from "react";
 import { X, RotateCcw } from "lucide-react";
-import {
-  SKIN_FUNCTIONS,
-  SKIN_TYPE_LABELS_FOR_FILTER,
-} from "@/constants/categoryColors";
+import { SKIN_TYPE_LABELS_FOR_FILTER } from "@/constants/categoryColors";
 import type { FilterState } from "@/types/common";
 import { PRICE_MAX } from "@/types/common";
+import { useProductFilters } from "@/hooks";
 
 export type { FilterState };
 export { FILTER_INITIAL_STATE } from "@/types/common";
@@ -30,7 +28,6 @@ interface FilterModalProps {
   onChange: (next: Partial<FilterState>) => void;
   onReset: () => void;
   resultCount: number;
-  availableBrands: string[];
 }
 
 export function FilterModal({
@@ -41,7 +38,9 @@ export function FilterModal({
   onReset,
   resultCount,
 }: FilterModalProps) {
-  const { filterSkin, filterFns, priceRange } = state;
+  const { filterSkin, tagIds, priceRange } = state;
+  const { data: filterMeta } = useProductFilters();
+  const tags = filterMeta?.tags ?? [];
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -121,32 +120,25 @@ export function FilterModal({
 
             <div className="h-px bg-gray-100" />
 
-            {/* 피부고민 — 최대 4개 중복 선택 */}
+            {/* 피부고민 태그 — API */}
             <FilterSection
               title="피부고민"
-              rightLabel={
-                filterFns.size > 0 ? `${filterFns.size}/4` : undefined
-              }
+              rightLabel={Object.values(tagIds).filter(Boolean).length > 0 ? `${Object.values(tagIds).filter(Boolean).length}/4` : undefined}
             >
               <div className="flex flex-wrap gap-2">
-                {SKIN_FUNCTIONS.map((concern) => {
-                  const isActive = filterFns.has(concern);
-                  const isDisabled = !isActive && filterFns.size >= 4;
+                {tags.map((t) => {
+                  const isActive = tagIds[t.tagId] === true;
+                  const activeCount = Object.values(tagIds).filter(Boolean).length;
+                  const isDisabled = !isActive && activeCount >= 4;
                   return (
                     <FilterChip
-                      key={concern}
-                      label={concern}
+                      key={t.tagId}
+                      label={t.tag}
                       active={isActive}
                       disabled={isDisabled}
                       onClick={() => {
                         if (isDisabled) return;
-                        const newSet = new Set(filterFns);
-                        if (newSet.has(concern)) {
-                          newSet.delete(concern);
-                        } else {
-                          newSet.add(concern);
-                        }
-                        onChange({ filterFns: newSet });
+                        onChange({ tagIds: { ...tagIds, [t.tagId]: !tagIds[t.tagId] } });
                       }}
                     />
                   );

@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState } from "react";
 import { Heart, Plus, Check, ShoppingBag, Scale } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,7 +10,7 @@ import {
   SKIN_FUNCTION_COLORS,
   SKIN_TYPE_TAG_COLORS,
 } from "@/constants/categoryColors";
-import { useLikeStore } from "@/stores/useLikeStore";
+import { useLike } from "@/hooks";
 
 // ── 그림자 — border 없이 입체감을 주는 자연스러운 레이어드 shadow
 const CARD_SHADOW = "0 2px 8px rgba(0,0,0,0.10), 0 8px 28px rgba(0,0,0,0.16)";
@@ -227,7 +228,62 @@ function CompareButton({
   );
 }
 
-// ── 좋아요 버튼 (standalone, vertical/modal 하단 액션용)
+// ── 제품 이미지 — onError로 broken 이미지 fallback 처리
+// fill 모드와 fixed 모드를 모두 지원
+function ProductImage({
+  imageUrl,
+  name,
+  emoji,
+  sizes,
+  className,
+  width,
+  height,
+}: {
+  imageUrl?: string | null;
+  name: string;
+  emoji?: string;
+  sizes?: string;
+  className?: string;
+  width?: number;
+  height?: number;
+}) {
+  const [imgError, setImgError] = useState(false);
+
+  if (!imageUrl || imgError) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center text-3xl bg-[#F5F2EC]">
+        {emoji || "🧴"}
+      </div>
+    );
+  }
+
+  // fixed size 모드 (modal variant 썸네일)
+  if (width && height) {
+    return (
+      <Image
+        src={imageUrl}
+        alt={name}
+        width={width}
+        height={height}
+        className={className}
+        onError={() => setImgError(true)}
+      />
+    );
+  }
+
+  // fill 모드
+  return (
+    <Image
+      src={imageUrl}
+      alt={name}
+      fill
+      sizes={sizes}
+      className={className}
+      onError={() => setImgError(true)}
+    />
+  );
+}
+
 function LikeButton({
   isLiked,
   onToggle,
@@ -284,10 +340,8 @@ export default function ProductCard({
   showLike = true,
   showEwg = true,
 }: ProductCardProps) {
-  // likedIds를 직접 구독 — isLiked() 함수 호출 결과는 store 변경 시 재계산되지 않음
-  const likedIds = useLikeStore((state) => state.likedIds);
-  const toggleLike = useLikeStore((state) => state.toggleLike);
-  const isLiked = !!likedIds[String(id)];
+  const { likeList, toggleLike } = useLike();
+  const isLiked = !!likeList[String(id)];
 
   // 상세페이지 링크 — href prop 우선, 없으면 기본 경로
   const productHref = href ?? `/product/${id}`;
@@ -321,15 +375,15 @@ export default function ProductCard({
         style={{ boxShadow: CARD_SHADOW }}
       >
         <Link href={productHref} className="no-underline flex flex-col flex-1">
-          {/* 이미지 — 3:2 비율 */}
-          <div className="relative w-full aspect-3/2 bg-[#F5F2EC]">
-            {imageUrl ? (
-              <Image src={imageUrl} alt={name} fill className="object-cover" />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-2xl">
-                {emoji || "🧴"}
-              </div>
-            )}
+          {/* 이미지 — 정사각형 */}
+          <div className="relative w-full aspect-3/2 overflow-hidden">
+            <ProductImage
+              imageUrl={imageUrl}
+              name={name}
+              emoji={emoji}
+              sizes="(max-width: 500px) 50vw, 250px"
+              className="object-contain"
+            />
 
             {/* 좋아요 버튼 — showLike=false 시 숨김 */}
             {showLike && (
@@ -398,14 +452,14 @@ export default function ProductCard({
     return (
       <Link href={productHref}>
         <div className="flex items-center overflow-hidden h-22 bg-white rounded-[10px] border border-[#E2DDD8] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-          <div className="relative shrink-0 w-22 h-full bg-[#F5F2EC]">
-            {imageUrl ? (
-              <Image src={imageUrl} alt={name} fill className="object-cover" />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-[28px]">
-                {emoji || "🧴"}
-              </div>
-            )}
+          <div className="relative shrink-0 w-22 h-full overflow-hidden">
+            <ProductImage
+              imageUrl={imageUrl}
+              name={name}
+              emoji={emoji}
+              sizes="88px"
+              className="object-cover"
+            />
           </div>
 
           <div className="flex-1 px-3 py-2 min-w-0">
@@ -462,20 +516,15 @@ export default function ProductCard({
         <Link href={productHref} className="no-underline">
           <div className="flex items-center gap-3">
             {/* 썸네일 */}
-            <div className="shrink-0 w-15 h-15 flex items-center justify-center rounded-lg bg-[#F5F2EC]">
-              {emoji ? (
-                <span className="text-[26px]">{emoji}</span>
-              ) : imageUrl ? (
-                <Image
-                  src={imageUrl}
-                  alt={name}
-                  width={60}
-                  height={60}
-                  className="object-cover rounded-lg"
-                />
-              ) : (
-                <span className="text-[22px]">🧴</span>
-              )}
+            <div className="relative shrink-0 w-15 h-15 overflow-hidden rounded-lg bg-[#F5F2EC]">
+              <ProductImage
+                imageUrl={imageUrl}
+                name={name}
+                emoji={emoji}
+                width={60}
+                height={60}
+                className="object-cover rounded-lg"
+              />
             </div>
 
             <div className="flex-1 min-w-0">
@@ -535,14 +584,14 @@ export default function ProductCard({
       style={{ boxShadow: CARD_SHADOW }}
     >
       <Link href={productHref} className="no-underline">
-        <div className="relative h-27 bg-[#F5F2EC]">
-          {imageUrl ? (
-            <Image src={imageUrl} alt={name} fill className="object-cover" />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-[30px]">
-              {emoji || "🧴"}
-            </div>
-          )}
+        <div className="relative h-27 overflow-hidden">
+          <ProductImage
+            imageUrl={imageUrl}
+            name={name}
+            emoji={emoji}
+            sizes="(max-width: 500px) 50vw, 250px"
+            className="object-cover"
+          />
         </div>
 
         <div className="px-3.5 pt-3 pb-3.5">

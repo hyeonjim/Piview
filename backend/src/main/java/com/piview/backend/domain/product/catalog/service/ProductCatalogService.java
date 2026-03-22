@@ -9,26 +9,11 @@ import com.piview.backend.domain.product.catalog.dto.ProductIngredientDetailResp
 import com.piview.backend.domain.product.catalog.dto.ProductPageResponse;
 import com.piview.backend.domain.product.catalog.dto.ProductSearchCondition;
 import com.piview.backend.domain.product.catalog.dto.ProductSummaryResponse;
-import com.piview.backend.domain.product.catalog.dto.TagFilterDto;
-import com.piview.backend.domain.product.catalog.repository.BigCategoryRepository;
-import com.piview.backend.domain.product.catalog.repository.BrandRepository;
-import com.piview.backend.domain.product.catalog.repository.CategoryRepository;
-import com.piview.backend.domain.product.catalog.repository.IngredientRepository;
-import com.piview.backend.domain.product.catalog.repository.ProductIngredientRepository;
-import com.piview.backend.domain.product.catalog.repository.ProductRepository;
-import com.piview.backend.domain.product.catalog.repository.TagRepository;
-import com.piview.backend.domain.product.entity.BigCategory;
-import com.piview.backend.domain.product.entity.Brand;
-import com.piview.backend.domain.product.entity.Category;
-import com.piview.backend.domain.product.entity.EwgGrade;
-import com.piview.backend.domain.product.entity.Ingredient;
-import com.piview.backend.domain.product.entity.Product;
-import com.piview.backend.domain.product.entity.ProductIngredients;
-import com.piview.backend.domain.product.entity.Tag;
+import com.piview.backend.domain.product.catalog.dto.ConcernFilterDto;
+import com.piview.backend.domain.product.catalog.repository.*;
+import com.piview.backend.domain.product.entity.*;
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
-import com.piview.backend.domain.product.catalog.dto.*;
-import com.piview.backend.domain.product.catalog.repository.*;
 import com.piview.backend.domain.product.like.repository.ProductLikeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -56,8 +41,11 @@ public class ProductCatalogService {
     private final BigCategoryRepository bigCategoryRepository;
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
-    private final TagRepository tagRepository;
     private final ProductLikeRepository productLikeRepository;
+    private final SkinConcernsRepository skinConcernsRepository;
+
+    // concern 가져오기 위한 service
+    private final ProductConcernQueryService productConcernQueryService;
 
     // filter MetaData 제공 service
     public ProductFilterMetaResponse getFilterMeta() {
@@ -65,7 +53,7 @@ public class ProductCatalogService {
         List<BigCategory> bigCategories = bigCategoryRepository.findAllByOrderByBigCategoryIdAsc();
         List<Category> categories = categoryRepository.findAllByOrderByBigCategory_BigCategoryIdAscCategoryIdAsc();
         List<Brand> brands = brandRepository.findAllByOrderByBrandNameAsc();
-        List<Tag> tags = tagRepository.findAllByOrderByTagAsc();
+        List<SkinConcerns> concerns = skinConcernsRepository.findAllByOrderByIdAsc();
 
         Map<Integer, List<Category>> categoryMap = categories.stream()
                 .collect(Collectors.groupingBy(category -> category.getBigCategory().getBigCategoryId()));
@@ -92,17 +80,20 @@ public class ProductCatalogService {
                         .build())
                 .toList();
 
-        List<TagFilterDto> tagDtos = tags.stream()
-                .map(tag -> TagFilterDto.builder()
-                        .tagId(tag.getTagId())
-                        .tag(tag.getTag())
-                        .build())
-                .toList();
+        // 5, 6을 "안티에이징" 1개 태그로 병합해서 반환
+        List<ConcernFilterDto> concernDtos = toConcernFilterDtos(concerns);
+
+//        List<ConcernFilterDto> concernDtos = concerns.stream()
+//                .map(concern -> ConcernFilterDto.builder()
+//                        .concernId(concern.getId())
+//                        .concernName(concern.getConcernName())
+//                        .build())
+//                .toList();
 
         return ProductFilterMetaResponse.builder()
                 .bigCategories(bigCategoryDtos)
                 .brands(brandDtos)
-                .tags(tagDtos)
+                .concerns(concernDtos)
                 .build();
     }
 
@@ -111,7 +102,11 @@ public class ProductCatalogService {
         validate(condition);
 
         String normalizedQ = normalizeQ(condition.getQ());
-        List<Long> normalizedTagIds = distinctOrNull(condition.getTagIds());
+
+        // 기존 distinct만 하던 concernIds를 안티에이징 linked 규칙을 추가하여 정규화
+        List<Long> normalizedConcernIds = normalizeConcernIds(condition.getConcernIds());
+//        List<Long> normalizedConcernIds = distinctOrNull(condition.getConcernIds());
+
         List<Long> normalizedBrandIds = distinctOrNull(condition.getBrandIds());
 
         ProductSearchCondition normalized = ProductSearchCondition.builder()
@@ -119,7 +114,7 @@ public class ProductCatalogService {
                 .bigCategoryId(condition.getBigCategoryId())
                 .categoryId(condition.getCategoryId())
                 .skinType(condition.getSkinType())
-                .tagIds(normalizedTagIds)
+                .concernIds(normalizedConcernIds)
                 .brandIds(normalizedBrandIds)
                 .minPrice(condition.getMinPrice())
                 .maxPrice(condition.getMaxPrice())
@@ -130,14 +125,25 @@ public class ProductCatalogService {
         PageRequest pageable = PageRequest.of(normalized.getPage(), normalized.getSize());
         Slice<Product> productSlice = productRepository.search(normalized, pageable);
 
+        // total pages
+        long totalCount = productRepository.count(normalized);
+
         List<Long> likedProductIds = (userId != null)
             ? productLikeRepository.findLikedProductIdsByUserId(userId)
             : Collections.emptyList();
 
+        // 상품  별 concerns 조회
+        List<Long> productIds = productSlice.getContent().stream()
+                .map(Product::getProductId)
+                .toList();
+
+        Map<Long, List<String>> concernsByProductId = productConcernQueryService.buildConcernsByProductIds(productIds);
+
         List<ProductSummaryResponse> responses = productSlice.getContent().stream()
             .map(product -> {
                 boolean isLiked = likedProductIds.contains(product.getProductId());
-                return ProductSummaryResponse.from(product, isLiked);
+                List<String> concerns =  concernsByProductId.getOrDefault(product.getProductId(), List.of());
+                return ProductSummaryResponse.from(product, isLiked, concerns);
             })
             .toList();
 
@@ -146,6 +152,7 @@ public class ProductCatalogService {
                 .hasNext(productSlice.hasNext())
                 .page(normalized.getPage())
                 .size(normalized.getSize())
+                .totalCount(totalCount)
                 .build();
     }
 
@@ -168,6 +175,44 @@ public class ProductCatalogService {
             return null;
         }
         return values.stream().distinct().toList();
+    }
+
+    // search tagIds 정규화 helper
+    private List<Long> normalizeConcernIds(List<Long> concernIds) {
+        List<Long> distinctConcernIds = distinctOrNull(concernIds);
+        return ProductConcernQueryService.normalizeConcernIdsForSearch(distinctConcernIds);
+    }
+
+    // filter meta의 tags를 안티에이징 규칙으로 병합 helper
+    private List<ConcernFilterDto> toConcernFilterDtos(List<SkinConcerns> concerns) {
+        Map<Long, ConcernFilterDto> normalized = new LinkedHashMap<>();
+
+        for (SkinConcerns concern : concerns) {
+            Long concernId = concern.getId();
+            String concernName = concern.getConcernName();
+
+            if (ProductConcernQueryService.isAntiAgingConcern(concernId, concernName)) {
+                normalized.putIfAbsent(
+                        ProductConcernQueryService.ANTI_AGING_LINKED_ID_1,
+                        ConcernFilterDto.builder()
+                                .concernId(ProductConcernQueryService.ANTI_AGING_LINKED_ID_1)
+                                .concernName(ProductConcernQueryService.ANTI_AGING_NAME)
+                                .build()
+                );
+
+                continue;
+            }
+
+            normalized.putIfAbsent(
+                    concernId,
+                    ConcernFilterDto.builder()
+                            .concernId(concernId)
+                            .concernName(concernName)
+                            .build()
+            );
+        }
+
+        return new ArrayList<>(normalized.values());
     }
 
     public ProductDetailResponse getProductDetail(Long productId, Long userId) {
@@ -239,12 +284,18 @@ public class ProductCatalogService {
                 allergenIngredients.add(nameKo != null ? nameKo : nameEn);
             }
 
+            Integer ewgScore = null;
+            if (ingredient != null && ingredient.getEwgScoreMin() != null && ingredient.getEwgScoreMax() != null) {
+                ewgScore = Math.round((ingredient.getEwgScoreMin() + ingredient.getEwgScoreMax()) / 2.0f);
+            }
+
             ingredients.add(ProductIngredientDetailResponse.builder()
                     .position(i + 1)
                     .nameKo(nameKo)
                     .nameEn(nameEn)
                     .ewgGrade(ewgGrade)
-                    .functions(null)
+                    .ewgScore(ewgScore)
+                    .functions(ingredient != null ? ingredient.getCoosFunctions() : null)
                     .isAllergen(isAllergen)
                     .build());
         }
@@ -276,7 +327,7 @@ public class ProductCatalogService {
                 .productName(product.getName())
                 .description(product.getDescription())
                 .skinTypes(skinTypes)
-                .tags(null)
+                .concerns(productConcernQueryService.resolveConcernsForProduct(productId))
                 .price(product.getPrice())
                 .volume(product.getVolume())
                 .lowCount(lowCount)

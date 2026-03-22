@@ -16,6 +16,9 @@ import lombok.Getter;
 @Schema(description = "마이페이지 내 정보 조회/수정 응답 DTO입니다.")
 public class UserProfileResponse {
 
+    @Schema(description = "사용자 ID", example = "1")
+    private Long userId;
+
     @Schema(description = "사용자 표시 이름", example = "김준")
     private String name;
 

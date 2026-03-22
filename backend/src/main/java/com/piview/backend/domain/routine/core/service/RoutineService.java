@@ -1,6 +1,7 @@
 package com.piview.backend.domain.routine.core.service;
 
 
+import com.piview.backend.domain.product.catalog.service.ProductConcernQueryService;
 import com.piview.backend.domain.routine.core.dto.RoutineDraftDto.*;
 import com.piview.backend.domain.routine.core.dto.RoutineDraftDto.AddDraftItemRequest;
 import com.piview.backend.domain.routine.core.dto.RoutineDraftDto.DraftItemDto;
@@ -44,9 +45,12 @@ public class RoutineService {
   private final ProductLikeRepository productLikeRepository;
   private final RedisDraftService redisDraftService;
 
+  // product의 피부고민을 가져오기 위해서 필요합니다.
+  private final ProductConcernQueryService productConcernQueryService;
+
   // 제품을 루틴(redis)에 추가
   @Transactional(readOnly = true) // DB에서 Product만 조회하므로 readOnly
-  public void addProductToDraft(Long userId, AddDraftItemRequest request) {
+  public List<DraftItemDto> addProductToDraft(Long userId, AddDraftItemRequest request) {
     // 기존 장바구니 리스트 불러오기
     List<DraftItemDto> currentDraft = new ArrayList<>(redisDraftService.getDraftItems(userId));
 
@@ -62,16 +66,20 @@ public class RoutineService {
 
     boolean isLiked = productLikeRepository.findByUserIdAndProductId(userId, product.getProductId()).isPresent();
 
+    // 피부고민을 가져오기 위해서 list를 만들어 줍니다.
+    List<String> concerns = productConcernQueryService.resolveConcernsForProduct(product.getProductId());
+
     // 새로운 DraftItemDto 생성 및 리스트에 추가
     DraftItemDto newItem = new DraftItemDto(
         request.columnId(),
         nextOrder,
-        ProductSummaryResponse.from(product, isLiked)
+        ProductSummaryResponse.from(product, isLiked, concerns)
     );
     currentDraft.add(newItem);
 
     // 업데이트된 리스트를 다시 Redis에 저장
     redisDraftService.saveDraftItems(userId, currentDraft);
+    return currentDraft;
   }
 
   // 루틴 생성 및 저장
@@ -138,13 +146,15 @@ public class RoutineService {
 
   // 메인 루틴 변경
   @Transactional
-  public void setMainRoutine(Long userId, Long targetRoutineId) {
+  public RoutineResponse setMainRoutine(Long userId, Long targetRoutineId) {
     routineRepository.updateIsMainFalseByUserId(userId); // 벌크 연산
 
     MyRoutine targetRoutine = routineRepository.findByIdWithDetails(targetRoutineId)
         .orElseThrow(() -> new CustomException(ErrorCode.ROUTINE_NOT_FOUND));
 
     targetRoutine.changeMainStatus(true);
+
+    return convertToRoutineResponse(targetRoutine, userId);
   }
 
   // 루틴 전체 목록 조회
@@ -180,6 +190,14 @@ public class RoutineService {
   private RoutineResponse convertToRoutineResponse(MyRoutine routine, Long userId) {
     List<Long> likedProductIds = productLikeRepository.findLikedProductIdsByUserId(userId);
 
+    // concern까지 가져오기 위해 추가해야할 칭구들
+    List<Long> routineProductIds = routine.getDetails().stream()
+            .map(detail -> detail.getProduct().getProductId())
+            .distinct()
+            .toList();
+
+    Map<Long, List<String>> concernsByProductId = productConcernQueryService.buildConcernsByProductIds(routineProductIds);
+
     Map<RoutineColumn, List<RoutineDetail>> groupedDetails = routine.getDetails().stream()
         .collect(Collectors.groupingBy(RoutineDetail::getRoutineColumn));
 
@@ -195,7 +213,9 @@ public class RoutineService {
                 return new RoutineProductDto(
                     detail.getId(),
                     detail.getStepOrder(),
-                    ProductSummaryResponse.from(detail.getProduct(), isLiked)
+                    ProductSummaryResponse.from(detail.getProduct(),
+                            isLiked,
+                            concernsByProductId.getOrDefault(detail.getProduct().getProductId(), List.of()))
                 );
               })
               .toList();
@@ -210,7 +230,7 @@ public class RoutineService {
 
   // 루틴 순서 변경
   @Transactional
-  public void updateRoutineOrders(Long userId, Long routineId, RoutineOrderUpdateRequest request) {
+  public RoutineResponse updateRoutineOrders(Long userId, Long routineId, RoutineOrderUpdateRequest request) {
     // 해당 루틴이 본인 소유가 맞는지 검증
     MyRoutine routine = routineRepository.findByIdWithDetails(routineId)
         .orElseThrow(() -> new CustomException(ErrorCode.ROUTINE_NOT_FOUND));
@@ -233,6 +253,7 @@ public class RoutineService {
         detail.updateStepOrder(newOrder);
       }
     });
+    return convertToRoutineResponse(routine, userId);
   }
 
   // 루틴 삭제

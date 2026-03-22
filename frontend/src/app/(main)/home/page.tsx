@@ -4,8 +4,7 @@ import { useEffect } from "react";
 import { Leaf, Sun, Moon, Droplets, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { SKINCARE_INSIGHTS } from "@/constants";
-import { useRoutineStore } from "@/stores";
-import { useUserStore } from "@/stores/useUserStore";
+import { useRoutineStore, useUserStore } from "@/stores";
 import { useUserQuery } from "@/hooks";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
 

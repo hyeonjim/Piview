@@ -6,6 +6,7 @@ import lombok.Builder;
 @Builder
 public record MyCosResponseDto (
     Long id,
+    Long productId,
     String brand,
     String productName,
     String category,

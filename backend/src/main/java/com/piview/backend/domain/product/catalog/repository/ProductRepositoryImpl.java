@@ -5,6 +5,7 @@ import java.util.List;
 import com.piview.backend.domain.product.catalog.dto.ProductSearchCondition;
 import com.piview.backend.domain.product.entity.Product;
 import com.piview.backend.domain.skin.common.SkinTypeEnum;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -19,7 +20,7 @@ import static com.piview.backend.domain.product.entity.QBrand.brand;
 import static com.piview.backend.domain.product.entity.QCategory.category;
 import static com.piview.backend.domain.product.entity.QImage.image;
 import static com.piview.backend.domain.product.entity.QProduct.product;
-import static com.piview.backend.domain.product.entity.QProductTagScore.productTagScore;
+import static com.piview.backend.domain.product.entity.QProductConcernCache.productConcernCache;
 
 @Repository
 @RequiredArgsConstructor
@@ -36,16 +37,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .join(product.image, image).fetchJoin()
             .join(product.category, category).fetchJoin()
             .join(category.bigCategory, bigCategory).fetchJoin()
-            .where(
-                    qContains(condition.getQ()),
-                    categoryEq(condition.getCategoryId()),
-                    bigCategoryEqWhenCategoryNull(condition.getCategoryId(), condition.getBigCategoryId()),
-                    skinTypeEq(condition.getSkinType()),
-                    hasAllTags(condition.getTagIds()),
-                    brandIn(condition.getBrandIds()),
-                    minPriceGoe(condition.getMinPrice()),
-                    maxPriceLoe(condition.getMaxPrice())
-            )
+            .where(buildWhere(condition))
             .orderBy(product.productId.desc())
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize() + 1)
@@ -58,6 +50,33 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     }
 
     return new SliceImpl<>(content, pageable, hasNext);
+  }
+
+  @Override
+  public long count(ProductSearchCondition condition) {
+    Long result = queryFactory
+            .select(product.count())
+            .from(product)
+            .join(product.brand, brand)
+            .join(product.category, category)
+            .join(category.bigCategory, bigCategory)
+            .where(buildWhere(condition))
+            .fetchOne();
+
+    return result != null ? result : 0L;
+  }
+
+  // search(), count()가 동일한 where 조건을 사용하므로 메서드 분리
+  private BooleanBuilder buildWhere(ProductSearchCondition condition) {
+    return new BooleanBuilder()
+            .and(qContains(condition.getQ()))
+            .and(categoryEq(condition.getCategoryId()))
+            .and(bigCategoryEqWhenCategoryNull(condition.getCategoryId(), condition.getBigCategoryId()))
+            .and(skinTypeEq(condition.getSkinType()))
+            .and(hasAllConcerns(condition.getConcernIds()))
+            .and(brandIn(condition.getBrandIds()))
+            .and(minPriceGoe(condition.getMinPrice()))
+            .and(maxPriceLoe(condition.getMaxPrice()));
   }
 
   private BooleanExpression qContains(String q) {
@@ -89,21 +108,20 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .or(product.top2SkinType.eq(skinType));
   }
 
-  private BooleanExpression hasAllTags(List<Long> tagIds) {
-    if (tagIds == null || tagIds.isEmpty()) {
+  private BooleanExpression hasAllConcerns(List<Long> concernIds) {
+    if (concernIds == null || concernIds.isEmpty()) {
       return null;
     }
-    long tagCount = tagIds.size();
+    long concernCount = concernIds.size();
 
     return JPAExpressions
-            .select(productTagScore.tag.tagId.countDistinct())
-            .from(productTagScore)
+            .select(productConcernCache.skinConcernId.countDistinct())
+            .from(productConcernCache)
             .where(
-                    productTagScore.product.eq(product),
-                    productTagScore.isTagged.isTrue(),
-                    productTagScore.tag.tagId.in(tagIds)
+                    productConcernCache.productId.eq(product.productId),
+                    productConcernCache.skinConcernId.in(concernIds)
             )
-            .eq(tagCount);
+            .eq(concernCount);
   }
 
   private BooleanExpression brandIn(List<Long> brandIds) {
