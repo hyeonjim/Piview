@@ -1,5 +1,6 @@
 package com.piview.backend.domain.product.catalog.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.piview.backend.domain.product.entity.Product;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,10 +21,16 @@ public class ProductSummaryResponse {
     private String categoryName;
     private String imageUrl;
     private List<String> skinTypes;
-    private List<String> tags;
+
+    @JsonProperty("tags")
+    private List<String> concerns;
     private boolean isLiked;
 
     public static ProductSummaryResponse from(Product product, boolean isLiked) {
+        return from(product, isLiked, List.of());
+    }
+
+    public static ProductSummaryResponse from(Product product, boolean isLiked, List<String> concerns) {
 
         List<String> skinTypes = new ArrayList<>();
 
@@ -42,7 +49,7 @@ public class ProductSummaryResponse {
                 .categoryName(product.getCategory() != null ? product.getCategory().getCategoryName() : null)
                 .imageUrl(product.getImage() != null ? product.getImage().getUrl() : null)
                 .skinTypes(skinTypes)
-                .tags(null)     // 태그 파이프라인 미구현 -> null 고정(추후 추가 예정)
+                .concerns(concerns)     // 태그 파이프라인 미구현 -> null 고정(추후 추가 예정)
                 .isLiked(isLiked)
                 .build();
 

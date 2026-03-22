@@ -19,6 +19,8 @@ public enum ErrorCode {
     INVALID_SKIN_PROBLEMS(HttpStatus.BAD_REQUEST, "피부 고민 목록 값이 올바르지 않습니다."),
     ROUTINE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "루틴은 최대 6개까지만 생성할 수 있습니다."),
     EMPTY_ROUTINE_DRAFT(HttpStatus.BAD_REQUEST, "루틴에 추가된 제품이 없습니다."),
+    PRODUCT_COMPARE_REQUIRES_TWO_IDS(HttpStatus.BAD_REQUEST, "비교할 상품 ID는 정확히 2개여야 합니다."),
+    PRODUCT_COMPARE_DUPLICATE_IDS(HttpStatus.BAD_REQUEST, "비교할 상품 ID는 서로 달라야 합니다."),
 
     // 403 FORBIDDEN
     UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "본인의 화장품 목록만 접근 및 삭제할 수 있습니다."),
