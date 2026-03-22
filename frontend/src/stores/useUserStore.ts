@@ -84,7 +84,7 @@ export const useUserStore = create<UserStore>((set) => ({
       user: state.user
         ? {
             ...state.user,
-            gender: state.user.gender === "men" ? "women" : "men",
+            gender: state.user.gender === "MEN" ? "WOMEN" : "MEN",
           }
         : null,
     })),

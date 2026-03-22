@@ -39,6 +39,6 @@ export interface SurveySubmitRequest {
 // 응답
 export interface SurveySubmitResponse {
   analysisId: string;
-  mySkinType: "DRY" | "OILY" | "COMBINATION" | "DEHYDRATED_OILY";
+  mySkinType: "dry" | "oily" | "combination" | "subuji";
   skinProblems: string[];
 }

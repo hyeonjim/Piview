@@ -7,9 +7,8 @@ import { useMyCosQuery, useAddMyCos, useRemoveMyCos } from "@/hooks";
 import { useRoutineStore } from "@/stores";
 import { useLike, useLikedProducts, useCompare } from "@/hooks";
 import ProductCard from "@/components/common/ProductCard";
-import CompareModal, {
-  type CompareProduct,
-} from "@/components/common/CompareModal";
+import CompareModal from "@/components/common/CompareModal";
+import type { ProductViewModel } from "@/types/product/myCos";
 import { Pagination } from "@/components/common/Pagination";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
 import { PAGE_SIZE } from "@/constants/pagination";
@@ -54,7 +53,7 @@ export default function LikesPage() {
     openCompare,
     closeCompare,
     canCompare,
-  } = useCompare<CompareProduct>();
+  } = useCompare<ProductViewModel>();
 
   const handleAddRoutine = (productId: string) => {
     if (isInRoutine(productId)) return;
@@ -81,7 +80,7 @@ export default function LikesPage() {
     });
   };
 
-  const handleToggleCompare = (product: CompareProduct) => {
+  const handleToggleCompare = (product: ProductViewModel) => {
     const isAlreadySelected = compareItems.some(
       (item) => item.id === product.id,
     );
@@ -93,7 +92,7 @@ export default function LikesPage() {
     <div className="flex-1 bg-[var(--color-bg-base)]">
       {showCompare && canCompare && (
         <CompareModal
-          compareItems={compareItems as [CompareProduct, CompareProduct]}
+          compareItems={compareItems as [ProductViewModel, ProductViewModel]}
           onClose={closeCompare}
         />
       )}
@@ -146,13 +145,14 @@ export default function LikesPage() {
                   isOwned={isOwned(productId)}
                   onToggleOwned={() => handleToggleOwned(productId)}
                   isInCompare={compareItems.some(
-                    (item) => item.id === productId,
+                    (item) => item.id === product.productId,
                   )}
                   onToggleCompare={() =>
                     handleToggleCompare({
-                      id: productId,
+                      id: product.productId,
                       name: product.name ?? "",
                       brand: product.brandName ?? "",
+                      imageUrl: product.imageUrl,
                       emoji: "🧴",
                       skinTypes: product.skinTypes,
                       effects: product.tags ?? [],

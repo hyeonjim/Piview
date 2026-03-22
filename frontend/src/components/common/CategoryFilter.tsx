@@ -9,10 +9,7 @@ import type { BigCategoryFilterDto } from "@/types/product";
 interface CategoryFilterProps {
   selectedBigCategoryId: number | null;
   selectedCategoryId: number | null;
-  onBigCategorySelect: (
-    bigCategoryId: number | null,
-    bigCategoryName: string | null,
-  ) => void;
+  onBigCategorySelect: (bigCategoryId: number | null) => void;
   onCategorySelect: (categoryId: number | null) => void;
 }
 
@@ -30,7 +27,7 @@ export function CategoryFilter({
     if (bigCategories.length > 0 && selectedBigCategoryId === null) {
       const firstBig = bigCategories[0];
       const firstCat = firstBig.categories[0] ?? null;
-      onBigCategorySelect(firstBig.bigCategoryId, firstBig.bigCategoryName);
+      onBigCategorySelect(firstBig.bigCategoryId);
       onCategorySelect(firstCat?.categoryId ?? null);
     }
   }, [bigCategories.length]);
@@ -66,10 +63,7 @@ export function CategoryFilter({
                   onClick={() => {
                     if (!isActive) {
                       const firstCat = big.categories[0] ?? null;
-                      onBigCategorySelect(
-                        big.bigCategoryId,
-                        big.bigCategoryName,
-                      );
+                      onBigCategorySelect(big.bigCategoryId);
                       onCategorySelect(firstCat?.categoryId ?? null);
                     }
                   }}

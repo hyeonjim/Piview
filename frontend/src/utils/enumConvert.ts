@@ -2,32 +2,15 @@
  * utils/enumConvert.ts
  * 프론트 ↔ 백엔드 enum 변환 유틸
  *
- * 프론트: "men" | "건성" | "20" 등 한글/소문자
- * 백엔드: "MEN" | "DRY" | "TWENTIES" 등 대문자 enum
+ * SkinType: 한글 ("건성") ↔ 백엔드 ("dry" | "DRY")
+ * Gender/AgeGroup: 백엔드 형식 그대로 사용 ("MEN" | "WOMEN", "TEENS" | "TWENTIES" 등)
  *
  * ⚠️ API 연동 전 반드시 이 유틸을 먼저 작성할 것 (모든 연동의 선행 조건)
  */
 
-import type { Gender, AgeGroup, SkinType } from "@/types/user";
+import type { SkinType } from "@/types/user";
 
 // ── 프론트 → 백엔드 ──────────────────────────────────────────────
-
-/** "men" | "women" → "MEN" | "WOMEN" */
-export const toGenderEnum = (gender: Gender): "MEN" | "WOMEN" =>
-  gender === "men" ? "MEN" : "WOMEN";
-
-/** "10" | "20" | "30" | "40" → "TEENS" | "TWENTIES" | "THIRTIES" | "FORTIES_PLUS" */
-export const toAgeGroupEnum = (
-  age: AgeGroup,
-): "TEENS" | "TWENTIES" | "THIRTIES" | "FORTIES_PLUS" => {
-  const map = {
-    "10": "TEENS",
-    "20": "TWENTIES",
-    "30": "THIRTIES",
-    "40": "FORTIES_PLUS",
-  } as const;
-  return map[age];
-};
 
 /** "건성" | "지성" | "복합성" | "수부지" → "dry" | "oily" | "combination" | "subuji"
  *  GET /products skinType 파라미터용 (소문자)

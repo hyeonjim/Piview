@@ -12,7 +12,6 @@ import {
 import { useSurveyStore } from "@/stores";
 import { useSurveySubmit } from "@/hooks";
 
-import { toGenderEnum, toAgeGroupEnum } from "@/utils/enumConvert";
 import type { SurveySubmitRequest } from "@/types/user";
 import type { AgeGroup, Gender } from "@/types/user";
 
@@ -49,13 +48,13 @@ const NEXT_BTN_BASE = { borderRadius: "20px", fontSize: "15px" };
 /** 전체 질문 수 */
 const TOTAL_QUESTIONS = 8;
 
-function getQuestionByNumber(number: number, gender: "women" | "men") {
+function getQuestionByNumber(number: number, gender: "WOMEN" | "MEN") {
   if (number === 1) return GENDER_QUESTION;
   if (number === 2) return COMMON_QUESTIONS[0];
   if (number === 3) return COMMON_QUESTIONS[1];
   if (number === 4) return COMMON_QUESTIONS[2];
   if (number >= 5 && number <= 7) {
-    const genderQuestions = gender === "men" ? MEN_QUESTIONS : WOMEN_QUESTIONS;
+    const genderQuestions = gender === "MEN" ? MEN_QUESTIONS : WOMEN_QUESTIONS;
     return genderQuestions[number - 5];
   }
   if (number === 8) return ALLERGY_QUESTION;
@@ -69,13 +68,13 @@ function getQuestionByNumber(number: number, gender: "women" | "men") {
 function valueToOption(
   questionId: number,
   value: string,
-  gender: "women" | "men",
+  gender: "WOMEN" | "MEN",
 ): "A" | "B" | "C" | "D" {
   let options: { value: string }[] = [];
   if (questionId === 1) options = COMMON_QUESTIONS[1].options;
   else if (questionId === 2) options = COMMON_QUESTIONS[2].options;
   else if (questionId === 3)
-    options = (gender === "men" ? MEN_QUESTIONS : WOMEN_QUESTIONS)[0].options;
+    options = (gender === "MEN" ? MEN_QUESTIONS : WOMEN_QUESTIONS)[0].options;
   else if (questionId === 6) options = ALLERGY_QUESTION.options;
   const idx = options.findIndex((o) => o.value === value);
   return (["A", "B", "C", "D"][idx] ?? "A") as "A" | "B" | "C" | "D";
@@ -84,12 +83,12 @@ function valueToOption(
 /** ageGroup 값 → AgeGroup enum */
 function valueToAgeGroup(value: string): AgeGroup {
   const map: Record<string, AgeGroup> = {
-    "10s": "10",
-    "20s": "20",
-    "30s": "30",
-    "40s+": "40",
+    "TEENS": "TEENS",
+    "TWENTIES": "TWENTIES",
+    "THIRTIES": "THIRTIES",
+    "FORTIES_PLUS": "FORTIES_PLUS",
   };
-  return map[value] ?? "20";
+  return map[value] ?? "TWENTIES";
 }
 
 /** 피부 고민(id:5) 답변 → skinProblems 배열 */
@@ -126,8 +125,8 @@ export default function SurveyPage({
   const selectAnswer = useCallback(
     (value: string) => {
       setAnswer(question.id, value);
-      if (question.id === -1 && (value === "men" || value === "women")) {
-        setGender(value as "women" | "men");
+      if (question.id === -1 && (value === "MEN" || value === "WOMEN")) {
+        setGender(value as "WOMEN" | "MEN");
       }
     },
     [question.id, setAnswer, setGender],
@@ -145,8 +144,8 @@ export default function SurveyPage({
 
       // ── POST /skin/surveys 요청 body 조립 ──
       const request: SurveySubmitRequest = {
-        gender: toGenderEnum((answers[-1] as Gender) ?? gender),
-        ageGroup: toAgeGroupEnum(valueToAgeGroup(answers[0])),
+        gender: (answers[-1] as Gender) ?? gender,
+        ageGroup: valueToAgeGroup(answers[0]),
         question3: valueToOption(1, answers[1], gender),
         question4: valueToOption(2, answers[2], gender),
         question5: valueToOption(3, answers[3], gender),
@@ -203,7 +202,7 @@ export default function SurveyPage({
         <p className="text-text-muted" style={CATEGORY_TEXT_STYLE}>
           {isGender
             ? "맞춤 진단 시작"
-            : gender === "men"
+            : gender === "MEN"
               ? "남성 맞춤 진단"
               : "여성 맞춤 진단"}
         </p>

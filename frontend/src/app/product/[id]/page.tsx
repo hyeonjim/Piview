@@ -24,9 +24,8 @@ import {
 } from "@/hooks";
 import { getEwgColor } from "@/constants/categoryColors";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
-import CompareModal, {
-  type CompareProduct,
-} from "@/components/common/CompareModal";
+import CompareModal from "@/components/common/CompareModal";
+import type { ProductViewModel } from "@/types/product/myCos";
 import { useRoutineStore } from "@/stores";
 
 function AllergenIcon() {
@@ -101,11 +100,12 @@ function ProductDetailInner() {
     ? allRoutineProducts.filter((p) => p.category === productData.categoryName)
     : [];
 
-  const currentProductAsCompare: CompareProduct | null = productData
+  const currentProductAsCompare: ProductViewModel | null = productData
     ? {
-        id: String(productData.productId),
+        id: productData.productId,
         name: productData.productName ?? "",
         brand: productData.brandName ?? "",
+        imageUrl: productData.imageUrl,
         emoji: "🧴",
         price: productData.price ?? undefined,
         skinTypes: productData.skinTypes,
@@ -116,12 +116,13 @@ function ProductDetailInner() {
       }
     : null;
 
-  const selectedRoutineCompare: CompareProduct | null =
+  const selectedRoutineCompare: ProductViewModel | null =
     sameCategoryRoutineProducts.length > 0
       ? {
-          id: sameCategoryRoutineProducts[selectedRoutineProductIndex].id,
+          id: Number(sameCategoryRoutineProducts[selectedRoutineProductIndex].id),
           name: sameCategoryRoutineProducts[selectedRoutineProductIndex].name,
           brand: sameCategoryRoutineProducts[selectedRoutineProductIndex].brand,
+          imageUrl: sameCategoryRoutineProducts[selectedRoutineProductIndex].imageUrl ?? null,
           emoji: sameCategoryRoutineProducts[selectedRoutineProductIndex].emoji,
           price: sameCategoryRoutineProducts[selectedRoutineProductIndex].price,
           skinTypes:
