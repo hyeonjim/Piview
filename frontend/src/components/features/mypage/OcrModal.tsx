@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { X, Camera, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useOcr, useProductDetail } from "@/hooks";
+import { fromSkinTypeEnum } from "@/utils/enumConvert";
 import ProductCard from "@/components/common/ProductCard";
 import { useRoutineStore } from "@/stores";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
@@ -61,7 +62,7 @@ export default function OcrModal({ onClose }: OcrModalProps) {
       name: product.productName ?? "",
       category: product.categoryName ?? "",
       emoji: "🧴",
-      skinTypes: product.skinTypes ?? [],
+      skinTypes: (product.skinTypes ?? []).map(fromSkinTypeEnum),
       effects: product.tags ?? [],
       matchScore: 0,
       imageUrl: product.imageUrl ?? undefined,
