@@ -1,9 +1,13 @@
 import BottomNav from "@/components/layout/BottomNav";
 
-export default function MainLayout({ children }: { children: React.ReactNode }) {
+export default function MainLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <>
-      <main className="flex-1 flex flex-col pb-14">{children}</main>
+      <main className="flex-1 flex flex-col pb-nav">{children}</main>
       <BottomNav />
     </>
   );

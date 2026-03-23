@@ -2,34 +2,43 @@
 
 import { Heart } from "lucide-react";
 
-import { useOwnedStore } from "@/stores/useOwnedStore";
-import { useRoutineStore } from "@/stores";
-import { useLike, useCompare } from "@/hooks";
+import { useMyCosQuery, useAddMyCos, useRemoveMyCos } from "@/hooks";
+import { useLike, useLikedProducts, useCompare } from "@/hooks";
+import { useLikeStore } from "@/stores";
 import ProductCard from "@/components/common/ProductCard";
-import CompareModal, {
-  type CompareProduct,
-} from "@/components/common/CompareModal";
-import { MOCK_SEARCH_PRODUCTS } from "@/constants/_mock/searchProducts";
-import { ROUTINE_STEPS } from "@/constants/routineSteps";
+import CompareModal from "@/components/common/CompareModal";
+import type { ProductViewModel } from "@/types/product/myCos";
+import { Pagination } from "@/components/common/Pagination";
+import { PAGE_SIZE } from "@/constants/pagination";
 
 export default function LikesPage() {
-  const { likeList: likedIds } = useLike();
-  // ⚠️ API 연동 시 서버 fetch로 교체
-  const likedProducts = MOCK_SEARCH_PRODUCTS.filter((p) => likedIds[p.id]);
+  const { page, setPage } = useLikeStore();
+  const { data: likedProducts = [], isLoading } = useLikedProducts();
 
-  // 루틴 상태 — 전역 store (상세 페이지와 동기화)
-  const routineMap = useRoutineStore((state) => state.localRoutine);
-  const addStepProduct = useRoutineStore((state) => state.addStepProduct);
-  const isInRoutine = (productId: string) =>
-    Object.values(routineMap)
-      .flat()
-      .filter(Boolean)
-      .some((p) => p.id === productId);
+  // 페이지네이션 — 프론트에서 slice
+  const totalPages = Math.ceil(likedProducts.length / PAGE_SIZE) || 1;
+  const pagedProducts = likedProducts.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE,
+  );
 
-  // 보유 상태 — 전역 store로 검색/추천 페이지와 공유
-  const { toggleOwned, ownedProducts } = useOwnedStore();
-  const isOwned = (id: string) => ownedProducts.some((p) => p.id === id);
+  // 보유 상태 — API 연동
+  const { data: myCosData = [] } = useMyCosQuery();
+  const { mutate: addMyCos } = useAddMyCos();
+  const { mutate: removeMyCos } = useRemoveMyCos();
 
+  const isOwned = (productId: number) =>
+    myCosData.some((item) => (item.productId ?? item.id) === productId);
+
+  const handleToggleOwned = (productId: number) => {
+    const owned = myCosData.find(
+      (item) => (item.productId ?? item.id) === productId,
+    );
+    if (owned) removeMyCos(owned.id);
+    else addMyCos(productId);
+  };
+
+  // 비교 모달
   const {
     compareItems,
     showCompare,
@@ -37,32 +46,10 @@ export default function LikesPage() {
     openCompare,
     closeCompare,
     canCompare,
-  } = useCompare<CompareProduct>();
+  } = useCompare<ProductViewModel>();
 
-  const handleAddRoutine = (productId: string) => {
-    if (isInRoutine(productId)) return;
-    const product = likedProducts.find((p) => p.id === productId);
-    if (!product) return;
-    const matchedStep = ROUTINE_STEPS.find((step) =>
-      step.categories.includes(product.category),
-    );
-    addStepProduct(matchedStep?.code ?? "PR", {
-      id: product.id,
-      brand: product.brand,
-      name: product.name,
-      category: product.category,
-      emoji: product.emoji,
-      skinTypes: product.skinTypes,
-      effects: product.effects,
-      matchScore: product.matchScore,
-      price: product.price,
-      ewgSafe: product.ewgSafe,
-      ewgCaution: product.ewgCaution,
-      ewgDanger: product.ewgDanger,
-    });
-  };
-
-  const handleToggleCompare = (product: CompareProduct) => {
+  // 비교 토글 핸들러 — 2개 선택 시 모달 자동 오픈
+  const handleToggleCompare = (product: ProductViewModel) => {
     const isAlreadySelected = compareItems.some(
       (item) => item.id === product.id,
     );
@@ -71,118 +58,98 @@ export default function LikesPage() {
   };
 
   return (
-    <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
+    <div className="flex-1 bg-[var(--color-bg-base)]">
       {showCompare && canCompare && (
         <CompareModal
-          compareItems={compareItems as [CompareProduct, CompareProduct]}
+          compareItems={compareItems as [ProductViewModel, ProductViewModel]}
           onClose={closeCompare}
         />
       )}
 
       {/* 헤더 */}
-      <div style={{ backgroundColor: "#F5F2EC", padding: "15px 20px 16px" }}>
-        <h1
-          style={{
-            margin: "3px 0 0",
-            fontSize: "22px",
-            fontWeight: 700,
-            color: "#2A2118",
-            letterSpacing: "-0.4px",
-          }}
-        >
-          찜한 제품
+      <div className="bg-[var(--color-bg-base)] px-5 pt-[15px] pb-4">
+        <h1 className="mt-[3px] text-[22px] font-bold text-[var(--color-text-primary)] tracking-[-0.4px]">
+          Liked
         </h1>
         {likedProducts.length > 0 && (
-          <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#BFB6AA" }}>
+          <p className="mt-0.5 text-[12px] text-[var(--color-text-faint)]">
             {likedProducts.length}개 저장됨
           </p>
         )}
       </div>
 
-      <div style={{ padding: "16px 16px 24px" }}>
-        {likedProducts.length === 0 ? (
-          <div
-            className="flex flex-col items-center justify-center"
-            style={{
-              backgroundColor: "#FFFFFF",
-              borderRadius: "12px",
-              border: "1px solid #E2DDD8",
-              padding: "48px 20px",
-              marginTop: "8px",
-            }}
-          >
+      <div className="px-4 pb-6 pt-0">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12 px-5">
+            <p className="text-[14px] text-[var(--color-text-muted)]">
+              불러오는 중...
+            </p>
+          </div>
+        ) : likedProducts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] px-5 py-12 mt-2">
             <Heart
               size={32}
-              style={{ color: "#D9D5D0", marginBottom: "12px" }}
+              className="text-[var(--color-text-disabled)] mb-3"
             />
-            <p
-              style={{
-                margin: 0,
-                fontSize: "14px",
-                fontWeight: 600,
-                color: "#A69D92",
-              }}
-            >
+            <p className="m-0 text-[14px] font-semibold text-[var(--color-text-muted)]">
               찜한 제품이 없어요
             </p>
-            <p
-              style={{
-                margin: "6px 0 0",
-                fontSize: "12px",
-                color: "#BFB6AA",
-                textAlign: "center",
-              }}
-            >
+            <p className="mt-1.5 mb-0 text-[12px] text-[var(--color-text-faint)] text-center">
               마음에 드는 제품을 찜해보세요
             </p>
           </div>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "24px",
-              alignItems: "start",
-            }}
-          >
-            {likedProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                brand={product.brand}
-                name={product.name}
-                category={product.category}
-                emoji={product.emoji}
-                skinTypes={product.skinTypes}
-                effects={product.effects}
-                layout="grid"
-                showActions={true}
-                inRoutine={isInRoutine(product.id)}
-                onAddRoutine={() => handleAddRoutine(product.id)}
-                isOwned={isOwned(product.id)}
-                onToggleOwned={() => toggleOwned(product)}
-                isInCompare={compareItems.some(
-                  (item) => item.id === product.id,
-                )}
-                onToggleCompare={() =>
-                  handleToggleCompare({
-                    id: product.id,
-                    name: product.name,
-                    brand: product.brand,
-                    emoji: product.emoji,
-                    price: product.price,
-                    skinTypes: product.skinTypes,
-                    effects: product.effects,
-                    ewgSafe: product.ewgSafe,
-                    ewgCaution: product.ewgCaution,
-                    ewgDanger: product.ewgDanger,
-                  })
-                }
-              />
-            ))}
+          <div className="grid grid-cols-2 gap-6 items-start">
+            {pagedProducts.map((product) => {
+              const productId = product.productId;
+              return (
+                <ProductCard
+                  key={productId}
+                  id={productId}
+                  brand={product.brandName ?? ""}
+                  name={product.name ?? ""}
+                  category={product.categoryName ?? ""}
+                  imageUrl={product.imageUrl ?? undefined}
+                  skinTypes={product.skinTypes}
+                  effects={product.tags ?? []}
+                  layout="grid"
+                  showActions={true}
+                  isOwned={isOwned(productId)}
+                  onToggleOwned={() => handleToggleOwned(productId)}
+                  isInCompare={compareItems.some(
+                    (item) => item.id === productId,
+                  )}
+                  onToggleCompare={() =>
+                    handleToggleCompare({
+                      id: productId,
+                      name: product.name ?? "",
+                      brand: product.brandName ?? "",
+                      imageUrl: product.imageUrl,
+                      emoji: "🧴",
+                      skinTypes: product.skinTypes,
+                      effects: product.tags ?? [],
+                      ewgSafe: 0,
+                      ewgCaution: 0,
+                      ewgDanger: 0,
+                    })
+                  }
+                />
+              );
+            })}
           </div>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onChange={(p) => {
+            setPage(p);
+            window.scrollTo(0, 0);
+          }}
+        />
+      )}
     </div>
   );
 }

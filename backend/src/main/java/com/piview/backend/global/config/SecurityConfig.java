@@ -112,9 +112,6 @@ public class SecurityConfig {
     // Authorization 헤더 노출 추가
     configuration.setExposedHeaders(List.of("Set-Cookie", "Authorization"));
 
-    // 프론트엔드가 쿠키만 읽을 수 있게 Set-Cookie만 남기기
-    configuration.setExposedHeaders(List.of("Set-Cookie"));
-
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
     return source;

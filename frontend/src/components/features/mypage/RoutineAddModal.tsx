@@ -3,15 +3,6 @@
 // ── 스타일 상수 ──────────────────────────────────────────────────────
 const SEARCH_INPUT_PADDING_CLEAR = 36;
 const SEARCH_INPUT_PADDING_DEFAULT = 12;
-const MODAL_CATEGORY_CHIP_BASE = {
-  height: "32px",
-  padding: "0 14px",
-  borderRadius: "20px",
-  fontSize: "13px",
-  cursor: "pointer",
-  border: "none",
-  whiteSpace: "nowrap" as const,
-};
 const MODAL_ACTION_ICON_BTN = {
   width: "36px",
   height: "36px",
@@ -20,80 +11,93 @@ const MODAL_ACTION_ICON_BTN = {
   backgroundColor: "white",
   cursor: "pointer",
 };
-// 스텝별 카테고리 필터 칩 — SR(세럼/에센스), LT(로션/에멀전)는 카테고리 단일이라 칩 없음
-const STEP_CATEGORY_CHIPS: Record<string, string[]> = {
-  CL: ["폼", "오일", "밤", "젤", "워터", "로션"],
-  PR: ["토너", "미스트", "패드"],
-  SR: [],
-  LT: [],
-  CR: ["크림", "오일", "아이크림"],
-  SC: ["스틱", "스프레이"],
-};
 
-import { useState, useMemo } from "react";
-import { X, Search, Package, Heart, GitCompare } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { X, Search, Package, Heart, GitCompare, Loader2 } from "lucide-react";
 import {
-  SKIN_FUNCTION_COLORS,
   SKIN_TYPE_TAG_COLORS,
+  CATEGORY_COLORS,
 } from "@/constants/categoryColors";
-import { MYPAGE_ROUTINE_STEPS, ROUTINE_STEPS } from "@/constants/routineSteps";
-import { STEP_PRODUCTS } from "@/constants/_mock/mypageProducts";
-import type { LocalProduct } from "@/stores";
+import { getRoutineSteps } from "@/constants/routineSteps";
+import { useProductSearch, useProductFilters } from "@/hooks";
+import { useUserStore, selectGender } from "@/stores";
+import { getCategoryDisplayName } from "@/utils/format";
+import type { MappedProduct } from "@/utils/productMapper";
 
 interface RoutineAddModalProps {
+  /** 현재 열린 스텝 코드 (CL, PR, SR ...) */
   openStep: string;
-  routine: Record<string, LocalProduct[]>;
+  /** 현재 draft에 담긴 productId 목록 — 중복 추가 방지용 */
+  draftProductIds: number[];
+  /** columnId — POST /api/v1/routines/draft 요청에 사용 */
+  columnId: number;
   onClose: () => void;
-  onAdd: (product: LocalProduct) => void;
+  /** 선택된 제품의 productId를 전달 — page.tsx에서 draft API 호출 */
+  onAdd: (productId: number) => void;
 }
 
 export default function RoutineAddModal({
   openStep,
-  routine,
+  draftProductIds,
   onClose,
   onAdd,
 }: RoutineAddModalProps) {
-  const [addSearch, setAddSearch] = useState("");
-  const [isPiview, setIsPiview] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
 
-  const currentLabel =
-    MYPAGE_ROUTINE_STEPS.find((step) => step.code === openStep)?.label ?? "";
+  // 성별에 따른 루틴 스텝 가져오기
+  const currentGender = useUserStore(selectGender);
+  const routineSteps = getRoutineSteps(currentGender);
 
-  // 스텝에 해당하는 카테고리 제품 필터링
-  const modalProducts = useMemo(() => {
-    const cats =
-      ROUTINE_STEPS.find((step) => step.code === openStep)?.categories ?? [];
-    return STEP_PRODUCTS.filter((product) =>
-      cats.some(
-        (category) =>
-          product.category === category || product.category.includes(category),
-      ),
+  // 현재 루틴 단계 정보
+  const currentStep = routineSteps.find((step) => step.code === openStep);
+  const currentLabel = currentStep?.label ?? "";
+  const stepCategories = currentStep?.categories ?? [];
+
+  // 카테고리 필터 메타데이터 가져오기
+  const { data: filterMeta } = useProductFilters();
+  const bigCategories = filterMeta?.bigCategories ?? [];
+
+  // 현재 루틴 단계의 카테고리들을 API 메타데이터와 매칭하여 ID 포함한 정보로 변환
+  const availableCategories = useMemo(() => {
+    if (!filterMeta || stepCategories.length === 0) return [];
+
+    const allSubCategories = bigCategories.flatMap((bc) =>
+      bc.categories.map((cat) => ({
+        ...cat,
+        bigCategoryId: bc.bigCategoryId,
+      }))
     );
-  }, [openStep]);
 
-  // 선택된 카테고리 칩으로 필터링
-  const categoryFilteredProducts = useMemo(() => {
-    if (!selectedCategory) return modalProducts;
-    return modalProducts.filter((product) =>
-      product.category.includes(selectedCategory),
-    );
-  }, [modalProducts, selectedCategory]);
+    return stepCategories
+      .map((categoryName) => {
+        // 정확히 일치하는 카테고리 찾기
+        return allSubCategories.find((cat) => cat.categoryName === categoryName);
+      })
+      .filter((cat): cat is NonNullable<typeof cat> => cat !== undefined);
+  }, [filterMeta, stepCategories, bigCategories]);
 
-  // 검색 + 피뷰추천 필터 적용
-  const displayProducts = useMemo(() => {
-    let list = categoryFilteredProducts;
-    if (addSearch) {
-      const keyword = addSearch.toLowerCase();
-      list = list.filter(
-        (product) =>
-          product.name.toLowerCase().includes(keyword) ||
-          product.brand.toLowerCase().includes(keyword),
-      );
+  // 모달이 열릴 때 첫 번째 카테고리 자동 선택
+  useEffect(() => {
+    if (availableCategories.length > 0) {
+      setSelectedCategoryId(availableCategories[0].categoryId);
     }
-    const sorted = [...list].sort((a, b) => b.matchScore - a.matchScore);
-    return isPiview ? sorted.slice(0, 5) : sorted;
-  }, [categoryFilteredProducts, addSearch, isPiview]);
+  }, [availableCategories]);
+
+  // 실제 제품 검색 API 연동
+  // 검색어와 카테고리 ID로 필터링
+  const selectedCategory = availableCategories.find(
+    (cat) => cat.categoryId === selectedCategoryId
+  );
+
+  const searchParams = useMemo(() => ({
+    q: searchQuery || undefined,
+    bigCategoryId: selectedCategory?.bigCategoryId ?? undefined,
+    categoryId: selectedCategoryId ?? undefined,
+    size: 20,
+  }), [searchQuery, selectedCategory, selectedCategoryId]);
+
+  const { products, isLoading } = useProductSearch(searchParams);
 
   return (
     <>
@@ -110,24 +114,12 @@ export default function RoutineAddModal({
               <h3 className="text-base font-bold text-text-primary">
                 {currentLabel} 선택
               </h3>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setIsPiview((prev) => !prev)}
-                  className={`flex items-center gap-1 cursor-pointer transition-all active:scale-95 px-3 py-[5px] rounded-[20px] text-xs font-semibold ${
-                    isPiview
-                      ? "bg-brand text-white border-none"
-                      : "bg-white text-brand border border-brand"
-                  }`}
-                >
-                  ☆ 피뷰추천
-                </button>
-                <button
-                  onClick={onClose}
-                  className="flex items-center justify-center w-7 h-7 rounded-full bg-[var(--color-bg-muted-warm)] border-none cursor-pointer"
-                >
-                  <X size={14} color="#888" />
-                </button>
-              </div>
+              <button
+                onClick={onClose}
+                className="flex items-center justify-center w-7 h-7 rounded-full bg-[var(--color-bg-muted-warm)] border-none cursor-pointer"
+              >
+                <X size={14} color="#888" />
+              </button>
             </div>
 
             {/* 검색바 */}
@@ -139,19 +131,19 @@ export default function RoutineAddModal({
               />
               <input
                 type="text"
-                value={addSearch}
-                onChange={(e) => setAddSearch(e.target.value)}
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="제품명 또는 브랜드 검색"
                 className="w-full h-10 pl-9 pr-3 rounded-xl border border-border-warm bg-[#FAF8F5] text-xs text-[#2A2A2A] outline-none"
                 style={{
-                  paddingRight: addSearch
+                  paddingRight: searchQuery
                     ? SEARCH_INPUT_PADDING_CLEAR
                     : SEARCH_INPUT_PADDING_DEFAULT,
                 }}
               />
-              {addSearch && (
+              {searchQuery && (
                 <button
-                  onClick={() => setAddSearch("")}
+                  onClick={() => setSearchQuery("")}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-border-warm border-none cursor-pointer"
                 >
                   <X size={12} color="#888" />
@@ -159,174 +151,180 @@ export default function RoutineAddModal({
               )}
             </div>
 
-            {/* 카테고리 필터 칩 — SR/LT는 칩 없음 */}
-            {STEP_CATEGORY_CHIPS[openStep]?.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto pb-1 mb-3 scrollbar-hide">
-                {STEP_CATEGORY_CHIPS[openStep].map((chip) => (
-                  <button
-                    key={chip}
-                    onClick={() =>
-                      setSelectedCategory((prev) =>
-                        prev === chip ? null : chip,
-                      )
-                    }
-                    style={{
-                      ...MODAL_CATEGORY_CHIP_BASE,
-                      backgroundColor:
-                        selectedCategory === chip
-                          ? "var(--color-brand)"
-                          : "var(--color-chip-base)",
-                      color:
-                        selectedCategory === chip
-                          ? "white"
-                          : "var(--color-text-secondary)",
-                      fontWeight: selectedCategory === chip ? 600 : 400,
-                    }}
-                  >
-                    {chip}
-                  </button>
-                ))}
+            {/* 카테고리 필터 - 현재 루틴 단계의 소분류만 표시 */}
+            {availableCategories.length > 0 && (
+              <div className="flex flex-wrap gap-2 p-[10px_0px] min-h-[52px] mb-2">
+                {availableCategories.map((cat) => {
+                  const isActive = selectedCategoryId === cat.categoryId;
+                  const catColor = CATEGORY_COLORS[cat.categoryName];
+                  return (
+                    <button
+                      key={cat.categoryId}
+                      onClick={() => {
+                        if (!isActive) setSelectedCategoryId(cat.categoryId);
+                      }}
+                      className="category-pill-button"
+                      data-active={isActive}
+                      data-has-color={!!catColor}
+                      style={
+                        !isActive && catColor
+                          ? ({
+                              "--pill-bg": catColor.chip,
+                              "--pill-color": catColor.accent,
+                              "--pill-border": catColor.border,
+                            } as React.CSSProperties)
+                          : undefined
+                      }
+                    >
+                      {getCategoryDisplayName(cat.categoryName)}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
-            {/* 제품 목록 */}
-            {displayProducts.length === 0 ? (
+            {/* 로딩 상태 */}
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-10 gap-2 text-text-muted">
+                <Loader2 size={24} className="animate-spin opacity-50" />
+                <p className="text-xs">제품을 불러오는 중...</p>
+              </div>
+            ) : products.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-[var(--color-text-stone)]">
                 <Package size={32} className="mb-2 opacity-50" />
-                <p className="text-xs">해당 카테고리에 제품이 없습니다</p>
+                <p className="text-xs">검색 결과가 없습니다</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {displayProducts.map((product) => {
-                  // ⚠️ API 연동 시 서버 루틴 상태로 교체
-                  const isAdded =
-                    routine[openStep]?.some((p) => p.id === product.id) ?? false;
-                  return (
-                    <div
-                      key={product.id}
-                      className="rounded-[14px] p-4 border"
-                      style={{
-                        borderColor: isAdded
-                          ? "var(--color-brand-light)"
-                          : "var(--color-border-warm)",
-                        backgroundColor: isAdded
-                          ? "var(--color-brand-bg)"
-                          : "white",
-                      }}
-                    >
-                      {/* 제품 정보 행 */}
-                      <div className="flex gap-3">
-                        {/* 이미지/코드 배지 */}
-                        <div
-                          className="shrink-0 flex items-center justify-center rounded-xl text-xs font-bold text-text-muted"
-                          style={{ width: 72, height: 72 }}
-                        >
-                          {product.emoji ?? product.category.slice(0, 2)}
-                        </div>
-                        {/* 텍스트 */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-text-muted mb-0.5">
-                            {product.brand}
-                          </p>
-                          <p className="text-sm font-semibold text-text-primary leading-snug">
-                            {product.name}
-                          </p>
-                          {/* 피부타입 칩 */}
-                          {product.skinTypes.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1.5">
-                              {product.skinTypes.map((skinType) => {
-                                const tc = SKIN_TYPE_TAG_COLORS[skinType];
-                                return tc ? (
-                                  <span
-                                    key={skinType}
-                                    className="text-[11px] px-2 py-[2px] rounded-[4px] font-semibold"
-                                    style={{
-                                      backgroundColor: tc.bg,
-                                      color: tc.text,
-                                    }}
-                                  >
-                                    {skinType}
-                                  </span>
-                                ) : null;
-                              })}
-                            </div>
-                          )}
-                          {/* 기능 칩 */}
-                          {product.effects.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {product.effects.slice(0, 3).map((fn) => {
-                                const fc = SKIN_FUNCTION_COLORS[fn];
-                                return fc ? (
-                                  <span
-                                    key={fn}
-                                    className="text-[11px] px-2 py-[2px] rounded-[4px] font-bold"
-                                    style={{
-                                      backgroundColor: fc.chip,
-                                      color: fc.accent,
-                                    }}
-                                  >
-                                    {fn}
-                                  </span>
-                                ) : null;
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 추천 이유 텍스트 */}
-                      {/* ⚠️ API 연동 시 product.reason으로 교체 */}
-                      <p className="text-xs text-text-muted mt-3 leading-relaxed">
-                        복합성 피부에도 사용 가능하며, 특정 고민 해결에 도움을
-                        줄 수 있는 제품이에요.
-                      </p>
-
-                      {/* 액션 버튼 행 */}
-                      <div className="flex items-center gap-2 mt-3">
-                        {/* 루틴추가 */}
-                        <button
-                          onClick={() => onAdd(product)}
-                          disabled={isAdded}
-                          className="flex items-center justify-center gap-1 flex-1 h-9 rounded-[40px] border-none cursor-pointer transition-all text-sm font-bold"
-                          style={{
-                            backgroundColor: isAdded
-                              ? "var(--color-brand-bg)"
-                              : "var(--color-brand)",
-                            color: isAdded ? "var(--color-brand)" : "white",
-                          }}
-                        >
-                          + {isAdded ? "추가됨" : "루틴추가"}
-                        </button>
-                        {/* 보유추가 */}
-                        <button className="flex items-center gap-1 h-9 px-3 rounded-[40px] border border-border text-xs text-text-secondary cursor-pointer bg-white">
-                          {/* ⚠️ API 연동 시 보유추가 기능 연결 */}
-                          🧴 보유추가
-                        </button>
-                        {/* 찜 */}
-                        <button
-                          className="flex items-center justify-center cursor-pointer"
-                          style={MODAL_ACTION_ICON_BTN}
-                        >
-                          {/* ⚠️ API 연동 시 찜 기능 연결 */}
-                          <Heart size={15} className="text-text-muted" />
-                        </button>
-                        {/* 비교 */}
-                        <button
-                          className="flex items-center justify-center cursor-pointer"
-                          style={MODAL_ACTION_ICON_BTN}
-                        >
-                          {/* ⚠️ API 연동 시 비교 기능 연결 */}
-                          <GitCompare size={15} className="text-text-muted" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                {products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    isAdded={draftProductIds.includes(product.id)}
+                    onAdd={() => onAdd(product.id)}
+                  />
+                ))}
               </div>
             )}
           </div>
         </div>
       </div>
     </>
+  );
+}
+
+// ── 제품 카드 ────────────────────────────────────────────────────────────────
+interface ProductCardProps {
+  product: MappedProduct;
+  isAdded: boolean;
+  onAdd: () => void;
+}
+
+function ProductCard({ product, isAdded, onAdd }: ProductCardProps) {
+  return (
+    <div
+      className="rounded-[14px] p-4 border"
+      style={{
+        borderColor: isAdded
+          ? "var(--color-brand-light)"
+          : "var(--color-border-warm)",
+        backgroundColor: isAdded ? "var(--color-brand-bg)" : "white",
+      }}
+    >
+      {/* 제품 정보 행 */}
+      <div className="flex gap-3">
+        {/* 이미지 */}
+        <div
+          className="shrink-0 flex items-center justify-center rounded-xl bg-[#F5F2EC] overflow-hidden"
+          style={{ width: 72, height: 72 }}
+        >
+          {product.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={product.imageUrl}
+              alt={product.name ?? "제품 이미지"}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-[11px] font-bold text-text-muted">
+              {product.category?.slice(0, 2) ?? "🧴"}
+            </span>
+          )}
+        </div>
+
+        {/* 텍스트 */}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-text-muted mb-0.5">{product.brand}</p>
+          <p className="text-sm font-semibold text-text-primary leading-snug line-clamp-2">
+            {product.name}
+          </p>
+          {/* 피부타입 칩 */}
+          {product.skinTypes.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {product.skinTypes.map((skinType) => {
+                const colorScheme = SKIN_TYPE_TAG_COLORS[skinType];
+                return colorScheme ? (
+                  <span
+                    key={skinType}
+                    className="text-[11px] px-2 py-[2px] rounded-[4px] font-semibold"
+                    style={{
+                      backgroundColor: colorScheme.bg,
+                      color: colorScheme.text,
+                    }}
+                  >
+                    {skinType}
+                  </span>
+                ) : null;
+              })}
+            </div>
+          )}
+          {/* 태그 칩 */}
+          {product.effects && product.effects.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {product.effects.slice(0, 3).map((tag) => (
+                <span
+                  key={tag}
+                  className="text-[11px] px-2 py-[2px] rounded-[4px] font-bold bg-[#F5F2EC] text-text-muted"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 액션 버튼 행 */}
+      <div className="flex items-center gap-2 mt-3">
+        {/* 루틴추가 */}
+        <button
+          onClick={onAdd}
+          disabled={isAdded}
+          className="flex items-center justify-center gap-1 flex-1 h-9 rounded-[40px] border-none cursor-pointer transition-all text-sm font-bold"
+          style={{
+            backgroundColor: isAdded
+              ? "var(--color-brand-bg)"
+              : "var(--color-brand)",
+            color: isAdded ? "var(--color-brand)" : "white",
+          }}
+        >
+          + {isAdded ? "추가됨" : "루틴추가"}
+        </button>
+        {/* 찜 — ⚠️ API 연동 시 useLike 훅으로 연결 */}
+        <button
+          className="flex items-center justify-center cursor-pointer"
+          style={MODAL_ACTION_ICON_BTN}
+        >
+          <Heart size={15} className="text-text-muted" />
+        </button>
+        {/* 비교 — ⚠️ API 연동 시 useCompare 훅으로 연결 */}
+        <button
+          className="flex items-center justify-center cursor-pointer"
+          style={MODAL_ACTION_ICON_BTN}
+        >
+          <GitCompare size={15} className="text-text-muted" />
+        </button>
+      </div>
+    </div>
   );
 }
