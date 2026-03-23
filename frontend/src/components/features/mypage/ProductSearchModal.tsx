@@ -181,7 +181,6 @@ export default function ProductSearchModal({
                             showLike={false}
                             showActions={false}
                             isOwned={alreadyOwned}
-                            nameFontSize="14px"
                           />
                           {/* 추가 버튼 오버레이 */}
                           <button
@@ -215,7 +214,6 @@ export default function ProductSearchModal({
                           layout="grid"
                           showLike={false}
                           showActions={false}
-                          nameFontSize="14px"
                         />
                         {/* 추가/제거 토글 버튼 오버레이 */}
                         <button
