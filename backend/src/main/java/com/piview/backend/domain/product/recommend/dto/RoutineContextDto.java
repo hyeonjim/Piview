@@ -1,4 +1,4 @@
-package com.piview.backend.domain.product.recommand.dto;
+package com.piview.backend.domain.product.recommend.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,11 +1,11 @@
-package com.piview.backend.domain.product.recommand.service;
+package com.piview.backend.domain.product.recommend.service;
 
 import com.piview.backend.domain.product.catalog.repository.ProductRepository;
 import com.piview.backend.domain.product.entity.CategoryIdealScore;
 import com.piview.backend.domain.product.entity.Product;
-import com.piview.backend.domain.product.recommand.dto.RecommendRequestDto;
-import com.piview.backend.domain.product.recommand.dto.RoutineContextDto;
-import com.piview.backend.domain.product.recommand.repository.CategoryIdealScoreRepository;
+import com.piview.backend.domain.product.recommend.dto.RecommendRequestDto;
+import com.piview.backend.domain.product.recommend.dto.RoutineContextDto;
+import com.piview.backend.domain.product.recommend.repository.CategoryIdealScoreRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,12 +28,12 @@ public class RecommendationService {
     // ★ 핵심 매핑: 프론트가 요청한 스텝(1~7)을 실제 DB 소카테고리 ID 리스트로 변환
     private static final Map<Long, List<Long>> ROUTINE_COL_TO_CATEGORIES = Map.of(
             1L, List.of(8L, 9L, 10L, 11L, 12L, 13L), // 클렌저 (폼, 젤, 밤, 오일, 워터, 로션)
-            2L, List.of(), // 쉐이빙 (현재 카테고리 없음, 필요시 추가)
-            3L, List.of(1L, 5L, 7L),                 // 스킨/토너/미스트/패드
-            4L, List.of(3L),                         // 세럼/에센스/앰플
-            5L, List.of(2L),                         // 로션/에멀전/올인원
-            6L, List.of(4L, 6L),                     // 크림/페이스오일
-            7L, List.of(14L)                         // 선크림
+            2L, List.of(22L),                       // 쉐이빙
+            3L, List.of(1L, 5L, 7L, 16L),                 // 스킨/토너/미스트/패드
+            4L, List.of(3L, 21L),                         // 세럼/에센스/앰플
+            5L, List.of(2L, 17L, 19L),                         // 로션/에멀전/올인원
+            6L, List.of(4L, 6L, 18L),                     // 크림/페이스오일
+            7L, List.of(14L, 15L, 20L)                         // 선크림,선스틱
     );
 
     public List<Product> getRecommendations(RecommendRequestDto req, RoutineContextDto routineContext) {
@@ -49,10 +49,10 @@ public class RecommendationService {
         }
 
         // ====================================================================
-        // [분기 A] 루틴이 비어있거나, 씻어내는 '클렌저(1번)' 스텝일 경우
+        // [분기 A] 루틴이 비어있거나, 씻어내는 '클렌저(1번), 쉐이빙(2번)' 스텝일 경우
         // ====================================================================
         // 워시오프는 얼굴에 남지 않으므로 루틴 누적 오차(Gap) 계산에서 제외합니다.
-        if (routineContext.isEmpty() || targetRoutineColId == 1L) {
+        if (routineContext.isEmpty() || targetRoutineColId == 1L || targetRoutineColId == 2L) {
 
             // DB에서 1차 50개 추출 (Gap 보정 없음)
             List<Product> initialCandidates = productRepository.findInitialRecommendations(

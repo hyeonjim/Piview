@@ -17,18 +17,18 @@ public class CategoryIdealScore {
 
     @Id
     @Column(name = "category_ideal_score_id")
-    private Long category_ideal_score_id;
+    private Long categoryIdealScoreId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "skin_type")
-    private SkinTypeEnum skin_type;
+    private SkinTypeEnum skinType;
 
     @Column(name = "routine_col_id")
-    private Long routine_col_id;
+    private Long routineColId;
 
     @Column(name = "ideal_m", precision = 5, scale = 2)
-    private BigDecimal ideal_m;
+    private BigDecimal idealM;
 
     @Column(name = "ideal_o", precision = 5, scale = 2)
-    private BigDecimal ideal_o;
+    private BigDecimal idealO;
 }
