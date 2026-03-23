@@ -31,17 +31,6 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
 
   return (
     <div className="pagination-container">
-      {/* 맨 처음 */}
-      <button
-        onClick={() => onChange(1)}
-        disabled={page === 1}
-        className="pagination-nav-button"
-        data-disabled={page === 1}
-        aria-label="첫 페이지"
-      >
-        <ChevronsLeft className="pagination-icon" size={14} />
-      </button>
-
       {/* 이전 그룹 */}
       <button
         onClick={() => onChange(Math.max(1, groupStart - groupSize))}
@@ -49,6 +38,17 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
         className="pagination-nav-button"
         data-disabled={!hasPrevGroup}
         aria-label="이전 그룹"
+      >
+        <ChevronsLeft className="pagination-icon" size={14} />
+      </button>
+
+      {/* 이전 페이지 */}
+      <button
+        onClick={() => onChange(Math.max(1, page - 1))}
+        disabled={page === 1}
+        className="pagination-nav-button"
+        data-disabled={page === 1}
+        aria-label="이전 페이지"
       >
         <ChevronLeft className="pagination-icon" size={14} />
       </button>
@@ -67,6 +67,17 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
         </button>
       ))}
 
+      {/* 다음 페이지 */}
+      <button
+        onClick={() => onChange(Math.min(totalPages, page + 1))}
+        disabled={page === totalPages}
+        className="pagination-nav-button"
+        data-disabled={page === totalPages}
+        aria-label="다음 페이지"
+      >
+        <ChevronRight className="pagination-icon" size={14} />
+      </button>
+
       {/* 다음 그룹 */}
       <button
         onClick={() => onChange(Math.min(totalPages, groupEnd + 1))}
@@ -74,17 +85,6 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
         className="pagination-nav-button"
         data-disabled={!hasNextGroup}
         aria-label="다음 그룹"
-      >
-        <ChevronRight className="pagination-icon" size={14} />
-      </button>
-
-      {/* 맨 끝 */}
-      <button
-        onClick={() => onChange(totalPages)}
-        disabled={page === totalPages}
-        className="pagination-nav-button"
-        data-disabled={page === totalPages}
-        aria-label="마지막 페이지"
       >
         <ChevronsRight className="pagination-icon" size={14} />
       </button>

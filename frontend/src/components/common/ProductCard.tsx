@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Heart, Plus, Check, ShoppingBag, Scale } from "lucide-react";
+import { Heart, ShoppingBag, Scale, Check, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import EWGIndicator from "./EWGIndicator";
@@ -18,13 +18,13 @@ const CARD_SHADOW = "0 2px 8px rgba(0,0,0,0.10), 0 8px 28px rgba(0,0,0,0.16)";
 // ── 비교/보유 버튼 공통 활성/비활성 스타일
 const ACTION_BUTTON_ACTIVE = {
   border: "1px solid #A69D92",
-  backgroundColor: "#F2EFE9",
-  color: "#6B6258",
+  backgroundColor: "var(--color-bg-beige)",
+  color: "var(--color-text-sub)",
 };
 const ACTION_BUTTON_INACTIVE = {
   border: "1px solid #E8E4DF",
-  backgroundColor: "#FFFFFF",
-  color: "#C4BEB7",
+  backgroundColor: "var(--color-bg-card)",
+  color: "var(--color-nav-inactive)",
 };
 
 // ── 인터페이스 ──────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ interface ProductCardProps {
   emoji?: string;
   skinTypes?: string[];
   effects?: string[];
-  /** 피부기능별 수치 점수 0~100 — ⚠️ API 연동 시 서버 값으로 교체 */
+  /** 피부기능별 수치 점수 0~100 */
   effectScores?: Record<string, number>;
   price?: number;
   reason?: string;
@@ -52,9 +52,9 @@ interface ProductCardProps {
   onDetailClick?: () => void;
   /** 상세페이지 링크 override — 미지정 시 /product/{id} */
   href?: string;
-  /** 액션 버튼 영역 표시 여부 — true 일 때 루틴추가/보유추가/비교 버튼 노출 */
+  /** 액션 버튼 영역 표시 여부 — true 일 때 보유추가/비교 버튼 노출 */
   showActions?: boolean;
-  /** 루틴추가 콜백 */
+  /** 루틴추가 콜백 — 넘기면 버튼 표시, 안 넘기면 숨김 */
   onAddRoutine?: () => void;
   /** 루틴 추가 상태 */
   inRoutine?: boolean;
@@ -70,8 +70,8 @@ interface ProductCardProps {
   showLike?: boolean;
   /** EWG 지표 표시 여부 — false 시 피부타입·기능 태그로 대체 (기본값 true, horizontal 전용) */
   showEwg?: boolean;
-  /** grid 레이아웃 제품명 폰트 크기 오버라이드 */
-  nameFontSize?: string;
+  /** LCP 최적화 — 화면 상단 첫 카드에만 true (기본값 false) */
+  priority?: boolean;
 }
 
 // ── 피부타입 태그 — 색상이 동적(상수 맵)이므로 색상만 inline style 유지
@@ -108,7 +108,7 @@ function EffectTag({ label }: { label: string }) {
 // ── PICK 배지 — 고정 색상이므로 Tailwind만 사용
 function PickBadge() {
   return (
-    <span className="text-[11px] font-semibold px-[7px] py-[3px] rounded-[10px] uppercase tracking-[0.06em] bg-[#3D3028] text-[#F2EFE9]">
+    <span className="text-[11px] font-semibold px-[7px] py-[3px] rounded-[10px] uppercase tracking-[0.06em] bg-[#3D3028] text-[var(--color-bg-beige)]">
       PICK
     </span>
   );
@@ -160,8 +160,8 @@ function RoutineButton({
       disabled={inRoutine}
       className={`flex items-center justify-center gap-1 h-6 rounded-[6px] text-xs font-semibold border-none cursor-pointer transition-all active:scale-[0.97] ${
         inRoutine
-          ? "bg-[#F2EFE9] text-[#A69D92]"
-          : "bg-[#3D3028] text-[#F2EFE9]"
+          ? "bg-[var(--color-bg-beige)] text-[var(--color-brand)]"
+          : "bg-[#3D3028] text-[var(--color-bg-beige)]"
       } ${className}`}
     >
       {inRoutine ? (
@@ -240,6 +240,7 @@ function ProductImage({
   className,
   width,
   height,
+  priority = false,
 }: {
   imageUrl?: string | null;
   name: string;
@@ -248,6 +249,7 @@ function ProductImage({
   className?: string;
   width?: number;
   height?: number;
+  priority?: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
 
@@ -268,6 +270,7 @@ function ProductImage({
         width={width}
         height={height}
         className={className}
+        priority={priority}
         onError={() => setImgError(true)}
       />
     );
@@ -281,6 +284,7 @@ function ProductImage({
       fill
       sizes={sizes}
       className={className}
+      priority={priority}
       onError={() => setImgError(true)}
     />
   );
@@ -299,13 +303,13 @@ function LikeButton({
       className="flex items-center justify-center h-8 px-2.5 rounded-[6px] cursor-pointer transition-all active:scale-[0.97]"
       style={{
         border: `1px solid ${isLiked ? "#F5C5BB" : "#E8E4DF"}`,
-        backgroundColor: isLiked ? "#FEF2EF" : "#FFFFFF",
+        backgroundColor: isLiked ? "#FEF2EF" : "var(--color-bg-card)",
       }}
     >
       <Heart
         size={15}
         style={{
-          color: isLiked ? "#E8715A" : "#C4BEB7",
+          color: isLiked ? "#E8715A" : "var(--color-nav-inactive)",
           fill: isLiked ? "#E8715A" : "none",
         }}
       />
@@ -341,7 +345,7 @@ export default function ProductCard({
   onToggleCompare = () => {},
   showLike = true,
   showEwg = true,
-  nameFontSize,
+  priority = false,
 }: ProductCardProps) {
   const { likeList, toggleLike } = useLike();
   const isLiked = !!likeList[String(id)];
@@ -370,7 +374,7 @@ export default function ProductCard({
 
   // 좋아요 Heart 아이콘 스타일 — 색상이 동적이므로 inline style
   const heartStyle = {
-    color: isLiked ? "#E8715A" : "#C4BEB7",
+    color: isLiked ? "#E8715A" : "var(--color-nav-inactive)",
     fill: isLiked ? "#E8715A" : "none",
   };
 
@@ -390,6 +394,7 @@ export default function ProductCard({
               emoji={emoji}
               sizes="(max-width: 500px) 50vw, 250px"
               className="object-contain"
+              priority={priority}
             />
 
             {/* 좋아요 버튼 — showLike=false 시 숨김 */}
@@ -433,10 +438,7 @@ export default function ProductCard({
                 />
               )}
             </div>
-            <p
-              className="product-card-name mt-0.75 m-0 text-[16px] font-semibold text-[#2A2118] leading-[1.4] line-clamp-2 overflow-hidden"
-              style={nameFontSize ? { fontSize: nameFontSize } : undefined}
-            >
+            <p className="mt-0.75 m-0 text-[17px] font-semibold text-[var(--color-text-primary)] leading-[1.4] line-clamp-2 overflow-hidden">
               {name}
             </p>
             {(skinTypes.length > 0 || effects.length > 0) && (
@@ -461,7 +463,7 @@ export default function ProductCard({
   if (layout === "horizontal") {
     return (
       <Link href={productHref}>
-        <div className="flex items-center overflow-hidden h-22 bg-white rounded-[10px] border border-[#E2DDD8] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+        <div className="flex items-center overflow-hidden h-22 bg-white rounded-[10px] border border-[var(--color-border)] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
           <div className="relative shrink-0 w-22 h-full overflow-hidden">
             <ProductImage
               imageUrl={imageUrl}
@@ -482,7 +484,7 @@ export default function ProductCard({
                 />
               )}
             </div>
-            <p className="mt-0.75 m-0 text-[16px] font-bold text-[#2A2118] leading-[1.4]">
+            <p className="mt-0.75 m-0 text-[16px] font-bold text-[var(--color-text-primary)] leading-[1.4]">
               {name}
             </p>
             {showEwg ? (
@@ -526,9 +528,8 @@ export default function ProductCard({
       <div
         className="rounded-[10px] p-3"
         style={{
-          // 루틴 추가 여부에 따라 배경/테두리 색이 바뀌므로 inline style 유지
-          border: `1px solid ${inRoutine ? "#D9D5D0" : "#EDEBE8"}`,
-          backgroundColor: inRoutine ? "#F2EFE9" : "#FFFFFF",
+          border: "1px solid var(--color-border-modal)",
+          backgroundColor: "var(--color-bg-card)",
         }}
       >
         <Link href={productHref} className="no-underline">
@@ -556,7 +557,7 @@ export default function ProductCard({
                 )}
                 {showPickBadge && <PickBadge />}
               </div>
-              <p className="m-0 text-[13px] font-bold text-[#2A2118] truncate">
+              <p className="m-0 text-[13px] font-bold text-[var(--color-text-primary)] truncate">
                 {name}
               </p>
               <div className="flex flex-wrap gap-0.75 mt-1.25">
@@ -584,7 +585,7 @@ export default function ProductCard({
             {showDetailButton && (
               <button
                 onClick={(event) => handleAction(event, onDetailClick)}
-                className="flex items-center justify-center h-8 px-3 rounded-[6px] text-xs text-[#8A8278] bg-white border border-[#E8E4DF] cursor-pointer active:scale-[0.97]"
+                className="flex items-center justify-center h-8 px-3 rounded-[6px] text-xs text-[var(--color-text-hint)] bg-white border border-[#E8E4DF] cursor-pointer active:scale-[0.97]"
               >
                 상세보기
               </button>
@@ -598,7 +599,7 @@ export default function ProductCard({
   // ── 4. VERTICAL — 기본값 ──────────────────────────────────────────
   return (
     <div
-      className="relative flex flex-col overflow-hidden w-full bg-white rounded-[10px] border border-[#E2DDD8]"
+      className="relative flex flex-col overflow-hidden w-full bg-white rounded-[10px] border border-[var(--color-border)]"
       style={{ boxShadow: CARD_SHADOW }}
     >
       <Link href={productHref} className="no-underline">
@@ -624,7 +625,7 @@ export default function ProductCard({
             {showPickBadge && <PickBadge />}
           </div>
 
-          <p className="m-0 text-[18px] font-semibold text-[#2A2118] leading-[1.45] line-clamp-2 overflow-hidden">
+          <p className="m-0 text-[18px] font-semibold text-[var(--color-text-primary)] leading-[1.45] line-clamp-2 overflow-hidden">
             {name}
           </p>
 
@@ -649,7 +650,7 @@ export default function ProductCard({
       </Link>
 
       {reason && (
-        <p className="m-0 text-[13px] text-[#A69D92] px-3.5 pb-2 leading-[1.55]">
+        <p className="m-0 text-[13px] text-[var(--color-brand)] px-3.5 pb-2 leading-[1.55]">
           {reason}
         </p>
       )}

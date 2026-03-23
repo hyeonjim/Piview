@@ -271,7 +271,7 @@ export default function SurveyPage({
                   style={{
                     fontSize: "15px",
                     fontWeight: isSelected ? 600 : 400,
-                    color: "#1A1A1A",
+                    color: "var(--color-product-name)",
                     lineHeight: 1.4,
                   }}
                 >
@@ -318,7 +318,7 @@ export default function SurveyPage({
               selectedAnswer && !isPending ? "var(--color-brand)" : "#F0F0F0",
             color:
               selectedAnswer && !isPending
-                ? "#FFFFFF"
+                ? "var(--color-bg-card)"
                 : "var(--color-text-disabled)",
             cursor: selectedAnswer && !isPending ? "pointer" : "default",
             boxShadow:

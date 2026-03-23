@@ -22,20 +22,23 @@ import {
   useAddMyCos,
   useRemoveMyCos,
   useMyCosQuery,
+  useAddDraftItemMutation,
+  useRemoveProductFromDraftMutation,
+  useDraftQuery,
 } from "@/hooks";
 import { getEwgColor } from "@/constants/categoryColors";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
-import { ROUTINE_STEPS } from "@/constants/routineSteps";
+import { getRoutineSteps } from "@/constants/routineSteps";
 import CompareModal from "@/components/common/CompareModal";
 import type { ProductViewModel } from "@/types/product/myCos";
-import { useRoutineStore } from "@/stores";
 import { useMainRoutineQuery } from "@/hooks";
+import { useUserStore, selectGender } from "@/stores";
 
 function AllergenIcon() {
   return (
     <div className="flex items-center justify-center shrink-0 self-center w-[20px] h-[20px] rounded-full bg-red-50">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="10" fill="#EF4444" />
+        <circle cx="12" cy="12" r="10" fill="var(--color-danger)" />
         <rect x="11" y="6.5" width="2" height="7" rx="1" fill="white" />
         <circle cx="12" cy="17" r="1.3" fill="white" />
       </svg>
@@ -88,9 +91,13 @@ function ProductDetailInner() {
     useState(0);
   const [showCompareModal, setShowCompareModal] = useState(false);
 
-  const routineMap = useRoutineStore((state) => state.localRoutine);
-  const addStepProduct = useRoutineStore((state) => state.addStepProduct);
-  const removeStepProduct = useRoutineStore((state) => state.removeStepProduct);
+  const { mutate: addDraftItem } = useAddDraftItemMutation();
+  const { mutate: removeDraftItem } = useRemoveProductFromDraftMutation();
+  const { data: draftItems = [] } = useDraftQuery();
+
+  // 성별에 따라 올바른 루틴 스텝 선택 (남성: 쉐이빙/올인원 포함)
+  const gender = useUserStore(selectGender);
+  const routineSteps = getRoutineSteps(gender);
 
   // 내루틴 비교 — 메인 루틴 API에서 같은 스텝 제품 추출
   // productData.categoryName API 미지원 → ProductCard href로 넘어온 category searchParam 사용
@@ -117,13 +124,13 @@ function ProductDetailInner() {
   const sameCategoryRoutineProducts = effectiveCategoryName
     ? (() => {
         // 현재 제품 카테고리가 속한 stepCode
-        const currentStepCode = ROUTINE_STEPS.find((step) =>
+        const currentStepCode = routineSteps.find((step) =>
           step.categories.includes(effectiveCategoryName),
         )?.code;
         if (!currentStepCode) return allMainRoutineProducts; // categoryName 없으면 전체 표시
         // 루틴 제품 중 같은 stepCode에 속한 것만
         return allMainRoutineProducts.filter((p) => {
-          const pStepCode = ROUTINE_STEPS.find((step) =>
+          const pStepCode = routineSteps.find((step) =>
             step.categories.includes(p.category ?? ""),
           )?.code;
           return pStepCode === currentStepCode;
@@ -161,9 +168,6 @@ function ProductDetailInner() {
   const ewgSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    useRoutineStore.persist.rehydrate();
-  }, []);
-  useEffect(() => {
     const handleScroll = () => {
       if (!ewgSectionRef.current) return;
       setIsScrollTopVisible(
@@ -175,41 +179,30 @@ function ProductDetailInner() {
   }, []);
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
-  const productIdStr = id ?? "";
-  const routineAdded = Object.values(routineMap)
-    .flat()
-    .filter(Boolean)
-    .some((p) => p.id === productIdStr);
+  const routineAdded = draftItems.some(
+    (item) => item.product?.productId === productIdNum,
+  );
 
   const handleAddRoutine = () => {
-    if (!productData) return;
+    if (!productData || !productIdNum) return;
     if (routineAdded) {
-      Object.entries(routineMap).forEach(([code, products]) => {
-        products.forEach((p) => {
-          if (p && p.id === productIdStr) removeStepProduct(code, productIdStr);
-        });
+      removeDraftItem(productIdNum, {
+        onSuccess: () => toast(`✓ ${productData.productName} 루틴에서 제거됨`),
       });
-      toast(`✓ ${productData.productName} 루틴에서 제거됨`);
       return;
     }
-    const matchedStep = ROUTINE_STEPS.find((step) =>
-      step.categories.includes(productData.categoryName ?? ""),
+    const matchedStep = routineSteps.find((step) =>
+      step.categories.includes(effectiveCategoryName ?? ""),
     );
-    addStepProduct(matchedStep?.code ?? "PR", {
-      id: productIdStr,
-      brand: productData.brandName ?? "",
-      name: productData.productName ?? "",
-      category: productData.categoryName ?? "",
-      emoji: "🧴",
-      skinTypes: productData.skinTypes,
-      effects: productData.tags,
-      matchScore: 0,
-      price: productData.price ?? undefined,
-      ewgSafe: productData.lowCount,
-      ewgCaution: productData.mediumCount,
-      ewgDanger: productData.highCount,
-    });
-    toast(`✓ ${productData.productName} 루틴에 추가됨!`);
+    const columnId = matchedStep?.columnId ?? 3; // 기본값: PR(토너) columnId
+    addDraftItem(
+      { columnId, productId: productIdNum },
+      {
+        onSuccess: () => toast(`✓ ${productData.productName} 루틴에 추가됨!`),
+        onError: () =>
+          toast.error("루틴 추가에 실패했어요. 다시 시도해 주세요."),
+      },
+    );
   };
 
   const handleToggleOwned = () => {
@@ -292,24 +285,24 @@ function ProductDetailInner() {
               <div className="w-10 h-1 rounded-full bg-[#E0DDD8]" />
             </div>
             <div className="flex items-center justify-between px-4 py-3 border-b border-[#EDEBE8]">
-              <h2 className="m-0 text-base font-bold text-[#2A2118]">
+              <h2 className="m-0 text-base font-bold text-[var(--color-text-primary)]">
                 내루틴 비교하기
               </h2>
               <button
                 onClick={() => setShowRoutineCompare(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-[#F2EFE9] border-none cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--color-bg-beige)] border-none cursor-pointer"
               >
-                <Scale size={15} className="text-[#8A8278]" />
+                <Scale size={15} className="text-[var(--color-text-hint)]" />
               </button>
             </div>
             <div className="px-6 py-10 flex flex-col items-center gap-3">
-              <div className="w-14 h-14 rounded-full bg-[#F2EFE9] flex items-center justify-center mb-1">
+              <div className="w-14 h-14 rounded-full bg-[var(--color-bg-beige)] flex items-center justify-center mb-1">
                 <Scale size={24} className="text-[#C4BEB7]" />
               </div>
-              <p className="text-base font-semibold text-[#2A2118]">
+              <p className="text-base font-semibold text-[var(--color-text-primary)]">
                 루틴에 비교할 제품이 없어요
               </p>
-              <p className="text-sm text-[#A69D92] text-center leading-relaxed">
+              <p className="text-sm text-[var(--color-brand)] text-center leading-relaxed">
                 {productData.categoryName} 카테고리의 제품을
                 <br />
                 루틴에 추가하면 비교할 수 있어요
@@ -318,7 +311,7 @@ function ProductDetailInner() {
             <div className="px-4 pb-8">
               <button
                 onClick={() => setShowRoutineCompare(false)}
-                className="w-full h-11 rounded-xl bg-[#F2EFE9] border-none cursor-pointer text-sm font-semibold text-[#8A8278]"
+                className="w-full h-11 rounded-xl bg-[var(--color-bg-beige)] border-none cursor-pointer text-sm font-semibold text-[var(--color-text-hint)]"
               >
                 닫기
               </button>
@@ -345,10 +338,10 @@ function ProductDetailInner() {
               <div className="w-10 h-1 rounded-full bg-[#E0DDD8]" />
             </div>
             <div className="px-4 py-3 border-b border-[#EDEBE8]">
-              <p className="text-base font-bold text-[#2A2118]">
+              <p className="text-base font-bold text-[var(--color-text-primary)]">
                 비교할 루틴 제품 선택
               </p>
-              <p className="text-xs text-[#A69D92] mt-0.5">
+              <p className="text-xs text-[var(--color-brand)] mt-0.5">
                 {productData.categoryName} 카테고리 제품{" "}
                 {sameCategoryRoutineProducts.length}개
               </p>
@@ -367,15 +360,17 @@ function ProductDetailInner() {
                     backgroundColor:
                       selectedRoutineProductIndex === index
                         ? "#f0f2e8"
-                        : "#FFFFFF",
+                        : "var(--color-bg-card)",
                   }}
                 >
                   <span className="text-2xl">{rp.emoji}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#2A2118] truncate">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
                       {rp.name}
                     </p>
-                    <p className="text-xs text-[#A69D92]">{rp.brand}</p>
+                    <p className="text-xs text-[var(--color-brand)]">
+                      {rp.brand}
+                    </p>
                   </div>
                   {selectedRoutineProductIndex === index && (
                     <Check
@@ -406,7 +401,7 @@ function ProductDetailInner() {
           onClick={() => router.back()}
           className="size-9 flex items-center justify-center rounded-full bg-white/70 border-none cursor-pointer"
         >
-          <ChevronLeft size={22} color="#1A1A1A" />
+          <ChevronLeft size={22} color="var(--color-product-name)" />
         </button>
         <button
           onClick={() => {
@@ -419,7 +414,7 @@ function ProductDetailInner() {
             size={22}
             className="transition-all duration-150"
             style={{
-              color: resolvedIsLiked ? "#E8715A" : "#C4BEB7",
+              color: resolvedIsLiked ? "#E8715A" : "var(--color-nav-inactive)",
               fill: resolvedIsLiked ? "#E8715A" : "none",
             }}
           />
@@ -520,20 +515,22 @@ function ProductDetailInner() {
               )}
             </div>
             <div className="flex gap-1.5 shrink-0">
-              <button
-                onClick={handleAddRoutine}
-                className={`flex items-center justify-center gap-1 w-20 h-8 rounded-xl border-none cursor-pointer transition-all active:scale-[0.98] text-xs font-bold ${routineAdded ? "bg-[#F0F0F0] text-text-muted" : "bg-brand text-white"}`}
-              >
-                {routineAdded ? (
-                  <>
-                    <Check size={11} /> 추가됨
-                  </>
-                ) : (
-                  <>
-                    <Plus size={11} /> 루틴추가
-                  </>
-                )}
-              </button>
+              {gender !== "WOMEN" && (
+                <button
+                  onClick={handleAddRoutine}
+                  className={`flex items-center justify-center gap-1 w-20 h-8 rounded-xl border-none cursor-pointer transition-all active:scale-[0.98] text-xs font-bold ${routineAdded ? "bg-[#F0F0F0] text-text-muted" : "bg-brand text-white"}`}
+                >
+                  {routineAdded ? (
+                    <>
+                      <Check size={11} /> 추가됨
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={11} /> 루틴추가
+                    </>
+                  )}
+                </button>
+              )}
               <button
                 onClick={handleToggleOwned}
                 className={`flex items-center justify-center gap-1 w-20 h-8 rounded-xl cursor-pointer transition-all active:scale-[0.98] text-xs font-semibold border ${owned ? "border-brand-light bg-brand-bg text-brand" : "border-border-warm bg-white text-text-hint"}`}
@@ -895,7 +892,7 @@ function ProductDetailInner() {
               onClick={scrollToTop}
               className="absolute bottom-6 right-4 flex items-center justify-center size-10 rounded-full bg-white/90 backdrop-blur-[10px] border-none cursor-pointer pointer-events-auto transition-all active:scale-[0.93] shadow-[0_2px_12px_rgba(0,0,0,0.15),0_0_0_1px_rgba(0,0,0,0.05)]"
             >
-              <ChevronUp size={20} color="#1A1A1A" />
+              <ChevronUp size={20} color="var(--color-product-name)" />
             </button>
           </div>
         </div>

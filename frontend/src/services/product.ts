@@ -20,16 +20,42 @@ import type {
 
 export const productService = {
   // GET /products
-  search: (params: ProductSearchParams): Promise<ProductPageResponse> =>
+  search: (
+    params: ProductSearchParams,
+    signal?: AbortSignal,
+  ): Promise<ProductPageResponse> =>
     client
-      .get<ApiResponse<ProductPageResponse>>("/products", { params })
+      .get<ApiResponse<ProductPageResponse>>("/products", { params, signal })
       .then((res) => res.data.data),
 
   // GET /products/{productId}
   getDetail: (productId: number): Promise<ProductDetailResponse> =>
     client
       .get<ApiResponse<ProductDetailResponse>>(`/products/${productId}`)
-      .then((res) => res.data.data),
+      .then((res) => {
+        const data = res.data.data;
+        // 정제수(Water/Aqua) — ewgScore/ewgGrade 무관하게 항상 1(안전)로 정규화
+        // 모든 소비처에서 동일하게 안전 성분으로 취급
+        if (data.ingredients) {
+          data.ingredients = data.ingredients.map((ingredient) => {
+            const isWater =
+              ingredient.nameEn
+                ?.toLowerCase()
+                .replace(/[\s/;,()\-]/g, "")
+                .match(/water|aqua/) != null ||
+              ingredient.nameKo?.replace(/\s/g, "").includes("정제수");
+            if (isWater) {
+              return {
+                ...ingredient,
+                ewgScore: 1,
+                ewgGrade: "low" as const,
+              };
+            }
+            return ingredient;
+          });
+        }
+        return data;
+      }),
 
   // POST /products/{productId}/likes/toggle
   toggleLike: (productId: number): Promise<boolean> =>
