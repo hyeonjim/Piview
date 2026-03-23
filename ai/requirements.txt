@@ -6,6 +6,7 @@ torchvision
 pillow
 easyocr
 opencv-python
+numpy
 mediapipe
 google-genai
 pydantic
