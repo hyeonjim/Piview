@@ -62,17 +62,3 @@ export interface ProductViewModel {
   price?: number;
 }
 
-// ── OwnedProduct (deprecated) ─────────────────────────────────────
-
-/**
- * @deprecated UI용은 ProductViewModel, API 데이터용은 MyCosProduct 사용
- * 다음 스프린트에서 제거 예정
- */
-export interface OwnedProduct {
-  id: string;
-  brand: string;
-  name: string;
-  category: string;
-  emoji?: string;
-  skinTypes?: string[];
-}

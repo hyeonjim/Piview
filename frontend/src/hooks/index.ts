@@ -6,6 +6,11 @@
  */
 
 export { useCompare } from "./useCompare";
+export {
+  useDislikedProductsQuery,
+  useAddDislikedProduct,
+  useRemoveDislikedProduct,
+} from "./queries/useDislikedProducts";
 
 // TanStack Query / 스토어 래퍼 훅 (queries/ 폴더)
 export { useUserQuery } from "./queries/useUserQuery";

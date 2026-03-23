@@ -70,6 +70,8 @@ interface ProductCardProps {
   showLike?: boolean;
   /** EWG 지표 표시 여부 — false 시 피부타입·기능 태그로 대체 (기본값 true, horizontal 전용) */
   showEwg?: boolean;
+  /** grid 레이아웃 제품명 폰트 크기 오버라이드 */
+  nameFontSize?: string;
 }
 
 // ── 피부타입 태그 — 색상이 동적(상수 맵)이므로 색상만 inline style 유지
@@ -339,6 +341,7 @@ export default function ProductCard({
   onToggleCompare = () => {},
   showLike = true,
   showEwg = true,
+  nameFontSize,
 }: ProductCardProps) {
   const { likeList, toggleLike } = useLike();
   const isLiked = !!likeList[String(id)];
@@ -430,7 +433,10 @@ export default function ProductCard({
                 />
               )}
             </div>
-            <p className="mt-0.75 m-0 text-[17px] font-semibold text-[#2A2118] leading-[1.4] line-clamp-2 overflow-hidden">
+            <p
+              className="product-card-name mt-0.75 m-0 text-[16px] font-semibold text-[#2A2118] leading-[1.4] line-clamp-2 overflow-hidden"
+              style={nameFontSize ? { fontSize: nameFontSize } : undefined}
+            >
               {name}
             </p>
             {(skinTypes.length > 0 || effects.length > 0) && (
