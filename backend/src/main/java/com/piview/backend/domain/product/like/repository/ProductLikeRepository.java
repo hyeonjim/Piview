@@ -5,8 +5,11 @@ import com.piview.backend.domain.product.like.entity.ProductLike;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
+import java.util.Set;
+
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.security.core.parameters.P;
 
 public interface ProductLikeRepository extends JpaRepository<ProductLike, Long> {
 
@@ -21,4 +24,8 @@ public interface ProductLikeRepository extends JpaRepository<ProductLike, Long> 
   // 사용자가 좋아요를 누른 제품 객체(Product) 전체 목록 조회
   @Query("SELECT pl.product FROM ProductLike pl JOIN pl.product p WHERE pl.user.id = :userId")
   List<Product> findProductsByUserId(@Param("userId") Long userId);
+
+  //추천된 제품 10개의 ID 중, 이 유저가 좋아욯나 제품의 ID만 Set으로 반환
+  @Query("SELECT l.product.productId FROM ProductLike l WHERE l.user.id = :userId AND l.product.productId IN :productIds")
+  Set<Long> findLikedProductIds(@Param("userId") Long userId, @Param("productIds") List<Long> productIds);
 }
