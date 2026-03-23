@@ -1,7 +1,6 @@
 package com.piview.backend.domain.product.entity;
 
 import java.math.BigDecimal;
-
 import com.piview.backend.domain.skin.common.SkinTypeEnum;
 
 import jakarta.persistence.*;
