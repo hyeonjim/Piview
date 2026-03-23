@@ -8,22 +8,22 @@
 import { create } from "zustand";
 
 interface SurveyStore {
-  gender: "women" | "men";
+  gender: "WOMEN" | "MEN";
   answers: Record<number, string>;
   analysisId: string | null;
-  setGender: (gender: "women" | "men") => void;
+  setGender: (gender: "WOMEN" | "MEN") => void;
   setAnswer: (questionId: number, value: string) => void;
   setAnalysisId: (analysisId: string) => void;
   resetSurvey: () => void;
 }
 
 export const useSurveyStore = create<SurveyStore>((set) => ({
-  gender: "women",
+  gender: "WOMEN",
   answers: {},
   analysisId: null,
   setGender: (gender) => set({ gender }),
   setAnswer: (questionId, value) =>
     set((state) => ({ answers: { ...state.answers, [questionId]: value } })),
   setAnalysisId: (analysisId) => set({ analysisId }),
-  resetSurvey: () => set({ gender: "women", answers: {}, analysisId: null }),
+  resetSurvey: () => set({ gender: "WOMEN", answers: {}, analysisId: null }),
 }));

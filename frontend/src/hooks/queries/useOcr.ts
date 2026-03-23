@@ -11,8 +11,6 @@
  *       }
  *     }
  *   });
- *
- * ⚠️ productId 받아도 GET /products/{id} 없으면 상세 페이지 mock 유지
  */
 
 import { useMutation } from "@tanstack/react-query";

@@ -36,8 +36,15 @@ export const queryKeys = {
   // 찜한 제품 목록 — GET /products/likes
   likedProducts: ["likedProducts"] as const,
 
+  // 기피 제품 목록 — GET /api/v1/users/me/disliked/products
+  dislikedProducts: ["dislikedProducts"] as const,
+
   // 필터 메타 — GET /products/filters (전역 캐시, 한 번만 호출)
   productFilters: ["productFilters"] as const,
+
+  // 제품 비교 — POST /products/compare
+  productCompare: (productIds: [number, number]) =>
+    ["productCompare", ...productIds] as const,
 
   // 피부 분석 상태 — GET /skin/analysis/{analysisId}
   analysisStatus: (analysisId: string) =>

@@ -9,6 +9,74 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ───────────────────────────────────────────────────────────────
+   🔤 폰트 unicode-range 보정
+   next/font/local의 variable 방식은 unicode-range를 지원하지 않음.
+   → 동일한 font-family명으로 @font-face를 재선언해서 덮어씀.
+   → SortsMillGoudy를 라틴 범위만 담당하도록 제한
+   → 한글은 SortsMillGoudy를 건너뛰고 MaruBuri로 바로 처리됨
+   ─────────────────────────────────────────────────────────────── */
+
+@font-face {
+  font-family: "SortsMillGoudy";
+  src: url("/fonts/SortsMillGoudy-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  /* Basic Latin + Latin-1 Supplement + Latin Extended-A 범위만 담당 */
+  unicode-range: U+0020-007F, U+00A0-00FF, U+0100-017F;
+}
+
+@font-face {
+  font-family: "SortsMillGoudy";
+  src: url("/fonts/SortsMillGoudy-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  unicode-range: U+0020-007F, U+00A0-00FF, U+0100-017F;
+}
+
+@font-face {
+  font-family: "MaruBuri";
+  src: url("/fonts/MaruBuri-ExtraLight.ttf") format("truetype");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MaruBuri";
+  src: url("/fonts/MaruBuri-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MaruBuri";
+  src: url("/fonts/MaruBuri-Regular.ttf") format("truetype");
+  /* 400~500 범위: font-medium(500) 요청 시 Regular가 처리 */
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MaruBuri";
+  src: url("/fonts/MaruBuri-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MaruBuri";
+  src: url("/fonts/MaruBuri-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ───────────────────────────────────────────────────────────────
    🎨 디자인 토큰 (Figma ThemeContext 원본)
    ─────────────────────────────────────────────────────────────── */
 
@@ -55,10 +123,17 @@
   --color-border-warm: #d9d1c7;
   --color-border-dash: #d9d5d0;
   --color-border-subtle: #ddd9d3;
+  --color-border-modal: #edebe8; /* 모달 헤더/구분선 */
+  --color-border-table: #e8e4df; /* 비교 테이블 외곽선 */
 
   /* ─── 시스템 컬러 ─── */
   --color-chip-base: #f2efe9;
   --color-danger: #ef4444;
+
+  /* ─── UI 컴포넌트 전용 ─── */
+  --color-handle-bar: #e0ddd8; /* 바텀시트 핸들 바 */
+  --color-table-label-bg: #fafaf8; /* 비교 테이블 라벨 열 배경 */
+  --color-highlight-strong: #5a5248; /* 비교 우위 강조 텍스트 */
 
   /* ─── 🏷️ CategoryFilter 컴포넌트 ─── */
   --color-category-active-text: #6b5445;
@@ -200,15 +275,28 @@
 
   /* ─── HTML & Font Setup ─── */
   html {
-    /* 폰트: 영어(SortsMillGoudy) → 한글(MaruBuri) → 시스템 폰트 폴백 */
+    /*
+     * 폰트 우선순위:
+     *   1. MaruBuri       — 한글 + 라틴 폴백
+     *   2. SortsMillGoudy — 라틴 문자 전용 (unicode-range로 한글 제외됨)
+     *   3. 시스템 폰트 폴백
+     *
+     * next/font variable 방식은 unicode-range를 지원하지 않아
+     * 위의 @font-face 직접 선언으로 unicode-range를 보정함.
+     * var(--font-english), var(--font-korean)은 기존 페이지 코드 호환용으로 유지
+     */
     font-family:
-      var(--font-english),
+      "MaruBuri",
+      "SortsMillGoudy",
       var(--font-korean),
+      var(--font-english),
       -apple-system,
       BlinkMacSystemFont,
       system-ui,
       serif;
     font-size: 16px;
+    /* 브라우저가 임의로 폰트 굵기/기울임 합성하는 것을 방지 */
+    font-synthesis: none;
   }
 
   /* ─── Body Background ─── */
@@ -239,11 +327,6 @@
   /* BottomNav 높이 보정 ((main)/layout.tsx에서 사용) */
   .pb-nav {
     padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
-  }
-
-  /* 피그마 기준 최소 폰트 크기 (13px) */
-  .text-xs {
-    font-size: 13px !important;
   }
 
   /* ─── 📝 Typography ─── */
@@ -285,7 +368,7 @@
     flex-shrink: 0;
     height: 44px;
     padding: 0 14px;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     letter-spacing: 0.01em;
     cursor: pointer;
@@ -308,7 +391,7 @@
     height: 30px;
     padding: 0 12px;
     border-radius: var(--radius-modal);
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     border: 1px solid;
@@ -433,8 +516,8 @@
 
   /* 썸네일 */
   .product-list-thumb {
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
     border-radius: 12px;
     background-color: white;
     display: flex;
@@ -444,7 +527,7 @@
     flex-shrink: 0;
     box-shadow: var(--shadow-product-thumb);
     border: 1px solid var(--color-product-card-border-default);
-    font-size: 32px;
+    font-size: 28px;
   }
 
   .product-list-thumb[data-has-color="true"] {
@@ -574,8 +657,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
+    width: 28px;
+    height: 28px;
     border-radius: 6px;
     border: 1px solid var(--color-border);
     background-color: var(--color-bg-card);
@@ -600,13 +683,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
+    width: 28px;
+    height: 28px;
     border-radius: 6px;
     border: 1px solid var(--color-border);
     background-color: var(--color-bg-card);
     color: var(--color-text-muted);
-    font-size: 22px;
+    font-size: 14px;
     font-weight: 400;
     cursor: pointer;
     transition: all 0.15s;

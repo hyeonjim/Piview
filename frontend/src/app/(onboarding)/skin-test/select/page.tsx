@@ -2,24 +2,49 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, ShieldAlert, Minus } from "lucide-react";
 import {
   AGE_GROUPS,
   GENDER_OPTIONS,
   SKIN_TYPES,
   SKIN_CONCERNS,
-  ALLERGIES,
 } from "@/constants";
+import { PAGE_SIZE } from "@/constants/pagination";
+import { useUserStore } from "@/stores";
+import { useUpdateProfile } from "@/hooks/queries/useUserQuery";
+import { useDislikedProductsQuery, useRemoveDislikedProduct } from "@/hooks";
+import { EmptyState } from "@/components/common";
+import { Pagination } from "@/components/common/Pagination";
+import ProductCard from "@/components/common/ProductCard";
+import ProductSearchModal from "@/components/features/mypage/ProductSearchModal";
+import { fromSkinTypeEnum } from "@/utils/enumConvert";
+import type { UserProfileUpdateRequest } from "@/types/user";
+
 
 export default function SelectPage() {
   const router = useRouter();
-  const [selectedGender, setSelectedGender] = useState<string>("women");
-  const [selectedAge, setSelectedAge] = useState<string | null>(null);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [selectedConcerns, setSelectedConcerns] = useState<string[]>([]);
-  const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
 
+  // Zustand store에서 현재 유저 정보 읽기 (pre-fill용)
+  const user = useUserStore((s) => s.user);
+  const storeConcerns = useUserStore((s) => s.concerns);
+  const { mutate: updateProfile, isPending, setConcerns } = useUpdateProfile();
+
+  // ── 폼 상태 — 저장된 값이 있으면 초기값으로 pre-fill ─────────────
+  const [selectedGender, setSelectedGender] = useState<string>(
+    user?.gender ?? "WOMEN",
+  );
+  const [selectedAge, setSelectedAge] = useState<string | null>(
+    user?.ageGroup ?? null,
+  );
+  // user.mySkinType(한글 레이블) → SKIN_TYPES id (폼 pre-fill용)
+  const [selectedType, setSelectedType] = useState<string | null>(
+    user?.mySkinType
+      ? (SKIN_TYPES.find((t) => t.label === user.mySkinType)?.id ?? null)
+      : null,
+  );
+  const [selectedConcerns, setSelectedConcerns] = useState<string[]>(
+    storeConcerns,
+  );
   const toggleConcern = (concern: string) =>
     setSelectedConcerns((previous) =>
       previous.includes(concern)
@@ -27,17 +52,40 @@ export default function SelectPage() {
         : [...previous, concern],
     );
 
-  const toggleAllergy = (allergy: string) =>
-    setSelectedAllergies((previous) =>
-      previous.includes(allergy)
-        ? previous.filter((item) => item !== allergy)
-        : [...previous, allergy],
-    );
+  // ── 기피 제품 ──────────────────────────────────────────────────
+  const [openAvoidModal, setOpenAvoidModal] = useState(false);
+  const [avoidPage, setAvoidPage] = useState(1);
+  const { data: dislikedItems = [] } = useDislikedProductsQuery();
+  const { mutate: removeDisliked } = useRemoveDislikedProduct();
+  const avoidTotalPages = Math.ceil(dislikedItems.length / PAGE_SIZE) || 1;
+  const pagedAvoid = dislikedItems.slice(
+    (avoidPage - 1) * PAGE_SIZE,
+    avoidPage * PAGE_SIZE,
+  );
 
   const isValid = selectedType !== null;
-  const filteredAllergies = searchQuery
-    ? ALLERGIES.filter((tag) => tag.includes(searchQuery))
-    : ALLERGIES;
+
+  // "완료" 버튼 클릭 — PATCH /users/me로 프로필 저장 후 결과 페이지 이동
+  const handleComplete = () => {
+    if (!isValid || isPending) return;
+
+    const profilePayload: UserProfileUpdateRequest = {
+      gender: selectedGender as "MEN" | "WOMEN",
+      ...(selectedAge && {
+        ageGroup: selectedAge as "TEENS" | "TWENTIES" | "THIRTIES" | "FORTIES_PLUS",
+      }),
+      ...(selectedType && { mySkinType: selectedType }),
+      skinProblems: selectedConcerns,
+    };
+
+    updateProfile(profilePayload, {
+      onSuccess: () => {
+        // ⚠️ ERD 확정 후 mySkinProblems에서 string 배열 파싱 방식으로 교체
+        setConcerns(selectedConcerns);
+        router.push(`/skin-test/result?type=${selectedType}`);
+      },
+    });
+  };
 
   return (
     <div className="flex flex-col min-h-full bg-white">
@@ -72,10 +120,10 @@ export default function SelectPage() {
                   style={{
                     backgroundColor: isSelected
                       ? "var(--color-brand-bg)"
-                      : "#FFFFFF",
+                      : "var(--color-bg-card)",
                     border: `1.5px solid ${isSelected ? "var(--color-brand)" : "#F0F0F0"}`,
                     fontWeight: 800,
-                    color: isSelected ? "#1A1A1A" : "#616161",
+                    color: isSelected ? "var(--color-product-name)" : "#616161",
                   }}
                 >
                   {gender.label}
@@ -101,9 +149,9 @@ export default function SelectPage() {
                   style={{
                     backgroundColor: isSelected
                       ? "var(--color-brand-bg)"
-                      : "#FFFFFF",
+                      : "var(--color-bg-card)",
                     border: `1.5px solid ${isSelected ? "var(--color-brand)" : "#F0F0F0"}`,
-                    color: isSelected ? "#1A1A1A" : "#616161",
+                    color: isSelected ? "var(--color-product-name)" : "#616161",
                     fontWeight: 800,
                   }}
                 >
@@ -130,10 +178,10 @@ export default function SelectPage() {
                   style={{
                     backgroundColor: isSelected
                       ? "var(--color-brand-bg)"
-                      : "#FFFFFF",
+                      : "var(--color-bg-card)",
                     border: `1.5px solid ${isSelected ? "var(--color-brand)" : "#F0F0F0"}`,
                     fontWeight: 800,
-                    color: isSelected ? "#1A1A1A" : "#616161",
+                    color: isSelected ? "var(--color-product-name)" : "#616161",
                   }}
                 >
                   {type.label}
@@ -162,9 +210,9 @@ export default function SelectPage() {
                   style={{
                     backgroundColor: isSelected
                       ? "var(--color-brand-bg)"
-                      : "#FFFFFF",
+                      : "var(--color-bg-card)",
                     border: `1.5px solid ${isSelected ? "var(--color-brand)" : "#E0E0E0"}`,
-                    color: isSelected ? "#1A1A1A" : "#616161",
+                    color: isSelected ? "var(--color-product-name)" : "#616161",
                     fontWeight: 600,
                   }}
                 >
@@ -175,73 +223,106 @@ export default function SelectPage() {
           </div>
         </section>
 
-        {/* 알레르기 성분 선택 */}
+        {/* 기피 제품 섹션 */}
         <section className="mt-8">
-          <div className="flex items-baseline gap-2">
-            <h2 className="text-text-primary font-semibold text-[15px]">
-              알레르기 성분
-            </h2>
-            <span className="text-text-hint text-[14px]">선택 사항</span>
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-start gap-1.5">
+              <ShieldAlert size={16} className="text-danger mt-0.5 shrink-0" />
+              <div>
+                <h2 className="text-text-primary font-semibold text-[15px]">기피 제품</h2>
+                <p className="text-xs text-text-muted mt-0.5">{dislikedItems.length}개 등록됨</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setOpenAvoidModal(true)}
+              className="text-[13px] px-3 py-1 rounded-full bg-bg-like text-danger font-semibold cursor-pointer border-none transition-colors hover:opacity-80"
+            >
+              + 추가
+            </button>
           </div>
 
-          {/* 검색 입력창 */}
-          <div className="relative mt-3">
-            <Search
-              size={16}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted"
-            />
-            <input
-              type="text"
-              placeholder="성분명 검색..."
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              className="w-full h-11 pl-[38px] pr-4 rounded-[10px] bg-bg-chip border-none text-text-primary text-[15px] outline-none"
-            />
-          </div>
-
-          {/* 알레르기 성분 태그 */}
-          <div className="flex flex-wrap gap-2 mt-5">
-            {filteredAllergies.map((tag) => {
-              const isSelected = selectedAllergies.includes(tag);
-              return (
-                <button
-                  key={tag}
-                  onClick={() => toggleAllergy(tag)}
-                  className="h-8 px-3 rounded-2xl transition-all duration-150 cursor-pointer text-[14px]"
-                  style={{
-                    backgroundColor: isSelected
-                      ? "var(--color-brand-bg)"
-                      : "#F5F5F5",
-                    border: isSelected
-                      ? "1.5px solid var(--color-brand)"
-                      : "1.5px solid transparent",
-                    color: isSelected ? "#1A1A1A" : "#616161",
-                    fontWeight: 600,
-                  }}
-                >
-                  #{tag}
-                </button>
-              );
-            })}
-          </div>
+          {dislikedItems.length === 0 ? (
+            <div
+              className="border border-dashed rounded-2xl py-12 mt-3"
+              style={{ borderColor: "var(--color-bg-like)" }}
+            >
+              <EmptyState
+                icon={ShieldAlert}
+                title="등록된 제품이 없습니다"
+                description={"트러블을 유발했거나 맞지 않았던\n제품을 등록해보세요"}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-3 mt-3 [&_p.line-clamp-2]:text-[14px]!">
+                {pagedAvoid.map((item) => (
+                  <div key={item.dislikedProductId} className="relative">
+                    <ProductCard
+                      id={item.dislikedProductId}
+                      brand={item.brandName}
+                      name={item.productName}
+                      category={item.categoryName}
+                      imageUrl={item.imageUrl ?? undefined}
+                      skinTypes={[
+                        item.topSkinType ? fromSkinTypeEnum(item.topSkinType) : null,
+                        item.top2SkinType ? fromSkinTypeEnum(item.top2SkinType) : null,
+                      ].filter(Boolean) as string[]}
+                      layout="grid"
+                      showLike={false}
+                    />
+                    {/* 삭제 버튼 오버레이 */}
+                    <button
+                      onClick={() => removeDisliked(item.dislikedProductId)}
+                      className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-white/90 shadow-sm border border-border cursor-pointer z-10 transition-colors hover:bg-white"
+                      aria-label="기피 제품 삭제"
+                    >
+                      <Minus size={11} className="text-danger" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <Pagination
+                page={avoidPage}
+                totalPages={avoidTotalPages}
+                onChange={(page) => { setAvoidPage(page); }}
+              />
+            </>
+          )}
         </section>
+
       </div>
+
+      {/* 기피 제품 추가 모달 */}
+      {openAvoidModal && (
+        <ProductSearchModal
+          mode="avoid"
+          onClose={() => setOpenAvoidModal(false)}
+        />
+      )}
 
       {/* 하단 고정 버튼 영역 */}
       <div className="w-[250px] mx-auto px-6 pb-8 pt-4">
         <button
-          onClick={() =>
-            isValid && router.push(`/skin-test/result?type=${selectedType}`)
-          }
+          onClick={handleComplete}
+          disabled={!isValid || isPending}
           className="w-full h-[52px] rounded-[32px] font-bold text-[18px] transition-all duration-200 border-none"
           style={{
-            backgroundColor: isValid ? "var(--color-brand)" : "#F5F5F5",
-            color: isValid ? "#FFFFFF" : "var(--color-text-disabled)",
-            cursor: isValid ? "pointer" : "default",
-            boxShadow: isValid ? "0px 2px 8px rgba(162,170,123,0.3)" : "none",
+            backgroundColor:
+              isValid && !isPending
+                ? "var(--color-brand)"
+                : "var(--color-product-action-bg)",
+            color:
+              isValid && !isPending
+                ? "var(--color-bg-card)"
+                : "var(--color-text-disabled)",
+            cursor: isValid && !isPending ? "pointer" : "default",
+            boxShadow:
+              isValid && !isPending
+                ? "0px 2px 8px rgba(162,170,123,0.3)"
+                : "none",
           }}
         >
-          완료
+          {isPending ? "저장 중..." : "완료"}
         </button>
       </div>
     </div>
