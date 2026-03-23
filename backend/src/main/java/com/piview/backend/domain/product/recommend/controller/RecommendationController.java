@@ -2,6 +2,7 @@ package com.piview.backend.domain.product.recommend.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.piview.backend.domain.product.entity.Product;
+import com.piview.backend.domain.product.like.repository.ProductLikeRepository;
 import com.piview.backend.domain.product.recommend.dto.RecommendRequestDto;
 import com.piview.backend.domain.product.recommend.dto.RecommendResponseDto;
 import com.piview.backend.domain.product.recommend.dto.RoutineContextDto;
@@ -18,7 +19,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Tag(name = "Recommendation API", description = "피부 맞춤형 화장품 추천 알고리즘 API")
@@ -30,9 +34,10 @@ public class RecommendationController {
     private final RedisRoutineService redisRoutineService;
     private final RoutineSessionService routineSessionService;
     private final RecommendationService recommendationService;
+    private final ProductLikeRepository productLikeRepository;
 
     @PostMapping("/products")
-    public ApiResponse<List<RecommendResponseDto>> getRecommendedProducts(
+    public ApiResponse<Map<String,List<RecommendResponseDto>>> getRecommendedProducts(
         @AuthenticationPrincipal UserPrincipal userPrincipal,
         @RequestBody RecommendRequestDto request) throws JsonProcessingException {
 
@@ -52,10 +57,26 @@ public class RecommendationController {
         List<Product> recommendedProducts = recommendationService.getRecommendations(request, routineContext);
 
         // 5. 프론트엔드용 DTO 변환 후 응답
-        List<RecommendResponseDto> responseData = recommendedProducts.stream()
-                .map(RecommendResponseDto::from)
+        List<Long> recommendedProductIds = recommendedProducts.stream()
+                .map(Product::getProductId)
                 .collect(Collectors.toList());
 
-        return ApiResponse.success(responseData);
+        //6. 해당 10개 중 유저가 좋아요한 제품 ID만 Set으로 가져옴
+        Set<Long> likedProductIds = productLikeRepository.findLikedProductIds(userId, recommendedProductIds);
+
+        // 7. dto 변환 시, Set에 포함되어 있으면 true, 아니면 false를 전달
+        Map<String, List<RecommendResponseDto>> groupedResponse = recommendedProducts.stream()
+            .map(product -> RecommendResponseDto.from(
+                product,
+                likedProductIds.contains(product.getProductId()),
+                request.getConcernId()
+            ))
+            .collect(Collectors.groupingBy(
+                RecommendResponseDto::getCategoryName,
+                LinkedHashMap::new, //순서 유지
+                Collectors.toList()
+            ));
+        return ApiResponse.success(groupedResponse);
+
     }
 }
