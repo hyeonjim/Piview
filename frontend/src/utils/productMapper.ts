@@ -8,7 +8,7 @@
  * ProductSummaryResponse (API) → ProductCard props 형태
  */
 
-import type { ProductSummaryResponse } from "@/types/product";
+import type { ProductSummaryResponse, RecommendResponseDto } from "@/types/product";
 import { fromSkinTypeEnum } from "./enumConvert";
 
 export interface MappedProduct {
@@ -52,4 +52,21 @@ export function mapProductSummaryList(
   products: ProductSummaryResponse[],
 ): MappedProduct[] {
   return products.map(mapProductSummary);
+}
+
+/** RecommendResponseDto → MappedProduct
+ *  추천 API 응답에는 tags 필드가 없으므로 effects는 빈 배열로 처리
+ */
+export function mapRecommendResponse(product: RecommendResponseDto): MappedProduct {
+  return {
+    id: product.productId,
+    name: product.name ?? "",
+    brand: product.brandName ?? "",
+    category: product.categoryName ?? "",
+    imageUrl: product.imageUrl ?? null,
+    // "dry" | "oily" → "건성" | "지성" 한글 변환
+    skinTypes: (product.skinTypes ?? []).map(fromSkinTypeEnum),
+    effects: [],
+    liked: product.liked ?? false,
+  };
 }
