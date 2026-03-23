@@ -22,12 +22,12 @@ public class ProductSummaryFacadeService {
   private final ProductIngredientRepository productIngredientRepository;
   private final ProductRepository productRepository;
   private final AiSummaryAsyncService aiSummaryAsyncService;
-  private final RecommendationService recommendationService; // 💡 의존성 추가됨!
+  private final RecommendationService recommendationService;
 
   @Transactional(readOnly = true)
   public CompletableFuture<ProductLine12SummaryResponse> getPersonalizedSummary(Long userId, Long productId) {
 
-    // 1. 사용자 정보 및 제품 정보 조회
+    // 사용자 정보 및 제품 정보 조회
     User user = userRepository.findByIdAndExistTrue(userId)
         .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다."));
     Product product = productRepository.findById(productId)
@@ -35,10 +35,10 @@ public class ProductSummaryFacadeService {
     ProductIngredients productIngredients = productIngredientRepository.findByProductId(productId)
         .orElseThrow(() -> new IllegalArgumentException("해당 제품의 성분 정보를 찾을 수 없습니다."));
 
-    // 2. Line 2: DB 기반 사용자 피부 고민 맞춤형 메시지 생성 (동기 처리)
+    // Line 2: DB 기반 사용자 피부 고민 맞춤형 메시지 생성 (동기 처리)
     String personalizedMessage = recommendationService.generateLine2Message(userId, product);
 
-    // 3. Line 1을 위한 LLM 프롬프트 Context 조립
+    //  Line 1을 위한 LLM 프롬프트 Context 조립
     String userSkinType = (user.getMySkinType() != null) ? user.getMySkinType().name() : "알 수 없음";
     String rawIngredientsText = productIngredients.getProductIngredientsKo() != null
         ? productIngredients.getProductIngredientsKo()
@@ -61,8 +61,9 @@ public class ProductSummaryFacadeService {
         .thenApply(aiSummary -> ProductLine12SummaryResponse.builder()
             .productId(product.getProductId())
             .productName(product.getName())
-            .line1AiSummary(aiSummary.getLine1()) // 💡 LLM이 준 3줄 중 첫 번째 줄(Line 1)만 사용!
-            .line2PersonalizedMsg(personalizedMessage) // 💡 우리가 DB로 직접 만든 Line 2 사용!
+            .line1AiSummary(aiSummary.getLine1())
+            .line2PersonalizedMsg(personalizedMessage)
+            .line3AiSummary(aiSummary.getLine3())
             .build()
         );
   }
