@@ -41,4 +41,8 @@ public class MyRoutine extends BaseEntity {
   public void changeMainStatus(boolean isMain) {
     this.isMain = isMain;
   }
+
+  public void updateTitle(String newTitle) {
+    this.title = newTitle;
+  }
 }
