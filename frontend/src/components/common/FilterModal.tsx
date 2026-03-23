@@ -59,7 +59,7 @@ export function FilterModal({
     if (!track) return 0;
     const { left, width } = track.getBoundingClientRect();
     const ratio = Math.max(0, Math.min(1, (clientX - left) / width));
-    return Math.round((ratio * PRICE_MAX) / 1000) * 1000;
+    return Math.round((ratio * PRICE_MAX) / 10000) * 10000;
   };
 
   const handleTrackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -78,9 +78,9 @@ export function FilterModal({
     setDraft((prev) => {
       const [min, max] = prev.priceRange;
       if (dragging.current === "min") {
-        return { ...prev, priceRange: [Math.min(value, max - 1000), max] };
+        return { ...prev, priceRange: [Math.min(value, max - 10000), max] };
       } else {
-        return { ...prev, priceRange: [min, Math.max(value, min + 1000)] };
+        return { ...prev, priceRange: [min, Math.max(value, min + 10000)] };
       }
     });
   };
@@ -222,7 +222,7 @@ export function FilterModal({
               rightLabel={
                 priceRange[0] === 0 && priceRange[1] === PRICE_MAX
                   ? "전체"
-                  : `${priceRange[0] === 0 ? "0원" : priceRange[0].toLocaleString() + "원"} ~ ${priceRange[1] === PRICE_MAX ? "제한없음" : priceRange[1].toLocaleString() + "원"}`
+                  : `${priceRange[0] === 0 ? "0만원" : (priceRange[0] / 10000).toLocaleString() + "만원"} ~ ${priceRange[1] === PRICE_MAX ? "제한없음" : (priceRange[1] / 10000).toLocaleString() + "만원"}`
               }
             >
               {/* 커스텀 듀얼 슬라이더 — pointer 이벤트로 min/max 판별 */}
@@ -253,8 +253,8 @@ export function FilterModal({
                 />
               </div>
               <div className="flex items-center justify-between mt-1">
-                <span className="text-[14px] text-gray-500">0원</span>
-                <span className="text-[14px] text-gray-500">1,000,000원+</span>
+                <span className="text-[14px] text-gray-500">0만원</span>
+                <span className="text-[14px] text-gray-500">100만원+</span>
               </div>
             </FilterSection>
 

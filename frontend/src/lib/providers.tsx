@@ -12,6 +12,7 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./queryClient";
 import { Toaster } from "@/components/common/Sonner";
+import { TokenInitializer } from "@/components/common/TokenInitializer";
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -20,7 +21,7 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <TokenInitializer>{children}</TokenInitializer>
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );

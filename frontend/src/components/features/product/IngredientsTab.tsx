@@ -1,4 +1,3 @@
-// ⚠️ 미연결 컴포넌트 — 백엔드 연동 시 페이지에 연결 예정
 /**
  * components/features/product/IngredientsTab.tsx
  *
@@ -14,15 +13,15 @@ const SEARCH_INPUT_STYLE = {
   paddingLeft: "14px",
   paddingRight: "14px",
   borderRadius: "10px",
-  backgroundColor: "#F5F5F5",
+  backgroundColor: "var(--color-product-action-bg)",
   border: "none",
   fontSize: "13px",
-  color: "#1A1A1A",
+  color: "var(--color-product-name)",
 };
 const INGRED_DIVIDER = "1px solid #F0F0F0";
 const INGRED_NAME_STYLE = {
   fontSize: "13px",
-  color: "#1A1A1A",
+  color: "var(--color-product-name)",
   flex: 1,
   paddingRight: "12px",
 };
@@ -30,7 +29,7 @@ const EWG_DOT_BASE = { width: "8px", height: "8px", borderRadius: "50%" };
 const EWG_SCORE_STYLE = { fontSize: "11px", fontWeight: 600 };
 const EMPTY_TEXT_STYLE = {
   fontSize: "13px",
-  color: "#9E9E9E",
+  color: "var(--color-product-brand)",
   textAlign: "center" as const,
   padding: "24px 0",
 };

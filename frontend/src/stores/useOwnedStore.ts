@@ -1,7 +1,7 @@
 /**
  * stores/useOwnedStore.ts
  * 보유제품 전역 상태 — 검색/추천 페이지 ↔ 마이페이지 공유
- * ⚠️ API 연동 시 toggleOwned 내에서 ownedService.toggle(product) 호출로 교체
+ * 실제 API 연동은 useMyCosQuery (hooks/queries/useMyCos.ts) 사용
  */
 
 import { create } from "zustand";
@@ -30,8 +30,6 @@ export const useOwnedStore = create<OwnedStore>((set, get) => ({
           : [...state.ownedProducts, product],
       };
     });
-    // ⚠️ API 연동 시 아래로 교체
-    // await ownedService.toggle(product.id);
   },
 
   isOwned: (id) =>

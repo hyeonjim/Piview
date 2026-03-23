@@ -72,10 +72,10 @@ export default function SelectPage() {
                   style={{
                     backgroundColor: isSelected
                       ? "var(--color-brand-bg)"
-                      : "#FFFFFF",
+                      : "var(--color-bg-card)",
                     border: `1.5px solid ${isSelected ? "var(--color-brand)" : "#F0F0F0"}`,
                     fontWeight: 800,
-                    color: isSelected ? "#1A1A1A" : "#616161",
+                    color: isSelected ? "var(--color-product-name)" : "#616161",
                   }}
                 >
                   {gender.label}
@@ -101,9 +101,9 @@ export default function SelectPage() {
                   style={{
                     backgroundColor: isSelected
                       ? "var(--color-brand-bg)"
-                      : "#FFFFFF",
+                      : "var(--color-bg-card)",
                     border: `1.5px solid ${isSelected ? "var(--color-brand)" : "#F0F0F0"}`,
-                    color: isSelected ? "#1A1A1A" : "#616161",
+                    color: isSelected ? "var(--color-product-name)" : "#616161",
                     fontWeight: 800,
                   }}
                 >
@@ -130,10 +130,10 @@ export default function SelectPage() {
                   style={{
                     backgroundColor: isSelected
                       ? "var(--color-brand-bg)"
-                      : "#FFFFFF",
+                      : "var(--color-bg-card)",
                     border: `1.5px solid ${isSelected ? "var(--color-brand)" : "#F0F0F0"}`,
                     fontWeight: 800,
-                    color: isSelected ? "#1A1A1A" : "#616161",
+                    color: isSelected ? "var(--color-product-name)" : "#616161",
                   }}
                 >
                   {type.label}
@@ -162,9 +162,9 @@ export default function SelectPage() {
                   style={{
                     backgroundColor: isSelected
                       ? "var(--color-brand-bg)"
-                      : "#FFFFFF",
+                      : "var(--color-bg-card)",
                     border: `1.5px solid ${isSelected ? "var(--color-brand)" : "#E0E0E0"}`,
-                    color: isSelected ? "#1A1A1A" : "#616161",
+                    color: isSelected ? "var(--color-product-name)" : "#616161",
                     fontWeight: 600,
                   }}
                 >
@@ -211,11 +211,11 @@ export default function SelectPage() {
                   style={{
                     backgroundColor: isSelected
                       ? "var(--color-brand-bg)"
-                      : "#F5F5F5",
+                      : "var(--color-product-action-bg)",
                     border: isSelected
                       ? "1.5px solid var(--color-brand)"
                       : "1.5px solid transparent",
-                    color: isSelected ? "#1A1A1A" : "#616161",
+                    color: isSelected ? "var(--color-product-name)" : "#616161",
                     fontWeight: 600,
                   }}
                 >
@@ -235,8 +235,8 @@ export default function SelectPage() {
           }
           className="w-full h-[52px] rounded-[32px] font-bold text-[18px] transition-all duration-200 border-none"
           style={{
-            backgroundColor: isValid ? "var(--color-brand)" : "#F5F5F5",
-            color: isValid ? "#FFFFFF" : "var(--color-text-disabled)",
+            backgroundColor: isValid ? "var(--color-brand)" : "var(--color-product-action-bg)",
+            color: isValid ? "var(--color-bg-card)" : "var(--color-text-disabled)",
             cursor: isValid ? "pointer" : "default",
             boxShadow: isValid ? "0px 2px 8px rgba(162,170,123,0.3)" : "none",
           }}

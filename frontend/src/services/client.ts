@@ -26,6 +26,22 @@ const client = axios.create({
   headers: { "Content-Type": "application/json" },
   // refreshToken(httpOnly 쿠키) 자동 전송용
   withCredentials: true,
+  // 배열 파라미터를 tagIds=1&tagIds=2 형태로 직렬화 (기본값은 tagIds[]=1 형태)
+  paramsSerializer: (params) => {
+    const parts: string[] = [];
+    for (const key of Object.keys(params)) {
+      const value = params[key];
+      if (value === undefined || value === null) continue;
+      if (Array.isArray(value)) {
+        for (const v of value) {
+          parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(v)}`);
+        }
+      } else {
+        parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+      }
+    }
+    return parts.join("&");
+  },
 });
 
 // ── 전체 store 초기화 헬퍼 — 로그아웃/세션 만료 시 호출 ──────────────────
@@ -77,11 +93,14 @@ client.interceptors.response.use(
 
     try {
       // refreshToken은 httpOnly 쿠키 → withCredentials로 자동 전송
-      // 응답으로 새 accessToken이 일반 쿠키로 내려옴
-      await client.post("/auth/refresh");
+      // 응답 바디: { accessToken: "..." }
+      const refreshResponse = await client.post("/auth/refresh");
 
-      // 새로 발급된 accessToken 쿠키에서 꺼내 Zustand에 저장 후 쿠키 삭제
-      const newAccessToken = getCookieAndClear("accessToken");
+      const newAccessToken =
+        (refreshResponse.data?.accessToken as string | undefined) ??
+        (refreshResponse.data?.data?.accessToken as string | undefined) ??
+        null;
+
       if (newAccessToken) {
         useUserStore.getState().setAccessToken(newAccessToken);
         originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;

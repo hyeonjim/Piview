@@ -9,8 +9,6 @@ export type Gender = "MEN" | "WOMEN";
 export type AgeGroup = "TEENS" | "TWENTIES" | "THIRTIES" | "FORTIES_PLUS";
 
 // ── /users/me API 응답 ────────────────────────────────────────────
-// ⚠️ /users/me API 미구현 — 연동 시 실제 응답 기준으로 필드 확인 필요
-// ⚠️ skinType, ageRange — 구버전 호환 필드. 연동 후 제거 예정
 export interface User {
   id: number;
   userId: number; // 백엔드 API에서 userId로 반환
@@ -23,11 +21,11 @@ export interface User {
   ageGroup: AgeGroup | null;
   mySkinType: SkinType | null;
   exist: boolean;
-  mySkinProblems: MySkinProblem[]; // ⚠️ 승찬님 ERD 확정 후 구조 수정 필요
+  mySkinProblems: MySkinProblem[]; // ⚠️ ERD 확정 후 구조 수정 필요
 }
 
 // ── GET /my-cos 응답에 포함 ───────────────────────────────────────
-// ⚠️ 승찬님 ERD 확정 후 구조 수정 필요
+// ⚠️ ERD 확정 후 구조 수정 필요
 export interface MySkinProblem {
   id: number;
   userId: number;

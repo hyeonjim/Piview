@@ -41,7 +41,12 @@ export const useLikeStore = create<LikeStore>((set, get) => ({
     set((state) => {
       const next = { ...state.likedIds };
       products.forEach(({ id, liked }) => {
-        next[String(id)] = liked;
+        // liked: true만 추가 — false는 쓰지 않음
+        // 검색 결과 캐시의 liked:false가 실제 찜 상태를 덮어쓰는 것 방지
+        // 찜 해제는 toggleLike(낙관적) 또는 initFromServer(서버 동기화)에서만 처리
+        if (liked) {
+          next[String(id)] = true;
+        }
       });
       return { likedIds: next };
     });

@@ -395,11 +395,9 @@ export default function PhotoAnalysisPage() {
     if (!capturedFile || isAnalyzing) return;
     capture(capturedFile, {
       onSuccess: ({ analysisId: id }) => {
-        console.log("[캡처 성공] analysisId:", id);
         setAnalysisId(id);
       },
-      onError: (err) => {
-        console.error("[캡처 실패]", err);
+      onError: () => {
         router.push("/skin-test/survey/1");
       },
     });
