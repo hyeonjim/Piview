@@ -70,12 +70,14 @@ client.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config as RetryableRequestConfig;
 
-    // 401 이외의 에러는 그대로 전달
-    if (error.response?.status !== 401) {
+    // 401/403 이외의 에러는 그대로 전달
+    // 403도 토큰 만료로 인한 권한 없음일 수 있어 refresh 시도
+    const status = error.response?.status;
+    if (status !== 401 && status !== 403) {
       return Promise.reject(error);
     }
 
-    // refresh 요청 자체가 401이면 무한루프 방지 — 바로 로그아웃
+    // refresh 요청 자체가 401/403이면 무한루프 방지 — 바로 로그아웃
     if (originalRequest.url?.includes("/auth/refresh")) {
       clearAllStores();
       window.location.href = "/splash";

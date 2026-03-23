@@ -9,7 +9,6 @@
 import client from "./client";
 import type { ApiResponse } from "@/types/common";
 import type {
-  DraftItem,
   DraftItemDto,
   RoutineListResponse,
   RoutineResponse,
@@ -35,8 +34,8 @@ export const routineService = {
    * 드래그 순서 변경 후 전체 배열을 Redis에 저장
    * @param items - 현재 루틴의 전체 제품 목록 (순서 포함)
    */
-  syncDraft: (items: DraftItem[]) =>
-    client.put<ApiResponse<void>>("/routines/draft", items),
+  syncDraft: (items: DraftItemDto[]) =>
+    client.put<ApiResponse<DraftItemDto[]>>("/routines/draft", items),
 
   /**
    * 임시 루틴(draft) 조회

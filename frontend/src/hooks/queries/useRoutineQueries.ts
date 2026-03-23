@@ -23,7 +23,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { routineService } from "@/services/routine";
 import type {
-  DraftItem,
   DraftItemDto,
   RoutineListResponse,
   RoutineResponse,
@@ -132,7 +131,7 @@ export function useSyncDraftMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (items: DraftItem[]) => routineService.syncDraft(items),
+    mutationFn: (items: DraftItemDto[]) => routineService.syncDraft(items),
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.routineDraft });

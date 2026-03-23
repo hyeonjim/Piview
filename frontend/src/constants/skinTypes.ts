@@ -11,7 +11,7 @@ export const SKIN_TYPES = [
   { id: "dry", label: "건성" },
   { id: "oily", label: "지성" },
   { id: "combination", label: "복합성" },
-  { id: "dehydrated", label: "수부지" },
+  { id: "subuji", label: "수부지" },
 ] as const;
 
 /** 성별 선택 옵션 */
@@ -28,18 +28,17 @@ export const AGE_GROUPS = [
   { id: "FORTIES_PLUS", label: "40대 이상" },
 ] as const;
 
-/** 피부 고민 선택지 (복수 선택) */
+/** 피부 고민 선택지 (복수 선택) — 백엔드 SkinProblemMapper 키값과 일치 */
 export const SKIN_CONCERNS = [
-  "여드름/트러블",
-  "건조함",
+  "여드름",
+  "미백",
+  "기미/주근깨/잡티",
   "주름/탄력",
-  "색소/잡티",
-  "모공",
-  "블랙헤드",
   "피지",
-  "수분부족",
-  "민감함",
-  "칙칙함",
+  "블랙헤드",
+  "속건조",
+  "홍조",
+  "각질",
 ] as const;
 
 /** 알레르기 성분 선택지 */

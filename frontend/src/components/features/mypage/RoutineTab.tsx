@@ -30,11 +30,12 @@ import {
   useSyncDraftMutation,
   useLoadRoutineToDraftMutation,
   useUpdateRoutineMutation,
+  useUpdateRoutineOrderMutation,
 } from "@/hooks";
 import type {
   DraftItemDto,
   RoutineListResponse,
-  DraftItem,
+  RoutineDetailOrderDto,
 } from "@/types/routine";
 import type { ProductSummaryResponse } from "@/types/product/product";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
@@ -94,21 +95,22 @@ function groupRoutineDetailByStep(
 }
 
 /**
- * 스텝별 제품 맵 → DraftItem[] 변환 (PUT /api/v1/routines/draft 요청 body)
+ * 스텝별 제품 맵 → DraftItemDto[] 변환 (PUT /api/v1/routines/draft 요청 body)
+ * 스웨거 기준 요청 body는 DraftItemDto[] (product 전체 객체 포함)
  * 스텝 순서 기준으로 stepOrder를 1부터 채번
  */
 function buildDraftItems(
   draftByStep: Record<string, ProductSummaryResponse[]>,
   steps: ReturnType<typeof getRoutineSteps>,
-): DraftItem[] {
-  const items: DraftItem[] = [];
+): DraftItemDto[] {
+  const items: DraftItemDto[] = [];
   let stepOrder = 1;
   for (const step of steps) {
     for (const product of draftByStep[step.code] ?? []) {
       items.push({
         columnId: step.columnId,
-        productId: product.productId,
         stepOrder: stepOrder++,
+        product,
       });
     }
   }
@@ -138,6 +140,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     useLoadRoutineToDraftMutation();
   const { mutate: updateRoutine, isPending: isUpdating } =
     useUpdateRoutineMutation();
+  const { mutate: updateRoutineOrder } = useUpdateRoutineOrderMutation();
 
   // ── 로컬 드래그용 상태 (서버 데이터 기반으로 초기화) ──────────────────
   // 드래그 중 UI 반영을 위해 서버 상태를 로컬 React 상태로 미러링
@@ -158,6 +161,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   const [editingRoutineId, setEditingRoutineId] = useState<number | null>(null);
   // 편집 시작 시점의 루틴 이름 — 수정 저장 모달에 미리 채워줄 기본값
   const [editingRoutineTitle, setEditingRoutineTitle] = useState<string>("");
+  // Edit Mode 진입 시 productId → routineDetailId 매핑 — PATCH /order 호출에 사용
+  const [editingDetailIdMap, setEditingDetailIdMap] = useState<Map<number, number>>(new Map());
 
   // 카드 클릭 시 상세 보기 대상 루틴 ID — store에서 관리해 재방문 시 복원
   const selectedRoutineId = useRoutineStore((state) => state.selectedRoutineId);
@@ -331,8 +336,10 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   };
 
   /**
-   * 드래그 종료 — 순서 변경 후 PUT /api/v1/routines/draft 호출
-   * 로컬 상태를 즉시 반영하고, 서버에 전체 배열을 동기화
+   * 드래그 종료 — 순서 변경 처리
+   * 1) 로컬 상태 즉시 반영 (UI 업데이트)
+   * 2) PUT /api/v1/routines/draft — draft 순서 항상 동기화 (Edit Save 시 기준이 됨)
+   * 3) Edit Mode 한정: PATCH /api/v1/routines/{routineId}/order — 저장된 루틴에도 즉시 반영
    */
   const handleDragHandlePointerUp = () => {
     if (!dragState) return;
@@ -359,11 +366,34 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     setLocalDraftByStep(newDraftByStep);
     setDragState(null);
 
-    // 서버에 전체 순서 동기화 — PUT /api/v1/routines/draft
-    const items = buildDraftItems(newDraftByStep, routineSteps);
-    syncDraft(items, {
+    // draft 순서는 Edit Mode/새 루틴 모드 모두 항상 동기화
+    // — Edit Save(PUT /routines/{routineId})가 draft 기준으로 덮어쓰기 때문
+    const draftItems = buildDraftItems(newDraftByStep, routineSteps);
+    syncDraft(draftItems, {
       onError: () => notify("순서 변경 저장에 실패했습니다."),
     });
+
+    if (editingRoutineId !== null && editingDetailIdMap.size > 0) {
+      // Edit Mode: PATCH /api/v1/routines/{routineId}/order 로 저장된 루틴에도 즉시 반영
+      // routineDetailId가 있는 제품만 포함 (새로 추가된 제품은 Edit Save 시 반영)
+      const updatedOrders: RoutineDetailOrderDto[] = [];
+      let stepOrder = 1;
+      for (const step of routineSteps) {
+        for (const product of newDraftByStep[step.code] ?? []) {
+          const routineDetailId = editingDetailIdMap.get(product.productId);
+          if (routineDetailId !== undefined) {
+            updatedOrders.push({ routineDetailId, stepOrder });
+          }
+          stepOrder++;
+        }
+      }
+      if (updatedOrders.length > 0) {
+        updateRoutineOrder(
+          { routineId: editingRoutineId, request: { updatedOrders } },
+          { onError: () => notify("순서 변경 저장에 실패했습니다.") },
+        );
+      }
+    }
   };
 
   // ── 루틴 저장 핸들러 ──────────────────────────────────────────────────
@@ -399,6 +429,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             setSaveModalName("");
             setEditingRoutineId(null);
             setEditingRoutineTitle("");
+            setEditingDetailIdMap(new Map());
             notify(`"${trimmedName}" 루틴이 수정되었습니다!`);
           },
           onError: () => notify("루틴 수정에 실패했습니다. 다시 시도해주세요."),
@@ -452,6 +483,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   const handleNewRoutine = () => {
     setEditingRoutineId(null);
     setEditingRoutineTitle("");
+    setEditingDetailIdMap(new Map());
     setSelectedRoutineId(null);
     clearDraft(undefined, {
       onSuccess: () => notify("새 루틴 작성을 시작합니다."),
@@ -469,6 +501,19 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     const currentTitle =
       routineList.find((routine) => routine.routineId === selectedRoutineId)
         ?.title ?? "";
+
+    // Edit Mode 진입 시 productId → routineDetailId 매핑 저장
+    // PATCH /api/v1/routines/{routineId}/order 호출 시 routineDetailId가 필요함
+    if (selectedRoutineDetail) {
+      const map = new Map<number, number>();
+      for (const stepGroup of selectedRoutineDetail.steps) {
+        for (const item of stepGroup.products) {
+          map.set(item.product.productId, item.routineDetailId);
+        }
+      }
+      setEditingDetailIdMap(map);
+    }
+
     loadRoutineToDraft(selectedRoutineId, {
       onSuccess: () => {
         setEditingRoutineId(selectedRoutineId);
@@ -632,7 +677,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               <button
                 onClick={handleOpenEditSaveModal}
                 disabled={isUpdating}
-                className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent disabled:opacity-50"
+                className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-sky-100 disabled:opacity-50"
               >
                 {isUpdating ? "저장 중..." : "Edit Save"}
               </button>
@@ -658,7 +703,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
 
         {/* 진행 상황 */}
         <p className="text-[14px] font-bold text-text-muted">
-          {filledCount}/{routineSteps.length}단계 완성 · 드래그로 순서 변경
+          {filledCount}/{routineSteps.length}단계 완성 · Edit Mode에서 변경
         </p>
       </div>
 
@@ -766,6 +811,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                         isViewingSavedRoutine ? () => {} : handleRemoveProduct
                       }
                       stepIcon={step.icon}
+                      priority={index === 0}
                     />
                   );
                 })}
@@ -882,6 +928,7 @@ interface RoutineProductCardProps {
   index: number;
   isDragging: boolean;
   isDropTarget: boolean;
+  priority?: boolean;
   onDragHandlePointerDown: (
     event: React.PointerEvent<HTMLDivElement>,
     stepCode: string,
@@ -904,6 +951,7 @@ function RoutineProductCard({
   onDragHandlePointerUp,
   onRemove,
   stepIcon,
+  priority = false,
 }: RoutineProductCardProps) {
   const categoryColor = product.categoryName
     ? CATEGORY_COLORS[product.categoryName]
@@ -954,6 +1002,8 @@ function RoutineProductCard({
                 src={product.imageUrl}
                 alt={product.name ?? ""}
                 fill
+                sizes="88px"
+                priority={priority}
                 className="object-cover"
               />
             ) : (

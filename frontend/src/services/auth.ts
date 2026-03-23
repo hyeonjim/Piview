@@ -5,7 +5,7 @@
  */
 
 import client from "./client";
-import type { User } from "@/types/user";
+import type { User, UserProfileUpdateRequest } from "@/types/user";
 import type { ApiResponse } from "@/types/common";
 
 export const authService = {
@@ -16,6 +16,16 @@ export const authService = {
   getMe: () =>
     client
       .get<ApiResponse<User>>("/users/me")
+      .then((response) => response.data.data),
+
+  /**
+   * 사용자 프로필 업데이트
+   * PATCH /users/me — 변경할 필드만 포함 (모든 필드 optional)
+   * 응답: 업데이트된 User 전체 반환
+   */
+  updateProfile: (body: UserProfileUpdateRequest) =>
+    client
+      .patch<ApiResponse<User>>("/users/me", body)
       .then((response) => response.data.data),
 
   /**

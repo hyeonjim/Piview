@@ -48,12 +48,11 @@ export const fromSkinTypeEnum = (skinType: string): SkinType => {
     DRY: "건성",
     OILY: "지성",
     COMBINATION: "복합성",
-    DEHYDRATED_OILY: "수부지",
+    SUBUJI: "수부지",
     // GET /my-cos topSkinType 소문자 대응
     dry: "건성",
     oily: "지성",
     combination: "복합성",
-    dehydrated_oily: "수부지",
     subuji: "수부지",
   };
   return map[skinType] ?? (skinType as SkinType);
