@@ -41,4 +41,6 @@ export {
   useSetMainRoutineMutation,
   useUpdateRoutineOrderMutation,
   useDeleteRoutineMutation,
+  useLoadRoutineToDraftMutation,
+  useUpdateRoutineMutation,
 } from "./queries/useRoutineQueries";

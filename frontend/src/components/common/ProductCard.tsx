@@ -378,12 +378,12 @@ export default function ProductCard({
   if (layout === "grid") {
     return (
       <div
-        className="relative flex flex-col overflow-hidden bg-white rounded-modal w-full min-w-0"
+        className="relative flex flex-col py-2 overflow-hidden bg-white rounded-modal w-full min-w-0"
         style={{ boxShadow: CARD_SHADOW }}
       >
         <Link href={productHref} className="no-underline flex flex-col flex-1">
           {/* 이미지 — 3/2 */}
-          <div className="relative w-full aspect-3/2 overflow-hidden">
+          <div className="relative w-full aspect-2/1 overflow-hidden">
             <ProductImage
               imageUrl={imageUrl}
               name={name}
@@ -539,8 +539,8 @@ export default function ProductCard({
                 imageUrl={imageUrl}
                 name={name}
                 emoji={emoji}
-                width={60}
-                height={60}
+                width={50}
+                height={50}
                 className="object-cover rounded-lg"
               />
             </div>

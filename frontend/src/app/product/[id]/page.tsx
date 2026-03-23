@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
@@ -81,12 +82,6 @@ function ProductDetailInner() {
   const resolvedIsLiked =
     isLiked !== null ? isLiked : (productData?.liked ?? false);
 
-  useEffect(() => {
-    // productData 로드되면 초기값 세팅 (아직 토글 안 한 경우만)
-    if (productData && isLiked === null) {
-      setIsLiked(productData.liked ?? false);
-    }
-  }, [productData?.liked]);
 
   const [showRoutineCompare, setShowRoutineCompare] = useState(false);
   const [selectedRoutineProductIndex, setSelectedRoutineProductIndex] =
@@ -434,18 +429,13 @@ function ProductDetailInner() {
       <div className="pb-8">
         {/* 이미지 카드 — 아래 섹션과 동일한 스타일, 이미지보다 살짝 큰 패딩 */}
         <div className="mx-5 mb-3 rounded-2xl bg-white overflow-hidden">
-          <div className="relative w-full aspect-3/2">
+          <div className="relative w-full aspect-2/1">
             {productData.imageUrl ? (
-              <img
+              <Image
                 src={productData.imageUrl}
                 alt={productData.productName ?? ""}
-                className="absolute inset-0 w-full h-full object-contain p-4"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                  (
-                    e.target as HTMLImageElement
-                  ).nextElementSibling?.removeAttribute("hidden");
-                }}
+                fill
+                className="object-contain p-4"
               />
             ) : null}
             <span
@@ -463,7 +453,7 @@ function ProductDetailInner() {
               <p className="text-[16px] text-text-muted font-semibold mb-0.5">
                 {productData.brandName}
               </p>
-              <h1 className="text-[20px] font-semibold text-text-primary leading-[1.35]">
+              <h1 className="text-[18px] font-semibold text-text-primary leading-[1.35]">
                 {productData.productName}
               </h1>
             </div>

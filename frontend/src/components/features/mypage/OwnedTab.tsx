@@ -73,7 +73,7 @@ export default function OwnedTab({ routine }: OwnedTabProps) {
   );
 
   return (
-    <div className="px-4 pb-24 pt-4 flex flex-col gap-6">
+    <div className="px-4 pb-24 pt-4 flex flex-col gap-20">
       {/* ── 보유 제품 섹션 ─────────────────────────────────────── */}
       <section>
         <div className="flex items-center justify-between mb-1">
@@ -106,6 +106,9 @@ export default function OwnedTab({ routine }: OwnedTabProps) {
                 <div key={product.id} className="relative">
                   <ProductCard
                     id={product.id}
+                    href={product.category
+                      ? `/product/${product.productId}?category=${encodeURIComponent(product.category)}`
+                      : `/product/${product.productId}`}
                     brand={product.brand}
                     name={product.name}
                     category={product.category}

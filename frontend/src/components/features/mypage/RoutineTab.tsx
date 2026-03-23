@@ -2,7 +2,7 @@
 
 import { toast } from "sonner";
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Plus, X, RotateCcw, ArrowUpDown, Pencil, ScanText } from "lucide-react";
+import { Plus, X, ArrowUpDown, ScanText } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -28,6 +28,8 @@ import {
   useClearDraftMutation,
   useRemoveProductFromDraftMutation,
   useSyncDraftMutation,
+  useLoadRoutineToDraftMutation,
+  useUpdateRoutineMutation,
 } from "@/hooks";
 import type {
   DraftItemDto,
@@ -132,6 +134,10 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   const { mutate: clearDraft } = useClearDraftMutation();
   const { mutate: removeProduct } = useRemoveProductFromDraftMutation();
   const { mutate: syncDraft } = useSyncDraftMutation();
+  const { mutate: loadRoutineToDraft, isPending: isLoadingToEdit } =
+    useLoadRoutineToDraftMutation();
+  const { mutate: updateRoutine, isPending: isUpdating } =
+    useUpdateRoutineMutation();
 
   // ── 로컬 드래그용 상태 (서버 데이터 기반으로 초기화) ──────────────────
   // 드래그 중 UI 반영을 위해 서버 상태를 로컬 React 상태로 미러링
@@ -148,8 +154,10 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveModalName, setSaveModalName] = useState("");
   const [showOcrModal, setShowOcrModal] = useState(false);
-  const [showRenameModal, setShowRenameModal] = useState(false);
-  const [renameValue, setRenameValue] = useState("");
+  // 편집 중인 루틴 ID — null이면 새 루틴 생성 모드, 값이 있으면 기존 루틴 수정 모드
+  const [editingRoutineId, setEditingRoutineId] = useState<number | null>(null);
+  // 편집 시작 시점의 루틴 이름 — 수정 저장 모달에 미리 채워줄 기본값
+  const [editingRoutineTitle, setEditingRoutineTitle] = useState<string>("");
 
   // 카드 클릭 시 상세 보기 대상 루틴 ID — store에서 관리해 재방문 시 복원
   const selectedRoutineId = useRoutineStore((state) => state.selectedRoutineId);
@@ -177,13 +185,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     return localDraftByStep;
   }, [isViewingSavedRoutine, selectedRoutineDetail, routineSteps, localDraftByStep]);
 
-  // 메인 루틴 찾기
-  const mainRoutine = useMemo(
-    () => routineList.find((routine) => routine.isMain),
-    [routineList],
-  );
-
-  // 저장된 루틴 슬라이더 스크롤 상태 — 도트 인디케이터 연동
+// 저장된 루틴 슬라이더 스크롤 상태 — 도트 인디케이터 연동
   const savedRoutineScrollRef = useRef<HTMLDivElement>(null);
   const [activeCardIndex, setActiveCardIndex] = useState(0);
 
@@ -371,40 +373,57 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   };
 
   /**
-   * 루틴 저장 — POST /api/v1/routines
-   * Redis draft를 읽어 새 루틴 생성
+   * 편집 저장 모달 열기 — 현재 루틴 이름을 미리 채워서 열림
+   */
+  const handleOpenEditSaveModal = () => {
+    setSaveModalName(editingRoutineTitle);
+    setShowSaveModal(true);
+  };
+
+  /**
+   * 루틴 저장 분기 핸들러
+   * - editingRoutineId가 있으면 PUT /api/v1/routines/{routineId} (기존 루틴 덮어쓰기)
+   * - 없으면 POST /api/v1/routines (새 루틴 생성)
    */
   const handleSaveRoutine = () => {
     const trimmedName = saveModalName.trim();
     if (!trimmedName) return;
 
-    console.log("🔍 루틴 저장 디버깅:", { user, userId: user?.userId });
-    console.log("🔍 user 전체 객체 (JSON):", JSON.stringify(user, null, 2));
-    console.log(
-      "🔍 user의 모든 키:",
-      user ? Object.keys(user) : "user is null",
-    );
+    // 편집 모드: 기존 루틴 덮어쓰기
+    if (editingRoutineId !== null) {
+      updateRoutine(
+        { routineId: editingRoutineId, request: { title: trimmedName } },
+        {
+          onSuccess: () => {
+            setShowSaveModal(false);
+            setSaveModalName("");
+            setEditingRoutineId(null);
+            setEditingRoutineTitle("");
+            notify(`"${trimmedName}" 루틴이 수정되었습니다!`);
+          },
+          onError: () => notify("루틴 수정에 실패했습니다. 다시 시도해주세요."),
+        },
+      );
+      return;
+    }
 
+    // 일반 모드: 새 루틴 생성
     if (!user?.userId) {
-      console.error("❌ user.userId가 없습니다:", user);
       notify("사용자 정보를 불러올 수 없습니다. 페이지를 새로고침해주세요.");
       return;
     }
 
-    const payload = { userId: user.userId, title: trimmedName };
-    console.log("📤 루틴 생성 payload:", payload);
-
-    createRoutine(payload, {
-      onSuccess: () => {
-        setShowSaveModal(false);
-        setSaveModalName("");
-        notify(`"${trimmedName}" 루틴이 저장되었습니다!`);
+    createRoutine(
+      { userId: user.userId, title: trimmedName },
+      {
+        onSuccess: () => {
+          setShowSaveModal(false);
+          setSaveModalName("");
+          notify(`"${trimmedName}" 루틴이 저장되었습니다!`);
+        },
+        onError: () => notify("루틴 저장에 실패했습니다. 다시 시도해주세요."),
       },
-      onError: (error) => {
-        console.error("❌ 루틴 저장 실패:", error);
-        notify("루틴 저장에 실패했습니다. 다시 시도해주세요.");
-      },
-    });
+    );
   };
 
   /**
@@ -428,25 +447,38 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   };
 
   /**
-   * 루틴 초기화 — DELETE /api/v1/routines/draft (Redis 초기화)
+   * 새 루틴 만들기 — Draft 초기화 + 편집 모드 해제 + 선택 해제
    */
-  const handleClearRoutine = () => {
+  const handleNewRoutine = () => {
+    setEditingRoutineId(null);
+    setEditingRoutineTitle("");
+    setSelectedRoutineId(null);
     clearDraft(undefined, {
-      onSuccess: () => notify("루틴이 초기화되었습니다."),
+      onSuccess: () => notify("새 루틴 작성을 시작합니다."),
       onError: () => notify("초기화에 실패했습니다."),
     });
   };
 
   /**
-   * 루틴 이름 변경 핸들러
-   * ⚠️ API 연동 시 PATCH /api/v1/routines/{routineId}/title 로 교체
+   * 루틴 편집 모드 진입 — POST /api/v1/routines/{routineId}/edit-start
+   * 선택된 저장 루틴을 Redis draft로 복사한 뒤 편집 가능 상태로 전환
+   * editingRoutineId에 현재 루틴 ID를 저장해 이후 Edit Save 시 PUT에 사용
    */
-  const handleRenameRoutine = () => {
-    const trimmedName = renameValue.trim();
-    if (!trimmedName || !selectedRoutineId) return;
-    // ⚠️ API 연동 시 실제 PATCH 요청으로 교체
-    notify("이름 변경 기능은 API 연동 후 적용됩니다.");
-    setShowRenameModal(false);
+  const handleEditRoutine = () => {
+    if (!selectedRoutineId) return;
+    const currentTitle =
+      routineList.find((routine) => routine.routineId === selectedRoutineId)
+        ?.title ?? "";
+    loadRoutineToDraft(selectedRoutineId, {
+      onSuccess: () => {
+        setEditingRoutineId(selectedRoutineId);
+        setEditingRoutineTitle(currentTitle);
+        // 보기 모드 해제 → draft 편집 화면으로 전환
+        setSelectedRoutineId(null);
+        notify("루틴을 편집 모드로 불러왔습니다.");
+      },
+      onError: () => notify("루틴 불러오기에 실패했습니다."),
+    });
   };
 
   /**
@@ -480,7 +512,15 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       {/* ── 저장된 루틴 슬라이더 ── */}
       {routineList.length > 0 && (
         <div className="mb-2">
-          <p className="text-[14px] font-bold text-text-muted mb-2">Saved routine</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[14px] font-bold text-text-muted">Saved routine</p>
+            <button
+              onClick={handleNewRoutine}
+              className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-xs text-brand cursor-pointer bg-transparent"
+            >
+              <Plus size={13} /> New
+            </button>
+          </div>
           <div
             ref={savedRoutineScrollRef}
             className="flex gap-2 overflow-x-auto pb-1"
@@ -506,7 +546,12 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 onDelete={() =>
                   handleDeleteRoutine(saved.routineId, saved.title)
                 }
-                onClick={() => setSelectedRoutineId(saved.routineId)}
+                onClick={() => {
+                    // 다른 루틴 카드 선택 시 Edit mode 종료
+                    setEditingRoutineId(null);
+                    setEditingRoutineTitle("");
+                    setSelectedRoutineId(saved.routineId);
+                  }}
               />
             ))}
           </div>
@@ -532,62 +577,42 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
 
       {/* ── 헤더 ── */}
       <div className="flex flex-col gap-2 mb-1">
-        {/* 루틴 이름 & 메인 루틴 설정 버튼 */}
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-bold text-text-primary">
-            {selectedRoutineDetail?.title || mainRoutine?.title || "메인루틴"}
-          </h2>
-          {/* 이름 변경 버튼 — 선택된 루틴이 있을 때만 표시 */}
-          {selectedRoutineId !== null && (
+        {/* 루틴 이름 & 메인 루틴 설정 버튼 & 액션 버튼 */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <h2 className="text-lg font-bold text-text-primary truncate">
+              {isViewingSavedRoutine
+                ? selectedRoutineDetail.title
+                : editingRoutineId !== null
+                  ? editingRoutineTitle
+                  : "메인루틴"}
+            </h2>
+            {/* ★ 클릭 시 현재 선택된(펼쳐진) 루틴을 바로 메인으로 설정 */}
             <button
               onClick={() => {
-                setRenameValue(selectedRoutineDetail?.title ?? "");
-                setShowRenameModal(true);
+                if (!selectedRoutineId) {
+                  notify("먼저 저장된 루틴 카드를 선택해주세요.");
+                  return;
+                }
+                handleSetMainRoutine(selectedRoutineId);
               }}
-              className="flex items-center justify-center w-5 h-5 border-none bg-transparent cursor-pointer text-[#A69D92]"
-              aria-label="루틴 이름 변경"
+              className="text-lg cursor-pointer bg-transparent border-none leading-none shrink-0"
+              style={{
+                color:
+                  selectedRoutineId !== null &&
+                  routineList.find((r) => r.routineId === selectedRoutineId)
+                    ?.isMain
+                    ? "#C8A96E"
+                    : "#D9D5D0",
+              }}
+              aria-label="메인 루틴으로 설정"
             >
-              <Pencil size={14} />
+              ★ Main
             </button>
-          )}
-          {/* ★ 클릭 시 현재 선택된(펼쳐진) 루틴을 바로 메인으로 설정 */}
-          <button
-            onClick={() => {
-              if (!selectedRoutineId) {
-                notify("먼저 저장된 루틴 카드를 선택해주세요.");
-                return;
-              }
-              handleSetMainRoutine(selectedRoutineId);
-            }}
-            className="text-lg cursor-pointer bg-transparent border-none leading-none"
-            style={{
-              color:
-                selectedRoutineId !== null &&
-                routineList.find((r) => r.routineId === selectedRoutineId)
-                  ?.isMain
-                  ? "#C8A96E"
-                  : "#D9D5D0",
-            }}
-            aria-label="메인 루틴으로 설정"
-          >
-            ★ Main
-          </button>
-        </div>
-
-        {/* 진행 상황 & 액션 버튼 */}
-        <div className="flex items-start justify-between">
-          <div className="min-w-0 flex-1">
-            <p className="text-[14px] font-bold text-text-muted mt-0.5">
-              {filledCount}/{routineSteps.length}단계 완성 · 드래그로 순서 변경
-            </p>
           </div>
-          <div className="flex gap-1.5 text-[14px]">
-            <button
-              onClick={handleClearRoutine}
-              className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent"
-            >
-              <RotateCcw size={12} /> Reset
-            </button>
+
+          {/* 액션 버튼 */}
+          <div className="flex gap-1.5 text-[14px] shrink-0">
             {/* OCR 버튼 — 아이콘 + Tooltip */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -601,6 +626,26 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               </TooltipTrigger>
               <TooltipContent>OCR로 제품 추가</TooltipContent>
             </Tooltip>
+            {/* Edit Mode / Edit Save 버튼 — 편집 모드 여부에 따라 역할 전환 */}
+            {editingRoutineId !== null ? (
+              // 편집 모드: 클릭 시 수정 저장 모달 열기
+              <button
+                onClick={handleOpenEditSaveModal}
+                disabled={isUpdating}
+                className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent disabled:opacity-50"
+              >
+                {isUpdating ? "저장 중..." : "Edit Save"}
+              </button>
+            ) : (
+              // 일반 모드: 클릭 시 선택된 루틴을 draft로 불러옴
+              <button
+                onClick={handleEditRoutine}
+                disabled={selectedRoutineId === null || isLoadingToEdit}
+                className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent disabled:opacity-50"
+              >
+                {isLoadingToEdit ? "불러오는 중..." : "Edit Mode"}
+              </button>
+            )}
             <button
               onClick={handleOpenSaveModal}
               disabled={isCreating || filledCount === 0}
@@ -610,6 +655,11 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             </button>
           </div>
         </div>
+
+        {/* 진행 상황 */}
+        <p className="text-[14px] font-bold text-text-muted">
+          {filledCount}/{routineSteps.length}단계 완성 · 드래그로 순서 변경
+        </p>
       </div>
 
       {/* ── 루틴 스텝별 섹션 ── */}
@@ -772,49 +822,6 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         </div>
       </div>
 
-      {/* ── 루틴 이름 변경 모달 ── */}
-      {showRenameModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45"
-          onClick={() => setShowRenameModal(false)}
-        >
-          <div
-            className="bg-white rounded-2xl p-6 mx-5 w-full max-w-sm"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h3 className="text-base font-semibold text-[#2A2118] mb-1">
-              루틴 이름 변경
-            </h3>
-            <input
-              type="text"
-              value={renameValue}
-              onChange={(event) => setRenameValue(event.target.value)}
-              className="w-full px-3 py-2.5 text-sm rounded-xl border border-[#E2DDD8] outline-none my-4"
-              autoFocus
-              onKeyDown={(event) => {
-                if (event.key === "Enter") handleRenameRoutine();
-                if (event.key === "Escape") setShowRenameModal(false);
-              }}
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowRenameModal(false)}
-                className="flex-1 py-2.5 text-sm font-semibold rounded-xl border border-[#E2DDD8] text-[#8A8278] bg-transparent cursor-pointer"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleRenameRoutine}
-                disabled={!renameValue.trim()}
-                className="flex-1 py-2.5 text-sm font-semibold rounded-xl text-white bg-[#A69D92] cursor-pointer disabled:opacity-40"
-              >
-                변경
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── 루틴 저장 이름 입력 모달 ── */}
       {showSaveModal && (
         <div
@@ -826,7 +833,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             onClick={(event) => event.stopPropagation()}
           >
             <h3 className="text-base font-semibold text-[#2A2118] mb-1">
-              루틴 저장
+              {editingRoutineId !== null ? "루틴 수정 저장" : "루틴 저장"}
             </h3>
             <input
               type="text"
@@ -849,10 +856,15 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               </button>
               <button
                 onClick={handleSaveRoutine}
-                disabled={!saveModalName.trim() || isCreating}
+                disabled={
+                  !saveModalName.trim() ||
+                  (editingRoutineId !== null ? isUpdating : isCreating)
+                }
                 className="flex-1 py-2.5 text-sm font-semibold rounded-xl text-white bg-[#A69D92] cursor-pointer disabled:opacity-40"
               >
-                {isCreating ? "저장 중..." : "저장"}
+                {(editingRoutineId !== null ? isUpdating : isCreating)
+                  ? "저장 중..."
+                  : "저장"}
               </button>
             </div>
           </div>

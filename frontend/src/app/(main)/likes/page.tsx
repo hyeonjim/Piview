@@ -2,9 +2,14 @@
 
 import { Heart } from "lucide-react";
 
-import { useMyCosQuery, useAddMyCos, useRemoveMyCos } from "@/hooks";
+import {
+  useMyCosQuery,
+  useAddMyCos,
+  useRemoveMyCos,
+  useLikedProducts,
+  useCompare,
+} from "@/hooks";
 import { useRoutineStore } from "@/stores";
-import { useLike, useLikedProducts, useCompare } from "@/hooks";
 import { useLikeStore } from "@/stores";
 import ProductCard from "@/components/common/ProductCard";
 import CompareModal from "@/components/common/CompareModal";
@@ -24,28 +29,34 @@ export default function LikesPage() {
     page * PAGE_SIZE,
   );
 
-  const routineMap = useRoutineStore((state) => state.localRoutine);
+  // 루틴 스토어 — 두 셀렉터를 한 번에 구독
+  const localRoutine = useRoutineStore((state) => state.localRoutine);
   const addStepProduct = useRoutineStore((state) => state.addStepProduct);
-  const isInRoutine = (productId: string) =>
-    Object.values(routineMap)
+
+  // 루틴 포함 여부 확인
+  const isInRoutine = (productId: number) =>
+    Object.values(localRoutine)
       .flat()
       .filter(Boolean)
-      .some((p) => p.id === productId);
+      .some((p) => p.id === String(productId));
 
   // 보유 상태 — API 연동
   const { data: myCosData = [] } = useMyCosQuery();
   const { mutate: addMyCos } = useAddMyCos();
   const { mutate: removeMyCos } = useRemoveMyCos();
-  const isOwned = (id: string) =>
-    myCosData.some((item) => String(item.productId ?? item.id) === id);
-  const handleToggleOwned = (productId: string) => {
+
+  const isOwned = (productId: number) =>
+    myCosData.some((item) => (item.productId ?? item.id) === productId);
+
+  const handleToggleOwned = (productId: number) => {
     const owned = myCosData.find(
-      (item) => String(item.productId ?? item.id) === productId,
+      (item) => (item.productId ?? item.id) === productId,
     );
     if (owned) removeMyCos(owned.id);
-    else addMyCos(Number(productId));
+    else addMyCos(productId);
   };
 
+  // 비교 모달
   const {
     compareItems,
     showCompare,
@@ -55,17 +66,17 @@ export default function LikesPage() {
     canCompare,
   } = useCompare<ProductViewModel>();
 
-  const handleAddRoutine = (productId: string) => {
+  // 루틴 추가 핸들러 — 카테고리에 맞는 스텝에 자동 배치
+  const handleAddRoutine = (productId: number) => {
     if (isInRoutine(productId)) return;
-    const product = likedProducts.find(
-      (p) => String(p.productId) === productId,
-    );
+    const product = likedProducts.find((p) => p.productId === productId);
     if (!product) return;
+
     const matchedStep = ROUTINE_STEPS.find((step) =>
       step.categories.includes(product.categoryName ?? ""),
     );
     addStepProduct(matchedStep?.code ?? "PR", {
-      id: productId,
+      id: String(productId),
       brand: product.brandName ?? "",
       name: product.name ?? "",
       category: product.categoryName ?? "",
@@ -80,6 +91,7 @@ export default function LikesPage() {
     });
   };
 
+  // 비교 토글 핸들러 — 2개 선택 시 모달 자동 오픈
   const handleToggleCompare = (product: ProductViewModel) => {
     const isAlreadySelected = compareItems.some(
       (item) => item.id === product.id,
@@ -132,7 +144,7 @@ export default function LikesPage() {
         ) : (
           <div className="grid grid-cols-2 gap-6 items-start">
             {pagedProducts.map((product) => {
-              const productId = String(product.productId);
+              const productId = product.productId;
               return (
                 <ProductCard
                   key={productId}
@@ -150,11 +162,11 @@ export default function LikesPage() {
                   isOwned={isOwned(productId)}
                   onToggleOwned={() => handleToggleOwned(productId)}
                   isInCompare={compareItems.some(
-                    (item) => item.id === product.productId,
+                    (item) => item.id === productId,
                   )}
                   onToggleCompare={() =>
                     handleToggleCompare({
-                      id: product.productId,
+                      id: productId,
                       name: product.name ?? "",
                       brand: product.brandName ?? "",
                       imageUrl: product.imageUrl,

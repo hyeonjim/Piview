@@ -15,6 +15,8 @@ import type {
   RoutineResponse,
   CreateRoutineRequest,
   RoutineOrderUpdateRequest,
+  EditRoutineLoadResponse,
+  UpdateRoutineRequest,
 } from "@/types/routine";
 
 export const routineService = {
@@ -116,4 +118,23 @@ export const routineService = {
    */
   deleteRoutine: (routineId: number) =>
     client.delete<ApiResponse<void>>(`/routines/${routineId}`),
+
+  /**
+   * 루틴 수정 모드 진입 (Redis로 복사)
+   * POST /api/v1/routines/{routineId}/edit-start
+   * 저장된 루틴을 Redis 임시 장바구니로 복사해 편집 준비
+   * @param routineId - 편집할 루틴 ID
+   */
+  loadRoutineToDraft: (routineId: number) =>
+    client.post<ApiResponse<EditRoutineLoadResponse>>(`/routines/${routineId}/edit-start`),
+
+  /**
+   * 루틴 재수정 완료 (최종 덮어쓰기)
+   * PUT /api/v1/routines/{routineId}
+   * Redis draft 내용 + title로 기존 루틴을 완전 덮어씀
+   * @param routineId - 수정할 루틴 ID
+   * @param request   - 새 루틴 제목
+   */
+  updateRoutine: (routineId: number, request: UpdateRoutineRequest) =>
+    client.put<ApiResponse<RoutineResponse>>(`/routines/${routineId}`, request),
 };
