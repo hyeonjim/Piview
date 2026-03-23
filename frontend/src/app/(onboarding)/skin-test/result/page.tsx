@@ -4,19 +4,20 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
 import { Lightbulb } from "lucide-react";
 import { SKIN_TYPE_INFO, DEFAULT_SKIN_TYPE } from "@/constants";
+import { useUserStore } from "@/stores";
 
 function ResultContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const skinType = searchParams.get("type") || "combination";
-  const concerns = searchParams.get("concerns")?.split(",").filter(Boolean) || [
-    "수분 부족",
-    "모공",
-  ];
-  const allergies = searchParams.get("allergies")?.split(",").filter(Boolean) || [];
-  const ageGroup = searchParams.get("age") || null;
 
-  const typeInfo = SKIN_TYPE_INFO[skinType] || DEFAULT_SKIN_TYPE;
+  // URL param으로 넘어온 피부 타입 ID (예: "dry", "oily")
+  const skinTypeId = searchParams.get("type") || "combination";
+
+  // Zustand store에서 실제 저장된 데이터 읽기
+  // select/page.tsx → PATCH /users/me 저장 후 store가 동기화된 상태
+  const concerns = useUserStore((s) => s.concerns);
+
+  const typeInfo = SKIN_TYPE_INFO[skinTypeId] || DEFAULT_SKIN_TYPE;
 
   return (
     <div className="flex flex-col min-h-full bg-white">
@@ -37,58 +38,33 @@ function ResultContent() {
 
         {/* 결과 */}
         <div className="text-center mt-5">
-          <p className="text-text-muted text-[15px]">
-            회원님의 피부 타입은
-          </p>
+          <p className="text-text-muted text-[15px]">회원님의 피부 타입은</p>
           <p className="font-bold text-[28px] mt-1.5 tracking-tight">
             {typeInfo.label}
           </p>
-          {ageGroup && (
-            <p className="text-text-faint text-sm mt-1">
-              연령대: {ageGroup}
-            </p>
-          )}
         </div>
 
         {/* 요약 카드 */}
         <div className="mt-6 p-5 bg-brand-bg rounded-2xl">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-start gap-3">
-              <span className="text-xl mt-0.5">💪</span>
-              <div>
-                <p className="text-text-faint text-sm mb-0.5">
-                  피부 고민
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {concerns.length > 0 ? (
-                    concerns.map((concern) => (
-                      <span
-                        key={concern}
-                        className="text-brand font-bold text-sm px-2.5 py-0.5 rounded-lg bg-white border border-brand-light"
-                      >
-                        {concern}
-                      </span>
-                    ))
-                  ) : (
-                    <p className="text-text-primary font-semibold text-[15px]">
-                      없음
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="h-px bg-brand-light" />
-
-            <div className="flex items-start gap-3">
-              <span className="text-xl mt-0.5">⚠️</span>
-              <div>
-                <p className="text-text-faint text-sm mb-0.5">
-                  주의 성분
-                </p>
-                <p className="text-text-primary font-semibold text-[15px]">
-                  {allergies.length > 0 ? allergies.join(", ") : "없음"}
-                </p>
+          <div className="flex items-start gap-3">
+            <span className="text-xl mt-0.5">💪</span>
+            <div>
+              <p className="text-text-faint text-sm mb-0.5">피부 고민</p>
+              <div className="flex flex-wrap gap-1.5">
+                {concerns.length > 0 ? (
+                  concerns.map((concern) => (
+                    <span
+                      key={concern}
+                      className="text-brand font-bold text-sm px-2.5 py-0.5 rounded-lg bg-white border border-brand-light"
+                    >
+                      {concern}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-text-primary font-semibold text-[15px]">
+                    없음
+                  </p>
+                )}
               </div>
             </div>
           </div>

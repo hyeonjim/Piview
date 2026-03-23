@@ -95,7 +95,7 @@ export default function WelcomePage() {
         ageGroup: null,
         mySkinType: null,
         exist: true,
-        mySkinProblems: [],
+        skinProblems: [],
       });
       router.push("/mypage");
     }

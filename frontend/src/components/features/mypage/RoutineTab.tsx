@@ -2,12 +2,17 @@
 
 import { toast } from "sonner";
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Plus, X, RotateCcw, ArrowUpDown } from "lucide-react";
+import { Plus, X, ArrowUpDown, ScanText } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import Image from "next/image";
 import Link from "next/link";
 import OcrModal from "@/components/features/mypage/OcrModal";
 import { getRoutineSteps } from "@/constants/routineSteps";
-import { useUserStore, selectGender } from "@/stores";
+import { useUserStore, selectGender, useRoutineStore } from "@/stores";
 import {
   CATEGORY_COLORS,
   SKIN_TYPE_TAG_COLORS,
@@ -16,17 +21,21 @@ import {
 import {
   useDraftQuery,
   useRoutineListQuery,
+  useRoutineDetailQuery,
   useCreateRoutineMutation,
   useDeleteRoutineMutation,
   useSetMainRoutineMutation,
   useClearDraftMutation,
   useRemoveProductFromDraftMutation,
   useSyncDraftMutation,
+  useLoadRoutineToDraftMutation,
+  useUpdateRoutineMutation,
+  useUpdateRoutineOrderMutation,
 } from "@/hooks";
 import type {
   DraftItemDto,
   RoutineListResponse,
-  DraftItem,
+  RoutineDetailOrderDto,
 } from "@/types/routine";
 import type { ProductSummaryResponse } from "@/types/product/product";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
@@ -66,21 +75,42 @@ function groupDraftByStep(
 }
 
 /**
- * 스텝별 제품 맵 → DraftItem[] 변환 (PUT /api/v1/routines/draft 요청 body)
+ * RoutineResponse.steps → 스텝별 제품 맵 변환 (저장된 루틴 읽기 전용 표시용)
+ * columnId 기준으로 routineSteps와 매핑
+ */
+function groupRoutineDetailByStep(
+  steps: { columnId: number; products: { stepOrder: number; product: ProductSummaryResponse }[] }[],
+  routineSteps: ReturnType<typeof getRoutineSteps>,
+): Record<string, ProductSummaryResponse[]> {
+  const result: Record<string, ProductSummaryResponse[]> = {};
+  for (const step of routineSteps) {
+    const matchingStep = steps.find((s) => s.columnId === step.columnId);
+    result[step.code] = matchingStep
+      ? matchingStep.products
+          .sort((a, b) => a.stepOrder - b.stepOrder)
+          .map((p) => p.product)
+      : [];
+  }
+  return result;
+}
+
+/**
+ * 스텝별 제품 맵 → DraftItemDto[] 변환 (PUT /api/v1/routines/draft 요청 body)
+ * 스웨거 기준 요청 body는 DraftItemDto[] (product 전체 객체 포함)
  * 스텝 순서 기준으로 stepOrder를 1부터 채번
  */
 function buildDraftItems(
   draftByStep: Record<string, ProductSummaryResponse[]>,
   steps: ReturnType<typeof getRoutineSteps>,
-): DraftItem[] {
-  const items: DraftItem[] = [];
+): DraftItemDto[] {
+  const items: DraftItemDto[] = [];
   let stepOrder = 1;
   for (const step of steps) {
     for (const product of draftByStep[step.code] ?? []) {
       items.push({
         columnId: step.columnId,
-        productId: product.productId,
         stepOrder: stepOrder++,
+        product,
       });
     }
   }
@@ -106,6 +136,11 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   const { mutate: clearDraft } = useClearDraftMutation();
   const { mutate: removeProduct } = useRemoveProductFromDraftMutation();
   const { mutate: syncDraft } = useSyncDraftMutation();
+  const { mutate: loadRoutineToDraft, isPending: isLoadingToEdit } =
+    useLoadRoutineToDraftMutation();
+  const { mutate: updateRoutine, isPending: isUpdating } =
+    useUpdateRoutineMutation();
+  const { mutate: updateRoutineOrder } = useUpdateRoutineOrderMutation();
 
   // ── 로컬 드래그용 상태 (서버 데이터 기반으로 초기화) ──────────────────
   // 드래그 중 UI 반영을 위해 서버 상태를 로컬 React 상태로 미러링
@@ -122,15 +157,40 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveModalName, setSaveModalName] = useState("");
   const [showOcrModal, setShowOcrModal] = useState(false);
-  const [showMainRoutineModal, setShowMainRoutineModal] = useState(false);
+  // 편집 중인 루틴 ID — null이면 새 루틴 생성 모드, 값이 있으면 기존 루틴 수정 모드
+  const [editingRoutineId, setEditingRoutineId] = useState<number | null>(null);
+  // 편집 시작 시점의 루틴 이름 — 수정 저장 모달에 미리 채워줄 기본값
+  const [editingRoutineTitle, setEditingRoutineTitle] = useState<string>("");
+  // Edit Mode 진입 시 productId → routineDetailId 매핑 — PATCH /order 호출에 사용
+  const [editingDetailIdMap, setEditingDetailIdMap] = useState<Map<number, number>>(new Map());
 
-  // 메인 루틴 찾기
-  const mainRoutine = useMemo(
-    () => routineList.find((routine) => routine.isMain),
-    [routineList],
+  // 카드 클릭 시 상세 보기 대상 루틴 ID — store에서 관리해 재방문 시 복원
+  const selectedRoutineId = useRoutineStore((state) => state.selectedRoutineId);
+  const setSelectedRoutineId = useRoutineStore(
+    (state) => state.setSelectedRoutineId,
   );
 
-  // 저장된 루틴 슬라이더 스크롤 상태 — 도트 인디케이터 연동
+  // 루틴 상세 조회 — selectedRoutineId가 있을 때만 활성화
+  const { data: selectedRoutineDetail } = useRoutineDetailQuery(
+    selectedRoutineId ?? undefined,
+  );
+
+  // 저장된 루틴 보기 모드 여부
+  const isViewingSavedRoutine =
+    selectedRoutineId !== null && selectedRoutineDetail !== undefined;
+
+  // 스텝 섹션에 표시할 제품 맵 — 보기 모드이면 저장된 루틴, 아니면 드래프트
+  const viewByStep = useMemo<Record<string, ProductSummaryResponse[]>>(() => {
+    if (isViewingSavedRoutine) {
+      return groupRoutineDetailByStep(
+        selectedRoutineDetail.steps,
+        routineSteps,
+      );
+    }
+    return localDraftByStep;
+  }, [isViewingSavedRoutine, selectedRoutineDetail, routineSteps, localDraftByStep]);
+
+// 저장된 루틴 슬라이더 스크롤 상태 — 도트 인디케이터 연동
   const savedRoutineScrollRef = useRef<HTMLDivElement>(null);
   const [activeCardIndex, setActiveCardIndex] = useState(0);
 
@@ -203,13 +263,13 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
 
   const notify = (msg: string) => toast(msg);
 
-  // 1개 이상 제품이 있는 스텝 수
+  // 1개 이상 제품이 있는 스텝 수 — 보기 모드면 해당 루틴 기준, 아니면 드래프트 기준
   const filledCount = useMemo(
     () =>
-      Object.values(localDraftByStep).filter(
+      Object.values(viewByStep).filter(
         (products) => Array.isArray(products) && products.length > 0,
       ).length,
-    [localDraftByStep],
+    [viewByStep],
   );
 
   // ── 드래그 핸들러 ────────────────────────────────────────────────────
@@ -276,8 +336,10 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   };
 
   /**
-   * 드래그 종료 — 순서 변경 후 PUT /api/v1/routines/draft 호출
-   * 로컬 상태를 즉시 반영하고, 서버에 전체 배열을 동기화
+   * 드래그 종료 — 순서 변경 처리
+   * 1) 로컬 상태 즉시 반영 (UI 업데이트)
+   * 2) PUT /api/v1/routines/draft — draft 순서 항상 동기화 (Edit Save 시 기준이 됨)
+   * 3) Edit Mode 한정: PATCH /api/v1/routines/{routineId}/order — 저장된 루틴에도 즉시 반영
    */
   const handleDragHandlePointerUp = () => {
     if (!dragState) return;
@@ -304,11 +366,34 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     setLocalDraftByStep(newDraftByStep);
     setDragState(null);
 
-    // 서버에 전체 순서 동기화 — PUT /api/v1/routines/draft
-    const items = buildDraftItems(newDraftByStep, routineSteps);
-    syncDraft(items, {
+    // draft 순서는 Edit Mode/새 루틴 모드 모두 항상 동기화
+    // — Edit Save(PUT /routines/{routineId})가 draft 기준으로 덮어쓰기 때문
+    const draftItems = buildDraftItems(newDraftByStep, routineSteps);
+    syncDraft(draftItems, {
       onError: () => notify("순서 변경 저장에 실패했습니다."),
     });
+
+    if (editingRoutineId !== null && editingDetailIdMap.size > 0) {
+      // Edit Mode: PATCH /api/v1/routines/{routineId}/order 로 저장된 루틴에도 즉시 반영
+      // routineDetailId가 있는 제품만 포함 (새로 추가된 제품은 Edit Save 시 반영)
+      const updatedOrders: RoutineDetailOrderDto[] = [];
+      let stepOrder = 1;
+      for (const step of routineSteps) {
+        for (const product of newDraftByStep[step.code] ?? []) {
+          const routineDetailId = editingDetailIdMap.get(product.productId);
+          if (routineDetailId !== undefined) {
+            updatedOrders.push({ routineDetailId, stepOrder });
+          }
+          stepOrder++;
+        }
+      }
+      if (updatedOrders.length > 0) {
+        updateRoutineOrder(
+          { routineId: editingRoutineId, request: { updatedOrders } },
+          { onError: () => notify("순서 변경 저장에 실패했습니다.") },
+        );
+      }
+    }
   };
 
   // ── 루틴 저장 핸들러 ──────────────────────────────────────────────────
@@ -318,40 +403,58 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   };
 
   /**
-   * 루틴 저장 — POST /api/v1/routines
-   * Redis draft를 읽어 새 루틴 생성
+   * 편집 저장 모달 열기 — 현재 루틴 이름을 미리 채워서 열림
+   */
+  const handleOpenEditSaveModal = () => {
+    setSaveModalName(editingRoutineTitle);
+    setShowSaveModal(true);
+  };
+
+  /**
+   * 루틴 저장 분기 핸들러
+   * - editingRoutineId가 있으면 PUT /api/v1/routines/{routineId} (기존 루틴 덮어쓰기)
+   * - 없으면 POST /api/v1/routines (새 루틴 생성)
    */
   const handleSaveRoutine = () => {
     const trimmedName = saveModalName.trim();
     if (!trimmedName) return;
 
-    console.log("🔍 루틴 저장 디버깅:", { user, userId: user?.userId });
-    console.log("🔍 user 전체 객체 (JSON):", JSON.stringify(user, null, 2));
-    console.log(
-      "🔍 user의 모든 키:",
-      user ? Object.keys(user) : "user is null",
-    );
+    // 편집 모드: 기존 루틴 덮어쓰기
+    if (editingRoutineId !== null) {
+      updateRoutine(
+        { routineId: editingRoutineId, request: { title: trimmedName } },
+        {
+          onSuccess: () => {
+            setShowSaveModal(false);
+            setSaveModalName("");
+            setEditingRoutineId(null);
+            setEditingRoutineTitle("");
+            setEditingDetailIdMap(new Map());
+            notify(`"${trimmedName}" 루틴이 수정되었습니다!`);
+          },
+          onError: () => notify("루틴 수정에 실패했습니다. 다시 시도해주세요."),
+        },
+      );
+      return;
+    }
 
+    // 일반 모드: 새 루틴 생성
     if (!user?.userId) {
-      console.error("❌ user.userId가 없습니다:", user);
       notify("사용자 정보를 불러올 수 없습니다. 페이지를 새로고침해주세요.");
       return;
     }
 
-    const payload = { userId: user.userId, title: trimmedName };
-    console.log("📤 루틴 생성 payload:", payload);
-
-    createRoutine(payload, {
-      onSuccess: () => {
-        setShowSaveModal(false);
-        setSaveModalName("");
-        notify(`"${trimmedName}" 루틴이 저장되었습니다!`);
+    createRoutine(
+      { userId: user.userId, title: trimmedName },
+      {
+        onSuccess: () => {
+          setShowSaveModal(false);
+          setSaveModalName("");
+          notify(`"${trimmedName}" 루틴이 저장되었습니다!`);
+        },
+        onError: () => notify("루틴 저장에 실패했습니다. 다시 시도해주세요."),
       },
-      onError: (error) => {
-        console.error("❌ 루틴 저장 실패:", error);
-        notify("루틴 저장에 실패했습니다. 다시 시도해주세요.");
-      },
-    });
+    );
   };
 
   /**
@@ -375,12 +478,51 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   };
 
   /**
-   * 루틴 초기화 — DELETE /api/v1/routines/draft (Redis 초기화)
+   * 새 루틴 만들기 — Draft 초기화 + 편집 모드 해제 + 선택 해제
    */
-  const handleClearRoutine = () => {
+  const handleNewRoutine = () => {
+    setEditingRoutineId(null);
+    setEditingRoutineTitle("");
+    setEditingDetailIdMap(new Map());
+    setSelectedRoutineId(null);
     clearDraft(undefined, {
-      onSuccess: () => notify("루틴이 초기화되었습니다."),
+      onSuccess: () => notify("새 루틴 작성을 시작합니다."),
       onError: () => notify("초기화에 실패했습니다."),
+    });
+  };
+
+  /**
+   * 루틴 편집 모드 진입 — POST /api/v1/routines/{routineId}/edit-start
+   * 선택된 저장 루틴을 Redis draft로 복사한 뒤 편집 가능 상태로 전환
+   * editingRoutineId에 현재 루틴 ID를 저장해 이후 Edit Save 시 PUT에 사용
+   */
+  const handleEditRoutine = () => {
+    if (!selectedRoutineId) return;
+    const currentTitle =
+      routineList.find((routine) => routine.routineId === selectedRoutineId)
+        ?.title ?? "";
+
+    // Edit Mode 진입 시 productId → routineDetailId 매핑 저장
+    // PATCH /api/v1/routines/{routineId}/order 호출 시 routineDetailId가 필요함
+    if (selectedRoutineDetail) {
+      const map = new Map<number, number>();
+      for (const stepGroup of selectedRoutineDetail.steps) {
+        for (const item of stepGroup.products) {
+          map.set(item.product.productId, item.routineDetailId);
+        }
+      }
+      setEditingDetailIdMap(map);
+    }
+
+    loadRoutineToDraft(selectedRoutineId, {
+      onSuccess: () => {
+        setEditingRoutineId(selectedRoutineId);
+        setEditingRoutineTitle(currentTitle);
+        // 보기 모드 해제 → draft 편집 화면으로 전환
+        setSelectedRoutineId(null);
+        notify("루틴을 편집 모드로 불러왔습니다.");
+      },
+      onError: () => notify("루틴 불러오기에 실패했습니다."),
     });
   };
 
@@ -415,7 +557,15 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       {/* ── 저장된 루틴 슬라이더 ── */}
       {routineList.length > 0 && (
         <div className="mb-2">
-          <p className="text-xs font-bold text-text-muted mb-2">저장된 루틴</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[14px] font-bold text-text-muted">Saved routine</p>
+            <button
+              onClick={handleNewRoutine}
+              className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-xs text-brand cursor-pointer bg-transparent"
+            >
+              <Plus size={13} /> New
+            </button>
+          </div>
           <div
             ref={savedRoutineScrollRef}
             className="flex gap-2 overflow-x-auto pb-1"
@@ -437,10 +587,16 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               <SavedRoutineCard
                 key={saved.routineId}
                 saved={saved}
+                isSelected={selectedRoutineId === saved.routineId}
                 onDelete={() =>
                   handleDeleteRoutine(saved.routineId, saved.title)
                 }
-                onSetMain={() => handleSetMainRoutine(saved.routineId)}
+                onClick={() => {
+                    // 다른 루틴 카드 선택 시 Edit mode 종료
+                    setEditingRoutineId(null);
+                    setEditingRoutineTitle("");
+                    setSelectedRoutineId(saved.routineId);
+                  }}
               />
             ))}
           </div>
@@ -460,44 +616,81 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               ))}
             </div>
           )}
+
         </div>
       )}
 
       {/* ── 헤더 ── */}
       <div className="flex flex-col gap-2 mb-1">
-        {/* 루틴 이름 & 메인 루틴 설정 버튼 */}
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-bold text-text-primary">
-            {mainRoutine?.title || "메인루틴"}
-          </h2>
-          <button
-            onClick={() => setShowMainRoutineModal(true)}
-            className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent"
-          >
-            변경
-          </button>
-        </div>
-
-        {/* 진행 상황 & 액션 버튼 */}
-        <div className="flex items-start justify-between">
-          <div className="min-w-0 flex-1">
-            <p className="text-[14px] font-bold text-text-muted mt-0.5">
-              {filledCount}/{routineSteps.length}단계 완성 · 드래그로 순서 변경
-            </p>
+        {/* 루틴 이름 & 메인 루틴 설정 버튼 & 액션 버튼 */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <h2 className="text-lg font-bold text-text-primary truncate">
+              {isViewingSavedRoutine
+                ? selectedRoutineDetail.title
+                : editingRoutineId !== null
+                  ? editingRoutineTitle
+                  : "메인루틴"}
+            </h2>
+            {/* ★ 클릭 시 현재 선택된(펼쳐진) 루틴을 바로 메인으로 설정 */}
+            <button
+              onClick={() => {
+                if (!selectedRoutineId) {
+                  notify("먼저 저장된 루틴 카드를 선택해주세요.");
+                  return;
+                }
+                handleSetMainRoutine(selectedRoutineId);
+              }}
+              className="text-lg cursor-pointer bg-transparent border-none leading-none shrink-0"
+              style={{
+                color:
+                  selectedRoutineId !== null &&
+                  routineList.find((r) => r.routineId === selectedRoutineId)
+                    ?.isMain
+                    ? "#C8A96E"
+                    : "#D9D5D0",
+              }}
+              aria-label="메인 루틴으로 설정"
+            >
+              ★ Main
+            </button>
           </div>
-          <div className="flex gap-1.5 text-[14px]">
-            <button
-              onClick={handleClearRoutine}
-              className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent"
-            >
-              <RotateCcw size={12} /> Reset
-            </button>
-            <button
-              onClick={() => setShowOcrModal(true)}
-              className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent"
-            >
-              OCR
-            </button>
+
+          {/* 액션 버튼 */}
+          <div className="flex gap-1.5 text-[14px] shrink-0">
+            {/* OCR 버튼 — 아이콘 + Tooltip */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setShowOcrModal(true)}
+                  className="flex items-center justify-center p-1.5 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent"
+                  aria-label="OCR로 제품 추가"
+                >
+                  <ScanText size={16} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>OCR로 제품 추가</TooltipContent>
+            </Tooltip>
+            {/* Edit Mode / Edit Save 버튼 — 편집 모드 여부에 따라 역할 전환 */}
+            {editingRoutineId !== null ? (
+              // 편집 모드: 클릭 시 수정 저장 모달 열기
+              <button
+                onClick={handleOpenEditSaveModal}
+                disabled={isUpdating}
+                className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-sky-100 disabled:opacity-50"
+              >
+                {isUpdating ? "저장 중..." : "Edit Save"}
+              </button>
+            ) : (
+              // 일반 모드: 클릭 시 선택된 루틴을 draft로 불러옴
+              <button
+                onClick={handleEditRoutine}
+                disabled={selectedRoutineId === null || isLoadingToEdit}
+                className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent disabled:opacity-50"
+              >
+                {isLoadingToEdit ? "불러오는 중..." : "Edit Mode"}
+              </button>
+            )}
             <button
               onClick={handleOpenSaveModal}
               disabled={isCreating || filledCount === 0}
@@ -507,12 +700,18 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             </button>
           </div>
         </div>
+
+        {/* 진행 상황 */}
+        <p className="text-[14px] font-bold text-text-muted">
+          {filledCount}/{routineSteps.length}단계 완성 · Edit Mode에서 변경
+        </p>
       </div>
 
       {/* ── 루틴 스텝별 섹션 ── */}
       {routineSteps.map((step) => {
-        const products = localDraftByStep[step.code] ?? [];
-        const isDropTarget = dragState?.toStepCode === step.code;
+        const products = viewByStep[step.code] ?? [];
+        const isDropTarget =
+          !isViewingSavedRoutine && dragState?.toStepCode === step.code;
 
         return (
           <div key={step.code} className="mt-3">
@@ -524,22 +723,31 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                   {step.label}
                 </span>
               </div>
-              <button
-                onClick={() => onOpenModal(step.code, step.columnId)}
-                className="flex items-center gap-1 text-xs font-bold text-brand cursor-pointer border-none bg-transparent"
-              >
-                <Plus size={13} /> 추가
-              </button>
+              {/* 보기 모드에서는 추가 버튼 숨김 */}
+              {!isViewingSavedRoutine && (
+                <button
+                  onClick={() => onOpenModal(step.code, step.columnId)}
+                  className="flex items-center gap-1 text-xs font-bold text-brand cursor-pointer border-none bg-transparent"
+                >
+                  <Plus size={13} /> 추가
+                </button>
+              )}
             </div>
 
             {products.length === 0 ? (
+              /* 빈 스텝 — 드래프트 편집 화면과 동일한 형태, 보기 모드에서는 클릭 비활성 */
               <button
                 data-drop-zone
                 data-step-code={step.code}
                 data-drop-index="0"
-                onClick={() => onOpenModal(step.code, step.columnId)}
-                className="w-full rounded-2xl px-4 py-3 flex items-center gap-3 cursor-pointer border-none text-left"
+                onClick={
+                  isViewingSavedRoutine
+                    ? undefined
+                    : () => onOpenModal(step.code, step.columnId)
+                }
+                className="w-full rounded-2xl px-4 py-3 flex items-center gap-3 border-none text-left"
                 style={{
+                  cursor: isViewingSavedRoutine ? "default" : "pointer",
                   backgroundColor: isDropTarget
                     ? "rgba(166,157,146,0.12)"
                     : "var(--color-warm-bg)",
@@ -555,15 +763,19 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 <p className="flex-1 text-sm font-semibold text-text-muted">
                   제품을 추가해 주세요
                 </p>
-                <Plus size={14} className="shrink-0 text-[#A69D92]" />
+                {!isViewingSavedRoutine && (
+                  <Plus size={14} className="shrink-0 text-[#A69D92]" />
+                )}
               </button>
             ) : (
               <div className="flex flex-col gap-2">
                 {products.map((product, index) => {
                   const isDraggingThis =
+                    !isViewingSavedRoutine &&
                     dragState?.fromStepCode === step.code &&
                     dragState.fromIndex === index;
                   const isProductDropTarget =
+                    !isViewingSavedRoutine &&
                     !!dragState &&
                     dragState.toStepCode === step.code &&
                     dragState.toIndex === index &&
@@ -580,11 +792,26 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                       index={index}
                       isDragging={isDraggingThis}
                       isDropTarget={isProductDropTarget}
-                      onDragHandlePointerDown={handleDragHandlePointerDown}
-                      onDragHandlePointerMove={handleDragHandlePointerMove}
-                      onDragHandlePointerUp={handleDragHandlePointerUp}
-                      onRemove={handleRemoveProduct}
+                      onDragHandlePointerDown={
+                        isViewingSavedRoutine
+                          ? () => {}
+                          : handleDragHandlePointerDown
+                      }
+                      onDragHandlePointerMove={
+                        isViewingSavedRoutine
+                          ? () => {}
+                          : handleDragHandlePointerMove
+                      }
+                      onDragHandlePointerUp={
+                        isViewingSavedRoutine
+                          ? () => {}
+                          : handleDragHandlePointerUp
+                      }
+                      onRemove={
+                        isViewingSavedRoutine ? () => {} : handleRemoveProduct
+                      }
                       stepIcon={step.icon}
+                      priority={index === 0}
                     />
                   );
                 })}
@@ -652,7 +879,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             onClick={(event) => event.stopPropagation()}
           >
             <h3 className="text-base font-semibold text-[#2A2118] mb-1">
-              루틴 저장
+              {editingRoutineId !== null ? "루틴 수정 저장" : "루틴 저장"}
             </h3>
             <input
               type="text"
@@ -675,74 +902,21 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               </button>
               <button
                 onClick={handleSaveRoutine}
-                disabled={!saveModalName.trim() || isCreating}
+                disabled={
+                  !saveModalName.trim() ||
+                  (editingRoutineId !== null ? isUpdating : isCreating)
+                }
                 className="flex-1 py-2.5 text-sm font-semibold rounded-xl text-white bg-[#A69D92] cursor-pointer disabled:opacity-40"
               >
-                {isCreating ? "저장 중..." : "저장"}
+                {(editingRoutineId !== null ? isUpdating : isCreating)
+                  ? "저장 중..."
+                  : "저장"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── 메인 루틴 설정 모달 ── */}
-      {showMainRoutineModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45"
-          onClick={() => setShowMainRoutineModal(false)}
-        >
-          <div
-            className="bg-white rounded-2xl p-6 mx-5 w-full max-w-sm"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h3 className="text-base font-semibold text-[#2A2118] mb-4">
-              메인 루틴 선택
-            </h3>
-            <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
-              {routineList.length === 0 ? (
-                <p className="text-sm text-text-muted text-center py-4">
-                  저장된 루틴이 없습니다.
-                </p>
-              ) : (
-                routineList.map((routine) => (
-                  <button
-                    key={routine.routineId}
-                    onClick={() => {
-                      handleSetMainRoutine(routine.routineId);
-                      setShowMainRoutineModal(false);
-                    }}
-                    className={`w-full px-4 py-3 text-left rounded-xl border cursor-pointer transition-colors ${
-                      routine.isMain
-                        ? "border-[#C8A96E] bg-[#FBF7EF] text-[#2A2118]"
-                        : "border-[#E2DDD8] bg-white hover:bg-[#F8F6F2] text-text-primary"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-semibold">{routine.title}</p>
-                        <p className="text-xs text-text-muted mt-0.5">
-                          {routine.productCount}개 제품
-                        </p>
-                      </div>
-                      {routine.isMain && (
-                        <span className="text-xs font-bold text-[#C8A96E]">
-                          ★ 메인
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-            <button
-              onClick={() => setShowMainRoutineModal(false)}
-              className="w-full mt-4 py-2.5 text-sm font-semibold rounded-xl border border-[#E2DDD8] text-[#8A8278] bg-transparent cursor-pointer"
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -754,6 +928,7 @@ interface RoutineProductCardProps {
   index: number;
   isDragging: boolean;
   isDropTarget: boolean;
+  priority?: boolean;
   onDragHandlePointerDown: (
     event: React.PointerEvent<HTMLDivElement>,
     stepCode: string,
@@ -776,6 +951,7 @@ function RoutineProductCard({
   onDragHandlePointerUp,
   onRemove,
   stepIcon,
+  priority = false,
 }: RoutineProductCardProps) {
   const categoryColor = product.categoryName
     ? CATEGORY_COLORS[product.categoryName]
@@ -826,6 +1002,8 @@ function RoutineProductCard({
                 src={product.imageUrl}
                 alt={product.name ?? ""}
                 fill
+                sizes="88px"
+                priority={priority}
                 className="object-cover"
               />
             ) : (
@@ -905,32 +1083,39 @@ function RoutineProductCard({
 // ── 저장된 루틴 카드 ────────────────────────────────────────────────────────
 interface SavedRoutineCardProps {
   saved: RoutineListResponse;
+  isSelected: boolean;
   onDelete: () => void;
-  onSetMain?: () => void;
+  onClick: () => void;
 }
 
 function SavedRoutineCard({
   saved,
+  isSelected,
   onDelete,
-  onSetMain,
+  onClick,
 }: SavedRoutineCardProps) {
+  // 선택된 카드만 금색 스타일 — 메인 여부와 무관하게 isSelected가 우선
+  const borderStyle = isSelected ? "1.5px solid #C8A96E" : "1px solid #E2DDD8";
+  const backgroundStyle = isSelected ? "#FBF7EF" : "#F8F6F2";
+
   return (
     <div
-      className="relative shrink-0 flex flex-col gap-1 pt-7 pb-3 rounded-xl transition-all"
+      onClick={onClick}
+      className="relative shrink-0 flex flex-col gap-1 pt-7 pb-3 rounded-xl transition-all cursor-pointer"
       style={{
         minWidth: "calc(38% - 4px)",
         maxWidth: "calc(38% - 4px)",
         scrollSnapAlign: "start",
         scrollSnapStop: "always",
-        border: saved.isMain ? "1.5px solid #C8A96E" : "1px solid #E2DDD8",
-        backgroundColor: saved.isMain ? "#FBF7EF" : "#F8F6F2",
+        border: borderStyle,
+        backgroundColor: backgroundStyle,
       }}
     >
-      {/* 메인 배지 */}
+      {/* 메인 루틴만 별표 배지 표시 */}
       {saved.isMain && (
         <span
-          className="absolute top-1.5 left-1.5 w-4 h-4 flex items-center justify-center rounded-full text-[10px] leading-none"
-          style={{ backgroundColor: "#C8A96E", color: "#FFFFFF" }}
+          className="absolute top-1.5 left-1.5 w-4 h-4 flex items-center justify-center text-[11px] leading-none"
+          style={{ color: "#C8A96E" }}
         >
           ★
         </span>
@@ -956,19 +1141,6 @@ function SavedRoutineCard({
       <p className="text-[10px] font-bold text-[#A69D92] text-center">
         {saved.productCount}개 제품
       </p>
-
-      {/* 메인으로 설정 버튼 */}
-      {!saved.isMain && onSetMain && (
-        <button
-          onClick={(event) => {
-            event.stopPropagation();
-            onSetMain();
-          }}
-          className="mx-2 mt-1 py-1 text-[10px] font-bold rounded-full border border-[#D9D5D0] text-[#B8A99A] bg-transparent cursor-pointer"
-        >
-          메인 설정
-        </button>
-      )}
     </div>
   );
 }

@@ -32,7 +32,7 @@ export const SKIN_TYPE_INFO: Record<string, SkinTypeInfo> = {
     insight:
       "T존과 볼 부위의 특성이 달라요. 부위별로 다른 케어가 효과적이에요. 오일-프리 제품으로 T존을 관리하고 볼에는 충분한 수분을 공급해주세요.",
   },
-  dehydrated: {
+  subuji: {
     label: "수부지 피부",
     emoji: "💧💦",
     insight:

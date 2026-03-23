@@ -21,15 +21,7 @@ export interface User {
   ageGroup: AgeGroup | null;
   mySkinType: SkinType | null;
   exist: boolean;
-  mySkinProblems: MySkinProblem[]; // ⚠️ ERD 확정 후 구조 수정 필요
-}
-
-// ── GET /my-cos 응답에 포함 ───────────────────────────────────────
-// ⚠️ ERD 확정 후 구조 수정 필요
-export interface MySkinProblem {
-  id: number;
-  userId: number;
-  skinProblemId: number;
+  skinProblems: string[]; // API 응답 형식 — 백엔드 SkinProblemMapper 키값 배열
 }
 
 // ── useUserStore 상태 ─────────────────────────────────────────────
@@ -37,4 +29,14 @@ export interface AvoidContent {
   id: number;
   userId: number;
   avoidContent: string;
+}
+
+// ── PATCH /api/v1/users/me 요청 body ──────────────────────────────
+// 모든 필드 optional — 변경할 필드만 포함해서 전송
+export interface UserProfileUpdateRequest {
+  gender?: "MEN" | "WOMEN";
+  ageGroup?: "TEENS" | "TWENTIES" | "THIRTIES" | "FORTIES_PLUS";
+  /** API 형식: "dry" | "oily" | "combination" | "subuji" */
+  mySkinType?: string;
+  skinProblems?: string[];
 }

@@ -112,6 +112,26 @@ export interface CreateRoutineRequest {
 }
 
 /**
+ * POST /api/v1/routines/{routineId}/edit-start 응답
+ * 스웨거: EditRoutineLoadResponse
+ * 기존 루틴을 Redis draft로 복사한 결과
+ */
+export interface EditRoutineLoadResponse {
+  routineId: number;
+  title: string;
+  draftItems: DraftItemDto[];
+}
+
+/**
+ * PUT /api/v1/routines/{routineId} 요청 body
+ * 스웨거: UpdateRoutineRequest
+ * Redis draft 내용 + title로 기존 루틴을 완전 덮어씀
+ */
+export interface UpdateRoutineRequest {
+  title: string;
+}
+
+/**
  * PATCH /api/v1/routines/{routineId}/order 요청 아이템
  * 스웨거: RoutineDetailOrderDto
  */

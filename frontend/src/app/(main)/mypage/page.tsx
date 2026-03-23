@@ -3,27 +3,22 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Settings, LogOut, Wrench } from "lucide-react";
+import { Settings, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import {
   useDraftQuery,
   useAddDraftItemMutation,
-  useMyCosQuery,
-  useRemoveMyCos,
   useUserQuery,
 } from "@/hooks";
 import RoutineTab from "@/components/features/mypage/RoutineTab";
 import RoutineAddModal from "@/components/features/mypage/RoutineAddModal";
 import OwnedTab from "@/components/features/mypage/OwnedTab";
-import AvoidProductModal from "@/components/features/mypage/AvoidProductModal";
 import { useRoutineStore } from "@/stores";
 import { useUserStore, selectSkinType, selectGender } from "@/stores";
 import { useSearchStore } from "@/stores/useSearchStore";
 import { useRecommendStore } from "@/stores/useRecommendStore";
 import { useLikeStore } from "@/stores";
 import { authService } from "@/services/auth";
-import type { ProductViewModel } from "@/types/product/myCos";
-import { fromSkinTypeEnum } from "@/utils/enumConvert";
 
 export default function MyPage() {
   const router = useRouter();
@@ -113,50 +108,7 @@ export default function MyPage() {
     );
   };
 
-  // ── OwnedTab (내 화장대) ────────────────────────────────────────────
-  const { data: myCosRawData, isLoading: myCosLoading } = useMyCosQuery();
-  const myCosItems = Array.isArray(myCosRawData) ? myCosRawData : [];
-  const { mutate: removeMyCos } = useRemoveMyCos();
-
-  // MyCosItem → ProductViewModel 변환 (OwnedTab props 호환)
-  const ownedProducts: ProductViewModel[] = myCosItems.map((item) => ({
-    id: item.id,
-    brand: item.brand,
-    name: item.productName,
-    category: item.category,
-    imageUrl: item.imageUrl,
-    skinTypes: [
-      item.topSkinType ? fromSkinTypeEnum(item.topSkinType) : null,
-      item.top2SkinType ? fromSkinTypeEnum(item.top2SkinType) : null,
-    ].filter(Boolean) as string[],
-    effects: [],
-  }));
-
-  const handleRemoveOwned = (productId: string | number) => {
-    const myCosId =
-      typeof productId === "number" ? productId : Number(productId);
-    if (!isNaN(myCosId)) removeMyCos(myCosId);
-  };
-
-  // ── 기피 제품 — ⚠️ API 연동 시 서버 상태로 교체 ──────────────────────
-  const [avoidProducts, setAvoidProducts] = useState<ProductViewModel[]>([]);
-  const [openAvoidModal, setOpenAvoidModal] = useState(false);
-  const [avoidSearch, setAvoidSearch] = useState("");
-
-  const handleToggleAvoid = (product: ProductViewModel) => {
-    setAvoidProducts((previousProducts) =>
-      previousProducts.some(
-        (previousProduct) => previousProduct.id === product.id,
-      )
-        ? previousProducts.filter(
-            (previousProduct) => previousProduct.id !== product.id,
-          )
-        : [...previousProducts, product],
-    );
-  };
-
-  // OwnedTab에서 루틴 props로 사용하는 localRoutine (OwnedTab 인터페이스 호환 유지)
-  // OwnedTab이 LocalProduct[] 기반인 동안만 사용, 이후 OwnedTab API 연동 시 제거
+  // OwnedTab 루틴 배지 표시용 localRoutine
   const routineForOwnedTab = useRoutineStore((state) => state.localRoutine);
 
   return (
@@ -227,14 +179,14 @@ export default function MyPage() {
             ) : (
               <div className="flex flex-wrap gap-1 mt-4">
                 {/* 피부 타입 배지 */}
-                <span className="text-[16px] py-0.5 px-2 rounded-full bg-[#E8E3DC] text-[#5A504A] font-semibold">
+                <span className="text-[14px] py-0.5 px-2 rounded-full bg-[#E8E3DC] text-[#5A504A] font-semibold">
                   {savedSkinType}
                 </span>
                 {/* 피부 고민 배지 */}
                 {savedConcerns.map((concern, index) => (
                   <span
                     key={`${concern}-${index}`}
-                    className="text-[14px] py-0.5 px-2 rounded-full bg-[#EEF0E8] text-[#6B7257] font-medium"
+                    className="text-[14px] py-0.5 px-2 rounded-full bg-[#EEF0E8] text-[#6B7257] font-semibold"
                   >
                     {concern}
                   </span>
@@ -283,32 +235,9 @@ export default function MyPage() {
       {activeTab === "routine" && (
         <RoutineTab onOpenModal={handleOpenModal} />
       )}
-      {activeTab === "owned" &&
-        (myCosLoading ? (
-          <div className="flex justify-center py-20 text-brand text-sm font-normal">
-            불러오는 중...
-          </div>
-        ) : (
-          <OwnedTab
-            routine={routineForOwnedTab}
-            ownedProducts={ownedProducts}
-            avoidProducts={avoidProducts}
-            onRemoveOwned={handleRemoveOwned}
-            onRemoveAvoid={(productId) => {
-              const numericId =
-                typeof productId === "number" ? productId : Number(productId);
-              setAvoidProducts((previousProducts) =>
-                previousProducts.filter(
-                  (previousProduct) => previousProduct.id !== numericId,
-                ),
-              );
-            }}
-            onOpenAvoidModal={() => {
-              setOpenAvoidModal(true);
-              setAvoidSearch("");
-            }}
-          />
-        ))}
+      {activeTab === "owned" && (
+        <OwnedTab routine={routineForOwnedTab} />
+      )}
 
       {/* 제품 추가 모달 — openStep이 있을 때만 렌더링 */}
       {openStep && (
@@ -321,15 +250,6 @@ export default function MyPage() {
         />
       )}
 
-      {openAvoidModal && (
-        <AvoidProductModal
-          avoidProducts={avoidProducts}
-          avoidSearch={avoidSearch}
-          onSearchChange={setAvoidSearch}
-          onClose={() => setOpenAvoidModal(false)}
-          onToggle={handleToggleAvoid}
-        />
-      )}
     </div>
   );
 }

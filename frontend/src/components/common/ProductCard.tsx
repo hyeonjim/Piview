@@ -83,7 +83,7 @@ export function SkinTypeTag({ label }: { label: string }) {
   };
   return (
     <span
-      className="inline-block mb-2 text-[12px] font-semibold px-1.5 py-0.5 rounded-[3px]"
+      className="inline-block mb-1 mr-2 text-[12px] font-semibold px-1 rounded-[3px]"
       style={{ backgroundColor: color.bg, color: color.text }}
     >
       {label}
@@ -97,7 +97,7 @@ function EffectTag({ label }: { label: string }) {
   if (!color) return null;
   return (
     <span
-      className="inline-block text-[12px] mb-2 font-semibold px-1.5 py-0.5 rounded-[3px]"
+      className="inline-block text-[12px] mb-1 mr-1 font-semibold px-1 rounded-[3px]"
       style={{ backgroundColor: color.chip, color: color.accent }}
     >
       {label}
@@ -382,12 +382,12 @@ export default function ProductCard({
   if (layout === "grid") {
     return (
       <div
-        className="relative flex flex-col overflow-hidden bg-white rounded-modal w-full min-w-0"
+        className="relative flex flex-col py-2 overflow-hidden bg-white rounded-modal w-full min-w-0"
         style={{ boxShadow: CARD_SHADOW }}
       >
         <Link href={productHref} className="no-underline flex flex-col flex-1">
           {/* 이미지 — 3/2 */}
-          <div className="relative w-full aspect-3/2 overflow-hidden">
+          <div className="relative w-full aspect-2/1 overflow-hidden">
             <ProductImage
               imageUrl={imageUrl}
               name={name}
@@ -425,7 +425,7 @@ export default function ProductCard({
           {/* 텍스트 영역 — 고정 높이로 카드 간 높이 통일 */}
           <div
             className="px-3 pt-2.5 pb-2 overflow-hidden"
-            style={{ height: "96px" }}
+            style={{ height: "140px" }}
           >
             {/* 브랜드명 + 비교 버튼 한 줄 */}
             <div className="flex items-center justify-between">
@@ -442,11 +442,11 @@ export default function ProductCard({
               {name}
             </p>
             {(skinTypes.length > 0 || effects.length > 0) && (
-              <div className="flex flex-wrap gap-1.25 mt-1.5">
+              <div className="flex flex-wrap mt-1.5">
                 {skinTypes.slice(0, 1).map((skinType) => (
                   <SkinTypeTag key={skinType} label={skinType} />
                 ))}
-                {effects.slice(0, 1).map((effect) => (
+                {effects.map((effect) => (
                   <EffectTag key={effect} label={effect} />
                 ))}
               </div>
@@ -501,7 +501,7 @@ export default function ProductCard({
                 {skinTypes.slice(0, 1).map((skinType) => (
                   <SkinTypeTag key={skinType} label={skinType} />
                 ))}
-                {effects.slice(0, 2).map((effect) => (
+                {effects.map((effect) => (
                   <EffectTag key={effect} label={effect} />
                 ))}
               </div>
@@ -540,8 +540,8 @@ export default function ProductCard({
                 imageUrl={imageUrl}
                 name={name}
                 emoji={emoji}
-                width={60}
-                height={60}
+                width={50}
+                height={50}
                 className="object-cover rounded-lg"
               />
             </div>
@@ -564,7 +564,7 @@ export default function ProductCard({
                 {skinTypes.map((skinType) => (
                   <SkinTypeTag key={skinType} label={skinType} />
                 ))}
-                {effects.slice(0, 3).map((effect) => (
+                {effects.map((effect) => (
                   <EffectTag key={effect} label={effect} />
                 ))}
               </div>

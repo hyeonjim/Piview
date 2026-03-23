@@ -26,16 +26,19 @@ export default function LikesPage() {
   const { data: myCosData = [] } = useMyCosQuery();
   const { mutate: addMyCos } = useAddMyCos();
   const { mutate: removeMyCos } = useRemoveMyCos();
-  const isOwned = (id: string) =>
-    myCosData.some((item) => String(item.productId ?? item.id) === id);
-  const handleToggleOwned = (productId: string) => {
+
+  const isOwned = (productId: number) =>
+    myCosData.some((item) => (item.productId ?? item.id) === productId);
+
+  const handleToggleOwned = (productId: number) => {
     const owned = myCosData.find(
-      (item) => String(item.productId ?? item.id) === productId,
+      (item) => (item.productId ?? item.id) === productId,
     );
     if (owned) removeMyCos(owned.id);
-    else addMyCos(Number(productId));
+    else addMyCos(productId);
   };
 
+  // 비교 모달
   const {
     compareItems,
     showCompare,
@@ -45,6 +48,7 @@ export default function LikesPage() {
     canCompare,
   } = useCompare<ProductViewModel>();
 
+  // 비교 토글 핸들러 — 2개 선택 시 모달 자동 오픈
   const handleToggleCompare = (product: ProductViewModel) => {
     const isAlreadySelected = compareItems.some(
       (item) => item.id === product.id,
@@ -97,7 +101,7 @@ export default function LikesPage() {
         ) : (
           <div className="grid grid-cols-2 gap-6 items-start">
             {pagedProducts.map((product) => {
-              const productId = String(product.productId);
+              const productId = product.productId;
               return (
                 <ProductCard
                   key={productId}
@@ -113,11 +117,11 @@ export default function LikesPage() {
                   isOwned={isOwned(productId)}
                   onToggleOwned={() => handleToggleOwned(productId)}
                   isInCompare={compareItems.some(
-                    (item) => item.id === product.productId,
+                    (item) => item.id === productId,
                   )}
                   onToggleCompare={() =>
                     handleToggleCompare({
-                      id: product.productId,
+                      id: productId,
                       name: product.name ?? "",
                       brand: product.brandName ?? "",
                       imageUrl: product.imageUrl,

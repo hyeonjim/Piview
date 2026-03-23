@@ -11,6 +11,10 @@ interface CategoryFilterProps {
   selectedCategoryId: number | null;
   onBigCategorySelect: (bigCategoryId: number | null) => void;
   onCategorySelect: (categoryId: number | null) => void;
+  /** 대분류 탭 폰트 크기 오버라이드 (기본값: globals.css 기준) */
+  bigCategoryFontSize?: string;
+  /** 소분류 pill 폰트 크기 오버라이드 (기본값: globals.css 기준) */
+  pillFontSize?: string;
 }
 
 export function CategoryFilter({
@@ -18,6 +22,8 @@ export function CategoryFilter({
   selectedCategoryId,
   onBigCategorySelect,
   onCategorySelect,
+  bigCategoryFontSize,
+  pillFontSize,
 }: CategoryFilterProps) {
   const { data: filterMeta, isLoading } = useProductFilters();
   const bigCategories: BigCategoryFilterDto[] = filterMeta?.bigCategories ?? [];
@@ -69,6 +75,7 @@ export function CategoryFilter({
                   }}
                   className="category-tab-button"
                   data-active={isActive}
+                  style={bigCategoryFontSize ? { fontSize: bigCategoryFontSize } : undefined}
                 >
                   {getCategoryDisplayName(big.bigCategoryName)}
                 </button>
@@ -105,8 +112,11 @@ export function CategoryFilter({
                           "--pill-bg": catColor.chip,
                           "--pill-color": catColor.accent,
                           "--pill-border": catColor.border,
+                          ...(pillFontSize ? { fontSize: pillFontSize } : {}),
                         } as React.CSSProperties)
-                      : undefined
+                      : pillFontSize
+                        ? { fontSize: pillFontSize }
+                        : undefined
                   }
                 >
                   {getCategoryDisplayName(cat.categoryName)}

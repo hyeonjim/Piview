@@ -23,12 +23,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { routineService } from "@/services/routine";
 import type {
-  DraftItem,
   DraftItemDto,
   RoutineListResponse,
   RoutineResponse,
   CreateRoutineRequest,
   RoutineOrderUpdateRequest,
+  EditRoutineLoadResponse,
+  UpdateRoutineRequest,
 } from "@/types/routine";
 
 // ── 조회 훅 ───────────────────────────────────────────────────────
@@ -130,7 +131,7 @@ export function useSyncDraftMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (items: DraftItem[]) => routineService.syncDraft(items),
+    mutationFn: (items: DraftItemDto[]) => routineService.syncDraft(items),
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.routineDraft });
@@ -284,6 +285,56 @@ export function useUpdateRoutineOrderMutation() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.routineDetail(variables.routineId),
       });
+    },
+  });
+}
+
+/**
+ * 루틴 재수정 완료 (최종 덮어쓰기)
+ * PUT /api/v1/routines/{routineId}
+ * Redis draft 내용 + title로 기존 루틴을 완전 덮어씀
+ */
+export function useUpdateRoutineMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    RoutineResponse,
+    Error,
+    { routineId: number; request: UpdateRoutineRequest }
+  >({
+    mutationFn: ({ routineId, request }) =>
+      routineService
+        .updateRoutine(routineId, request)
+        .then((response) => response.data.data),
+
+    onSuccess: (_data, variables) => {
+      // 루틴 목록, 상세, 메인 캐시 무효화
+      queryClient.invalidateQueries({ queryKey: queryKeys.routineList });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.routineDetail(variables.routineId),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.routineMain });
+    },
+  });
+}
+
+/**
+ * 루틴 수정 모드 진입 (Redis로 복사)
+ * POST /api/v1/routines/{routineId}/edit-start
+ * 저장된 루틴을 Redis draft로 복사해 편집 모드로 전환
+ */
+export function useLoadRoutineToDraftMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<EditRoutineLoadResponse, Error, number>({
+    mutationFn: (routineId) =>
+      routineService
+        .loadRoutineToDraft(routineId)
+        .then((response) => response.data.data),
+
+    onSuccess: () => {
+      // draft가 새로운 루틴 데이터로 교체되었으므로 캐시 무효화
+      queryClient.invalidateQueries({ queryKey: queryKeys.routineDraft });
     },
   });
 }
