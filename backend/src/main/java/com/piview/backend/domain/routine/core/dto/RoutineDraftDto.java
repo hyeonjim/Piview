@@ -2,6 +2,7 @@ package com.piview.backend.domain.routine.core.dto;
 
 import com.piview.backend.domain.product.catalog.dto.ProductSummaryResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 
 public class RoutineDraftDto {
   public record AddDraftItemRequest(
@@ -15,6 +16,12 @@ public class RoutineDraftDto {
       Integer columnId,
       Integer stepOrder,
       ProductSummaryResponse product
+  ) {}
+
+  public record EditRoutineLoadResponse(
+      Long routineId,
+      String title,
+      List<DraftItemDto> draftItems
   ) {}
 
 }
