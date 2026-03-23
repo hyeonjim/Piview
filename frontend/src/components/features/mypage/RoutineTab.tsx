@@ -641,7 +641,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 }
                 handleSetMainRoutine(selectedRoutineId);
               }}
-              className="text-lg cursor-pointer bg-transparent border-none leading-none shrink-0"
+              className="text-[16px] cursor-pointer bg-transparent border-none leading-none shrink-0"
               style={{
                 color:
                   selectedRoutineId !== null &&
@@ -702,13 +702,13 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         </div>
 
         {/* 진행 상황 */}
-        <p className="text-[14px] font-bold text-text-muted">
-          {filledCount}/{routineSteps.length}단계 완성 · Edit Mode에서 변경
+        <p className="text-[14px] font-semibold text-text-muted">
+          Edit Mode에서 변경
         </p>
       </div>
 
       {/* ── 루틴 스텝별 섹션 ── */}
-      {routineSteps.map((step) => {
+      {routineSteps.map((step, stepIndex) => {
         const products = viewByStep[step.code] ?? [];
         const isDropTarget =
           !isViewingSavedRoutine && dragState?.toStepCode === step.code;
@@ -718,7 +718,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             {/* 스텝 섹션 헤더 */}
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
-                <span className="text-base">{step.icon}</span>
+                <span className="text-base font-semibold text-brand">{stepIndex + 1}단계</span>
                 <span className="text-[16px] font-semibold text-text-primary">
                   {step.label}
                 </span>
@@ -962,7 +962,7 @@ function RoutineProductCard({
       data-drag-item
       data-step-code={stepCode}
       data-item-index={index}
-      className="relative h-22 rounded-[10px] overflow-hidden bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
+      className="relative h-25 rounded-[10px] overflow-hidden bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
       style={{
         opacity: isDragging ? 0.4 : 1,
         border: isDropTarget ? "2px solid #A69D92" : "1px solid #E2DDD8",
@@ -975,7 +975,7 @@ function RoutineProductCard({
         className="absolute top-1 right-1 z-10 w-5 h-5 flex items-center justify-center cursor-pointer bg-transparent border-none"
         aria-label="제품 삭제"
       >
-        <X size={12} className="text-[#C4BEB7]" />
+        <X size={16} className="text-[#C4BEB7]" />
       </button>
 
       <div className="flex items-center h-full">
@@ -992,7 +992,7 @@ function RoutineProductCard({
         >
           {/* 드래그 아이콘 */}
           <div className="absolute top-1 left-1 z-10">
-            <ArrowUpDown size={10} className="text-[#C4BEB7] opacity-70" />
+            <ArrowUpDown size={15} className="text-[#C4BEB7]" />
           </div>
 
           {/* 이미지 */}
@@ -1025,7 +1025,7 @@ function RoutineProductCard({
             </span>
             {categoryColor && (
               <span
-                className="text-[12px] px-1.5 py-[1px] rounded-[3px] font-semibold"
+                className="text-[12px] px-1.5 rounded-[3px] font-semibold"
                 style={{
                   backgroundColor: categoryColor.chip,
                   color: categoryColor.accent,
@@ -1035,7 +1035,7 @@ function RoutineProductCard({
               </span>
             )}
           </div>
-          <p className="mt-0.75 m-0 text-[16px] font-bold text-[#2A2118] leading-[1.4] line-clamp-1">
+          <p className="my-1.5 text-[16px] font-semibold text-[#2A2118] leading-[1.4] line-clamp-1">
             {product.name}
           </p>
           <div className="flex flex-wrap gap-1 mt-1">
@@ -1044,7 +1044,7 @@ function RoutineProductCard({
               return (
                 <span
                   key={skinType}
-                  className="inline-block text-[12px] font-semibold px-1.5 py-0.5 rounded-[3px]"
+                  className="inline-block text-[12px] font-semibold px-1.5 rounded-[3px]"
                   style={{
                     backgroundColor:
                       SKIN_TYPE_TAG_COLORS[koSkinType]?.bg ?? "#F0EDE8",
@@ -1063,7 +1063,7 @@ function RoutineProductCard({
               return (
                 <span
                   key={effect}
-                  className="inline-block text-[12px] font-semibold px-1.5 py-0.5 rounded-[3px]"
+                  className="inline-block text-[12px] font-semibold px-1.5 rounded-[3px]"
                   style={{
                     backgroundColor: color.chip,
                     color: color.accent,
@@ -1101,7 +1101,7 @@ function SavedRoutineCard({
   return (
     <div
       onClick={onClick}
-      className="relative shrink-0 flex flex-col gap-1 pt-7 pb-3 rounded-xl transition-all cursor-pointer"
+      className="relative shrink-0 flex flex-col gap-1 pt-5 pb-3 rounded-xl transition-all cursor-pointer"
       style={{
         minWidth: "calc(38% - 4px)",
         maxWidth: "calc(38% - 4px)",
@@ -1114,7 +1114,7 @@ function SavedRoutineCard({
       {/* 메인 루틴만 별표 배지 표시 */}
       {saved.isMain && (
         <span
-          className="absolute top-1.5 left-1.5 w-4 h-4 flex items-center justify-center text-[11px] leading-none"
+          className="absolute top-1.5 left-1.5 w-6 h-6 flex items-center justify-center text-[16px] leading-none"
           style={{ color: "#C8A96E" }}
         >
           ★
@@ -1127,18 +1127,18 @@ function SavedRoutineCard({
           event.stopPropagation();
           onDelete();
         }}
-        className="absolute top-1.5 right-1.5 w-4 h-4 flex items-center justify-center rounded-full border-none cursor-pointer bg-[#E8E4DF]"
+        className="absolute top-1.5 right-1.5 w-4 h-4 flex items-center justify-center rounded-full border-none cursor-pointer"
       >
-        <X size={11} className="text-[#8A8278]" />
+        <X size={14} className="text-[#8A8278]" />
       </button>
 
       {/* 루틴 이름 */}
-      <p className="text-sm font-semibold text-[#2A2118] truncate leading-tight px-2 text-center">
+      <p className="text-sm font-semibold text-[#2A2118] truncate leading-tight text-center">
         {saved.title}
       </p>
 
       {/* 제품 수 */}
-      <p className="text-[10px] font-bold text-[#A69D92] text-center">
+      <p className="text-[12px] font-semibold text-[#A69D92] text-center">
         {saved.productCount}개 제품
       </p>
     </div>

@@ -4,7 +4,7 @@
  * — 키가 여러 파일에 흩어지면 invalidateQueries 놓치는 버그 생김
  */
 
-import type { ProductSearchParams } from "@/types/product";
+import type { ProductSearchParams, RecommendRequestDto } from "@/types/product";
 
 export const queryKeys = {
   // 사용자 정보 — GET /users/me
@@ -49,4 +49,8 @@ export const queryKeys = {
   // 피부 분석 상태 — GET /skin/analysis/{analysisId}
   analysisStatus: (analysisId: string) =>
     ["analysisStatus", analysisId] as const,
+
+  // 제품 추천 — POST /recommendations/products
+  recommendations: (request: RecommendRequestDto) =>
+    ["recommendations", request] as const,
 } as const;

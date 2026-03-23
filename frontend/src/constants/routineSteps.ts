@@ -2,24 +2,22 @@
  * constants/routineSteps.ts
  * 루틴 스텝 단일 정의 — 앱 전체의 루틴 스텝 정보는 여기서만 관리
  *
- * ⚠️ 백엔드 연동 시: ROUTINE_STEPS 배열을 API 응답으로 교체
- *
  * 사용처:
- *   - stores/useLocalRoutineStore.ts  → ROUTINE_STEPS, INITIAL_ROUTINE
- *   - app/(main)/home/page.tsx        → ROUTINE_STEPS
- *   - app/(main)/mypage/page.tsx      → ROUTINE_STEPS
- *   - components/features/search/AddToRoutineModal.tsx → ROUTINE_STEPS, RoutineStepKey
+ *   - app/(main)/home/page.tsx             → ROUTINE_STEPS
+ *   - app/product/[id]/page.tsx            → getRoutineSteps
+ *   - components/features/mypage/RoutineTab.tsx     → getRoutineSteps
+ *   - components/features/mypage/RoutineAddModal.tsx → getRoutineSteps
  */
 
 import type { Gender } from "@/types/user";
 
 export interface RoutineStep {
-  code: string; // 스텝 코드 (CL, PR, SR, LT, CR, SC, SH)
-  columnId: number; // 백엔드 RoutineColumn ID (draft API용)
-  key: string; // 영문 키 (AddToRoutineModal 호환)
-  label: string; // 화면 표시 라벨
-  icon: string; // 이모지 아이콘
-  categories: string[]; // 해당 스텝에 속하는 카테고리 목록 (mypage 필터 + 자동 추천용)
+  code: string;      // 스텝 코드 (CL, PR, SR, LT, CR, SC, SH)
+  columnId: number;  // 백엔드 RoutineColumn ID
+  key: string;       // 영문 키
+  label: string;     // 화면 표시 라벨
+  icon: string;      // 이모지 아이콘
+  categories: string[]; // 해당 스텝에 속하는 카테고리 목록
 }
 
 /** 여성용 루틴 스텝 (기본 6단계) */
@@ -150,33 +148,10 @@ export const MEN_ROUTINE_STEPS: RoutineStep[] = [
   },
 ];
 
-/**
- * 성별에 따라 루틴 스텝 반환
- * 개발 도구용 - 성별별 루틴 확인에 사용
- */
+/** 성별에 따라 루틴 스텝 반환 */
 export function getRoutineSteps(gender: Gender | null): RoutineStep[] {
   return gender === "MEN" ? MEN_ROUTINE_STEPS : WOMEN_ROUTINE_STEPS;
 }
 
-/** 루틴 스텝 전체 정의 — 순서가 루틴 순서 (하위 호환용, 여성 기본) */
+/** 루틴 스텝 전체 정의 — 여성 기본값 (home/page.tsx에서 columnId 매칭용) */
 export const ROUTINE_STEPS: RoutineStep[] = WOMEN_ROUTINE_STEPS;
-
-/** AddToRoutineModal에서 사용하는 스텝 키 타입 */
-export type RoutineStepKey = (typeof ROUTINE_STEPS)[number]["key"];
-
-/**
- * 루틴 스토어 초기값 — 모든 스텝을 빈 배열로 초기화
- * ⚠️ 백엔드 연동 시 삭제
- */
-export const INITIAL_ROUTINE = Object.fromEntries(
-  ROUTINE_STEPS.map((s) => [s.code, [] as never[]]),
-);
-
-/**
- * mypage용 코드+라벨 단순 버전 (기존 MYPAGE_ROUTINE_STEPS 대체)
- * 하위 호환을 위해 유지 — ROUTINE_STEPS에서 파생
- */
-export const MYPAGE_ROUTINE_STEPS = ROUTINE_STEPS.map(({ code, label }) => ({
-  code,
-  label,
-}));

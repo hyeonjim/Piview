@@ -71,11 +71,6 @@ export default function LikesPage() {
         <h1 className="mt-[3px] text-[22px] font-bold text-[var(--color-text-primary)] tracking-[-0.4px]">
           Liked
         </h1>
-        {likedProducts.length > 0 && (
-          <p className="mt-0.5 text-[12px] text-[var(--color-text-faint)]">
-            {likedProducts.length}개 저장됨
-          </p>
-        )}
       </div>
 
       <div className="px-4 pb-6 pt-0">

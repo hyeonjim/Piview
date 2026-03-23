@@ -16,6 +16,8 @@ import type {
   ProductFilterMetaResponse,
   ProductCompareRequest,
   ProductCompareResponse,
+  RecommendRequestDto,
+  RecommendResponseDto,
 } from "@/types/product";
 
 export const productService = {
@@ -83,5 +85,16 @@ export const productService = {
       .post<ApiResponse<ProductCompareResponse>>("/products/compare", {
         productIds,
       } as ProductCompareRequest)
+      .then((res) => res.data.data),
+
+  // POST /recommendations/products
+  getRecommendations: (
+    request: RecommendRequestDto,
+  ): Promise<Record<string, RecommendResponseDto[]>> =>
+    client
+      .post<ApiResponse<Record<string, RecommendResponseDto[]>>>(
+        "/recommendations/products",
+        request,
+      )
       .then((res) => res.data.data),
 };

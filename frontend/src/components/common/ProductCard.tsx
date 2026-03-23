@@ -438,7 +438,7 @@ export default function ProductCard({
                 />
               )}
             </div>
-            <p className="mt-0.75 m-0 text-[17px] font-semibold text-[var(--color-text-primary)] leading-[1.4] line-clamp-2 overflow-hidden">
+            <p className="mt-0.75 m-0 text-[16px] font-semibold text-[var(--color-text-primary)] leading-[1.4] line-clamp-2 overflow-hidden">
               {name}
             </p>
             {(skinTypes.length > 0 || effects.length > 0) && (
