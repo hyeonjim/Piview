@@ -15,7 +15,7 @@ public class IngredientConcernWeight {
 
   @Id
   @Column(name = "ingredient_concern_weight_id", nullable = false)
-  private String id;
+  private Long id;
 
   @Column(name = "ingredient_id", nullable = false)
   private Long ingredientId;
