@@ -34,6 +34,7 @@ public class RedisRoutineService {
             List<RedisRoutineItemDto> draftItems = objectMapper.readValue(json, new TypeReference<List<RedisRoutineItemDto>>() {});
 
             return draftItems.stream()
+                    .filter(item -> item != null && item.getProduct() != null && item.getProduct().getProductId() != null)
                     .map(item -> item.getProduct().getProductId())
                     .collect(Collectors.toList());
         } catch (Exception e){

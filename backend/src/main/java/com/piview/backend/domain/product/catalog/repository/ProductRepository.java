@@ -19,10 +19,10 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     // [분기 A] 장바구니가 비어있을 때 (초기 추천)
     // =================================================================================
     @Query(nativeQuery = true, value = """
-        SELECT DISTINCT p.*
-        FROM Products p
-        JOIN Category c ON p.category_id = c.category_id
-        LEFT JOIN ProductConcernCache pcc ON p.product_id = pcc.product_id AND pcc.skin_concern_id = :concernId
+        SELECT p.*
+        FROM products p
+        JOIN category c ON p.category_id = c.category_id
+        LEFT JOIN product_concern_cache pcc ON p.product_id = pcc.product_id AND pcc.skin_concern_id = :concernId
         WHERE p.category_id IN (:categoryIds) -- 루틴 스텝에 맞는 여러 소카테고리 ID 검색
           
           -- 1. 여성 유저일 경우 '남성 화장품(ID: 4)' 카테고리 원천 차단
@@ -60,10 +60,10 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     // [분기 B] 장바구니에 제품이 있을 때 (루틴 갭 보정)
     // =================================================================================
     @Query(nativeQuery = true, value = """
-        SELECT DISTINCT p.*
-        FROM Products p
-        JOIN Category c ON p.category_id = c.category_id
-        LEFT JOIN ProductConcernCache pcc ON p.product_id = pcc.product_id AND pcc.skin_concern_id = :concernId
+        SELECT p.*
+        FROM products p
+        JOIN category c ON p.category_id = c.category_id
+        LEFT JOIN product_concern_cache pcc ON p.product_id = pcc.product_id AND pcc.skin_concern_id = :concernId
         WHERE p.category_id IN (:categoryIds)
           
           -- [기본 필터] 남성 화장품(ID: 4) 제외, 상위 25% 컷오프, 코메도제닉 필터
