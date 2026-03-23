@@ -23,7 +23,6 @@ interface FilterModalProps {
   state: FilterState;
   onChange: (next: FilterState) => void;
   onReset: () => void;
-  resultCount: number;
 }
 
 export function FilterModal({
@@ -32,7 +31,6 @@ export function FilterModal({
   state,
   onChange,
   onReset,
-  resultCount,
 }: FilterModalProps) {
   // ── 내부 draft — 버튼 누를 때까지 API 호출 안 함 ──────────────
   const [draft, setDraft] = useState<FilterState>(state);
@@ -269,7 +267,7 @@ export function FilterModal({
               onClick={handleApply}
               className="w-full cursor-pointer border-none transition-all active:scale-[0.98] h-11 rounded-lg bg-gray-900 text-white text-sm font-bold tracking-wide"
             >
-              {resultCount.toLocaleString()}개 제품 보기
+              제품 보기
             </button>
           </div>
         </div>

@@ -343,8 +343,12 @@ export default function ProductCard({
   const { likeList, toggleLike } = useLike();
   const isLiked = !!likeList[String(id)];
 
-  // 상세페이지 링크 — href prop 우선, 없으면 기본 경로
-  const productHref = href ?? `/product/${id}`;
+  // 상세페이지 링크 — href prop 우선, 없으면 category searchParam 포함
+  const productHref =
+    href ??
+    (category
+      ? `/product/${id}?category=${encodeURIComponent(category)}`
+      : `/product/${id}`);
 
   const handleLike = (event: React.MouseEvent) => {
     event.preventDefault();

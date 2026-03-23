@@ -23,8 +23,13 @@ import {
   useRemoveProductFromDraftMutation,
   useSyncDraftMutation,
 } from "@/hooks";
-import type { DraftItemDto, RoutineListResponse, DraftItem } from "@/types/routine";
+import type {
+  DraftItemDto,
+  RoutineListResponse,
+  DraftItem,
+} from "@/types/routine";
 import type { ProductSummaryResponse } from "@/types/product/product";
+import { fromSkinTypeEnum } from "@/utils/enumConvert";
 
 // SVG 점수 링 둘레 상수
 const CIRCUMFERENCE = 138;
@@ -86,12 +91,16 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   // 성별에 따른 루틴 스텝 가져오기
   const currentGender = useUserStore(selectGender);
   const user = useUserStore((state) => state.user);
-  const routineSteps = getRoutineSteps(currentGender);
+  const routineSteps = useMemo(
+    () => getRoutineSteps(currentGender),
+    [currentGender],
+  );
 
   // ── 서버 데이터 ────────────────────────────────────────────────────
   const { data: draftItems = [], isLoading: isDraftLoading } = useDraftQuery();
   const { data: routineList = [] } = useRoutineListQuery();
-  const { mutate: createRoutine, isPending: isCreating } = useCreateRoutineMutation();
+  const { mutate: createRoutine, isPending: isCreating } =
+    useCreateRoutineMutation();
   const { mutate: deleteRoutine } = useDeleteRoutineMutation();
   const { mutate: setMainRoutine } = useSetMainRoutineMutation();
   const { mutate: clearDraft } = useClearDraftMutation();
@@ -107,9 +116,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   // 서버 draft 데이터가 바뀌면 로컬 상태 동기화
   useEffect(() => {
     setLocalDraftByStep(groupDraftByStep(draftItems, routineSteps));
-  // routineSteps는 gender에 의존하므로 currentGender를 deps에 포함
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftItems, currentGender]);
+  }, [draftItems, routineSteps]);
 
   // ── UI 상태 ────────────────────────────────────────────────────────
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -145,7 +152,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   };
 
   // ── 슬라이더 마우스 드래그 핸들러 ─────────────────────────────────────
-  const handleSliderPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handleSliderPointerDown = (
+    event: React.PointerEvent<HTMLDivElement>,
+  ) => {
     if (event.pointerType === "touch") return;
     const container = savedRoutineScrollRef.current;
     if (!container) return;
@@ -155,7 +164,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     sliderDragStartScrollLeftRef.current = container.scrollLeft;
   };
 
-  const handleSliderPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handleSliderPointerMove = (
+    event: React.PointerEvent<HTMLDivElement>,
+  ) => {
     if (!isSliderDraggingRef.current || event.pointerType === "touch") return;
     const container = savedRoutineScrollRef.current;
     if (!container) return;
@@ -178,7 +189,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     container.style.cursor = "grab";
   };
 
-  const handleSliderClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleSliderClickCapture = (
+    event: React.MouseEvent<HTMLDivElement>,
+  ) => {
     if (sliderDragMovedRef.current) {
       event.stopPropagation();
       sliderDragMovedRef.current = false;
@@ -214,31 +227,50 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     });
   };
 
-  const handleDragHandlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handleDragHandlePointerMove = (
+    event: React.PointerEvent<HTMLDivElement>,
+  ) => {
     if (!dragState) return;
-    const elementUnder = document.elementFromPoint(event.clientX, event.clientY);
+    const elementUnder = document.elementFromPoint(
+      event.clientX,
+      event.clientY,
+    );
 
-    const itemElement = elementUnder?.closest("[data-drag-item]") as HTMLElement | null;
+    const itemElement = elementUnder?.closest(
+      "[data-drag-item]",
+    ) as HTMLElement | null;
     if (itemElement) {
       const toStepCode = itemElement.getAttribute("data-step-code");
       const indexStr = itemElement.getAttribute("data-item-index");
       if (!toStepCode || indexStr === null) return;
       const toIndex = parseInt(indexStr, 10);
-      if (toStepCode !== dragState.toStepCode || toIndex !== dragState.toIndex) {
-        setDragState((prev) => (prev ? { ...prev, toStepCode, toIndex } : null));
+      if (
+        toStepCode !== dragState.toStepCode ||
+        toIndex !== dragState.toIndex
+      ) {
+        setDragState((prev) =>
+          prev ? { ...prev, toStepCode, toIndex } : null,
+        );
       }
       return;
     }
 
-    const dropZone = elementUnder?.closest("[data-drop-zone]") as HTMLElement | null;
+    const dropZone = elementUnder?.closest(
+      "[data-drop-zone]",
+    ) as HTMLElement | null;
     if (dropZone) {
       const toStepCode = dropZone.getAttribute("data-step-code");
-      const toIndex = parseInt(dropZone.getAttribute("data-drop-index") ?? "0", 10);
+      const toIndex = parseInt(
+        dropZone.getAttribute("data-drop-index") ?? "0",
+        10,
+      );
       if (
         toStepCode &&
         (toStepCode !== dragState.toStepCode || toIndex !== dragState.toIndex)
       ) {
-        setDragState((prev) => (prev ? { ...prev, toStepCode, toIndex } : null));
+        setDragState((prev) =>
+          prev ? { ...prev, toStepCode, toIndex } : null,
+        );
       }
     }
   };
@@ -295,7 +327,10 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
 
     console.log("🔍 루틴 저장 디버깅:", { user, userId: user?.userId });
     console.log("🔍 user 전체 객체 (JSON):", JSON.stringify(user, null, 2));
-    console.log("🔍 user의 모든 키:", user ? Object.keys(user) : "user is null");
+    console.log(
+      "🔍 user의 모든 키:",
+      user ? Object.keys(user) : "user is null",
+    );
 
     if (!user?.userId) {
       console.error("❌ user.userId가 없습니다:", user);
@@ -343,7 +378,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
    * 루틴 초기화 — DELETE /api/v1/routines/draft (Redis 초기화)
    */
   const handleClearRoutine = () => {
-    clearDraft({
+    clearDraft(undefined, {
       onSuccess: () => notify("루틴이 초기화되었습니다."),
       onError: () => notify("초기화에 실패했습니다."),
     });
@@ -402,7 +437,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               <SavedRoutineCard
                 key={saved.routineId}
                 saved={saved}
-                onDelete={() => handleDeleteRoutine(saved.routineId, saved.title)}
+                onDelete={() =>
+                  handleDeleteRoutine(saved.routineId, saved.title)
+                }
                 onSetMain={() => handleSetMainRoutine(saved.routineId)}
               />
             ))}
@@ -575,7 +612,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 cy="28"
                 r="22"
                 fill="none"
-                stroke={filledCount > 0 ? "#A69D92" : "var(--color-border-subtle)"}
+                stroke={
+                  filledCount > 0 ? "#A69D92" : "var(--color-border-subtle)"
+                }
                 strokeWidth="4"
                 strokeDasharray={`${(filledCount / routineSteps.length) * CIRCUMFERENCE} ${CIRCUMFERENCE}`}
                 strokeLinecap="round"
@@ -686,7 +725,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                         </p>
                       </div>
                       {routine.isMain && (
-                        <span className="text-xs font-bold text-[#C8A96E]">★ 메인</span>
+                        <span className="text-xs font-bold text-[#C8A96E]">
+                          ★ 메인
+                        </span>
                       )}
                     </div>
                   </button>
@@ -766,7 +807,9 @@ function RoutineProductCard({
         <div
           className="relative shrink-0 w-22 h-full cursor-grab active:cursor-grabbing select-none"
           style={{ touchAction: "none" }}
-          onPointerDown={(event) => onDragHandlePointerDown(event, stepCode, index)}
+          onPointerDown={(event) =>
+            onDragHandlePointerDown(event, stepCode, index)
+          }
           onPointerMove={onDragHandlePointerMove}
           onPointerUp={onDragHandlePointerUp}
           onPointerCancel={onDragHandlePointerUp}
@@ -818,19 +861,22 @@ function RoutineProductCard({
             {product.name}
           </p>
           <div className="flex flex-wrap gap-1 mt-1">
-            {product.skinTypes?.slice(0, 1).map((skinType) => (
-              <span
-                key={skinType}
-                className="inline-block text-[12px] font-semibold px-1.5 py-0.5 rounded-[3px]"
-                style={{
-                  backgroundColor:
-                    SKIN_TYPE_TAG_COLORS[skinType]?.bg ?? "#F0EDE8",
-                  color: SKIN_TYPE_TAG_COLORS[skinType]?.text ?? "#7A7060",
-                }}
-              >
-                {skinType}
-              </span>
-            ))}
+            {product.skinTypes?.slice(0, 1).map((skinType) => {
+              const koSkinType = fromSkinTypeEnum(skinType);
+              return (
+                <span
+                  key={skinType}
+                  className="inline-block text-[12px] font-semibold px-1.5 py-0.5 rounded-[3px]"
+                  style={{
+                    backgroundColor:
+                      SKIN_TYPE_TAG_COLORS[koSkinType]?.bg ?? "#F0EDE8",
+                    color: SKIN_TYPE_TAG_COLORS[koSkinType]?.text ?? "#7A7060",
+                  }}
+                >
+                  {koSkinType}
+                </span>
+              );
+            })}
             {product.tags?.slice(0, 2).map((effect) => {
               const color = SKIN_FUNCTION_COLORS[effect] ?? {
                 chip: "#F0EDE8",
@@ -863,7 +909,11 @@ interface SavedRoutineCardProps {
   onSetMain?: () => void;
 }
 
-function SavedRoutineCard({ saved, onDelete, onSetMain }: SavedRoutineCardProps) {
+function SavedRoutineCard({
+  saved,
+  onDelete,
+  onSetMain,
+}: SavedRoutineCardProps) {
   return (
     <div
       className="relative shrink-0 flex flex-col gap-1 pt-7 pb-3 rounded-xl transition-all"

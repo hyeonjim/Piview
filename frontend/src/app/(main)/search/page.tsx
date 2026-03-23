@@ -396,7 +396,6 @@ export default function SearchPage() {
           setFilter(next);
         }}
         onReset={resetFilter}
-        resultCount={products.length}
       />
     </div>
   );
