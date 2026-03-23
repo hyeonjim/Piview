@@ -1,9 +1,9 @@
-package com.piview.backend.domain.product.recommand.service;
+package com.piview.backend.domain.product.recommend.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.piview.backend.domain.product.recommand.dto.RedisRoutineItemDto;
+import com.piview.backend.domain.product.recommend.dto.RedisRoutineItemDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;

@@ -1,7 +1,7 @@
-package com.piview.backend.domain.product.recommand.service;
+package com.piview.backend.domain.product.recommend.service;
 
 import com.piview.backend.domain.product.entity.Product;
-import com.piview.backend.domain.product.recommand.dto.RoutineContextDto;
+import com.piview.backend.domain.product.recommend.dto.RoutineContextDto;
 import org.springframework.stereotype.Component;
 
 @Component
