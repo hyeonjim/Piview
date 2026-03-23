@@ -1,5 +1,6 @@
 package com.piview.backend.domain.routine.core.controller;
 
+import com.piview.backend.domain.routine.core.dto.RoutineDraftDto;
 import com.piview.backend.domain.routine.core.dto.RoutineListResponse;
 import com.piview.backend.global.exception.ApiResponse;
 import com.piview.backend.global.security.UserPrincipal;
@@ -103,5 +104,33 @@ public class RoutineController {
     routineService.deleteRoutine(userId, routineId);
 
     return ApiResponse.success("루틴이 성공적으로 삭제되었습니다.", null); // 204 No Content 반환 (성공적으로 삭제됨)
+  }
+
+  // 루틴 수정(덮어쓰기) 요청 DTO
+  public record UpdateRoutineRequest(String title) {}
+
+  @Operation(summary = "루틴 수정 모드 진입 (Redis로 복사)", description = "기존에 저장된 루틴을 편집하기 위해 Redis 임시 장바구니로 데이터를 복사해 옵니다.")
+  @PostMapping("/{routineId}/edit-start")
+  public ApiResponse<RoutineDraftDto.EditRoutineLoadResponse> loadRoutineToDraft(
+      @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @PathVariable Long routineId) {
+
+    Long userId = userPrincipal.getId();
+    RoutineDraftDto.EditRoutineLoadResponse response = routineService.loadRoutineToDraft(userId, routineId);
+
+    return ApiResponse.success("기존 루틴을 장바구니로 성공적으로 불러왔습니다.", response);
+  }
+
+  @Operation(summary = "불러온 루틴 재수정 완료 (최종 덮어쓰기)", description = "Redis 장바구니에서 수정한 내용을 바탕으로 기존 루틴 데이터를 완전히 덮어씌웁니다.")
+  @PutMapping("/{routineId}")
+  public ApiResponse<RoutineResponseDto.RoutineResponse> updateRoutine(
+      @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @PathVariable Long routineId,
+      @RequestBody UpdateRoutineRequest request) {
+
+    Long userId = userPrincipal.getId();
+    RoutineResponseDto.RoutineResponse updatedRoutine = routineService.updateRoutine(userId, routineId, request.title());
+
+    return ApiResponse.success("루틴이 성공적으로 수정(덮어쓰기)되었습니다.", updatedRoutine);
   }
 }
