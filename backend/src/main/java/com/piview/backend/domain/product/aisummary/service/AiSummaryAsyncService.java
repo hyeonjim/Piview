@@ -18,11 +18,11 @@ import java.util.concurrent.CompletableFuture;
 public class AiSummaryAsyncService {
 
   // application.yml 파일에서 API 키를 주입받음
-  @Value("${llm.api.key}")
+  @Value("${gemini.api.key}")
   private String apiKey;
 
   // GMS 또는 OpenAI API 엔드포인트
-  private static final String API_URL = "https://gms.ssafy.io/gmsapi/api.openai.com/v1/chat/completions";
+  private static final String API_URL = "https://gms.ssafy.io/gmsapi/generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent";
 
   private final ObjectMapper objectMapper = new ObjectMapper();
   private final HttpClient httpClient = HttpClient.newBuilder()
@@ -55,21 +55,30 @@ public class AiSummaryAsyncService {
                 """;
 
       Map<String, Object> requestBodyMap = Map.of(
-          "model", "gpt-5-nano", // 발급받은 텍스트 생성 모델명 입력
-          "response_format", Map.of("type", "json_object"), // JSON 응답 강제
-          "reasoning_effort", "low",
-          "messages", new Object[]{
-              Map.of("role", "system", "content", systemPrompt),
-              Map.of("role", "user", "content", productDetails)
-          }
+          // 시스템 프롬프트 설정
+          "systemInstruction", Map.of(
+              "parts", new Object[]{Map.of("text", systemPrompt)}
+          ),
+          // 유저 프롬프트 (제품 정보) 설정
+          "contents", new Object[]{
+              Map.of(
+                  "role", "user",
+                  "parts", new Object[]{Map.of("text", productDetails)}
+              )
+          },
+          // JSON 응답 강제 설정
+          "generationConfig", Map.of(
+              "responseMimeType", "application/json"
+          )
       );
 
       String requestBody = objectMapper.writeValueAsString(requestBodyMap);
 
+      // 💡 Gemini API는 헤더에 'x-goog-api-key'로 키를 전달합니다.
       HttpRequest request = HttpRequest.newBuilder()
           .uri(URI.create(API_URL))
           .header("Content-Type", "application/json")
-          .header("Authorization", "Bearer " + apiKey)
+          .header("x-goog-api-key", apiKey)
           .POST(HttpRequest.BodyPublishers.ofString(requestBody))
           .build();
 
@@ -80,14 +89,17 @@ public class AiSummaryAsyncService {
               throw new RuntimeException("API 응답 에러: " + response.body());
             }
             try {
-              System.out.println("====== GMS 서버 전체 응답 ======");
+              System.out.println("====== Gemini 서버 전체 응답 ======");
               System.out.println(response.body());
               System.out.println("================================");
 
               var rootNode = objectMapper.readTree(response.body());
-              String contentJson = rootNode.path("choices").get(0).path("message").path("content").asText();
 
-              // 💡 핵심 2: LLM이 ```json 이나 ``` 같은 마크다운을 붙여서 줬다면 깔끔하게 제거!
+              // 💡 Gemini 응답 구조에 맞춘 파싱: candidates[0].content.parts[0].text
+              String contentJson = rootNode.path("candidates").get(0)
+                  .path("content").path("parts").get(0).path("text").asText();
+
+              // 혹시 모를 마크다운 태그(```json) 제거 처리
               if (contentJson.startsWith("```json")) {
                 contentJson = contentJson.replace("```json", "").replace("```", "").trim();
               } else if (contentJson.startsWith("```")) {
@@ -103,7 +115,6 @@ public class AiSummaryAsyncService {
           })
           .exceptionally(ex -> {
             System.err.println("LLM 생성 중 오류: " + ex.getMessage());
-            // 에러 발생 시 프론트엔드가 깨지지 않도록 기본값 반환
             return new AiSummaryResponse(
                 "💧 AI 한마디를 불러오는 중 문제가 발생했어요.",
                 "🌿 잠시 후 다시 시도해 주세요.",
