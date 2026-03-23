@@ -25,7 +25,7 @@ public class RecommendationService {
     private final CategoryIdealScoreRepository idealScoreRepository;
     private final RoutineConflictChecker conflictChecker; // 성분 충돌 필터기
 
-    // ★ 핵심 매핑: 프론트가 요청한 스텝(1~7)을 실제 DB 소카테고리 ID 리스트로 변환
+    // 핵심 매핑: 프론트가 요청한 스텝(1~7)을 실제 DB 소카테고리 ID 리스트로 변환
     private static final Map<Long, List<Long>> ROUTINE_COL_TO_CATEGORIES = Map.of(
             1L, List.of(8L, 9L, 10L, 11L, 12L, 13L), // 클렌저 (폼, 젤, 밤, 오일, 워터, 로션)
             2L, List.of(22L),                       // 쉐이빙
@@ -74,7 +74,11 @@ public class RecommendationService {
 
         if (idealScore == null) {
             log.warn("해당 피부타입({})과 스텝({})에 대한 이상치 데이터가 없습니다.", req.getSkinType(), targetRoutineColId);
-            // 이상치가 없으면 분기 A 로직으로 폴백(Fallback) 처리하거나 예외를 던집니다.
+            // 이상치가 없으면 분기 A 로직으로 폴백(Fallback) 처리
+            List<Product> initialCandidates = productRepository.findInitialRecommendations(
+                targetCategoryIds, req.getSkinType(), req.getGender(), req.getConcernId()
+            );
+            return filterAndLimit(initialCandidates, routineContext);
         }
 
         // 3. 최종 타겟 M, O 설정 = (스텝 기본 이상치) + (지금까지 누적된 오차 짬처리)

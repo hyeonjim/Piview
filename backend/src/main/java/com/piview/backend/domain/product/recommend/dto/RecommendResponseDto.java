@@ -41,6 +41,7 @@ public class RecommendResponseDto {
         .brandName(product.getBrand() != null? product.getBrand().getBrandName():null)
         .categoryName(product.getCategory() != null? product.getCategory().getCategoryName():null)
         .imageUrl(product.getImage() != null? product.getImage().getUrl():null)
+        .price(product.getPrice())
         .volume(product.getVolume())
         .description(product.getDescription())
         .skinTypes(combinedSkinTypes)
