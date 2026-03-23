@@ -9,3 +9,4 @@ opencv-python
 google-genai
 pydantic
 python-dotenv
+httpx

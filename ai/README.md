@@ -4,7 +4,7 @@
 
 - FastAPI 기반 AI 서버입니다.
 - 기본 포트는 `8000`입니다.
-- OCR과 피부 분석 엔드포인트를 제공합니다.
+- OCR, 피부 분석, 챗봇 엔드포인트를 제공합니다.
 
 ## Run
 
@@ -22,7 +22,15 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 예시:
 
 ```env
-GEMINI_API_KEY=your-key
+GMS_KEY=your-key
+```
+
+선택 환경변수:
+
+```env
+GMS_MODEL=gemini-2.5-flash
+GMS_API_BASE_URL=https://gms.ssafy.io/gmsapi/generativelanguage.googleapis.com
+CHATBOT_MODEL=gemini-2.5-flash
 ```
 
 ## API Endpoints
@@ -37,6 +45,9 @@ GEMINI_API_KEY=your-key
   - 피부 상태 분석
   - `multipart/form-data`
   - file field: `file`
+- `POST /chat/query`
+  - 챗봇 질의응답
+  - `application/json`
 
 ## Verification
 
@@ -48,3 +59,4 @@ GEMINI_API_KEY=your-key
 
 - 로컬에서 AI 서버 기본 주소는 `http://localhost:8000`입니다.
 - 백엔드는 `fastapi.base-url` 설정을 기준으로 AI 서버를 호출합니다.
+- 챗봇 smoke test는 `python scripts/chatbot_smoke_test.py`로 확인할 수 있습니다.
