@@ -9,7 +9,9 @@
 
 import axios, { type InternalAxiosRequestConfig } from "axios";
 import { useUserStore } from "@/stores";
-import { useRoutineStore } from "@/stores";
+import { useSearchStore } from "@/stores/useSearchStore";
+import { useRecommendStore } from "@/stores/useRecommendStore";
+import { useLikeStore } from "@/stores";
 
 // _retry 플래그 타입 확장 (TypeScript 에러 방지)
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
@@ -24,7 +26,34 @@ const client = axios.create({
   headers: { "Content-Type": "application/json" },
   // refreshToken(httpOnly 쿠키) 자동 전송용
   withCredentials: true,
+  // 배열 파라미터를 tagIds=1&tagIds=2 형태로 직렬화 (기본값은 tagIds[]=1 형태)
+  paramsSerializer: (params) => {
+    const parts: string[] = [];
+    for (const key of Object.keys(params)) {
+      const value = params[key];
+      if (value === undefined || value === null) continue;
+      if (Array.isArray(value)) {
+        for (const v of value) {
+          parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(v)}`);
+        }
+      } else {
+        parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+      }
+    }
+    return parts.join("&");
+  },
 });
+
+// ── 전체 store 초기화 헬퍼 — 로그아웃/세션 만료 시 호출 ──────────────────
+function clearAllStores() {
+  useUserStore.getState().clearUser();
+  useSearchStore.getState().setSearchQuery("");
+  useSearchStore.getState().resetFilter();
+  useRecommendStore.getState().setSearchQuery("");
+  useRecommendStore.getState().resetFilter();
+  useLikeStore.getState().initFromServer([]);
+  useLikeStore.getState().setPage(1);
+}
 
 // ── 요청 인터셉터: accessToken → Authorization 헤더 주입 ───────────────────
 client.interceptors.request.use((config) => {
@@ -41,25 +70,23 @@ client.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config as RetryableRequestConfig;
 
-    // 401 이외의 에러는 그대로 전달
-    if (error.response?.status !== 401) {
+    // 401/403 이외의 에러는 그대로 전달
+    // 403도 토큰 만료로 인한 권한 없음일 수 있어 refresh 시도
+    const status = error.response?.status;
+    if (status !== 401 && status !== 403) {
       return Promise.reject(error);
     }
 
-    // refresh 요청 자체가 401이면 무한루프 방지 — 바로 로그아웃
+    // refresh 요청 자체가 401/403이면 무한루프 방지 — 바로 로그아웃
     if (originalRequest.url?.includes("/auth/refresh")) {
-      useUserStore.getState().clearUser();
-      useRoutineStore.getState().clearLocalRoutine();
-      localStorage.removeItem("piview-routine");
+      clearAllStores();
       window.location.href = "/splash";
       return Promise.reject(error);
     }
 
     // _retry 플래그가 이미 있으면 refresh도 실패한 것 → 무한루프 방지
     if (originalRequest._retry) {
-      useUserStore.getState().clearUser();
-      useRoutineStore.getState().clearLocalRoutine();
-      localStorage.removeItem("piview-routine");
+      clearAllStores();
       window.location.href = "/splash";
       return Promise.reject(error);
     }
@@ -68,11 +95,14 @@ client.interceptors.response.use(
 
     try {
       // refreshToken은 httpOnly 쿠키 → withCredentials로 자동 전송
-      // 응답으로 새 accessToken이 일반 쿠키로 내려옴
-      await client.post("/auth/refresh");
+      // 응답 바디: { accessToken: "..." }
+      const refreshResponse = await client.post("/auth/refresh");
 
-      // 새로 발급된 accessToken 쿠키에서 꺼내 Zustand에 저장 후 쿠키 삭제
-      const newAccessToken = getCookieAndClear("accessToken");
+      const newAccessToken =
+        (refreshResponse.data?.accessToken as string | undefined) ??
+        (refreshResponse.data?.data?.accessToken as string | undefined) ??
+        null;
+
       if (newAccessToken) {
         useUserStore.getState().setAccessToken(newAccessToken);
         originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
@@ -82,9 +112,7 @@ client.interceptors.response.use(
       return client(originalRequest);
     } catch {
       // refresh도 실패 → 세션 만료, 로그아웃 처리
-      useUserStore.getState().clearUser();
-      useRoutineStore.getState().clearLocalRoutine();
-      localStorage.removeItem("piview-routine");
+      clearAllStores();
       window.location.href = "/splash";
       return Promise.reject(error);
     }

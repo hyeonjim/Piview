@@ -34,7 +34,6 @@ export function useAnalysisStatus(analysisId: string | null) {
     queryKey: queryKeys.analysisStatus(analysisId ?? ""),
     queryFn: async () => {
       const result = await skinService.getAnalysisStatus(analysisId!);
-      console.log("[피부분석 폴링]", result.status, result.analysisId);
       return result;
     },
     enabled: !!analysisId,

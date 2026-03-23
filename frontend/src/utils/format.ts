@@ -58,6 +58,7 @@ const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
   클렌징오일: "오일",
   클렌징워터: "워터",
   클렌징로션: "밀크",
+  남성화장품: "맨즈",
 };
 
 /**

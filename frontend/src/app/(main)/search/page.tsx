@@ -2,24 +2,18 @@
 
 import { useState } from "react";
 import { PAGE_SIZE } from "@/constants/pagination";
-import {
-  FilterModal,
-  FilterState,
-  FILTER_INITIAL_STATE,
-} from "@/components/common/FilterModal";
+import { FilterModal, FilterState } from "@/components/common/FilterModal";
 import { CategoryFilter } from "@/components/common/CategoryFilter";
 import ProductCard from "@/components/common/ProductCard";
 import { Pagination } from "@/components/common/Pagination";
 import EmptyState from "@/components/common/EmptyState";
 import SearchBar from "@/components/common/SearchBar";
-import CompareModal, {
-  type CompareProduct,
-} from "@/components/common/CompareModal";
+import CompareModal from "@/components/common/CompareModal";
+import type { ProductViewModel } from "@/types/product/myCos";
 import { useCompare, useProductSearch } from "@/hooks";
 
 import { useAddMyCos, useRemoveMyCos, useMyCosQuery } from "@/hooks";
-import { useRoutineStore } from "@/stores";
-import { ROUTINE_STEPS } from "@/constants/routineSteps";
+import { useSearchStore } from "@/stores/useSearchStore";
 import { SlidersHorizontal, Search, Scale } from "lucide-react";
 
 import { toSkinTypeParam } from "@/utils/enumConvert";
@@ -27,39 +21,59 @@ import { PRICE_MAX } from "@/types/common";
 import type { SkinType } from "@/types/user";
 
 export default function SearchPage() {
-  const [selectedBigCategoryId, setSelectedBigCategoryId] = useState<
-    number | null
-  >(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
-    null,
-  );
-  const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(1);
-  const [maxKnownPage, setMaxKnownPage] = useState(1);
+  const {
+    searchQuery,
+    selectedBigCategoryId,
+    selectedCategoryId,
+    filter,
+    page,
+    maxKnownPage,
+    setSearchQuery,
+    setSelectedBigCategoryId,
+    setSelectedCategoryId,
+    setFilter,
+    resetFilter,
+    setPage,
+  } = useSearchStore();
+
   const [showFilter, setShowFilter] = useState(false);
-  const [filter, setFilter] = useState<FilterState>(FILTER_INITIAL_STATE);
 
   // ── API 연동 ───────────────────────────────────────────────────
-  const { products, hasNext, totalCount, isLoading, isError } =
-    useProductSearch({
-      q: searchQuery.trim() || undefined,
-      bigCategoryId: selectedBigCategoryId ?? undefined,
-      categoryId: selectedCategoryId ?? undefined,
-      skinType: filter.filterSkin
-        ? toSkinTypeParam(filter.filterSkin as SkinType)
+  const {
+    products,
+    hasNext,
+    totalCount,
+    isLoading,
+    isFetching,
+    isPlaceholderData,
+    isError,
+  } = useProductSearch({
+    q: searchQuery.trim() || undefined,
+    bigCategoryId: selectedBigCategoryId ?? undefined,
+    categoryId: selectedCategoryId ?? undefined,
+    skinType: filter.filterSkin
+      ? toSkinTypeParam(filter.filterSkin as SkinType)
+      : undefined,
+    tagIds:
+      Object.keys(filter.tagIds).filter((k) => filter.tagIds[Number(k)])
+        .length > 0
+        ? Object.keys(filter.tagIds)
+            .filter((k) => filter.tagIds[Number(k)])
+            .map(Number)
         : undefined,
-      tagIds: Object.keys(filter.tagIds).filter((k) => filter.tagIds[Number(k)]).length > 0
-        ? Object.keys(filter.tagIds).filter((k) => filter.tagIds[Number(k)]).map(Number)
+    brandIds:
+      Object.keys(filter.brandIds).filter((k) => filter.brandIds[Number(k)])
+        .length > 0
+        ? Object.keys(filter.brandIds)
+            .filter((k) => filter.brandIds[Number(k)])
+            .map(Number)
         : undefined,
-      brandIds: Object.keys(filter.brandIds).filter((k) => filter.brandIds[Number(k)]).length > 0
-        ? Object.keys(filter.brandIds).filter((k) => filter.brandIds[Number(k)]).map(Number)
-        : undefined,
-      minPrice: filter.priceRange[0] > 0 ? filter.priceRange[0] : undefined,
-      maxPrice:
-        filter.priceRange[1] < PRICE_MAX ? filter.priceRange[1] : undefined,
-      page: page - 1,
-      size: PAGE_SIZE,
-    });
+    minPrice: filter.priceRange[0] > 0 ? filter.priceRange[0] : undefined,
+    maxPrice:
+      filter.priceRange[1] < PRICE_MAX ? filter.priceRange[1] : undefined,
+    page: page - 1,
+    size: PAGE_SIZE,
+  });
 
   // Slice 기반 페이지네이션
   const totalPages =
@@ -71,17 +85,8 @@ export default function SearchPage() {
 
   const handlePageChange = (p: number) => {
     setPage(p);
-    setMaxKnownPage((prev) => Math.max(prev, p));
     window.scrollTo(0, 0);
   };
-  const routineMap = useRoutineStore((state) => state.localRoutine);
-  const addStepProduct = useRoutineStore((state) => state.addStepProduct);
-  const isInRoutine = (productId: number) =>
-    Object.values(routineMap)
-      .flat()
-      .filter(Boolean)
-      .some((p) => p.id === String(productId));
-
   // 보유 상태 — API 연동
   const { data: myCosData = [] } = useMyCosQuery();
   const { mutate: addMyCos } = useAddMyCos();
@@ -104,7 +109,7 @@ export default function SearchPage() {
     openCompare,
     closeCompare,
     canCompare,
-  } = useCompare<CompareProduct>();
+  } = useCompare<ProductViewModel>();
 
   const filterCount =
     (filter.filterSkin ? 1 : 0) +
@@ -114,42 +119,15 @@ export default function SearchPage() {
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
-    setPage(1);
-    setMaxKnownPage(1);
   };
   const handleBigCategorySelect = (bigCategoryId: number | null) => {
     setSelectedBigCategoryId(bigCategoryId);
-    setSelectedCategoryId(null);
-    setPage(1);
-    setMaxKnownPage(1);
   };
   const handleCategorySelect = (categoryId: number | null) => {
     setSelectedCategoryId(categoryId);
-    setPage(1);
-    setMaxKnownPage(1);
   };
 
-  const handleAddRoutine = (productId: number) => {
-    if (isInRoutine(productId)) return;
-    const product = products.find((p) => p.id === productId);
-    if (!product) return;
-    const matchedStep = ROUTINE_STEPS.find((step) =>
-      step.categories.includes(product.category),
-    );
-    addStepProduct(matchedStep?.code ?? "PR", {
-      id: String(product.id),
-      brand: product.brand,
-      name: product.name,
-      category: product.category,
-      emoji: "",
-      skinTypes: product.skinTypes,
-      effects: product.effects,
-      matchScore: 0,
-      imageUrl: product.imageUrl ?? undefined,
-    });
-  };
-
-  const handleToggleCompare = (product: CompareProduct) => {
+  const handleToggleCompare = (product: ProductViewModel) => {
     const isAlreadySelected = compareItems.some(
       (item) => item.id === product.id,
     );
@@ -161,7 +139,7 @@ export default function SearchPage() {
     <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
       {showCompare && canCompare && (
         <CompareModal
-          compareItems={compareItems as [CompareProduct, CompareProduct]}
+          compareItems={compareItems as [ProductViewModel, ProductViewModel]}
           onClose={closeCompare}
         />
       )}
@@ -180,12 +158,12 @@ export default function SearchPage() {
               margin: "3px 0 12px",
               fontSize: "22px",
               fontWeight: 700,
-              color: "#2A2118",
+              color: "var(--color-text-primary)",
               letterSpacing: "-0.4px",
               lineHeight: 1.2,
             }}
           >
-            전체 제품
+            All
           </h1>
           <div className="flex items-center gap-5">
             <div className="flex-1">
@@ -204,9 +182,18 @@ export default function SearchPage() {
                 borderRadius: "10px",
                 fontSize: "14px",
                 fontWeight: 600,
-                borderColor: filterCount > 0 ? "#A69D92" : "#E2DDD8",
-                backgroundColor: filterCount > 0 ? "#A69D92" : "#FFFFFF",
-                color: filterCount > 0 ? "#FFFFFF" : "#8A8278",
+                borderColor:
+                  filterCount > 0
+                    ? "var(--color-brand)"
+                    : "var(--color-border)",
+                backgroundColor:
+                  filterCount > 0
+                    ? "var(--color-brand)"
+                    : "var(--color-bg-card)",
+                color:
+                  filterCount > 0
+                    ? "var(--color-bg-card)"
+                    : "var(--color-text-hint)",
               }}
             >
               <SlidersHorizontal size={14} />
@@ -244,12 +231,19 @@ export default function SearchPage() {
       {compareItems.length === 1 && (
         <div
           className="flex items-center justify-between mx-4 mt-3 px-3 py-2.5 rounded-xl"
-          style={{ backgroundColor: "#F2EFE9", border: "1px solid #D9D5D0" }}
+          style={{
+            backgroundColor: "var(--color-bg-beige)",
+            border: "1px solid #D9D5D0",
+          }}
         >
           <div className="flex items-center gap-2">
-            <Scale size={13} style={{ color: "#8A8278" }} />
+            <Scale size={13} style={{ color: "var(--color-text-hint)" }} />
             <span
-              style={{ fontSize: "12px", color: "#6B6258", fontWeight: 600 }}
+              style={{
+                fontSize: "12px",
+                color: "var(--color-text-sub)",
+                fontWeight: 600,
+              }}
             >
               비교할 제품을 1개 더 선택하세요
             </span>
@@ -258,7 +252,7 @@ export default function SearchPage() {
             onClick={clearCompare}
             style={{
               fontSize: "11px",
-              color: "#A69D92",
+              color: "var(--color-brand)",
               border: "none",
               background: "none",
               cursor: "pointer",
@@ -274,9 +268,13 @@ export default function SearchPage() {
           style={{ backgroundColor: "#3D3028" }}
         >
           <div className="flex items-center gap-2">
-            <Scale size={13} style={{ color: "#F2EFE9" }} />
+            <Scale size={13} style={{ color: "var(--color-bg-beige)" }} />
             <span
-              style={{ fontSize: "12px", color: "#F2EFE9", fontWeight: 600 }}
+              style={{
+                fontSize: "12px",
+                color: "var(--color-bg-beige)",
+                fontWeight: 600,
+              }}
             >
               2개 제품 선택 완료
             </span>
@@ -286,7 +284,7 @@ export default function SearchPage() {
               onClick={clearCompare}
               style={{
                 fontSize: "11px",
-                color: "#BFB6AA",
+                color: "var(--color-text-faint)",
                 border: "none",
                 background: "none",
                 cursor: "pointer",
@@ -300,7 +298,7 @@ export default function SearchPage() {
                 fontSize: "12px",
                 fontWeight: 700,
                 color: "#3D3028",
-                backgroundColor: "#F2EFE9",
+                backgroundColor: "var(--color-bg-beige)",
                 border: "none",
                 borderRadius: "6px",
                 padding: "4px 10px",
@@ -315,24 +313,24 @@ export default function SearchPage() {
 
       {/* 제품 그리드 */}
       <div style={{ padding: "16px 16px 24px" }}>
-        {isLoading ? (
+        {isLoading || (isFetching && isPlaceholderData) ? (
           <div
             className="flex justify-center py-20"
-            style={{ color: "#A69D92", fontSize: "14px" }}
+            style={{ color: "var(--color-brand)", fontSize: "14px" }}
           >
             불러오는 중...
           </div>
         ) : isError ? (
           <div
             className="flex justify-center py-20"
-            style={{ color: "#A69D92", fontSize: "14px" }}
+            style={{ color: "var(--color-brand)", fontSize: "14px" }}
           >
             오류가 발생했어요. 다시 시도해 주세요.
           </div>
         ) : products.length === 0 ? (
           <div
             style={{
-              backgroundColor: "#FFFFFF",
+              backgroundColor: "var(--color-bg-card)",
               borderRadius: "12px",
               border: "1px solid #E2DDD8",
               marginTop: "8px",
@@ -346,9 +344,10 @@ export default function SearchPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-6 items-start">
-            {products.map((product) => (
+            {products.map((product, index) => (
               <ProductCard
                 key={product.id}
+                priority={index === 0}
                 id={product.id}
                 brand={product.brand}
                 name={product.name}
@@ -358,8 +357,6 @@ export default function SearchPage() {
                 effects={product.effects}
                 layout="grid"
                 showActions={true}
-                inRoutine={isInRoutine(product.id)}
-                onAddRoutine={() => handleAddRoutine(product.id)}
                 isOwned={isOwned(product.id)}
                 onToggleOwned={() => handleToggleOwned(product.id)}
                 isInCompare={compareItems.some(
@@ -370,7 +367,7 @@ export default function SearchPage() {
                     id: product.id,
                     name: product.name,
                     brand: product.brand,
-                    imageUrl: product.imageUrl ?? undefined,
+                    imageUrl: product.imageUrl ?? null,
                     skinTypes: product.skinTypes,
                     effects: product.effects,
                   })
@@ -392,16 +389,9 @@ export default function SearchPage() {
         onClose={() => setShowFilter(false)}
         state={filter}
         onChange={(next) => {
-          setFilter((prev) => ({ ...prev, ...next }));
-          setPage(1);
-          setMaxKnownPage(1);
+          setFilter(next);
         }}
-        onReset={() => {
-          setFilter(FILTER_INITIAL_STATE);
-          setPage(1);
-          setMaxKnownPage(1);
-        }}
-        resultCount={products.length}
+        onReset={resetFilter}
       />
     </div>
   );

@@ -395,11 +395,9 @@ export default function PhotoAnalysisPage() {
     if (!capturedFile || isAnalyzing) return;
     capture(capturedFile, {
       onSuccess: ({ analysisId: id }) => {
-        console.log("[캡처 성공] analysisId:", id);
         setAnalysisId(id);
       },
-      onError: (err) => {
-        console.error("[캡처 실패]", err);
+      onError: () => {
         router.push("/skin-test/survey/1");
       },
     });
@@ -567,14 +565,7 @@ export default function PhotoAnalysisPage() {
               </button>
             </div>
 
-            {/* 건너뛰기 */}
-            <button
-              onClick={() => router.push("/skin-test/survey/1")}
-              className="bg-transparent border-none cursor-pointer"
-              style={HINT_BOTTOM_TEXT}
-            >
-              건너뛰기
-            </button>
+            {/* 건너뛰기 버튼 제거 — 사진 없이 설문 제출 불가 */}
           </div>
         ) : (
           /* 프리뷰 모드 */
@@ -607,13 +598,6 @@ export default function PhotoAnalysisPage() {
                 style={UPLOAD_BTN_STYLE}
               >
                 다시 촬영
-              </button>
-              <button
-                onClick={() => router.push("/skin-test/survey/1")}
-                className="flex-1 transition-all active:scale-[0.97] cursor-pointer border-none"
-                style={RETRY_BTN_STYLE}
-              >
-                건너뛰기
               </button>
             </div>
           </div>

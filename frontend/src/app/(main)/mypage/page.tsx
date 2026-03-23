@@ -3,23 +3,22 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Settings, LogOut, Wrench } from "lucide-react";
+import { Settings, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import {
-  useSyncRoutineDraft,
-  useMyCosQuery,
-  useRemoveMyCos,
+  useDraftQuery,
+  useAddDraftItemMutation,
   useUserQuery,
 } from "@/hooks";
 import RoutineTab from "@/components/features/mypage/RoutineTab";
 import RoutineAddModal from "@/components/features/mypage/RoutineAddModal";
 import OwnedTab from "@/components/features/mypage/OwnedTab";
-import AvoidProductModal from "@/components/features/mypage/AvoidProductModal";
-import { useRoutineStore, type LocalProduct } from "@/stores";
+import { useRoutineStore } from "@/stores";
 import { useUserStore, selectSkinType, selectGender } from "@/stores";
+import { useSearchStore } from "@/stores/useSearchStore";
+import { useRecommendStore } from "@/stores/useRecommendStore";
+import { useLikeStore } from "@/stores";
 import { authService } from "@/services/auth";
-import type { OwnedProduct } from "@/stores/useOwnedStore";
-import { fromSkinTypeEnum } from "@/utils/enumConvert";
 
 export default function MyPage() {
   const router = useRouter();
@@ -43,24 +42,33 @@ export default function MyPage() {
     try {
       await authService.logout();
     } finally {
+      // 유저
       useUserStore.getState().clearUser();
-      useRoutineStore.getState().clearLocalRoutine();
-      localStorage.removeItem("piview-routine");
+      // 검색/추천/찜 — 다른 계정 로그인 시 이전 상태 잔존 방지
+      useSearchStore.getState().setSearchQuery("");
+      useSearchStore.getState().resetFilter();
+      useRecommendStore.getState().setSearchQuery("");
+      useRecommendStore.getState().resetFilter();
+      useLikeStore.getState().initFromServer([]);
+      useLikeStore.getState().setPage(1);
       router.push("/splash");
     }
   };
 
-  const {
-    localRoutine: routine,
-    addStepProduct,
-    removeStepProduct,
-  } = useRoutineStore();
+  // ── 루틴 Draft API 연동 ────────────────────────────────────────────
+  // 현재 draft에 담긴 productId 목록 — RoutineAddModal 중복 방지용
+  const { data: draftItems = [] } = useDraftQuery();
+  const draftProductIds = draftItems
+    .filter((item) => item.product && item.product.productId)
+    .map((item) => item.product.productId);
 
-  useEffect(() => {
-    useRoutineStore.persist.rehydrate();
-  }, []);
+  // 단일 제품 추가 — POST /api/v1/routines/draft
+  const { mutate: addDraftItem } = useAddDraftItemMutation();
 
+  // ── 모달 상태 ────────────────────────────────────────────────────────
+  // 열린 스텝 코드 + columnId (RoutineTab → RoutineAddModal로 전달)
   const [openStep, setOpenStep] = useState<string | null>(null);
+  const [openColumnId, setOpenColumnId] = useState<number>(0);
 
   useEffect(() => {
     document.body.style.overflow = openStep ? "hidden" : "";
@@ -69,58 +77,39 @@ export default function MyPage() {
     };
   }, [openStep]);
 
-  useSyncRoutineDraft();
+  /**
+   * RoutineTab에서 + 추가 버튼 클릭 시 호출
+   * stepCode → 모달 타이틀에 사용, columnId → draft API 요청에 사용
+   */
+  const handleOpenModal = (stepCode: string, columnId: number) => {
+    setOpenStep(stepCode);
+    setOpenColumnId(columnId);
+  };
 
-  const handleAddToRoutine = (product: LocalProduct) => {
+  /**
+   * RoutineAddModal에서 제품 선택 시 호출
+   * POST /api/v1/routines/draft → draft 캐시 자동 갱신
+   */
+  const handleAddToRoutine = (productId: number) => {
     if (!openStep) return;
-    addStepProduct(openStep, product);
-    toast(`✓ ${product.name} 루틴에 추가됨!`);
-    setOpenStep(null);
-  };
-
-  const handleRemoveFromRoutine = (stepCode: string, productId: string) =>
-    removeStepProduct(stepCode, productId);
-
-  // ── 보유제품 API 연동 ─────────────────────────────────────────
-  // 서버 응답이 배열이 아닌 경우(래핑된 객체 등) 방어 처리
-  const { data: myCosRawData, isLoading: myCosLoading } = useMyCosQuery();
-  const myCosItems = Array.isArray(myCosRawData) ? myCosRawData : [];
-  const { mutate: removeMyCos } = useRemoveMyCos();
-
-  // MyCosItem → OwnedProduct 변환 (OwnedTab props 호환)
-  const ownedProducts: OwnedProduct[] = myCosItems.map((item) => ({
-    id: String(item.id),
-    brand: item.brand,
-    name: item.productName,
-    category: item.category,
-    imageUrl: item.imageUrl,
-    skinTypes: [
-      item.topSkinType ? fromSkinTypeEnum(item.topSkinType) : null,
-      item.top2SkinType ? fromSkinTypeEnum(item.top2SkinType) : null,
-    ].filter(Boolean) as string[],
-  }));
-
-  const handleRemoveOwned = (productId: string) => {
-    const myCosId = Number(productId);
-    if (!isNaN(myCosId)) removeMyCos(myCosId);
-  };
-
-  // ── 기피 제품 — ⚠️ API 연동 시 서버 상태로 교체 ──────────────
-  const [avoidProducts, setAvoidProducts] = useState<OwnedProduct[]>([]);
-  const [openAvoidModal, setOpenAvoidModal] = useState(false);
-  const [avoidSearch, setAvoidSearch] = useState("");
-
-  const handleToggleAvoid = (product: OwnedProduct) => {
-    setAvoidProducts((previousProducts) =>
-      previousProducts.some(
-        (previousProduct) => previousProduct.id === product.id,
-      )
-        ? previousProducts.filter(
-            (previousProduct) => previousProduct.id !== product.id,
-          )
-        : [...previousProducts, product],
+    console.log("🔍 루틴 추가 요청:", { columnId: openColumnId, productId, stepCode: openStep });
+    addDraftItem(
+      { columnId: openColumnId, productId },
+      {
+        onSuccess: () => {
+          toast("✓ 루틴에 추가되었습니다!");
+          setOpenStep(null);
+        },
+        onError: (error) => {
+          console.error("❌ 루틴 추가 실패:", error);
+          toast("제품 추가에 실패했습니다. 다시 시도해주세요.");
+        },
+      },
     );
   };
+
+  // OwnedTab 루틴 배지 표시용 localRoutine
+  const routineForOwnedTab = useRoutineStore((state) => state.localRoutine);
 
   return (
     <div className="flex-1 bg-[#F5F2EC]">
@@ -140,7 +129,6 @@ export default function MyPage() {
             }
           >
             {profileImageUrl ? (
-              // 카카오 프로필 이미지 표시
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={profileImageUrl}
@@ -148,7 +136,6 @@ export default function MyPage() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              // 기본 아바타 — 이름의 첫 글자 표시
               <span className="text-[22px] font-semibold text-white">
                 {userName.charAt(0).toUpperCase()}
               </span>
@@ -158,9 +145,7 @@ export default function MyPage() {
           <div className="flex-1 min-w-0">
             {/* 이름 + 설정/로그아웃 버튼 행 */}
             <div className="flex items-center justify-between">
-              {/* 이름 + 성별 토글 버튼 */}
               <div className="flex items-center gap-2">
-                {/* 20px → font-semibold: 디스플레이 크기, 세리프는 600이 더 균형적 */}
                 <p className="text-[20px] font-bold text-text-primary tracking-[-0.3px]">
                   {userName}님
                 </p>
@@ -171,7 +156,7 @@ export default function MyPage() {
                   aria-label="성별 토글 (개발용)"
                 >
                   <Wrench size={12} />
-                  {currentGender === "men" ? "Men" : "Women"}
+                  {currentGender === "MEN" ? "Men" : "Women"}
                 </button>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -183,14 +168,6 @@ export default function MyPage() {
                     <Settings size={15} className="text-brand-dark" />
                   </button>
                 </Link>
-                {/* 12px 소형 텍스트 → font-semibold: 작은 크기 가독성 보완 */}
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-1 text-[12px] font-semibold text-text-faint bg-transparent border-none cursor-pointer py-1 px-0.5"
-                >
-                  <LogOut size={13} />
-                  로그아웃
-                </button>
               </div>
             </div>
 
@@ -202,14 +179,14 @@ export default function MyPage() {
             ) : (
               <div className="flex flex-wrap gap-1 mt-4">
                 {/* 피부 타입 배지 */}
-                <span className="text-[16px] py-0.5 px-2 rounded-full bg-[#E8E3DC] text-[#5A504A] font-semibold">
+                <span className="text-[14px] py-0.5 px-2 rounded-full bg-[#E8E3DC] text-[#5A504A] font-semibold">
                   {savedSkinType}
                 </span>
                 {/* 피부 고민 배지 */}
                 {savedConcerns.map((concern, index) => (
                   <span
                     key={`${concern}-${index}`}
-                    className="text-[14px] py-0.5 px-2 rounded-full bg-[#EEF0E8] text-[#6B7257] font-medium"
+                    className="text-[14px] py-0.5 px-2 rounded-full bg-[#EEF0E8] text-[#6B7257] font-semibold"
                   >
                     {concern}
                   </span>
@@ -241,7 +218,7 @@ export default function MyPage() {
                 : "font-normal text-text-faint"
             }`}
           >
-            {tabType === "routine" ? <>내 루틴</> : <>내 화장대</>}
+            {tabType === "routine" ? <>My routine</> : <>Owned</>}
             {/* 선택 인디케이터 — 하단 라인 */}
             <span
               className={`absolute bottom-0 left-0 right-0 h-[2.5px] rounded-t-full transition-all duration-200 ${
@@ -256,54 +233,23 @@ export default function MyPage() {
 
       {/* 탭 콘텐츠 */}
       {activeTab === "routine" && (
-        <RoutineTab
-          routine={routine}
-          onOpenModal={(stepCode) => setOpenStep(stepCode)}
-          onRemove={handleRemoveFromRoutine}
-        />
+        <RoutineTab onOpenModal={handleOpenModal} />
       )}
-      {activeTab === "owned" &&
-        (myCosLoading ? (
-          <div className="flex justify-center py-20 text-brand text-sm font-normal">
-            불러오는 중...
-          </div>
-        ) : (
-          <OwnedTab
-            routine={routine}
-            ownedProducts={ownedProducts}
-            avoidProducts={avoidProducts}
-            onRemoveOwned={handleRemoveOwned}
-            onRemoveAvoid={(productId) =>
-              setAvoidProducts((previousProducts) =>
-                previousProducts.filter(
-                  (previousProduct) => previousProduct.id !== productId,
-                ),
-              )
-            }
-            onOpenAvoidModal={() => {
-              setOpenAvoidModal(true);
-              setAvoidSearch("");
-            }}
-          />
-        ))}
+      {activeTab === "owned" && (
+        <OwnedTab routine={routineForOwnedTab} />
+      )}
 
+      {/* 제품 추가 모달 — openStep이 있을 때만 렌더링 */}
       {openStep && (
         <RoutineAddModal
           openStep={openStep}
-          routine={routine}
+          columnId={openColumnId}
+          draftProductIds={draftProductIds}
           onClose={() => setOpenStep(null)}
           onAdd={handleAddToRoutine}
         />
       )}
-      {openAvoidModal && (
-        <AvoidProductModal
-          avoidProducts={avoidProducts}
-          avoidSearch={avoidSearch}
-          onSearchChange={setAvoidSearch}
-          onClose={() => setOpenAvoidModal(false)}
-          onToggle={handleToggleAvoid}
-        />
-      )}
+
     </div>
   );
 }

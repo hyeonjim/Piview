@@ -3,6 +3,8 @@
  * 루틴 도메인 타입 — 스웨거 기준
  */
 
+import type { ProductSummaryResponse } from "../product/product";
+
 // ── 루틴 스텝 키 ─────────────────────────────────────────────────
 export type RoutineStepKey =
   | "cleanser" | "shaving" | "toner"
@@ -45,20 +47,7 @@ export interface RoutineAnalysis {
 }
 
 // ── 스웨거 응답 스키마 기반 타입 ──────────────────────────────────
-
-/**
- * GET /api/v1/products, GET /api/v1/routines/draft 등 공통 제품 요약
- * 스웨거: ProductSummaryResponse
- */
-export interface ProductSummaryResponse {
-  productId: number;
-  name: string;
-  brandName: string;
-  categoryName: string;
-  imageUrl: string;
-  skinTypes: string[];
-  tags: string[];
-}
+// ProductSummaryResponse imported from product/product.ts
 
 /**
  * GET /api/v1/routines/draft 응답 아이템
@@ -123,6 +112,26 @@ export interface CreateRoutineRequest {
 }
 
 /**
+ * POST /api/v1/routines/{routineId}/edit-start 응답
+ * 스웨거: EditRoutineLoadResponse
+ * 기존 루틴을 Redis draft로 복사한 결과
+ */
+export interface EditRoutineLoadResponse {
+  routineId: number;
+  title: string;
+  draftItems: DraftItemDto[];
+}
+
+/**
+ * PUT /api/v1/routines/{routineId} 요청 body
+ * 스웨거: UpdateRoutineRequest
+ * Redis draft 내용 + title로 기존 루틴을 완전 덮어씀
+ */
+export interface UpdateRoutineRequest {
+  title: string;
+}
+
+/**
  * PATCH /api/v1/routines/{routineId}/order 요청 아이템
  * 스웨거: RoutineDetailOrderDto
  */
@@ -140,12 +149,13 @@ export interface RoutineOrderUpdateRequest {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ⚠️ API 연동 시 삭제 예정 — 로컬 전용 타입 (퍼블리싱 단계)
+// ⚠️ Temporary: localStorage 전용 타입 (useRoutineStore에서만 사용)
+// TODO: API 연동 후 useRoutineStore를 ProductSummaryResponse 기반으로 마이그레이션하고 삭제
 // ═══════════════════════════════════════════════════════════════
 
 /**
  * 로컬 전용 제품 타입 (mock)
- * ⚠️ API 연동 시 ProductSummaryResponse로 교체 후 삭제
+ * ⚠️ useRoutineStore localStorage 전용 — API 연동 후 삭제 예정
  */
 export interface LocalProduct {
   id: string;
@@ -165,13 +175,13 @@ export interface LocalProduct {
 
 /**
  * 로컬 루틴 맵 (스텝 코드 → 제품 배열)
- * ⚠️ API 연동 시 RoutineStepGroupDto로 교체 후 삭제
+ * ⚠️ useRoutineStore localStorage 전용 — API 연동 후 삭제 예정
  */
 export type LocalRoutineMap = Record<string, LocalProduct[]>;
 
 /**
  * 저장된 루틴 타입 (localStorage 전용)
- * ⚠️ API 연동 시 RoutineListResponse로 교체 후 삭제
+ * ⚠️ useRoutineStore localStorage 전용 — API 연동 후 삭제 예정
  */
 export interface SavedRoutine {
   id: string;

@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
 import { Leaf, Sun, Moon, Droplets, Star, ChevronRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { SKINCARE_INSIGHTS } from "@/constants";
-import { useRoutineStore, useUserStore } from "@/stores";
-import { useUserQuery } from "@/hooks";
+import {
+  CATEGORY_COLORS,
+  SKIN_TYPE_TAG_COLORS,
+  SKIN_FUNCTION_COLORS,
+} from "@/constants/categoryColors";
+import { useUserStore } from "@/stores";
+import { useUserQuery, useMainRoutineQuery } from "@/hooks";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
+import { fromSkinTypeEnum } from "@/utils/enumConvert";
 
 // 시간대별 인사말과 아이콘 반환
 function getGreeting(): { text: string; icon: React.ReactNode } {
@@ -41,20 +47,21 @@ export default function HomePage() {
   useUserQuery();
   const greeting = getGreeting();
   const nickname = useUserStore((state) => state.user?.name ?? "User");
-  const { localRoutine: routine, isMainRoutine } = useRoutineStore();
+  const { data: mainRoutineData } = useMainRoutineQuery();
 
-  // 로컬 루틴 스토어 rehydrate (localStorage → zustand)
-  useEffect(() => {
-    useRoutineStore.persist.rehydrate();
-  }, []);
-
-  // 각 스텝별 제품 배열을 flat — 스텝당 여러 제품이 있을 수 있음
-  const mainRoutineItems = ROUTINE_STEPS.flatMap((step) =>
-    (routine[step.code] ?? []).map((product) => ({ step, product })),
+  // 메인 루틴 제품 목록 — 스텝 순서대로 flat
+  const mainRoutineItems = (mainRoutineData?.steps ?? []).flatMap((step) =>
+    step.products.map((rp) => ({
+      step: ROUTINE_STEPS.find((s) => s.columnId === step.columnId) ?? {
+        code: step.columnId.toString(),
+        label: step.columnName,
+        icon: "🧴",
+      },
+      product: rp.product,
+    })),
   );
 
-  // isMainRoutine이 off면 홈에서 루틴 미표시
-  const hasRoutine = isMainRoutine && mainRoutineItems.length > 0;
+  const hasRoutine = mainRoutineItems.length > 0;
 
   return (
     <div className="flex-1 bg-[#F5F2EC]">
@@ -85,13 +92,19 @@ export default function HomePage() {
           {/* 섹션 헤더 */}
           <div className="flex items-center justify-between py-3.5 px-4 border-b border-[#EDE9E3]">
             <span className="text-[16px] font-bold text-[#2A2118] tracking-[-0.2px]">
-              나의 메인루틴
+              메인 루틴
             </span>
 
             {hasRoutine ? (
-              <span className="text-[11px] font-semibold py-0.75 px-2.5 rounded-xl bg-[#F2EFE9] text-[#A69D92]">
-                {mainRoutineItems.length}단계
-              </span>
+              <div className="flex items-center gap-2">
+                {/* 루틴 이름 */}
+                <span className="text-[12px] font-semibold text-[#2A2118] truncate max-w-30">
+                  {mainRoutineData?.title}
+                </span>
+                <span className="text-[11px] font-semibold py-0.75 px-2.5 rounded-xl bg-[#F2EFE9] text-[#A69D92]">
+                  {mainRoutineItems.length}단계
+                </span>
+              </div>
             ) : (
               <Link href="/mypage">
                 <span className="flex items-center gap-0.5 text-xs text-[#A69D92]">
@@ -104,36 +117,118 @@ export default function HomePage() {
           {/* 루틴 리스트 */}
           {hasRoutine ? (
             <div className="px-4">
-              {mainRoutineItems.map(({ step, product }, index) => (
-                <div
-                  key={`${step.code}-${product.name}`}
-                  className={`flex items-center gap-3 py-3${
-                    index < mainRoutineItems.length - 1
-                      ? " border-b border-[#EDE9E3]"
-                      : ""
-                  }`}
-                >
-                  {/* 스텝 번호 — SortsMillGoudy 폰트 (영어 숫자용) */}
-                  <span className="text-[10px] font-bold text-[#BFB6AA] w-4 shrink-0 [font-family:var(--font-english),serif]">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
+              {mainRoutineItems.map(({ step, product }, index) => {
+                // 카테고리 칩 색상
+                const categoryColor = product.categoryName
+                  ? CATEGORY_COLORS[product.categoryName]
+                  : undefined;
+                // 스텝 아이콘 (fallback용)
+                const stepIcon =
+                  "icon" in step ? (step as { icon: string }).icon : "🧴";
 
-                  {/* 이모지 */}
-                  <span className="text-[20px] w-7 text-center shrink-0">
-                    {product.emoji}
-                  </span>
+                return (
+                  <div
+                    key={`${step.code}-${product.name}`}
+                    className={`flex items-center py-2${index < mainRoutineItems.length - 1 ? " border-b border-[#EDE9E3]" : ""}`}
+                  >
+                    {/* 스텝 번호 — 기존 위치/스타일 유지 */}
+                    <span className="text-[14px] font-bold text-[#BFB6AA] w-4 shrink-0 [font-family:var(--font-english),serif]">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
 
-                  {/* 스텝 정보 */}
-                  <div className="flex-1 min-w-0">
-                    <p className="m-0 text-xs text-[#A69D92] font-bold tracking-[0.03em]">
-                      {step.label}
-                    </p>
-                    <p className="mt-px text-base font-semibold text-[#2A2118] overflow-hidden text-ellipsis whitespace-nowrap">
-                      {product.name}
-                    </p>
+                    {/* 아이템 콘텐츠 */}
+                    <div className="flex-1 relative h-22 overflow-hidden">
+                      <div className="flex items-center h-full">
+                        {/* 이미지 영역 */}
+                        <div className="relative shrink-0 w-22 h-full bg-[#F5F2EC]">
+                          {product.imageUrl ? (
+                            <Image
+                              src={product.imageUrl}
+                              alt={product.name ?? ""}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center text-[26px]">
+                              {stepIcon}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 텍스트 영역 */}
+                        <Link
+                          href={`/product/${product.productId}`}
+                          className="flex-1 px-3 py-2 min-w-0 no-underline"
+                        >
+                          {/* 브랜드명 + 카테고리 칩 */}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[12px] font-bold text-[#BFB6AA] uppercase tracking-[0.08em]">
+                              {product.brandName}
+                            </span>
+                            {categoryColor && (
+                              <span
+                                className="text-[12px] px-1.5 py-px rounded-[3px] font-semibold"
+                                style={{
+                                  backgroundColor: categoryColor.chip,
+                                  color: categoryColor.accent,
+                                }}
+                              >
+                                {product.categoryName}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* 제품명 */}
+                          <p className="mt-0.5 m-0 text-[16px] font-bold text-[#2A2118] leading-[1.4] line-clamp-1">
+                            {product.name}
+                          </p>
+
+                          {/* 피부타입 + 기능 태그 */}
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {product.skinTypes?.slice(0, 1).map((skinType) => {
+                              const koSkinType = fromSkinTypeEnum(skinType);
+                              return (
+                                <span
+                                  key={skinType}
+                                  className="inline-block text-[12px] font-semibold px-1.5 py-0.5 rounded-[3px]"
+                                  style={{
+                                    backgroundColor:
+                                      SKIN_TYPE_TAG_COLORS[koSkinType]?.bg ??
+                                      "#F0EDE8",
+                                    color:
+                                      SKIN_TYPE_TAG_COLORS[koSkinType]?.text ??
+                                      "#7A7060",
+                                  }}
+                                >
+                                  {koSkinType}
+                                </span>
+                              );
+                            })}
+                            {product.tags?.slice(0, 2).map((effect) => {
+                              const color = SKIN_FUNCTION_COLORS[effect] ?? {
+                                chip: "#F0EDE8",
+                                accent: "#7A7060",
+                              };
+                              return (
+                                <span
+                                  key={effect}
+                                  className="inline-block text-[12px] font-semibold px-1.5 py-0.5 rounded-[3px]"
+                                  style={{
+                                    backgroundColor: color.chip,
+                                    color: color.accent,
+                                  }}
+                                >
+                                  {effect}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </Link>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             /* 루틴 없음 빈 상태 */

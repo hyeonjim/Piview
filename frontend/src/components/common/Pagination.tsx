@@ -1,6 +1,11 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 
 interface PaginationProps {
   page: number;
@@ -11,7 +16,6 @@ interface PaginationProps {
 export function Pagination({ page, totalPages, onChange }: PaginationProps) {
   if (totalPages <= 1) return null;
 
-  // 현재 페이지가 속한 10개 묶음 계산
   const groupSize = 5;
   const currentGroup = Math.ceil(page / groupSize);
   const groupStart = (currentGroup - 1) * groupSize + 1;
@@ -27,7 +31,18 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
 
   return (
     <div className="pagination-container">
-      {/* 이전 버튼 */}
+      {/* 이전 그룹 */}
+      <button
+        onClick={() => onChange(Math.max(1, groupStart - groupSize))}
+        disabled={!hasPrevGroup}
+        className="pagination-nav-button"
+        data-disabled={!hasPrevGroup}
+        aria-label="이전 그룹"
+      >
+        <ChevronsLeft className="pagination-icon" size={14} />
+      </button>
+
+      {/* 이전 페이지 */}
       <button
         onClick={() => onChange(Math.max(1, page - 1))}
         disabled={page === 1}
@@ -52,7 +67,7 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
         </button>
       ))}
 
-      {/* 다음 버튼 */}
+      {/* 다음 페이지 */}
       <button
         onClick={() => onChange(Math.min(totalPages, page + 1))}
         disabled={page === totalPages}
@@ -61,6 +76,17 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
         aria-label="다음 페이지"
       >
         <ChevronRight className="pagination-icon" size={14} />
+      </button>
+
+      {/* 다음 그룹 */}
+      <button
+        onClick={() => onChange(Math.min(totalPages, groupEnd + 1))}
+        disabled={!hasNextGroup}
+        className="pagination-nav-button"
+        data-disabled={!hasNextGroup}
+        aria-label="다음 그룹"
+      >
+        <ChevronsRight className="pagination-icon" size={14} />
       </button>
     </div>
   );

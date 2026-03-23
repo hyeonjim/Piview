@@ -85,16 +85,17 @@ export default function WelcomePage() {
       // 실패 시 fallback으로 로컬 스토어에만 설정 (기존 방식)
       useUserStore.getState().setUser({
         id: 999999,
+        userId: 999999,
         provider: "test",
         providerId: "test-admin",
         email: "admin@test.com",
         name: "User",
         imageUrl: null,
-        gender: "women",
+        gender: "WOMEN",
         ageGroup: null,
         mySkinType: null,
         exist: true,
-        mySkinProblems: [],
+        skinProblems: [],
       });
       router.push("/mypage");
     }
@@ -144,7 +145,7 @@ export default function WelcomePage() {
       <div className="flex-1" />
 
       {/* Bottom content area */}
-      <div className="relative z-10 px-7 pb-10">
+      <div className="relative z-10 px-7 pb-20">
         {/* Slide content */}
         <div className="min-h-[140px]">
           <h1
