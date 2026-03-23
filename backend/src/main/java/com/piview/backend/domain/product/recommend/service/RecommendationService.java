@@ -1,6 +1,7 @@
 package com.piview.backend.domain.product.recommend.service;
 
 import com.piview.backend.domain.product.catalog.repository.ProductRepository;
+import com.piview.backend.domain.product.entity.Category;
 import com.piview.backend.domain.product.entity.CategoryIdealScore;
 import com.piview.backend.domain.product.entity.Product;
 import com.piview.backend.domain.product.recommend.dto.RecommendRequestDto;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -48,66 +50,57 @@ public class RecommendationService {
             throw new IllegalArgumentException("해당 스킨케어 단계에 매핑된 카테고리가 없습니다.");
         }
 
+        List<Product> finalRecommendations = new ArrayList<>();
+
+        //공동 계산 : 타겟 루틴의 이상치와 M/O 보정 값은 한 번만 계산하면 됨
         // ====================================================================
         // [분기 A] 루틴이 비어있거나, 씻어내는 '클렌저(1번), 쉐이빙(2번)' 스텝일 경우
         // ====================================================================
         // 워시오프는 얼굴에 남지 않으므로 루틴 누적 오차(Gap) 계산에서 제외합니다.
-        if (routineContext.isEmpty() || targetRoutineColId == 1L || targetRoutineColId == 2L) {
+        boolean isInitial = routineContext.isEmpty() || targetRoutineColId ==1L || targetRoutineColId == 2L;
+        double finalTargetM = 0.0;
+        double finalTargetO = 0.0;
 
-            // DB에서 1차 50개 추출 (Gap 보정 없음)
-            List<Product> initialCandidates = productRepository.findInitialRecommendations(
-                    targetCategoryIds, req.getSkinType(), req.getGender(), req.getConcernId()
-            );
+        if (!isInitial) {
+            // ====================================================================
+            // [분기 B] 루틴에 제품이 있을 경우 (루틴 밸런스 + 상극 성분 필터링)
+            // ====================================================================
 
-            // 메모리 단에서 성분 충돌 필터링 후 Top 10 반환
-            return filterAndLimit(initialCandidates, routineContext);
-        }
-
-        // ====================================================================
-        // [분기 B] 루틴에 제품이 있을 경우 (루틴 밸런스 + 상극 성분 필터링)
-        // ====================================================================
-
-        // 2. 해당 스텝 + 피부타입의 이상치(Ideal M/O)를 DB에서 가져옵니다.
-        CategoryIdealScore idealScore = idealScoreRepository.findBySkinTypeAndRoutineColId(
+            // 2. 해당 스텝 + 피부타입의 이상치(Ideal M/O)를 DB에서 가져옵니다.
+            CategoryIdealScore idealScore = idealScoreRepository.findBySkinTypeAndRoutineColId(
                 req.getSkinType(), targetRoutineColId
-        );
-
-        if (idealScore == null) {
-            log.warn("해당 피부타입({})과 스텝({})에 대한 이상치 데이터가 없습니다.", req.getSkinType(), targetRoutineColId);
-            // 이상치가 없으면 분기 A 로직으로 폴백(Fallback) 처리
-            List<Product> initialCandidates = productRepository.findInitialRecommendations(
-                targetCategoryIds, req.getSkinType(), req.getGender(), req.getConcernId()
             );
-            return filterAndLimit(initialCandidates, routineContext);
+            if(idealScore != null){
+                finalTargetM = Math.max(0.0, idealScore.getIdealM().doubleValue() + routineContext.getCurrentDeficitM());
+                finalTargetO = Math.max(0.0, idealScore.getIdealO().doubleValue() + routineContext.getCurrentDeficitO());
+            }
         }
 
-        // 3. 최종 타겟 M, O 설정 = (스텝 기본 이상치) + (지금까지 누적된 오차 짬처리)
-        double finalTargetM = Math.max(0.0, idealScore.getIdealM().doubleValue() + routineContext.getCurrentDeficitM());
-        double finalTargetO = Math.max(0.0, idealScore.getIdealO().doubleValue() + routineContext.getCurrentDeficitO());
+        for(Long categoryId : targetCategoryIds){
+            List<Long> singleCategoryIdList = List.of(categoryId);
+            List<Product> candidates;
 
-        // 4. DB에 갭 보정 점수가 반영된 '상위 50개 후보군(Retrieval)' 요청
-        List<Product> routineCandidates = productRepository.findRoutineCandidates(
-                targetCategoryIds,
-                req.getSkinType(),
-                req.getGender(),
-                req.getConcernId(),
-                finalTargetM,
-                finalTargetO,
-                routineContext.getCurrentRoutineIds() // 장바구니에 있는 제품 ID 넘겨서 중복 방지
-        );
+            if (isInitial){
 
-        // 5. 메모리 단에서 성분 충돌 필터링 후 Top 10 반환
-        return filterAndLimit(routineCandidates, routineContext);
-    }
+                candidates = productRepository.findInitialRecommendations(
+                    singleCategoryIdList, req.getSkinType(), req.getGender(), req.getConcernId()
+                    );
+            } else {
+                candidates = productRepository.findRoutineCandidates(
+                    singleCategoryIdList, req.getSkinType(), req.getGender(), req.getConcernId(),
+                    finalTargetM, finalTargetO, routineContext.getCurrentRoutineIds()
+                );
+            }
 
-    /**
-     * 후보군 50개를 순회하며 상극 성분이 있는 제품을 완전히 버리고, 깨끗한 상위 10개만 반환하는 헬퍼 메서드
-     */
-    private List<Product> filterAndLimit(List<Product> candidates, RoutineContextDto routineContext) {
-        return candidates.stream()
-                // penalty가 0.0이면 충돌 없음(안전), 마이너스면 충돌 발생(버림)
+            List<Product> top5ForCategory = candidates.stream()
                 .filter(product -> conflictChecker.calculateConflictPenalty(routineContext, product) == 0.0)
-                .limit(10) // 최종 10개만 프론트엔드에 전달
-                .collect(Collectors.toList());
+                .limit(5)
+                .toList();
+
+            finalRecommendations.addAll(top5ForCategory);
+        }
+
+        return finalRecommendations;
+
     }
 }
