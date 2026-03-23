@@ -26,16 +26,14 @@ public class RecommendationService {
     // 제품이 해당 고민을 해결해주는지 확인
     boolean isMatched = checkProductSolvesProblem(userMainProblem, product);
 
-    if (isMatched) {
-      // 안티에이징 계열은 텍스트를 부드럽게 출력하기 위해 변환
-      String displayProblem = (userMainProblem.equals("주름/탄력") || userMainProblem.equals("노화방지-40대이상"))
-          ? "안티에이징" : userMainProblem;
+    // 안티에이징 계열은 텍스트를 부드럽게 출력하기 위해 변환
+    String displayProblem = (userMainProblem.equals("주름/탄력") || userMainProblem.equals("노화방지-40대이상"))
+        ? "안티에이징" : userMainProblem;
 
+    if (isMatched) {
       return String.format("회원님의 가장 큰 고민인 [%s] 케어에 탁월한 효과를 보이는 제품이에요.", displayProblem);
     } else {
       String productMainEffect = getProductMainEffect(product);
-      String displayProblem = (userMainProblem.equals("주름/탄력") || userMainProblem.equals("노화방지-40대이상"))
-          ? "안티에이징" : userMainProblem;
 
       return String.format("[%s] 집중 케어보다는, [%s] 관리에 아주 탁월한 제품이에요. 새로운 케어가 필요할 때 추천해 드려요!",
           displayProblem, productMainEffect);
