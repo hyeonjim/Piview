@@ -1,24 +1,18 @@
 /**
  * components/common/FilterModal.tsx
  * 검색/추천 페이지 공용 필터 모달
+ *
+ * - 내부 draft 상태로 관리 → "N개 제품 보기" 버튼 눌러야 onChange 호출 (API 1회)
+ * - 듀얼 레인지 슬라이더: 마우스/터치 다운 시 어느 thumb에 가까운지 판별해서 이동
  */
 "use client";
 
-const RANGE_INPUT_BASE: React.CSSProperties = {
-  top: 6,
-  height: 20,
-  appearance: "none",
-  background: "transparent",
-};
-
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { X, RotateCcw } from "lucide-react";
-import {
-  SKIN_FUNCTIONS,
-  SKIN_TYPE_LABELS_FOR_FILTER,
-} from "@/constants/categoryColors";
+import { SKIN_TYPE_LABELS_FOR_FILTER } from "@/constants/categoryColors";
 import type { FilterState } from "@/types/common";
-import { PRICE_MAX } from "@/types/common";
+import { PRICE_MAX, FILTER_INITIAL_STATE } from "@/types/common";
+import { useProductFilters } from "@/hooks";
 
 export type { FilterState };
 export { FILTER_INITIAL_STATE } from "@/types/common";
@@ -27,10 +21,8 @@ interface FilterModalProps {
   open: boolean;
   onClose: () => void;
   state: FilterState;
-  onChange: (next: Partial<FilterState>) => void;
+  onChange: (next: FilterState) => void;
   onReset: () => void;
-  resultCount: number;
-  availableBrands: string[];
 }
 
 export function FilterModal({
@@ -39,10 +31,17 @@ export function FilterModal({
   state,
   onChange,
   onReset,
-  resultCount,
 }: FilterModalProps) {
-  const { filterSkin, filterFns, priceRange } =
-    state;
+  // ── 내부 draft — 버튼 누를 때까지 API 호출 안 함 ──────────────
+  const [draft, setDraft] = useState<FilterState>(state);
+
+  // 모달 열릴 때마다 현재 적용된 state로 draft 동기화
+  useEffect(() => {
+    if (open) setDraft(state);
+  }, [open]);
+
+  const { data: filterMeta } = useProductFilters();
+  const tags = filterMeta?.tags ?? [];
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -51,112 +50,124 @@ export function FilterModal({
     };
   }, [open]);
 
+  // ── 듀얼 레인지 슬라이더 ───────────────────────────────────────
+  const trackRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef<"min" | "max" | null>(null);
+
+  const getValueFromPosition = (clientX: number): number => {
+    const track = trackRef.current;
+    if (!track) return 0;
+    const { left, width } = track.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - left) / width));
+    return Math.round((ratio * PRICE_MAX) / 10000) * 10000;
+  };
+
+  const handleTrackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const value = getValueFromPosition(e.clientX);
+    const [min, max] = draft.priceRange;
+    // 클릭 지점이 min/max 중 어느 쪽에 가까운지 판별
+    const distToMin = Math.abs(value - min);
+    const distToMax = Math.abs(value - max);
+    dragging.current = distToMin <= distToMax ? "min" : "max";
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+  };
+
+  const handleTrackPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragging.current) return;
+    const value = getValueFromPosition(e.clientX);
+    setDraft((prev) => {
+      const [min, max] = prev.priceRange;
+      if (dragging.current === "min") {
+        return { ...prev, priceRange: [Math.min(value, max - 10000), max] };
+      } else {
+        return { ...prev, priceRange: [min, Math.max(value, min + 10000)] };
+      }
+    });
+  };
+
+  const handleTrackPointerUp = () => {
+    dragging.current = null;
+  };
+
+  // ── 적용 ──────────────────────────────────────────────────────
+  const handleApply = () => {
+    onChange(draft);
+    onClose();
+  };
+
+  const handleReset = () => {
+    setDraft(FILTER_INITIAL_STATE);
+    onReset();
+    onClose();
+  };
+
   if (!open) return null;
+
+  const { filterSkin, tagIds, priceRange } = draft;
+  const minPct = (priceRange[0] / PRICE_MAX) * 100;
+  const maxPct = (priceRange[1] / PRICE_MAX) * 100;
 
   return (
     <>
       <div
-        className="fixed inset-0 z-[60] bg-black/30"
+        className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm"
         onClick={onClose}
-        style={{ backdropFilter: "blur(4px)" }}
       />
 
-      <div
-        className="fixed inset-0 z-[70] flex items-end justify-center pointer-events-none"
-        style={{ padding: "0" }}
-      >
+      <div className="fixed inset-0 z-[70] flex items-end justify-center pointer-events-none p-0">
         <div
-          className="flex flex-col pointer-events-auto w-full"
-          style={{
-            maxWidth: "500px",
-            maxHeight: "88vh",
-            backgroundColor: "#FFFFFF",
-            borderRadius: "16px 16px 0 0",
-            boxShadow: "0 -8px 40px rgba(0,0,0,0.12)",
-            overflow: "hidden",
-          }}
+          className="flex flex-col pointer-events-auto w-full max-w-app max-h-[88vh] bg-white rounded-t-2xl shadow-[0_-8px_40px_rgba(0,0,0,0.12)] overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* 드래그 핸들 */}
-          <div className="flex justify-center" style={{ padding: "12px 0 0" }}>
-            <div
-              style={{
-                width: "36px",
-                height: "4px",
-                borderRadius: "2px",
-                backgroundColor: "#E8E4DF",
-              }}
-            />
+          <div className="flex justify-center pt-3">
+            <div className="w-9 h-1 rounded-sm bg-gray-200" />
           </div>
 
           {/* 헤더 */}
-          <div
-            className="flex items-center justify-between"
-            style={{
-              padding: "12px 20px 14px",
-              borderBottom: "1px solid #F4F2EF",
-            }}
-          >
-            <h3
-              style={{
-                margin: 0,
-                fontSize: "16px",
-                fontWeight: 700,
-                color: "#1C1C1E",
-                letterSpacing: "-0.2px",
-              }}
-            >
+          <div className="flex items-center justify-between px-5 pt-3 pb-[14px] border-b border-gray-100">
+            <h3 className="m-0 text-base font-bold text-gray-900 tracking-tight">
               필터
             </h3>
             <div className="flex items-center gap-3">
               <button
-                onClick={onReset}
-                className="flex items-center gap-1 border-none bg-transparent cursor-pointer"
-                style={{
-                  fontSize: "12px",
-                  color: "#A8A39D",
-                }}
+                onClick={handleReset}
+                className="flex items-center gap-1 border-none bg-transparent cursor-pointer text-xs text-gray-400"
               >
                 <RotateCcw size={12} /> 초기화
               </button>
               <button
                 onClick={onClose}
-                className="flex items-center justify-center cursor-pointer border-none"
-                style={{
-                  width: "28px",
-                  height: "28px",
-                  borderRadius: "50%",
-                  backgroundColor: "#F4F2EF",
-                }}
+                className="flex items-center justify-center cursor-pointer border-none w-7 h-7 rounded-full bg-gray-100"
               >
-                <X size={14} style={{ color: "#8A8278" }} />
+                <X size={14} className="text-gray-500" />
               </button>
             </div>
           </div>
 
           {/* 바디 */}
-          <div style={{ overflowY: "auto", flex: 1, padding: "0 20px" }}>
+          <div className="overflow-y-auto flex-1 px-5">
             {/* 피부타입 */}
             <FilterSection title="피부타입">
-              <div className="flex flex-wrap" style={{ gap: "8px" }}>
-                {["전체", ...SKIN_TYPE_LABELS_FOR_FILTER].map((st) => {
+              <div className="flex flex-wrap gap-2">
+                {["전체", ...SKIN_TYPE_LABELS_FOR_FILTER].map((skinType) => {
                   const isActive =
-                    st === "전체" ? !filterSkin : filterSkin === st;
+                    skinType === "전체" ? !filterSkin : filterSkin === skinType;
                   return (
                     <FilterChip
-                      key={st}
-                      label={st}
+                      key={skinType}
+                      label={skinType}
                       active={isActive}
-                      variant="skin"
                       onClick={() =>
-                        onChange({
+                        setDraft((prev) => ({
+                          ...prev,
                           filterSkin:
-                            st === "전체"
+                            skinType === "전체"
                               ? null
-                              : filterSkin === st
+                              : prev.filterSkin === skinType
                                 ? null
-                                : st,
-                        })
+                                : skinType,
+                        }))
                       }
                     />
                   );
@@ -164,31 +175,38 @@ export function FilterModal({
               </div>
             </FilterSection>
 
-            <div style={{ height: "1px", backgroundColor: "#F4F2EF" }} />
+            <div className="h-px bg-gray-100" />
 
-            {/* 피부고민 — 최대 4개 중복 선택 */}
+            {/* 피부고민 태그 */}
             <FilterSection
               title="피부고민"
               rightLabel={
-                filterFns.size > 0 ? `${filterFns.size}/4` : undefined
+                Object.values(tagIds).filter(Boolean).length > 0
+                  ? `${Object.values(tagIds).filter(Boolean).length}/4`
+                  : undefined
               }
             >
-              <div className="flex flex-wrap" style={{ gap: "8px" }}>
-                {SKIN_FUNCTIONS.map((fn) => {
-                  const isActive = filterFns.has(fn);
-                  const isDisabled = !isActive && filterFns.size >= 4;
+              <div className="flex flex-wrap gap-2">
+                {tags.map((t) => {
+                  const isActive = tagIds[t.tagId] === true;
+                  const activeCount =
+                    Object.values(tagIds).filter(Boolean).length;
+                  const isDisabled = !isActive && activeCount >= 4;
                   return (
                     <FilterChip
-                      key={fn}
-                      label={fn}
+                      key={t.tagId}
+                      label={t.tag}
                       active={isActive}
                       disabled={isDisabled}
-                      variant="concern"
                       onClick={() => {
                         if (isDisabled) return;
-                        const newSet = new Set(filterFns);
-                        newSet.has(fn) ? newSet.delete(fn) : newSet.add(fn);
-                        onChange({ filterFns: newSet });
+                        setDraft((prev) => ({
+                          ...prev,
+                          tagIds: {
+                            ...prev.tagIds,
+                            [t.tagId]: !prev.tagIds[t.tagId],
+                          },
+                        }));
                       }}
                     />
                   );
@@ -196,145 +214,60 @@ export function FilterModal({
               </div>
             </FilterSection>
 
-            <div style={{ height: "1px", backgroundColor: "#F4F2EF" }} />
+            <div className="h-px bg-gray-100" />
 
-            {/* 가격 */}
+            {/* 가격 슬라이더 */}
             <FilterSection
               title="가격"
               rightLabel={
                 priceRange[0] === 0 && priceRange[1] === PRICE_MAX
                   ? "전체"
-                  : `${priceRange[0] === 0 ? "0원" : priceRange[0].toLocaleString() + "원"} ~ ${priceRange[1] === PRICE_MAX ? "제한없음" : priceRange[1].toLocaleString() + "원"}`
+                  : `${priceRange[0] === 0 ? "0만원" : (priceRange[0] / 10000).toLocaleString() + "만원"} ~ ${priceRange[1] === PRICE_MAX ? "제한없음" : (priceRange[1] / 10000).toLocaleString() + "만원"}`
               }
             >
+              {/* 커스텀 듀얼 슬라이더 — pointer 이벤트로 min/max 판별 */}
               <div
-                style={{
-                  position: "relative",
-                  height: "36px",
-                  paddingTop: "14px",
-                }}
+                ref={trackRef}
+                className="relative h-9 pt-[14px] cursor-pointer select-none"
+                onPointerDown={handleTrackPointerDown}
+                onPointerMove={handleTrackPointerMove}
+                onPointerUp={handleTrackPointerUp}
+                onPointerLeave={handleTrackPointerUp}
               >
+                {/* 배경 트랙 */}
+                <div className="absolute top-[14px] left-0 right-0 h-0.5 rounded-[1px] bg-gray-200" />
+                {/* 선택 구간 */}
                 <div
-                  style={{
-                    position: "absolute",
-                    top: "14px",
-                    left: 0,
-                    right: 0,
-                    height: "2px",
-                    borderRadius: "1px",
-                    backgroundColor: "#EDEBE8",
-                  }}
+                  className="absolute top-[14px] h-0.5 rounded-[1px] bg-gray-900 pointer-events-none"
+                  style={{ left: `${minPct}%`, right: `${100 - maxPct}%` }}
                 />
+                {/* min thumb */}
                 <div
-                  style={{
-                    position: "absolute",
-                    top: "14px",
-                    left: `${(priceRange[0] / PRICE_MAX) * 100}%`,
-                    right: `${100 - (priceRange[1] / PRICE_MAX) * 100}%`,
-                    height: "2px",
-                    borderRadius: "1px",
-                    backgroundColor: "#1C1C1E",
-                  }}
+                  className="absolute top-[5px] w-[18px] h-[18px] rounded-full bg-gray-800 border-2 border-white shadow-[0_1px_6px_rgba(0,0,0,.2)] pointer-events-none"
+                  style={{ left: `calc(${minPct}% - 9px)` }}
                 />
-                <input
-                  type="range"
-                  min={0}
-                  max={PRICE_MAX}
-                  step={1000}
-                  value={priceRange[0]}
-                  onChange={(e) => {
-                    const v = Number(e.target.value);
-                    onChange({
-                      priceRange: [
-                        Math.min(v, priceRange[1] - 1000),
-                        priceRange[1],
-                      ],
-                    });
-                  }}
-                  className="absolute w-full"
-                  style={{
-                    ...RANGE_INPUT_BASE,
-                    zIndex: priceRange[0] > PRICE_MAX * 0.5 ? 5 : 3,
-                  }}
+                {/* max thumb */}
+                <div
+                  className="absolute top-[5px] w-[18px] h-[18px] rounded-full bg-gray-800 border-2 border-white shadow-[0_1px_6px_rgba(0,0,0,.2)] pointer-events-none"
+                  style={{ left: `calc(${maxPct}% - 9px)` }}
                 />
-                <input
-                  type="range"
-                  min={0}
-                  max={PRICE_MAX}
-                  step={1000}
-                  value={priceRange[1]}
-                  onChange={(e) => {
-                    const v = Number(e.target.value);
-                    onChange({
-                      priceRange: [
-                        priceRange[0],
-                        Math.max(v, priceRange[0] + 1000),
-                      ],
-                    });
-                  }}
-                  className="absolute w-full"
-                  style={{ ...RANGE_INPUT_BASE, zIndex: 4 }}
-                />
-                <style>{`
-                  input[type="range"]::-webkit-slider-thumb {
-                    -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
-                    background:#1C1C1E; border:2px solid #fff;
-                    box-shadow:0 1px 6px rgba(0,0,0,.2); cursor:pointer;
-                  }
-                  input[type="range"]::-moz-range-thumb {
-                    width:18px; height:18px; border-radius:50%;
-                    background:#1C1C1E; border:2px solid #fff;
-                    box-shadow:0 1px 6px rgba(0,0,0,.2); cursor:pointer;
-                  }
-                `}</style>
               </div>
-              <div
-                className="flex items-center justify-between"
-                style={{ marginTop: "4px" }}
-              >
-                <span
-                  style={{
-                    fontSize: "11px",
-                    color: "#C4BEB7",
-                  }}
-                >
-                  0원
-                </span>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    color: "#C4BEB7",
-                  }}
-                >
-                  1,000,000원+
-                </span>
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-[14px] text-gray-500">0만원</span>
+                <span className="text-[14px] text-gray-500">100만원+</span>
               </div>
             </FilterSection>
 
-            <div style={{ height: "8px" }} />
+            <div className="h-2" />
           </div>
 
-          {/* 적용 버튼 */}
-          <div
-            style={{
-              padding: "12px 20px 24px",
-              borderTop: "1px solid #F4F2EF",
-            }}
-          >
+          {/* 적용 버튼 — 여기서만 onChange 호출 → API 1회 */}
+          <div className="px-5 pt-3 pb-6 border-t border-gray-100">
             <button
-              onClick={onClose}
-              className="w-full cursor-pointer border-none transition-all active:scale-[0.98]"
-              style={{
-                height: "44px",
-                borderRadius: "8px",
-                backgroundColor: "#1C1C1E",
-                color: "#FFFFFF",
-                fontSize: "14px",
-                fontWeight: 700,
-                letterSpacing: "0.01em",
-              }}
+              onClick={handleApply}
+              className="w-full cursor-pointer border-none transition-all active:scale-[0.98] h-11 rounded-lg bg-gray-900 text-white text-sm font-bold tracking-wide"
             >
-              {resultCount.toLocaleString()}개 제품 보기
+              제품 보기
             </button>
           </div>
         </div>
@@ -353,32 +286,13 @@ function FilterSection({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ padding: "18px 0" }}>
-      <div
-        className="flex items-center justify-between"
-        style={{ marginBottom: "12px" }}
-      >
-        <p
-          style={{
-            margin: 0,
-            fontSize: "13px",
-            fontWeight: 700,
-            color: "#1C1C1E",
-            letterSpacing: "-0.1px",
-          }}
-        >
+    <div className="py-[18px]">
+      <div className="flex items-center justify-between mb-3">
+        <p className="m-0 text-base font-bold text-gray-900 tracking-tight">
           {title}
         </p>
         {rightLabel && (
-          <p
-            style={{
-              margin: 0,
-              fontSize: "11px",
-              color: "#B0A99F",
-            }}
-          >
-            {rightLabel}
-          </p>
+          <p className="m-0 text-sm text-gray-400">{rightLabel}</p>
         )}
       </div>
       {children}
@@ -386,54 +300,28 @@ function FilterSection({
   );
 }
 
-// variant별 활성 색상 팔레트
-const CHIP_ACTIVE_STYLE: Record<
-  string,
-  { bg: string; border: string; color: string }
-> = {
-  // 피부타입 — 따뜻한 테라코타 계열
-  skin: { bg: "#F5EDE8", border: "#D4A090", color: "#9B6A54" },
-  // 피부고민 — 뮤트 세이지 계열
-  concern: { bg: "#E4EAE0", border: "#A0B898", color: "#5A7850" },
-  // 기본(브랜드 등) — 다크 브라운
-  default: { bg: "#5A504A", border: "#5A504A", color: "#FFFFFF" },
-};
-
 function FilterChip({
   label,
   active,
   onClick,
-  variant = "default",
   disabled = false,
 }: {
   label: string;
   active: boolean;
   onClick: () => void;
-  variant?: "default" | "skin" | "concern";
   disabled?: boolean;
 }) {
-  const activeStyle = CHIP_ACTIVE_STYLE[variant];
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      style={{
-        height: "32px",
-        padding: "0 14px",
-        borderRadius: "6px",
-        border: `1px solid ${active ? activeStyle.border : "#EDEBE8"}`,
-        backgroundColor: active
-          ? activeStyle.bg
+      className={`h-8 px-[14px] rounded-md text-[16px] font-semibold transition-all border ${
+        active
+          ? "bg-gray-100 border-gray-400 text-gray-700"
           : disabled
-            ? "#F7F6F4"
-            : "#FAFAF8",
-        color: active ? activeStyle.color : disabled ? "#C8C3BC" : "#8A8278",
-        fontSize: "12px",
-        fontWeight: active ? 600 : 400,
-        cursor: disabled ? "not-allowed" : "pointer",
-        transition: "all 0.15s",
-        opacity: disabled ? 0.5 : 1,
-      }}
+            ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-50"
+            : "bg-gray-50 border-gray-200 text-gray-500 cursor-pointer"
+      }`}
     >
       {label}
     </button>
