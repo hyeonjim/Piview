@@ -8,6 +8,7 @@ import com.piview.backend.domain.skin.common.SkinTypeEnum;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -37,7 +38,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .join(product.image, image).fetchJoin()
             .join(product.category, category).fetchJoin()
             .join(category.bigCategory, bigCategory).fetchJoin()
-            .where(buildWhere(condition))
+            .where(buildSearchWhere(condition))
             .orderBy(product.productId.desc())
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize() + 1)
@@ -54,20 +55,31 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
   @Override
   public long count(ProductSearchCondition condition) {
-    Long result = queryFactory
+    // count 전용 query 분리 (불필요한 join 날리기)
+    JPAQuery<Long> countQuery = queryFactory
             .select(product.count())
-            .from(product)
-            .join(product.brand, brand)
-            .join(product.category, category)
-            .join(category.bigCategory, bigCategory)
-            .where(buildWhere(condition))
+            .from(product);
+
+    // 필요한 경우에 join
+    if (needsBrandJoin(condition)) {
+      countQuery.join(product.brand, brand);
+    }
+    if (needsCategoryJoin(condition)) {
+      countQuery.join(product.category, category);
+    }
+    if (needsBigCategoryJoin(condition)) {
+      countQuery.join(category.bigCategory, bigCategory);
+    }
+
+    Long result = countQuery
+            .where(buildCountWhere(condition))
             .fetchOne();
 
     return result != null ? result : 0L;
   }
 
-  // search(), count()가 동일한 where 조건을 사용하므로 메서드 분리
-  private BooleanBuilder buildWhere(ProductSearchCondition condition) {
+  // search 전용 where
+  private BooleanBuilder buildSearchWhere(ProductSearchCondition condition) {
     return new BooleanBuilder()
             .and(qContains(condition.getQ()))
             .and(categoryEq(condition.getCategoryId()))
@@ -77,6 +89,33 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .and(brandIn(condition.getBrandIds()))
             .and(minPriceGoe(condition.getMinPrice()))
             .and(maxPriceLoe(condition.getMaxPrice()));
+  }
+
+  // count 전용 where
+  private BooleanBuilder buildCountWhere(ProductSearchCondition condition) {
+    return new BooleanBuilder()
+            .and(qContains(condition.getQ()))
+            .and(categoryEq(condition.getCategoryId()))
+            .and(bigCategoryEqWhenCategoryNull(condition.getCategoryId(), condition.getBigCategoryId()))
+            .and(skinTypeEq(condition.getSkinType()))
+            .and(hasAllConcerns(condition.getConcernIds()))
+            .and(brandIn(condition.getBrandIds()))
+            .and(minPriceGoe(condition.getMinPrice()))
+            .and(maxPriceLoe(condition.getMaxPrice()));
+  }
+
+  // count join 필요 여부 판별
+  private boolean needsBrandJoin(ProductSearchCondition condition) {
+    return (condition.getBrandIds() != null && !condition.getBrandIds().isEmpty())
+            || (condition.getQ() != null && !condition.getQ().isBlank());
+  }
+
+  private boolean needsCategoryJoin(ProductSearchCondition condition) {
+    return condition.getCategoryId() != null || condition.getBigCategoryId() != null;
+  }
+
+  private boolean needsBigCategoryJoin(ProductSearchCondition condition) {
+    return condition.getCategoryId() == null && condition.getBigCategoryId() != null;
   }
 
   private BooleanExpression qContains(String q) {
@@ -108,20 +147,21 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .or(product.top2SkinType.eq(skinType));
   }
 
+  // 서브쿼리 방식 -> 비상관 서브쿼리 (IN + GROUP BY + HAVING)
   private BooleanExpression hasAllConcerns(List<Long> concernIds) {
     if (concernIds == null || concernIds.isEmpty()) {
       return null;
     }
     long concernCount = concernIds.size();
 
-    return JPAExpressions
-            .select(productConcernCache.skinConcernId.countDistinct())
-            .from(productConcernCache)
-            .where(
-                    productConcernCache.productId.eq(product.productId),
-                    productConcernCache.skinConcernId.in(concernIds)
-            )
-            .eq(concernCount);
+    return product.productId.in(
+            JPAExpressions
+                    .select(productConcernCache.productId)
+                    .from(productConcernCache)
+                    .where(productConcernCache.skinConcernId.in(concernIds))
+                    .groupBy(productConcernCache.productId)
+                    .having(productConcernCache.skinConcernId.countDistinct().eq(concernCount))
+    );
   }
 
   private BooleanExpression brandIn(List<Long> brandIds) {
