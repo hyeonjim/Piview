@@ -11,6 +11,7 @@ import com.piview.backend.domain.user.profile.dto.response.UserProfileResponse;
 import com.piview.backend.domain.user.profile.service.UserProfileService;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,12 +94,17 @@ public class ChatbotService {
             userProfile.getSkinProblems() != null ? userProfile.getSkinProblems() : List.of(),
             myCosList.stream()
                 .map(MyCosResponseDto::productId)
+                .filter(Objects::nonNull)
                 .toList(),
             dislikedIngredients.stream()
                 .map(this::resolveIngredientName)
+                // AI 스키마는 list[str]라 배열 안의 null/blank를 허용하지 않으므로 여기서 정리한다.
+                .filter(Objects::nonNull)
+                .filter(name -> !name.isBlank())
                 .toList(),
             dislikedProducts.stream()
                 .map(DislikedProductSummaryResponse::productId)
+                .filter(Objects::nonNull)
                 .toList()
         );
     }
@@ -108,7 +114,10 @@ public class ChatbotService {
         if (ingredient.nameKo() != null && !ingredient.nameKo().isBlank()) {
             return ingredient.nameKo();
         }
-        return ingredient.nameEn();
+        if (ingredient.nameEn() != null && !ingredient.nameEn().isBlank()) {
+            return ingredient.nameEn();
+        }
+        return null;
     }
 
     private List<ChatbotQueryResponse.ChatbotProductCandidate> toProductCandidates(
