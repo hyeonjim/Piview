@@ -4,13 +4,17 @@ import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
+@Slf4j
 @Component
 public class ChatbotAiClient {
 
@@ -45,14 +49,42 @@ public class ChatbotAiClient {
                 .body(ChatbotAiQueryResponse.class);
 
             if (response == null) {
-                throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+                log.error("Chatbot AI returned an empty response body");
+                throw new CustomException(ErrorCode.AI_SERVER_INVALID_RESPONSE);
             }
 
             return response;
+        } catch (RestClientResponseException exception) {
+            HttpStatusCode statusCode = exception.getStatusCode();
+            log.error(
+                "Chatbot AI responded with error. status={}, body={}",
+                statusCode.value(),
+                truncate(exception.getResponseBodyAsString())
+            );
+
+            if (statusCode.is4xxClientError()) {
+                // 4xx는 backend -> ai 계약 불일치 가능성이 크므로 별도 코드로 구분한다.
+                throw new CustomException(ErrorCode.AI_SERVER_BAD_REQUEST);
+            }
+            if (statusCode.is5xxServerError()) {
+                throw new CustomException(ErrorCode.AI_SERVER_ERROR);
+            }
+            throw new CustomException(ErrorCode.AI_SERVER_ERROR);
         } catch (RestClientException exception) {
-            // 내부 AI 호출 실패는 일단 기존 OCR/피부분석과 같은 계열의 가용성 오류로 맞춘다.
+            // 연결 거절, 소켓 타임아웃 등 네트워크 계열 실패만 timeout으로 취급한다.
+            log.error("Chatbot AI request failed before receiving a valid response", exception);
             throw new CustomException(ErrorCode.AI_SERVER_TIMEOUT);
         }
+    }
+
+    private String truncate(String body) {
+        if (body == null || body.isBlank()) {
+            return "<empty>";
+        }
+        if (body.length() <= 500) {
+            return body;
+        }
+        return body.substring(0, 500) + "...";
     }
 }
 
