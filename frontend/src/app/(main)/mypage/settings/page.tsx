@@ -4,11 +4,28 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Camera } from "lucide-react";
 import Link from "next/link";
-import {
-  SETTINGS_SKIN_TYPES,
-  SETTINGS_SKIN_CONCERNS,
-} from "@/constants/userSettings";
 import { useUserStore, selectSkinType } from "@/stores/useUserStore";
+
+/** 설정 페이지 피부타입 (id = 한글 레이블, settings에서 직접 저장) */
+const SETTINGS_SKIN_TYPES = [
+  { id: "건성",  label: "건성"  },
+  { id: "지성",  label: "지성"  },
+  { id: "복합성", label: "복합성" },
+  { id: "수부지", label: "수부지" },
+] as const;
+
+/** 설정 페이지 피부 고민 — 백엔드 SkinProblemMapper 키값과 일치 */
+const SETTINGS_SKIN_CONCERNS = [
+  { id: "acne",         label: "여드름"          },
+  { id: "whitening",    label: "미백"            },
+  { id: "pigmentation", label: "기미/주근깨/잡티" },
+  { id: "wrinkles",     label: "주름/탄력"       },
+  { id: "sebum",        label: "피지"            },
+  { id: "blackhead",    label: "블랙헤드"        },
+  { id: "innerDryness", label: "속건조"          },
+  { id: "redness",      label: "홍조"            },
+  { id: "keratin",      label: "각질"            },
+] as const;
 import { useUpdateProfile } from "@/hooks/queries/useUserQuery";
 import { toSkinTypeEnum } from "@/utils/enumConvert";
 import { authService } from "@/services/auth";
@@ -72,7 +89,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-warm-bg">
+    <div className="min-h-screen bg-warm-bg">
       {/* 헤더 */}
       <div className="sticky top-0 z-10 px-5 pt-5 pb-3 flex items-center gap-3 bg-warm-bg">
         <button
@@ -86,7 +103,7 @@ export default function SettingsPage() {
         </h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-7.5">
+      <div className="px-7.5">
         {/* 피부타입 */}
         <div className="mt-5">
           <h3 className="text-base font-bold text-text-primary mb-1.5">나의 피부타입</h3>

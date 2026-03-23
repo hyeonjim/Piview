@@ -11,17 +11,12 @@ import {
   useRemoveMyCos,
   useDislikedProductsQuery,
   useRemoveDislikedProduct,
+  useDraftQuery,
 } from "@/hooks";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
 import { PAGE_SIZE } from "@/constants/pagination";
-import type { LocalProduct } from "@/stores";
 
-interface OwnedTabProps {
-  // 루틴 등록 배지 표시용
-  routine: Record<string, LocalProduct[]>;
-}
-
-export default function OwnedTab({ routine }: OwnedTabProps) {
+export default function OwnedTab() {
   // ── 모달 상태 ──────────────────────────────────────────────────
   const [openOwnedModal, setOpenOwnedModal] = useState(false);
   const [openAvoidModal, setOpenAvoidModal] = useState(false);
@@ -29,6 +24,11 @@ export default function OwnedTab({ routine }: OwnedTabProps) {
   // ── 페이지 상태 ────────────────────────────────────────────────
   const [ownedPage, setOwnedPage] = useState(1);
   const [avoidPage, setAvoidPage] = useState(1);
+
+  // ── 루틴 draft 기반 배지 표시 ────────────────────────────────
+  // draft에 포함된 productId Set — isInRoutine 판별에 사용
+  const { data: draftItems = [] } = useDraftQuery();
+  const draftProductIds = new Set(draftItems.map((item) => item.product.productId));
 
   // ── 보유 제품 (myCos) ──────────────────────────────────────────
   const { data: myCosItems = [] } = useMyCosQuery();
@@ -54,13 +54,9 @@ export default function OwnedTab({ routine }: OwnedTabProps) {
     ownedPage * PAGE_SIZE,
   );
 
-  // 루틴 배지 — 루틴에 포함된 제품인지 확인 (productId 기준)
-  const isInRoutine = (productId?: number) => {
-    if (!productId) return false;
-    return Object.values(routine)
-      .flat()
-      .some((routineProduct) => String(routineProduct.id) === String(productId));
-  };
+  // 루틴 배지 — draft에 포함된 제품인지 확인 (productId 기준)
+  const isInRoutine = (productId?: number) =>
+    !!productId && draftProductIds.has(productId);
 
   // ── 기피 제품 (disliked) ───────────────────────────────────────
   const { data: dislikedItems = [] } = useDislikedProductsQuery();

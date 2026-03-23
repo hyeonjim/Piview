@@ -1,9 +1,8 @@
 "use client";
 
-import { Leaf, Sun, Moon, Droplets, Star, ChevronRight } from "lucide-react";
+import { Leaf, Sun, Moon, Star, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { SKINCARE_INSIGHTS } from "@/constants";
 import {
   CATEGORY_COLORS,
   SKIN_TYPE_TAG_COLORS,
@@ -33,14 +32,6 @@ function getGreeting(): { text: string; icon: React.ReactNode } {
   };
 }
 
-// 아이콘 이름 → JSX 컴포넌트 매핑 (SKINCARE_INSIGHTS.iconName에 대응)
-const ICON_MAP = {
-  droplets: (size: number) => (
-    <Droplets size={size} className="text-[#8A9468]" />
-  ),
-  sun: (size: number) => <Sun size={size} className="text-[#C8A96E]" />,
-  leaf: (size: number) => <Leaf size={size} className="text-[#8A9468]" />,
-};
 
 export default function HomePage() {
   // store.user 없을 때 /users/me 재조회 — 새로고침·직접 진입 시 이름 복원
@@ -145,6 +136,7 @@ export default function HomePage() {
                               src={product.imageUrl}
                               alt={product.name ?? ""}
                               fill
+                              sizes="88px"
                               className="object-cover"
                             />
                           ) : (
@@ -251,36 +243,10 @@ export default function HomePage() {
 
       {/* ── Skincare Tips ──────────────────────────────────────── */}
       <div className="pt-5 px-4 pb-6">
-        {/* 섹션 타이틀 */}
         <div className="flex items-baseline gap-2 mb-3.75">
           <h2 className="text-[18px] font-bold text-[#2A2118] tracking-[-0.3px]">
             Skincare Tips
           </h2>
-        </div>
-
-        {/* 팁 카드 목록 */}
-        <div className="flex flex-col gap-2">
-          {SKINCARE_INSIGHTS.map((item) => (
-            <div
-              key={item.label}
-              className="flex items-start gap-3 bg-white rounded-[10px] border border-[#E2DDD8] p-3.5"
-            >
-              {/* 아이콘 박스 */}
-              <div className="flex items-center justify-center shrink-0 w-9 h-9 rounded-lg bg-[#F2EFE9]">
-                {ICON_MAP[item.iconName](15)}
-              </div>
-
-              {/* 텍스트 */}
-              <div>
-                <p className="m-0 text-[13px] font-semibold text-[#2A2118]">
-                  {item.label}
-                </p>
-                <p className="mt-0.75 text-xs text-[#A69D92] leading-[1.6]">
-                  {item.desc}
-                </p>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </div>

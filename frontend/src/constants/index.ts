@@ -12,13 +12,6 @@
 
 export * from "./categoryColors";
 export * from "./skinTypes";
-export * from "./skinTypeInfo";
-export * from "./routineSteps"; // ROUTINE_STEPS, MYPAGE_ROUTINE_STEPS, RoutineStepKey, INITIAL_ROUTINE
-export * from "./routineEvaluation";
+export * from "./routineSteps"; // ROUTINE_STEPS, WOMEN_ROUTINE_STEPS, MEN_ROUTINE_STEPS, getRoutineSteps, RoutineStep
 export * from "./survey";
-export * from "./skinTestOptions";
-export * from "./insights";
-export * from "./userSettings";
-export * from "./productCategories";
-export * from "./allergens";
 export * from "./pagination";
