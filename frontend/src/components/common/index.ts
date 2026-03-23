@@ -10,3 +10,4 @@ export { default as CompareModal } from "./CompareModal";
 export { Pagination } from "./Pagination";
 export { CategoryFilter } from "./CategoryFilter";
 export { FilterModal } from "./FilterModal";
+export { TokenInitializer } from "./TokenInitializer";
