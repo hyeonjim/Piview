@@ -12,7 +12,7 @@ const MODAL_ACTION_ICON_BTN = {
   cursor: "pointer",
 };
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { X, Search, Package, Heart, GitCompare, Loader2 } from "lucide-react";
 import {
   SKIN_TYPE_TAG_COLORS,
@@ -44,6 +44,9 @@ export default function RoutineAddModal({
 }: RoutineAddModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 7;
+
 
   // 성별에 따른 루틴 스텝 가져오기
   const currentGender = useUserStore(selectGender);
@@ -77,27 +80,45 @@ export default function RoutineAddModal({
       .filter((cat): cat is NonNullable<typeof cat> => cat !== undefined);
   }, [filterMeta, stepCategories, bigCategories]);
 
-  // 모달이 열릴 때 첫 번째 카테고리 자동 선택
-  useEffect(() => {
-    if (availableCategories.length > 0) {
-      setSelectedCategoryId(availableCategories[0].categoryId);
-    }
-  }, [availableCategories]);
+  // selectedCategoryId가 없거나 현재 목록에 없으면 첫 번째 카테고리를 기본값으로 파생
+  const effectiveCategoryId =
+    selectedCategoryId !== null &&
+    availableCategories.some((cat) => cat.categoryId === selectedCategoryId)
+      ? selectedCategoryId
+      : (availableCategories[0]?.categoryId ?? null);
 
   // 실제 제품 검색 API 연동
   // 검색어와 카테고리 ID로 필터링
   const selectedCategory = availableCategories.find(
-    (cat) => cat.categoryId === selectedCategoryId
+    (cat) => cat.categoryId === effectiveCategoryId
   );
 
   const searchParams = useMemo(() => ({
     q: searchQuery || undefined,
     bigCategoryId: selectedCategory?.bigCategoryId ?? undefined,
-    categoryId: selectedCategoryId ?? undefined,
+    categoryId: effectiveCategoryId ?? undefined,
     size: 20,
-  }), [searchQuery, selectedCategory, selectedCategoryId]);
+  }), [searchQuery, selectedCategory, effectiveCategoryId]);
 
   const { products, isLoading } = useProductSearch(searchParams);
+
+  // 검색어·카테고리 변경 시 첫 페이지로 초기화
+  const totalPages = Math.ceil(products.length / PAGE_SIZE);
+  const pagedProducts = products.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
+  // 검색어 또는 카테고리가 바뀌면 1페이지로 리셋
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryChange = (categoryId: number) => {
+    setSelectedCategoryId(categoryId);
+    setCurrentPage(1);
+  };
 
   return (
     <>
@@ -132,7 +153,7 @@ export default function RoutineAddModal({
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
+                onChange={(event) => handleSearchChange(event.target.value)}
                 placeholder="제품명 또는 브랜드 검색"
                 className="w-full h-10 pl-9 pr-3 rounded-xl border border-border-warm bg-[#FAF8F5] text-xs text-[#2A2A2A] outline-none"
                 style={{
@@ -143,7 +164,7 @@ export default function RoutineAddModal({
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => handleSearchChange("")}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-border-warm border-none cursor-pointer"
                 >
                   <X size={12} color="#888" />
@@ -155,13 +176,13 @@ export default function RoutineAddModal({
             {availableCategories.length > 0 && (
               <div className="flex flex-wrap gap-2 p-[10px_0px] min-h-[52px] mb-2">
                 {availableCategories.map((cat) => {
-                  const isActive = selectedCategoryId === cat.categoryId;
+                  const isActive = effectiveCategoryId === cat.categoryId;
                   const catColor = CATEGORY_COLORS[cat.categoryName];
                   return (
                     <button
                       key={cat.categoryId}
                       onClick={() => {
-                        if (!isActive) setSelectedCategoryId(cat.categoryId);
+                        if (!isActive) handleCategoryChange(cat.categoryId);
                       }}
                       className="category-pill-button"
                       data-active={isActive}
@@ -195,16 +216,52 @@ export default function RoutineAddModal({
                 <p className="text-xs">검색 결과가 없습니다</p>
               </div>
             ) : (
-              <div className="flex flex-col gap-3">
-                {products.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    isAdded={draftProductIds.includes(product.id)}
-                    onAdd={() => onAdd(product.id)}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="flex flex-col gap-3">
+                  {pagedProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      isAdded={draftProductIds.includes(product.id)}
+                      onAdd={() => onAdd(product.id)}
+                    />
+                  ))}
+                </div>
+
+                {/* 페이지네이션 */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-1 mt-4 mb-1">
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="w-7 h-7 rounded-full border border-border-warm bg-white text-xs text-text-muted disabled:opacity-30 cursor-pointer disabled:cursor-default"
+                    >
+                      ‹
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className="w-7 h-7 rounded-full border text-xs font-semibold cursor-pointer transition-colors"
+                        style={{
+                          borderColor: currentPage === page ? "var(--color-brand)" : "var(--color-border-warm)",
+                          backgroundColor: currentPage === page ? "var(--color-brand)" : "white",
+                          color: currentPage === page ? "white" : "var(--color-text-muted)",
+                        }}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="w-7 h-7 rounded-full border border-border-warm bg-white text-xs text-text-muted disabled:opacity-30 cursor-pointer disabled:cursor-default"
+                    >
+                      ›
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

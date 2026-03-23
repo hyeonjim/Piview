@@ -13,15 +13,6 @@ import { useUpdateProfile } from "@/hooks/queries/useUserQuery";
 import { toSkinTypeEnum } from "@/utils/enumConvert";
 import type { SkinType } from "@/types/user";
 
-function SectionTitle({ icon, title }: { icon: string; title: string }) {
-  return (
-    <h3 className="text-base font-semibold text-text-primary mb-1.5 flex items-center gap-2">
-      <span>{icon}</span>
-      {title}
-    </h3>
-  );
-}
-
 function Divider() {
   return <div className="h-px bg-border my-6" />;
 }
@@ -68,7 +59,7 @@ export default function SettingsPage() {
         >
           <ChevronLeft size={20} className="text-text-primary" />
         </button>
-        <h2 className="text-lg font-semibold text-text-primary tracking-[0.5px]">
+        <h2 className="text-lg font-bold text-text-primary tracking-[0.5px]">
           Settings
         </h2>
       </div>
@@ -76,8 +67,8 @@ export default function SettingsPage() {
       <div className="flex-1 overflow-y-auto px-[30px]">
         {/* 피부타입 */}
         <div className="mt-5">
-          <SectionTitle icon="🧴" title="나의 피부타입" />
-          <p className="text-xs text-text-muted mb-5">하나를 선택해주세요</p>
+          <h3 className="text-base font-bold text-text-primary mb-1.5">나의 피부타입</h3>
+          <p className="text-[14px] text-text-muted mb-5">하나를 선택해주세요</p>
           <div className="flex flex-wrap gap-2">
             {SETTINGS_SKIN_TYPES.map((st) => {
               const isActive = skinType === st.id;
@@ -85,7 +76,7 @@ export default function SettingsPage() {
                 <button
                   key={st.id}
                   onClick={() => setSkinTypeLocal(st.id)}
-                  className={`inline-flex items-center gap-1 px-4 py-2 rounded-chip text-sm font-semibold cursor-pointer transition-all border select-none ${
+                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-chip text-sm font-semibold cursor-pointer transition-all border select-none ${
                     isActive
                       ? "bg-brand text-white border-brand shadow-[0_2px_8px_rgba(162,170,123,0.2)]"
                       : "bg-white text-text-primary border-border"
@@ -102,7 +93,7 @@ export default function SettingsPage() {
 
         {/* 피부고민 */}
         <div>
-          <SectionTitle icon="💭" title="피부 고민" />
+          <h3 className="text-base font-bold text-text-primary mb-1.5">피부 고민</h3>
           <p className="text-xs text-text-muted mb-5">
             해당하는 고민을 모두 선택해주세요
           </p>
@@ -113,7 +104,7 @@ export default function SettingsPage() {
                 <button
                   key={c.id}
                   onClick={() => toggleConcern(c.label)}
-                  className={`inline-flex items-center gap-1 px-4 py-2 rounded-chip text-sm font-semibold cursor-pointer transition-all border select-none ${
+                  className={`inline-flex items-center gap-1 px-3 py-1.5  rounded-chip text-sm font-semibold cursor-pointer transition-all border select-none ${
                     isActive
                       ? "bg-brand text-white border-brand shadow-[0_2px_8px_rgba(162,170,123,0.2)]"
                       : "bg-white text-text-primary border-border"
@@ -131,7 +122,7 @@ export default function SettingsPage() {
 
         {/* 재진단 */}
         <div>
-          <SectionTitle icon="🔄" title="피부 진단 다시하기" />
+          <h3 className="text-base font-bold text-text-primary mb-1.5">피부 진단 다시하기</h3>
           <p className="text-xs text-text-muted mb-5">
             AI 사진 분석으로 피부 상태를 다시 진단할 수 있어요
           </p>
@@ -155,11 +146,11 @@ export default function SettingsPage() {
         </div>
 
         {/* 저장 버튼 */}
-        <div className="m-6 flex justify-center">
+        <div className="m-10 flex justify-center">
           <button
             onClick={handleSave}
             disabled={isPending}
-            className="w-[200px] h-11 rounded-button bg-brand text-white font-semibold text-[16px] border-none cursor-pointer shadow-[0_4px_16px_rgba(162,170,123,0.2)] transition-all active:scale-[0.98] disabled:opacity-60"
+            className="w-[200px] h-12 rounded-button bg-brand text-white font-bold text-[18px] border-none cursor-pointer shadow-[0_4px_16px_rgba(162,170,123,0.2)] transition-all active:scale-[0.98] disabled:opacity-60"
           >
             {isPending ? "저장 중..." : "저장하기"}
           </button>

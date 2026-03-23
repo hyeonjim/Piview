@@ -74,9 +74,8 @@ export default function HomePage() {
             {greeting.text}
           </span>
         </div>
-
         {/* 닉네임 */}
-        <h1 className="mt-2.5 mb-1.25 text-[22px] font-bold text-[#1C1C1E] tracking-[-0.5px] leading-[1.2]">
+        <h1 className="mt-2.5 mb-1.25 text-[20px] font-bold text-[#1C1C1E] tracking-[-0.5px] leading-[1.2]">
           {nickname}님,
         </h1>
 
@@ -98,10 +97,10 @@ export default function HomePage() {
             {hasRoutine ? (
               <div className="flex items-center gap-2">
                 {/* 루틴 이름 */}
-                <span className="text-[12px] font-semibold text-[#2A2118] truncate max-w-30">
+                <span className="text-[14px] font-semibold text-[#2A2118] truncate max-w-30">
                   {mainRoutineData?.title}
                 </span>
-                <span className="text-[11px] font-semibold py-0.75 px-2.5 rounded-xl bg-[#F2EFE9] text-[#A69D92]">
+                <span className="text-[12px] font-semibold py-0.75 px-2.5 rounded-xl bg-[#F2EFE9] text-[#A69D92]">
                   {mainRoutineItems.length}단계
                 </span>
               </div>
@@ -162,12 +161,12 @@ export default function HomePage() {
                         >
                           {/* 브랜드명 + 카테고리 칩 */}
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[12px] font-bold text-[#BFB6AA] uppercase tracking-[0.08em]">
+                            <span className="text-[14px] font-semibold text-[#BFB6AA] uppercase tracking-[0.08em]">
                               {product.brandName}
                             </span>
                             {categoryColor && (
                               <span
-                                className="text-[12px] px-1.5 py-px rounded-[3px] font-semibold"
+                                className="text-[12px] px-1 py-px rounded-[3px] font-semibold"
                                 style={{
                                   backgroundColor: categoryColor.chip,
                                   color: categoryColor.accent,
@@ -179,7 +178,7 @@ export default function HomePage() {
                           </div>
 
                           {/* 제품명 */}
-                          <p className="mt-0.5 m-0 text-[16px] font-bold text-[#2A2118] leading-[1.4] line-clamp-1">
+                          <p className="my-1 text-[16px] font-semibold text-[#2A2118] leading-[1.4] line-clamp-1">
                             {product.name}
                           </p>
 
@@ -190,7 +189,7 @@ export default function HomePage() {
                               return (
                                 <span
                                   key={skinType}
-                                  className="inline-block text-[12px] font-semibold px-1.5 py-0.5 rounded-[3px]"
+                                  className="inline-block text-[12px] font-semibold px-1 rounded-[3px]"
                                   style={{
                                     backgroundColor:
                                       SKIN_TYPE_TAG_COLORS[koSkinType]?.bg ??
@@ -212,7 +211,7 @@ export default function HomePage() {
                               return (
                                 <span
                                   key={effect}
-                                  className="inline-block text-[12px] font-semibold px-1.5 py-0.5 rounded-[3px]"
+                                  className="inline-block text-[12px] font-semibold px-1 rounded-[3px]"
                                   style={{
                                     backgroundColor: color.chip,
                                     color: color.accent,

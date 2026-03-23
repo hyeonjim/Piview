@@ -73,7 +73,7 @@ export default function OwnedTab({ routine }: OwnedTabProps) {
   );
 
   return (
-    <div className="px-4 pb-24 pt-4 flex flex-col gap-20">
+    <div className="px-4 pb-20 pt-4 flex flex-col gap-20">
       {/* ── 보유 제품 섹션 ─────────────────────────────────────── */}
       <section>
         <div className="flex items-center justify-between mb-1">
@@ -118,19 +118,13 @@ export default function OwnedTab({ routine }: OwnedTabProps) {
                     showLike={false}
                     inRoutine={isInRoutine(product.productId)}
                   />
-                  {/* 루틴 배지 — 카드 우상단 오버레이 */}
-                  {isInRoutine(product.productId) && (
-                    <span className="absolute top-2 right-8 text-[10px] px-1.5 py-px rounded-[4px] font-bold bg-brand-bg text-brand z-10">
-                      루틴
-                    </span>
-                  )}
                   {/* 삭제 버튼 오버레이 */}
                   <button
                     onClick={() => removeMyCos(product.id)}
-                    className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-white/90 shadow-sm border border-border cursor-pointer z-10 transition-colors hover:bg-white"
+                    className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full cursor-pointer z-10 transition-colors hover:bg-white"
                     aria-label="보유 제품 삭제"
                   >
-                    <Minus size={11} className="text-text-muted" />
+                    <Minus size={16} className="text-text-muted" />
                   </button>
                 </div>
               ))}
@@ -158,7 +152,7 @@ export default function OwnedTab({ routine }: OwnedTabProps) {
           </div>
           <button
             onClick={() => setOpenAvoidModal(true)}
-            className="text-[13px] px-3 py-1 rounded-full bg-bg-like text-danger font-semibold cursor-pointer border-none transition-colors hover:opacity-80"
+            className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-brand font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
           >
             + 추가
           </button>
@@ -196,10 +190,10 @@ export default function OwnedTab({ routine }: OwnedTabProps) {
                   {/* 삭제 버튼 오버레이 */}
                   <button
                     onClick={() => removeDisliked(item.dislikedProductId)}
-                    className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-white/90 shadow-sm border border-border cursor-pointer z-10 transition-colors hover:bg-white"
+                    className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center cursor-pointer z-10 transition-colors"
                     aria-label="기피 제품 삭제"
                   >
-                    <Minus size={11} className="text-danger" />
+                    <Minus size={16} />
                   </button>
                 </div>
               ))}
