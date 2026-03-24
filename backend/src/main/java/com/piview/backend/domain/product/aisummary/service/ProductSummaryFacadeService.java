@@ -1,6 +1,5 @@
 package com.piview.backend.domain.product.aisummary.service;
 
-import com.piview.backend.domain.product.aisummary.dto.AiSummaryResponse;
 import com.piview.backend.domain.product.aisummary.dto.ProductLine12SummaryResponse;
 import com.piview.backend.domain.product.catalog.repository.ProductIngredientRepository;
 import com.piview.backend.domain.product.catalog.repository.ProductRepository;
@@ -22,7 +21,7 @@ public class ProductSummaryFacadeService {
   private final ProductIngredientRepository productIngredientRepository;
   private final ProductRepository productRepository;
   private final AiSummaryAsyncService aiSummaryAsyncService;
-  private final RecommendationService recommendationService;
+  private final AiRecommendationService aiRecommendationService;
 
   @Transactional(readOnly = true)
   public CompletableFuture<ProductLine12SummaryResponse> getPersonalizedSummary(Long userId, Long productId) {
@@ -36,7 +35,7 @@ public class ProductSummaryFacadeService {
         .orElseThrow(() -> new IllegalArgumentException("해당 제품의 성분 정보를 찾을 수 없습니다."));
 
     // Line 2: DB 기반 사용자 피부 고민 맞춤형 메시지 생성 (동기 처리)
-    String personalizedMessage = recommendationService.generateLine2Message(userId, product);
+    String personalizedMessage = aiRecommendationService.generateLine2Message(userId, product);
 
     //  Line 1을 위한 LLM 프롬프트 Context 조립
     String userSkinType = (user.getMySkinType() != null) ? user.getMySkinType().name() : "알 수 없음";
