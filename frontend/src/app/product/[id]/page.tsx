@@ -14,10 +14,12 @@ import {
   Heart,
   Scale,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useProductDetail,
+  useProductAiSummary,
   useLike,
   useAddMyCos,
   useRemoveMyCos,
@@ -94,11 +96,9 @@ function ProductDetailInner() {
   );
   const owned = !!myCosItem;
   const { toggleLike } = useLike();
-  // 초기값은 API 응답의 liked, 토글 시 로컬에서 즉시 반전
   const [isLiked, setIsLiked] = useState<boolean | null>(null);
   const resolvedIsLiked =
     isLiked !== null ? isLiked : (productData?.liked ?? false);
-
 
   const [showRoutineCompare, setShowRoutineCompare] = useState(false);
   const [selectedRoutineProductIndex, setSelectedRoutineProductIndex] =
@@ -109,12 +109,17 @@ function ProductDetailInner() {
   const { mutate: removeDraftItem } = useRemoveProductFromDraftMutation();
   const { data: draftItems = [] } = useDraftQuery();
 
-  // 성별에 따라 올바른 루틴 스텝 선택 (남성: 쉐이빙/올인원 포함)
   const gender = useUserStore(selectGender);
   const routineSteps = getRoutineSteps(gender);
 
+  // AI 요약 — 버튼 클릭 시 refetch()로 수동 호출
+  const {
+    data: aiSummary,
+    isFetching: isAiFetching,
+    refetch: fetchAiSummary,
+  } = useProductAiSummary(id ? Number(id) : null);
+
   // 내루틴 비교 — 메인 루틴 API에서 같은 스텝 제품 추출
-  // productData.categoryName API 미지원 → ProductCard href로 넘어온 category searchParam 사용
   const { data: mainRoutineData } = useMainRoutineQuery();
 
   const categoryFromUrl = searchParams.get("category");
@@ -137,15 +142,13 @@ function ProductDetailInner() {
 
   const sameCategoryRoutineProducts = effectiveCategoryName
     ? (() => {
-        // 현재 제품 카테고리가 속한 stepCode
         const currentStepCode = routineSteps.find((step) =>
-          step.categories.includes(effectiveCategoryName),
+          step.categories.some((c) => c.name === effectiveCategoryName),
         )?.code;
-        if (!currentStepCode) return allMainRoutineProducts; // categoryName 없으면 전체 표시
-        // 루틴 제품 중 같은 stepCode에 속한 것만
+        if (!currentStepCode) return allMainRoutineProducts;
         return allMainRoutineProducts.filter((p) => {
           const pStepCode = routineSteps.find((step) =>
-            step.categories.includes(p.category ?? ""),
+            step.categories.some((c) => c.name === (p.category ?? "")),
           )?.code;
           return pStepCode === currentStepCode;
         });
@@ -206,9 +209,9 @@ function ProductDetailInner() {
       return;
     }
     const matchedStep = routineSteps.find((step) =>
-      step.categories.includes(effectiveCategoryName ?? ""),
+      step.categories.some((c) => c.name === (effectiveCategoryName ?? "")),
     );
-    const columnId = matchedStep?.columnId ?? 3; // 기본값: PR(토너) columnId
+    const columnId = matchedStep?.columnId ?? 3;
     addDraftItem(
       { columnId, productId: productIdNum },
       {
@@ -247,7 +250,6 @@ function ProductDetailInner() {
   const total = safe + caution + danger + unknown;
   const allergenList = productData.allergenIngredients ?? [];
   const dangerIngredients = productData.cautionIngredients ?? [];
-  // 피부타입별 점수 — 순서 고정(건성/지성/복합성/수부지) + 한글 변환
   const SKIN_TYPE_ORDER = ["dry", "oily", "combination", "subuji"];
   const SKIN_TYPE_KO: Record<string, string> = {
     dry: "건성",
@@ -436,7 +438,7 @@ function ProductDetailInner() {
       </div>
 
       <div className="pb-8">
-        {/* 이미지 카드 — 아래 섹션과 동일한 스타일, 이미지보다 살짝 큰 패딩 */}
+        {/* 이미지 카드 */}
         <div className="mx-5 mb-3 rounded-2xl bg-white overflow-hidden">
           <div className="relative w-full aspect-2/1">
             {productData.imageUrl ? (
@@ -448,9 +450,16 @@ function ProductDetailInner() {
                 className="object-contain p-4"
               />
             ) : null}
+            <span
+              className="absolute inset-0 flex items-center justify-center text-[80px]"
+              hidden={!!productData.imageUrl}
+            >
+              🧴
+            </span>
           </div>
         </div>
 
+        {/* 제품 정보 카드 */}
         <div className="mx-5 rounded-2xl bg-white p-4 mb-3">
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="flex-1 min-w-0">
@@ -470,9 +479,10 @@ function ProductDetailInner() {
                   setShowRoutineCompare(true);
                 }
               }}
-              className="flex items-center gap-1 px-2.5 h-7 rounded-lg border cursor-pointer transition-all active:scale-[0.96] text-[12px] font-semibold shrink-0 border-border bg-white text-text-hint"
+              className="flex items-center gap-1 px-2.5 h-7 rounded-lg border cursor-pointer transition-all active:scale-[0.96] text-[11px] font-semibold shrink-0 border-border bg-white text-text-hint"
             >
-              내루틴과 비교하기
+              <Scale size={11} />
+              내루틴 비교하기
             </button>
           </div>
 
@@ -541,9 +551,9 @@ function ProductDetailInner() {
               )}
               <button
                 onClick={handleToggleOwned}
-                className={`flex items-center justify-center gap-1 w-17 h-8 rounded-xl cursor-pointer transition-all active:scale-[0.98] text-[12px] font-semibold border ${owned ? "border-brand-light bg-brand-bg text-brand" : "border-border-warm bg-white text-text-hint"}`}
+                className={`flex items-center justify-center gap-1 w-20 h-8 rounded-xl cursor-pointer transition-all active:scale-[0.98] text-xs font-semibold border ${owned ? "border-brand-light bg-brand-bg text-brand" : "border-border-warm bg-white text-text-hint"}`}
               >
-                {owned ? "보유 중" : "보유추가"}
+                <Package size={11} /> {owned ? "보유 중" : "보유추가"}
               </button>
             </div>
           </div>
@@ -562,6 +572,62 @@ function ProductDetailInner() {
             </p>
           </div>
         )}
+
+        {/* AI 요약 카드 */}
+        <div className="mx-5 rounded-2xl bg-white p-4 mb-3">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[16px] font-bold text-text-primary">
+              AI 분석 요약
+            </p>
+            {!aiSummary && (
+              <button
+                onClick={() => fetchAiSummary()}
+                disabled={isAiFetching}
+                className="flex items-center gap-1 px-3 h-7 rounded-lg border border-brand-light bg-brand-bg text-brand text-[11px] font-semibold cursor-pointer disabled:opacity-50 transition-all active:scale-[0.96]"
+              >
+                {isAiFetching ? (
+                  <Loader2 size={11} className="animate-spin" />
+                ) : (
+                  <Sparkles size={11} />
+                )}
+                {isAiFetching ? "분석 중..." : "AI 요약 보기"}
+              </button>
+            )}
+          </div>
+
+          {isAiFetching && (
+            <div className="flex items-center justify-center py-6 gap-2 text-text-muted">
+              <Loader2 size={18} className="animate-spin opacity-50" />
+              <p className="text-xs">AI가 제품을 분석하고 있어요...</p>
+            </div>
+          )}
+
+          {aiSummary && !isAiFetching && (
+            <div className="flex flex-col gap-3">
+              {aiSummary.line1AiSummary && (
+                <p className="text-xs text-text-primary leading-[1.6]">
+                  {aiSummary.line1AiSummary}
+                </p>
+              )}
+              {aiSummary.line2PersonalizedMsg && (
+                <p className="text-xs text-brand leading-[1.6] font-semibold">
+                  {aiSummary.line2PersonalizedMsg}
+                </p>
+              )}
+              {aiSummary.line3AiSummary && (
+                <p className="text-xs text-text-primary leading-[1.6]">
+                  {aiSummary.line3AiSummary}
+                </p>
+              )}
+            </div>
+          )}
+
+          {!aiSummary && !isAiFetching && (
+            <p className="text-xs text-text-muted">
+              버튼을 눌러 이 제품의 AI 분석 요약을 확인해보세요.
+            </p>
+          )}
+        </div>
 
         {ingredients.length > 0 && (
           <div
@@ -687,7 +753,6 @@ function ProductDetailInner() {
           )}
 
         <div className="mx-5 my-5">
-          {/* 4번: 성분 없으면 탭 숨김 */}
           {ingredients.length > 0 && (
             <div className="flex rounded-xl p-1 bg-[#EEEBE4]">
               {[
@@ -711,7 +776,6 @@ function ProductDetailInner() {
         </div>
 
         <div className="mx-5 mb-8">
-          {/* 4번: 성분 없을 때 안내 */}
           {ingredients.length === 0 ? (
             <div className="rounded-2xl bg-white p-6 flex flex-col items-center gap-2">
               <p className="text-sm font-semibold text-text-muted">
@@ -725,7 +789,6 @@ function ProductDetailInner() {
             <>
               {activeTab === "ingredients" && (
                 <div className="rounded-2xl bg-white overflow-hidden">
-                  {/* 제품 설명 — 피그마 순서: 설명 먼저 */}
                   {productData.description && (
                     <div className="p-4 border-b border-[#F5F5F5]">
                       <p className="font-semibold text-text-sub mb-1.5">
@@ -736,7 +799,6 @@ function ProductDetailInner() {
                       </p>
                     </div>
                   )}
-                  {/* 전성분 — 펼치기/접기 */}
                   {ingredientsKr.length > 0 && (
                     <div className="p-4 border-b border-[#F5F5F5]">
                       <div className="flex items-center justify-between mb-1.5">
@@ -775,14 +837,11 @@ function ProductDetailInner() {
                       </p>
                     </div>
                   )}
-                  {/* 성분 상세 리스트 */}
                   <div>
                     {(isIngredientListOpen
                       ? ingredients
                       : ingredients.slice(0, 3)
                     ).map((ingredient) => {
-                      // 5번: ewgScore 우선, 없으면 ewgGrade로 fallback
-                      // 정제수(Water;Aqua) — ewgScore 없을 시 1 하드코딩
                       const isWater =
                         ingredient.nameEn
                           ?.toLowerCase()
@@ -800,8 +859,6 @@ function ProductDetailInner() {
                                 ? 8
                                 : null);
                       const ewgColorInfo = getEwgColor(resolvedScore);
-
-                      // functions 쉼표 분리 → 칩 배열
                       const functionChips = ingredient.functions
                         ? ingredient.functions
                             .split(",")
@@ -814,7 +871,6 @@ function ProductDetailInner() {
                           key={`${ingredient.position}-${ingredient.nameKo}`}
                           className="flex items-start gap-3 px-4 py-3 not-last:border-b not-last:border-[#F5F5F5]"
                         >
-                          {/* EWG 물방울 + 숫자 */}
                           <div className="flex flex-col items-center shrink-0 w-7">
                             <EwgDropIcon color={ewgColorInfo.barColor} />
                             <span
@@ -825,17 +881,14 @@ function ProductDetailInner() {
                             </span>
                           </div>
                           <div className="flex-1 min-w-0">
-                            {/* 성분명 한글 */}
                             <p className="text-sm font-semibold text-text-primary leading-[1.3]">
                               {ingredient.nameKo}
                             </p>
-                            {/* 성분명 영문 */}
                             {ingredient.nameEn && (
                               <p className="text-xs text-text-muted my-0.5">
                                 {ingredient.nameEn}
                               </p>
                             )}
-                            {/* 기능 칩 — 피그마: "피부컨디셔닝제, 용제" */}
                             {functionChips.length > 0 && (
                               <p className="text-xs text-text-hint leading-[1.6] mt-0.5">
                                 {functionChips.join(", ")}
