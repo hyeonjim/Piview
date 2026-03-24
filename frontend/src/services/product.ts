@@ -18,6 +18,7 @@ import type {
   ProductCompareResponse,
   RecommendRequestDto,
   RecommendResponseDto,
+  ProductAiSummaryResponse,
 } from "@/types/product";
 
 export const productService = {
@@ -96,5 +97,11 @@ export const productService = {
         "/recommendations/products",
         request,
       )
+      .then((res) => res.data.data),
+
+  // GET /products/{productId}/summary — AI 3줄 요약 + 맞춤 추천 메시지
+  getAiSummary: (productId: number): Promise<ProductAiSummaryResponse> =>
+    client
+      .get<ApiResponse<ProductAiSummaryResponse>>(`/products/${productId}/summary`)
       .then((res) => res.data.data),
 };
