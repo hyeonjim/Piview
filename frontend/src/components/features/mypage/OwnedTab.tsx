@@ -11,17 +11,12 @@ import {
   useRemoveMyCos,
   useDislikedProductsQuery,
   useRemoveDislikedProduct,
+  useDraftQuery,
 } from "@/hooks";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
 import { PAGE_SIZE } from "@/constants/pagination";
-import type { LocalProduct } from "@/stores";
 
-interface OwnedTabProps {
-  // 루틴 등록 배지 표시용
-  routine: Record<string, LocalProduct[]>;
-}
-
-export default function OwnedTab({ routine }: OwnedTabProps) {
+export default function OwnedTab() {
   // ── 모달 상태 ──────────────────────────────────────────────────
   const [openOwnedModal, setOpenOwnedModal] = useState(false);
   const [openAvoidModal, setOpenAvoidModal] = useState(false);
@@ -30,22 +25,24 @@ export default function OwnedTab({ routine }: OwnedTabProps) {
   const [ownedPage, setOwnedPage] = useState(1);
   const [avoidPage, setAvoidPage] = useState(1);
 
+  // ── 루틴 draft 기반 배지 표시 ────────────────────────────────
+  // draft에 포함된 productId Set — isInRoutine 판별에 사용
+  const { data: draftItems = [] } = useDraftQuery();
+  const draftProductIds = new Set(draftItems.map((item) => item.product.productId));
+
   // ── 보유 제품 (myCos) ──────────────────────────────────────────
   const { data: myCosItems = [] } = useMyCosQuery();
   const { mutate: removeMyCos } = useRemoveMyCos();
 
   // MyCosItem → ProductCard props 변환
   const ownedProducts = myCosItems.map((item) => ({
-    id: item.id, // myCosId — 삭제에 사용
-    productId: item.productId,
-    brand: item.brand,
-    name: item.productName,
-    category: item.category,
-    imageUrl: item.imageUrl ?? undefined,
-    skinTypes: [
-      item.topSkinType ? fromSkinTypeEnum(item.topSkinType) : null,
-      item.top2SkinType ? fromSkinTypeEnum(item.top2SkinType) : null,
-    ].filter(Boolean) as string[],
+    id: item.myCosId, // myCosId — 삭제에 사용
+    productId: item.productInfo.productId,
+    brand: item.productInfo.brandName,
+    name: item.productInfo.name,
+    category: item.productInfo.categoryName,
+    imageUrl: item.productInfo.imageUrl ?? undefined,
+    skinTypes: item.productInfo.skinTypes.map(fromSkinTypeEnum),
   }));
 
   const ownedTotalPages = Math.ceil(ownedProducts.length / PAGE_SIZE) || 1;
@@ -54,13 +51,9 @@ export default function OwnedTab({ routine }: OwnedTabProps) {
     ownedPage * PAGE_SIZE,
   );
 
-  // 루틴 배지 — 루틴에 포함된 제품인지 확인 (productId 기준)
-  const isInRoutine = (productId?: number) => {
-    if (!productId) return false;
-    return Object.values(routine)
-      .flat()
-      .some((routineProduct) => String(routineProduct.id) === String(productId));
-  };
+  // 루틴 배지 — draft에 포함된 제품인지 확인 (productId 기준)
+  const isInRoutine = (productId?: number) =>
+    !!productId && draftProductIds.has(productId);
 
   // ── 기피 제품 (disliked) ───────────────────────────────────────
   const { data: dislikedItems = [] } = useDislikedProductsQuery();
@@ -73,7 +66,7 @@ export default function OwnedTab({ routine }: OwnedTabProps) {
   );
 
   return (
-    <div className="px-4 pb-24 pt-4 flex flex-col gap-20">
+    <div className="px-4 pb-20 pt-4 flex flex-col gap-20">
       {/* ── 보유 제품 섹션 ─────────────────────────────────────── */}
       <section>
         <div className="flex items-center justify-between mb-1">
@@ -118,19 +111,13 @@ export default function OwnedTab({ routine }: OwnedTabProps) {
                     showLike={false}
                     inRoutine={isInRoutine(product.productId)}
                   />
-                  {/* 루틴 배지 — 카드 우상단 오버레이 */}
-                  {isInRoutine(product.productId) && (
-                    <span className="absolute top-2 right-8 text-[10px] px-1.5 py-px rounded-[4px] font-bold bg-brand-bg text-brand z-10">
-                      루틴
-                    </span>
-                  )}
                   {/* 삭제 버튼 오버레이 */}
                   <button
                     onClick={() => removeMyCos(product.id)}
-                    className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-white/90 shadow-sm border border-border cursor-pointer z-10 transition-colors hover:bg-white"
+                    className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full cursor-pointer z-10 transition-colors hover:bg-white"
                     aria-label="보유 제품 삭제"
                   >
-                    <Minus size={11} className="text-text-muted" />
+                    <Minus size={16} className="text-text-muted" />
                   </button>
                 </div>
               ))}
@@ -158,7 +145,7 @@ export default function OwnedTab({ routine }: OwnedTabProps) {
           </div>
           <button
             onClick={() => setOpenAvoidModal(true)}
-            className="text-[13px] px-3 py-1 rounded-full bg-bg-like text-danger font-semibold cursor-pointer border-none transition-colors hover:opacity-80"
+            className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-brand font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
           >
             + 추가
           </button>
@@ -196,10 +183,10 @@ export default function OwnedTab({ routine }: OwnedTabProps) {
                   {/* 삭제 버튼 오버레이 */}
                   <button
                     onClick={() => removeDisliked(item.dislikedProductId)}
-                    className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-white/90 shadow-sm border border-border cursor-pointer z-10 transition-colors hover:bg-white"
+                    className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center cursor-pointer z-10 transition-colors"
                     aria-label="기피 제품 삭제"
                   >
-                    <Minus size={11} className="text-danger" />
+                    <Minus size={16} />
                   </button>
                 </div>
               ))}

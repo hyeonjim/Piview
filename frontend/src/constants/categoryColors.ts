@@ -178,18 +178,3 @@ export const SKIN_TYPE_LABELS_FOR_FILTER = [
   "복합성",
   "수부지",
 ] as const;
-
-// ── EWG 등급 색상 ──────────────────────────────────────────────────────────
-export function getEwgColor(grade: number | null | undefined): {
-  bg: string;
-  text: string;
-  barColor: string;
-} {
-  if (grade == null)
-    return { bg: "#F5F5F5", text: "#9E9E9E", barColor: "#E0E0E0" };
-  if (grade <= 2)
-    return { bg: "#E8F5E9", text: "#2E7D32", barColor: "#4CAF50" };
-  if (grade <= 6)
-    return { bg: "#FFF8E1", text: "#F57F17", barColor: "#FFB300" };
-  return { bg: "#FFEBEE", text: "#C62828", barColor: "#F44336" };
-}

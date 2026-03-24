@@ -1,8 +1,36 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { WELCOME_SLIDES } from "@/constants/_mock/welcomeSlides";
+// 웰컴 슬라이드 데이터 (welcome 페이지 전용)
+interface WelcomeSlide {
+  image: string;
+  title: string;
+  subtitle: string;
+}
+
+const WELCOME_SLIDES: WelcomeSlide[] = [
+  {
+    image:
+      "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+    title: "Discover\nYour Glow",
+    subtitle: "당신의 피부에 맞는 특별한 케어를\n지금 시작하세요.",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1666025062728-c33a25e8ee3f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+    title: "Personalized\nFor You",
+    subtitle: "과학적 분석으로 나만의\n스킨케어 루틴을 설계합니다.",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1765964492963-b0aa8c172431?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+    title: "Care &\nAttention",
+    subtitle: "AI 기반 피부 진단과 성분 분석으로\n정확한 맞춤 추천을 경험하세요.",
+  },
+];
+
 import { useUserStore } from "@/stores";
 import { authService } from "@/services/auth";
 
@@ -118,10 +146,12 @@ export default function WelcomePage() {
             opacity: index === currentSlide ? 1 : 0,
           }}
         >
-          <img
+          <Image
             src={slideItem.image}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover object-[center_30%]"
+            fill
+            className="object-cover object-[center_30%]"
+            priority={index === 0}
           />
         </div>
       ))}

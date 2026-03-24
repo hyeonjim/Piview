@@ -15,7 +15,6 @@
  *   - useRemoveProductFromDraftMutation 임시 루틴에서 제품 삭제
  *   - useCreateRoutineMutation         (최종) 루틴 생성 및 저장
  *   - useSetMainRoutineMutation        메인 루틴 선택
- *   - useUpdateRoutineOrderMutation    루틴 내 제품 순서 수정
  *   - useDeleteRoutineMutation         루틴 삭제
  */
 
@@ -27,7 +26,6 @@ import type {
   RoutineListResponse,
   RoutineResponse,
   CreateRoutineRequest,
-  RoutineOrderUpdateRequest,
   EditRoutineLoadResponse,
   UpdateRoutineRequest,
 } from "@/types/routine";
@@ -260,31 +258,6 @@ export function useSetMainRoutineMutation() {
       // 목록 & 메인 루틴 캐시 동기화
       queryClient.invalidateQueries({ queryKey: queryKeys.routineList });
       queryClient.invalidateQueries({ queryKey: queryKeys.routineMain });
-    },
-  });
-}
-
-/**
- * 루틴 내 제품 순서 수정
- * PATCH /api/v1/routines/{routineId}/order
- */
-export function useUpdateRoutineOrderMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      routineId,
-      request,
-    }: {
-      routineId: number;
-      request: RoutineOrderUpdateRequest;
-    }) => routineService.updateRoutineOrder(routineId, request),
-
-    onSuccess: (_data, variables) => {
-      // 해당 루틴 상세 캐시 무효화
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.routineDetail(variables.routineId),
-      });
     },
   });
 }

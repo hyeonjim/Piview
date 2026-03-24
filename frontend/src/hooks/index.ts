@@ -39,7 +39,6 @@ export {
   useRemoveProductFromDraftMutation,
   useCreateRoutineMutation,
   useSetMainRoutineMutation,
-  useUpdateRoutineOrderMutation,
   useDeleteRoutineMutation,
   useLoadRoutineToDraftMutation,
   useUpdateRoutineMutation,

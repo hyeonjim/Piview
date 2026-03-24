@@ -78,12 +78,12 @@ export default function RecommendPage() {
   const { mutate: addMyCos } = useAddMyCos();
   const { mutate: removeMyCos } = useRemoveMyCos();
   const isOwned = (id: number) =>
-    myCosData.some((item) => (item.productId ?? item.id) === id);
+    myCosData.some((item) => item.productInfo.productId === id);
   const handleToggleOwned = (productId: number) => {
     const owned = myCosData.find(
-      (item) => (item.productId ?? item.id) === productId,
+      (item) => item.productInfo.productId === productId,
     );
-    if (owned) removeMyCos(owned.id);
+    if (owned) removeMyCos(owned.myCosId);
     else addMyCos(productId);
   };
 
