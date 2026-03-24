@@ -7,7 +7,7 @@ POST /chat/query  ← 사용자 질문 → 챗봇 응답
 from fastapi import APIRouter, HTTPException
 
 from schemas.chatbot import ChatbotQueryRequest, ChatbotQueryResponse
-from services.chatbot.service import chatbot_service
+from services.chatbot.generation import chatbot_service
 
 router = APIRouter()
 
