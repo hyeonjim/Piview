@@ -1,3 +1,9 @@
+"""LLM 답변 후처리.
+
+프롬프트로 최대한 막더라도, 모델은 종종 딱딱한 표현이나 과한 단정 문구를 남깁니다.
+이 단계는 모델 출력을 뒤엎기보다, 자주 발생하는 어색한 표현만 얕게 정리합니다.
+"""
+
 import re
 
 
@@ -25,6 +31,12 @@ ANSWER_REPLACEMENTS = {
 
 
 def postprocess_answer(answer: str) -> str:
+    """최종 응답 문장을 가볍게 정리합니다.
+
+    규칙은 보수적으로 유지합니다.
+    너무 공격적으로 치환하면 문맥이 망가질 수 있어서,
+    실제로 반복적으로 튀는 표현만 교정 대상으로 둡니다.
+    """
     cleaned = answer.strip()
     for before, after in ANSWER_REPLACEMENTS.items():
         cleaned = cleaned.replace(before, after)

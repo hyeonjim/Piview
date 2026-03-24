@@ -1,3 +1,5 @@
+"""Retrieval 결과를 API 응답 친화적인 형태로 변환하는 함수들."""
+
 from schemas.chatbot import ChatbotCitation, ChatbotProductCandidate
 from services.chatbot.retrieval.parsers import (
     filter_display_concerns,
@@ -10,6 +12,7 @@ def to_product_candidate(
     result: ProductSearchResult,
     preferred_concerns: set[str],
 ) -> ChatbotProductCandidate:
+    """검색 결과 1개를 카드 노출용 후보 객체로 바꿉니다."""
     return ChatbotProductCandidate(
         productId=result.product_id,
         name=result.name,
@@ -22,6 +25,7 @@ def to_citation(
     result: ProductSearchResult,
     preferred_concerns: set[str],
 ) -> ChatbotCitation:
+    """생성 모델이 참고할 수 있도록, 짧은 citation 텍스트를 만듭니다."""
     display_concerns = filter_display_concerns(result.concern_names, preferred_concerns)
     concern_text = f" / 관련 고민: {', '.join(display_concerns)}" if display_concerns else ""
     return ChatbotCitation(
@@ -37,6 +41,10 @@ def build_retrieval_context(
     message: str,
     avoid_terms: set[str],
 ) -> str:
+    """LLM에 넣을 검색 요약 텍스트를 만듭니다.
+
+    여기서는 카드에 뜬 후보를 짧게 나열하고, 말하면 안 되는 표현 제약도 함께 전달합니다.
+    """
     lines = ["상품 검색으로 찾은 후보입니다:"]
     for result in results[:5]:
         line = f"- {result.name}"
@@ -67,6 +75,7 @@ def _build_reason(
     result: ProductSearchResult,
     preferred_concerns: set[str],
 ) -> str:
+    """카드 하단에 노출할 짧은 추천 이유를 만듭니다."""
     reason_parts: list[str] = []
     if result.category_name:
         reason_parts.append(f"{result.category_name} 카테고리")

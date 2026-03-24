@@ -1,3 +1,10 @@
+"""Chatbot retrieval orchestration.
+
+이 모듈은 "질문을 검색 가능한 형태로 바꾸고, 검색 결과를 후보 묶음으로 만든다"는
+최상위 흐름만 담당합니다. 세부 parsing, scoring, response formatting은
+하위 패키지로 나눠서 관리합니다.
+"""
+
 from core.settings import get_settings
 from schemas.chatbot import ChatbotQueryRequest
 from services.chatbot.retrieval.builders import (
@@ -24,11 +31,16 @@ from services.chatbot.retrieval.scoring import fuse_results
 
 class ChatbotRetrievalService:
     async def retrieve(self, request: ChatbotQueryRequest) -> RetrievalBundle:
+        """질문 하나를 RetrievalBundle로 변환합니다.
+
+        RetrievalBundle은 이후 generation 단계가 그대로 소비하는 표준 중간 산출물입니다.
+        """
         applied_filters = collect_applied_filters(request)
         preferred_categories = extract_preferred_categories(request.message)
         avoid_terms = extract_avoid_terms(request)
 
         if needs_clarifying_question(request.message, preferred_categories):
+            # 이 경우는 상품 추천을 밀어붙이는 것보다, 질문을 한 번 더 좁히는 게 자연스럽습니다.
             return RetrievalBundle(
                 response_type="clarifying_question",
                 applied_filters=applied_filters,
@@ -47,6 +59,7 @@ class ChatbotRetrievalService:
             missing_categories = extract_missing_categories(request.message)
             search_query = build_search_query(request)
 
+            # 벡터 검색은 의미적 유사성을, 키워드 검색은 직접 표현된 단서를 더 잘 잡습니다.
             vector_results = product_vector_service.query(
                 query_text=search_query,
                 limit=max(settings.chatbot_top_k, settings.chatbot_candidate_pool),
@@ -60,6 +73,7 @@ class ChatbotRetrievalService:
                 )
                 if result.product_id not in excluded_product_ids
             ]
+            # 실제 추천 순서는 검색 결과 자체가 아니라, fusion 단계에서 다시 계산됩니다.
             results = fuse_results(
                 message=request.message,
                 vector_results=vector_results,
@@ -78,9 +92,10 @@ class ChatbotRetrievalService:
                     "상품 검색 인덱스를 아직 사용할 수 없습니다. "
                     f"현재 검색은 비활성화 상태이며 오류는 다음과 같습니다: {exc}"
                 ),
-            )
+                )
 
         if not results:
+            # 상품을 못 찾았더라도 generation 단계는 이 문맥을 이용해 일반 가이드는 만들 수 있습니다.
             return RetrievalBundle(
                 response_type="informational",
                 applied_filters=applied_filters,
