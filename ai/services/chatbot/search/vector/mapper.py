@@ -1,3 +1,5 @@
+"""Chroma raw query 결과를 ProductSearchResult로 바꾸는 변환기."""
+
 from services.chatbot.search.vector.models import ProductSearchResult
 
 
@@ -6,6 +8,7 @@ def map_query_results(
     limit: int,
     exclude_product_ids: set[int],
 ) -> list[ProductSearchResult]:
+    """외부 저장소 형식을 내부 표준 검색 결과 형식으로 정규화합니다."""
     documents = raw.get("documents", [[]])[0]
     metadatas = raw.get("metadatas", [[]])[0]
     distances = raw.get("distances", [[]])[0]
@@ -13,10 +16,12 @@ def map_query_results(
     results: list[ProductSearchResult] = []
     seen_product_ids: set[int] = set()
     for document, metadata, distance in zip(documents, metadatas, distances):
+        # 메타데이터가 없으면 상품 정보를 복원할 수 없으므로 버립니다.
         if not metadata:
             continue
 
         product_id = int(metadata["productId"])
+        # 같은 상품이 여러 번 나오거나, 상위 계층에서 제외하라고 한 상품은 걸러냅니다.
         if product_id in exclude_product_ids or product_id in seen_product_ids:
             continue
         seen_product_ids.add(product_id)

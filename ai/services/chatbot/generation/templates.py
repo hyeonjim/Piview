@@ -1,3 +1,10 @@
+"""LLM 없이도 안전하게 내려줄 수 있는 짧은 템플릿 답변 모음.
+
+생성 모델이 실패하더라도 UX를 완전히 깨지 않게 하기 위한 보조 계층입니다.
+답변 톤은 자연스럽게 유지하되, 검색 카드와 충돌하는 내용을 새로 발명하지 않도록
+문구를 짧고 보수적으로 유지합니다.
+"""
+
 from schemas.chatbot import ChatbotQueryRequest
 from services.chatbot.retrieval import RetrievalBundle
 
@@ -12,6 +19,7 @@ def build_fallback_answer(
     request: ChatbotQueryRequest,
     retrieval_bundle: RetrievalBundle,
 ) -> str:
+    """LLM이 완전히 실패했을 때 보여줄 최후의 답변을 만듭니다."""
     if not retrieval_bundle.products:
         return (
             "지금 답변 생성이 잠시 불안정합니다. 잠시 후 다시 시도해 주세요. "
@@ -35,6 +43,10 @@ def build_grounded_template_answer(
     request: ChatbotQueryRequest,
     retrieval_bundle: RetrievalBundle,
 ) -> str:
+    """카드 후보는 있지만 자연어 생성만 실패한 경우의 안전한 템플릿 답변입니다.
+
+    여기서는 제품명을 길게 반복하기보다, 왜 이런 방향으로 좁혔는지에만 집중합니다.
+    """
     message = request.message
     reason = retrieval_bundle.products[0].reason or ""
     skin_problem_hint = build_skin_problem_hint(request)
@@ -65,6 +77,7 @@ def build_grounded_template_answer(
 
 
 def build_clarifying_answer(message: str) -> str:
+    """피부 진단처럼 보이지 않도록, 질문을 좁히는 짧은 되물음을 만듭니다."""
     if "문제인 것 같아" in message:
         return "지금 가장 불편한 쪽이 건조함인지, 자극인지, 번들거림인지부터 알려주실래요?"
     if any(term in message for term in ("필요한 게", "먼저 같이 정해")):
@@ -75,6 +88,7 @@ def build_clarifying_answer(message: str) -> str:
 
 
 def _build_fallback_category_hint(products) -> str:
+    """검색 결과 reason에서 카테고리 힌트를 추출해 짧은 설명에 재사용합니다."""
     category_names = [
         category_hint
         for category_hint in (extract_category_hint(product.reason) for product in products)
@@ -84,6 +98,7 @@ def _build_fallback_category_hint(products) -> str:
 
 
 def _build_avoid_hint(request: ChatbotQueryRequest) -> str:
+    """userContext에만 있는 회피 성분은 fallback 문구에도 짧게 반영합니다."""
     if not request.userContext or not request.userContext.dislikedIngredientNames:
         return ""
     return f" {', '.join(request.userContext.dislikedIngredientNames)}는 우선 피하는 방향으로 봤습니다."
