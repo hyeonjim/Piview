@@ -1,8 +1,10 @@
 package com.piview.backend.domain.product.aisummary.service;
 
 import com.piview.backend.domain.product.entity.Product;
+import com.piview.backend.domain.skin.common.SkinTypeEnum;
 import com.piview.backend.domain.skin.survey.entity.MySkin;
 import com.piview.backend.domain.skin.survey.repository.MySkinRepository;
+import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -42,15 +44,19 @@ public class AiRecommendationService {
 
   // 📌 피부 고민(String)과 제품 성분(Boolean) 정밀 매핑
   private boolean checkProductSolvesProblem(String problem, Product product) {
+
+    boolean isForDrySkin = product.getTopSkinType() == SkinTypeEnum.dry;
+    boolean isTooOily = product.getOScore() != null && product.getOScore().compareTo(new BigDecimal("3.0")) > 0;
+
     return switch (problem) {
       case "여드름" ->
-          isTrue(product.getHasBenzoyl()) || isTrue(product.getHasAcid()); // 벤조일, BHA/AHA
+          (!isForDrySkin) && (isTrue(product.getHasBenzoyl()) || isTrue(product.getHasAcid()));
       case "미백", "기미/주근깨/잡티" ->
           isTrue(product.getHasNiacinamide()) || isTrue(product.getHasPureVitC()) || isTrue(product.getHasArbutin());
       case "주름/탄력", "노화방지-40대이상" -> // 5번, 6번 안티에이징 통합
           isTrue(product.getHasRetinol()) || isTrue(product.getHasCopperPep());
       case "피지", "블랙헤드", "각질" ->
-          isTrue(product.getHasAcid()); // 모공/각질류는 산성 성분(AHA/BHA) 매핑
+          (!isForDrySkin) && isTrue(product.getHasAcid());
       case "속건조", "진정" ->
           isTrue(product.getHasProtein()); // 수분/장벽/진정은 단백질 보습 케어로 매핑
       default -> false; // 아토피(1) 및 기타
