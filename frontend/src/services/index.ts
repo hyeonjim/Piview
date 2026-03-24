@@ -10,3 +10,4 @@ export { myCosService } from "./myCos";
 export { routineService } from "./routine";
 export { skinService } from "./skin";
 export { ocrService } from "./ocr";
+export { dislikedService } from "./disliked";

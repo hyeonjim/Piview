@@ -1,30 +1,21 @@
 /**
  * stores/useOwnedStore.ts
  * 보유제품 전역 상태 — 검색/추천 페이지 ↔ 마이페이지 공유
- * ⚠️ API 연동 시 toggleOwned 내에서 ownedService.toggle(product) 호출로 교체
+ * 실제 API 연동은 useMyCosQuery (hooks/queries/useMyCos.ts) 사용
  */
 
 import { create } from "zustand";
-
-// 보유 제품 최소 공통 타입 — SearchProduct/RecommendProduct 둘 다 호환
-export interface OwnedProduct {
-  id: string;
-  brand: string;
-  name: string;
-  category: string;
-  emoji?: string;
-  skinTypes?: string[];
-}
+import type { ProductViewModel } from "@/types/product/myCos";
 
 interface OwnedStore {
   /** 보유 제품 목록 */
-  ownedProducts: OwnedProduct[];
+  ownedProducts: ProductViewModel[];
   /** 보유 토글 — 없으면 추가, 있으면 제거 */
-  toggleOwned: (product: OwnedProduct) => void;
-  /** 특정 제품이 보유 상태인지 확인 */
-  isOwned: (id: string) => boolean;
-  /** 보유 제품 제거 */
-  removeOwned: (id: string) => void;
+  toggleOwned: (product: ProductViewModel) => void;
+  /** 특정 제품이 보유 상태인지 확인 (string/number ID 모두 지원) */
+  isOwned: (id: string | number) => boolean;
+  /** 보유 제품 제거 (string/number ID 모두 지원) */
+  removeOwned: (id: string | number) => void;
 }
 
 export const useOwnedStore = create<OwnedStore>((set, get) => ({
@@ -39,14 +30,15 @@ export const useOwnedStore = create<OwnedStore>((set, get) => ({
           : [...state.ownedProducts, product],
       };
     });
-    // ⚠️ API 연동 시 아래로 교체
-    // await ownedService.toggle(product.id);
   },
 
-  isOwned: (id) => get().ownedProducts.some((p) => p.id === id),
+  isOwned: (id) =>
+    get().ownedProducts.some((p) => String(p.id) === String(id)),
 
   removeOwned: (id) =>
     set((state) => ({
-      ownedProducts: state.ownedProducts.filter((p) => p.id !== id),
+      ownedProducts: state.ownedProducts.filter(
+        (p) => String(p.id) !== String(id),
+      ),
     })),
 }));

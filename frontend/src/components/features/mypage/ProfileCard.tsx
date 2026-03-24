@@ -82,9 +82,9 @@ export function ProfileCard({ name, skinType, ageGroup, gender }: Props) {
             <p style={META_TEXT_STYLE}>
               {[
                 ageGroup,
-                gender === "women"
+                gender === "WOMEN"
                   ? "여성"
-                  : gender === "men"
+                  : gender === "MEN"
                     ? "남성"
                     : null,
               ]
