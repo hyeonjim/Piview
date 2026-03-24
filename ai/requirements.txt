@@ -12,3 +12,5 @@ google-genai
 pydantic
 python-dotenv
 httpx
+chromadb
+pymysql
