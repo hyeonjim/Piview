@@ -28,4 +28,11 @@ public interface ProductConcernCacheRepository extends JpaRepository<ProductConc
         ORDER BY pcc.productId ASC, pcc.totalConcernScore DESC, sc.id ASC 
     """)
     List<ConcernView> findConcernViewsByProductIds(@Param("productIds") List<Long> productIds);
+
+    @Query("SELECT sc.concernName " +
+        "FROM ProductConcernCache pcc " +
+        "JOIN SkinConcerns sc ON pcc.skinConcernId = sc.id " +
+        "WHERE pcc.productId = :productId " +
+        "ORDER BY pcc.totalConcernScore DESC")
+    List<String> findTopConcernNamesByProductId(@Param("productId") Long productId);
 }
