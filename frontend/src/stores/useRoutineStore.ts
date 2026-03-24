@@ -100,6 +100,12 @@ interface RoutineStore {
 
   /** 저장된 루틴 삭제 */
   deleteSavedRoutine: (routineId: string) => void;
+
+  // UI 상태 (메모리 전용) — 마이페이지 재방문 시 마지막 화면 복원
+
+  /** RoutineTab에서 선택된 저장 루틴 ID (null = 드래프트 편집 뷰) */
+  selectedRoutineId: number | null;
+  setSelectedRoutineId: (id: number | null) => void;
 }
 
 // 🏗️ 스토어 생성
@@ -119,6 +125,10 @@ export const useRoutineStore = create<RoutineStore>()(
       isMainRoutine: true,
       currentRoutineName: "내 루틴",
       savedRoutines: [],
+
+      // UI 상태 (메모리 전용)
+      selectedRoutineId: null,
+      setSelectedRoutineId: (id) => set({ selectedRoutineId: id }),
 
       // 서버 연동용 액션
 

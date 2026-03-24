@@ -15,17 +15,17 @@ export const SETTINGS_SKIN_TYPES = [
   { id: "수부지",label: "수부지"},
 ] as const;
 
-/** 설정 페이지 피부 고민 */
+/** 설정 페이지 피부 고민 — 백엔드 SkinProblemMapper 키값과 일치 */
 export const SETTINGS_SKIN_CONCERNS = [
-  { id: "atopy",        label: "아토피"         },
-  { id: "acne",         label: "여드름"         },
-  { id: "whitening",    label: "미백"           },
-  { id: "sebum",        label: "피지/블랙헤드"  },
-  { id: "pigmentation", label: "기미/주근깨/잡티"},
-  { id: "innerDryness", label: "속건조"         },
-  { id: "wrinkles",     label: "주름/탄력"      },
-  { id: "redness",      label: "홍조"           },
-  { id: "keratin",      label: "각질"           },
+  { id: "acne",         label: "여드름"          },
+  { id: "whitening",    label: "미백"            },
+  { id: "pigmentation", label: "기미/주근깨/잡티" },
+  { id: "wrinkles",     label: "주름/탄력"       },
+  { id: "sebum",        label: "피지"            },
+  { id: "blackhead",    label: "블랙헤드"        },
+  { id: "innerDryness", label: "속건조"          },
+  { id: "redness",      label: "홍조"            },
+  { id: "keratin",      label: "각질"            },
 ] as const;
 
 /** 설정 페이지 알러지·기피 성분 */

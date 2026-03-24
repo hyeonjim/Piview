@@ -39,20 +39,3 @@ export const MAIN_CATEGORIES: Record<string, string[]> = {
   ],
 };
 
-/** 검색/추천 페이지 브랜드 목록 (API 연동 전 mock) */
-export const BRANDS: string[] = [
-  "타가",
-  "생앤선",
-  "미샤",
-  "피터스",
-  "반도",
-  "라운드랩",
-  "아누아",
-  "코스알엑스",
-  "이니스프리",
-  "피지오겔",
-  "아벤느",
-  "세타필",
-  "라로슈포제",
-  "넘버즈인",
-];
