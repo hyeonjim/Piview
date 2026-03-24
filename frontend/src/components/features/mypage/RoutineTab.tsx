@@ -894,6 +894,7 @@ function RoutineProductCard({
   onRemove,
   priority = false,
 }: RoutineProductCardProps) {
+  const [imgError, setImgError] = useState(false);
   return (
     <div
       data-drag-item
@@ -938,7 +939,7 @@ function RoutineProductCard({
 
           {/* 이미지 */}
           <div className="absolute inset-0 bg-[#F5F2EC]">
-            {product.imageUrl ? (
+            {product.imageUrl && !imgError ? (
               <Image
                 src={product.imageUrl}
                 alt={product.name ?? ""}
@@ -946,6 +947,7 @@ function RoutineProductCard({
                 sizes="88px"
                 priority={priority}
                 className="object-cover"
+                onError={() => setImgError(true)}
               />
             ) : (
               <div className="absolute inset-0 bg-gray-100" />

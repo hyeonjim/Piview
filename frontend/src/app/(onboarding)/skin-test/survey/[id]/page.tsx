@@ -5,9 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   GENDER_QUESTION,
   COMMON_QUESTIONS,
-  WOMEN_QUESTIONS,
-  MEN_QUESTIONS,
-  ALLERGY_QUESTION,
+  SKIN_PROBLEM_QUESTION,
 } from "@/constants";
 import { useSurveyStore } from "@/stores";
 import { useSurveySubmit } from "@/hooks";
@@ -22,12 +20,12 @@ const PROGRESS_TEXT_STYLE = {
   textAlign: "right" as const,
 };
 const CATEGORY_TEXT_STYLE = { fontSize: "15px" };
-const ALLERGY_BADGE_STYLE = {
+const SKIN_PROBLEM_BADGE_STYLE = {
   fontSize: "10px",
   padding: "2px 8px",
   borderRadius: "8px",
-  backgroundColor: "#FFF3E0",
-  color: "#E65100",
+  backgroundColor: "#E8F5E9",
+  color: "#2E7D32",
   fontWeight: 600,
 };
 const QUESTION_STYLE = {
@@ -40,61 +38,50 @@ const OPTION_ICON_STYLE = { fontSize: "20px", flexShrink: 0 };
 const CHECK_CIRCLE_STYLE = {
   width: "20px",
   height: "20px",
-  borderRadius: "50%",
 };
 const PREV_BTN_STYLE = { fontSize: "15px" };
 const NEXT_BTN_BASE = { borderRadius: "20px", fontSize: "15px" };
 
-/** 전체 질문 수 */
-const TOTAL_QUESTIONS = 8;
+/** 전체 질문 수: 성별(1) + 연령대(1) + Q3~Q6(4) + 피부고민(1) = 7 */
+const TOTAL_QUESTIONS = 7;
 
-function getQuestionByNumber(number: number, gender: "WOMEN" | "MEN") {
-  if (number === 1) return GENDER_QUESTION;
-  if (number === 2) return COMMON_QUESTIONS[0];
-  if (number === 3) return COMMON_QUESTIONS[1];
-  if (number === 4) return COMMON_QUESTIONS[2];
-  if (number >= 5 && number <= 7) {
-    const genderQuestions = gender === "MEN" ? MEN_QUESTIONS : WOMEN_QUESTIONS;
-    return genderQuestions[number - 5];
-  }
-  if (number === 8) return ALLERGY_QUESTION;
+/**
+ * 페이지 번호 → 질문 반환
+ * 1: 성별, 2: 연령대, 3~6: Q3~Q6(공통), 7: 피부고민
+ */
+function getQuestionByNumber(number: number) {
+  if (number === 1) return GENDER_QUESTION;       // id: -1
+  if (number === 2) return COMMON_QUESTIONS[0];   // id: 0  연령대
+  if (number === 3) return COMMON_QUESTIONS[1];   // id: 1  Q3
+  if (number === 4) return COMMON_QUESTIONS[2];   // id: 2  Q4
+  if (number === 5) return COMMON_QUESTIONS[3];   // id: 3  Q5
+  if (number === 6) return COMMON_QUESTIONS[4];   // id: 4  Q6
+  if (number === 7) return SKIN_PROBLEM_QUESTION; // id: 5  Q7 (다중선택)
   return null;
 }
 
 /**
- * 질문 선택지의 value → A/B/C/D 변환
- * 백엔드는 선택지 인덱스를 알파벳으로 받음
+ * answers[questionId] value → API A/B/C/D 변환
+ * Q3~Q6 value가 이미 "A"|"B"|"C"|"D" 이므로 options 인덱스로 변환
  */
 function valueToOption(
   questionId: number,
   value: string,
-  gender: "WOMEN" | "MEN",
 ): "A" | "B" | "C" | "D" {
-  let options: { value: string }[] = [];
-  if (questionId === 1) options = COMMON_QUESTIONS[1].options;
-  else if (questionId === 2) options = COMMON_QUESTIONS[2].options;
-  else if (questionId === 3)
-    options = (gender === "MEN" ? MEN_QUESTIONS : WOMEN_QUESTIONS)[0].options;
-  else if (questionId === 6) options = ALLERGY_QUESTION.options;
-  const idx = options.findIndex((o) => o.value === value);
+  const question = COMMON_QUESTIONS.find((q) => q.id === questionId);
+  const idx = question?.options.findIndex((o) => o.value === value) ?? -1;
   return (["A", "B", "C", "D"][idx] ?? "A") as "A" | "B" | "C" | "D";
 }
 
-/** ageGroup 값 → AgeGroup enum */
+/** ageGroup value → AgeGroup enum */
 function valueToAgeGroup(value: string): AgeGroup {
   const map: Record<string, AgeGroup> = {
-    "TEENS": "TEENS",
-    "TWENTIES": "TWENTIES",
-    "THIRTIES": "THIRTIES",
-    "FORTIES_PLUS": "FORTIES_PLUS",
+    TEENS: "TEENS",
+    TWENTIES: "TWENTIES",
+    THIRTIES: "THIRTIES",
+    FORTIES_PLUS: "FORTIES_PLUS",
   };
   return map[value] ?? "TWENTIES";
-}
-
-/** 피부 고민(id:5) 답변 → skinProblems 배열 */
-function valueToSkinProblems(concernValue: string): string[] {
-  if (!concernValue || concernValue === "") return [];
-  return [concernValue];
 }
 
 export default function SurveyPage({
@@ -106,37 +93,51 @@ export default function SurveyPage({
   const questionNumber = parseInt(id, 10);
 
   const router = useRouter();
-  const { gender, answers, analysisId, setGender, setAnswer, resetSurvey } =
-    useSurveyStore();
+  const {
+    gender,
+    answers,
+    skinProblems,
+    analysisId,
+    setGender,
+    setAnswer,
+    toggleSkinProblem,
+    resetSurvey,
+  } = useSurveyStore();
   const { mutate: submitSurvey, isPending } = useSurveySubmit();
 
-  const question = getQuestionByNumber(questionNumber, gender);
+  const question = getQuestionByNumber(questionNumber);
   if (!question) {
     router.replace("/skin-test/survey/1");
     return null;
   }
 
-  const selectedAnswer = answers[question.id];
-  const progress = (questionNumber / TOTAL_QUESTIONS) * 100;
-  const isLast = questionNumber === TOTAL_QUESTIONS;
-  const isAllergy = question.id === 6;
+  const isSkinProblem = question.id === 5;
   const isGender = question.id === -1;
+  const isLast = questionNumber === TOTAL_QUESTIONS;
+  const progress = (questionNumber / TOTAL_QUESTIONS) * 100;
+
+  const selectedAnswer = answers[question.id];
+  // Q7은 1개 이상 선택이면 통과, 나머지는 단일 선택 필수
+  const hasAnswer = isSkinProblem ? skinProblems.length > 0 : !!selectedAnswer;
 
   const selectAnswer = useCallback(
     (value: string) => {
+      if (isSkinProblem) {
+        toggleSkinProblem(value);
+        return;
+      }
       setAnswer(question.id, value);
       if (question.id === -1 && (value === "MEN" || value === "WOMEN")) {
         setGender(value as "WOMEN" | "MEN");
       }
     },
-    [question.id, setAnswer, setGender],
+    [question.id, isSkinProblem, setAnswer, setGender, toggleSkinProblem],
   );
 
   const goNext = () => {
-    if (!selectedAnswer || isPending) return;
+    if (!hasAnswer || isPending) return;
 
     if (isLast) {
-      // analysisId 없으면 photo 페이지로 복귀 (새로고침 등으로 store 유실된 경우)
       if (!analysisId) {
         router.replace("/skin-test/photo");
         return;
@@ -146,11 +147,11 @@ export default function SurveyPage({
       const request: SurveySubmitRequest = {
         gender: (answers[-1] as Gender) ?? gender,
         ageGroup: valueToAgeGroup(answers[0]),
-        question3: valueToOption(1, answers[1], gender),
-        question4: valueToOption(2, answers[2], gender),
-        question5: valueToOption(3, answers[3], gender),
-        question6: valueToOption(6, answers[6], gender),
-        skinProblems: valueToSkinProblems(answers[5]),
+        question3: valueToOption(1, answers[1]),
+        question4: valueToOption(2, answers[2]),
+        question5: valueToOption(3, answers[3]),
+        question6: valueToOption(4, answers[4]),
+        skinProblems,
       };
 
       submitSurvey(
@@ -158,16 +159,13 @@ export default function SurveyPage({
         {
           onSuccess: (data) => {
             resetSurvey();
-            // 응답의 mySkinType으로 결과 페이지 이동
             router.push(
               `/skin-test/result?type=${data.mySkinType.toLowerCase()}`,
             );
           },
           onError: () => {
-            // 실패해도 로컬 계산값으로 결과 페이지 이동
-            const fallback = answers[1] ?? "combination";
             resetSurvey();
-            router.push(`/skin-test/result?type=${fallback}`);
+            router.push(`/skin-test/result?type=combination`);
           },
         },
       );
@@ -217,15 +215,15 @@ export default function SurveyPage({
               width: "32px",
               height: "32px",
               borderRadius: "50%",
-              backgroundColor: isAllergy
-                ? "#FFF3E0"
+              backgroundColor: isSkinProblem
+                ? "#E8F5E9"
                 : isGender
                   ? "#E3F2FD"
                   : "var(--color-brand-bg)",
               fontSize: "11px",
               fontWeight: 700,
-              color: isAllergy
-                ? "#E65100"
+              color: isSkinProblem
+                ? "#2E7D32"
                 : isGender
                   ? "#1565C0"
                   : "var(--color-brand)",
@@ -233,21 +231,25 @@ export default function SurveyPage({
           >
             Q{questionNumber}
           </span>
-          {isAllergy && (
+          {isSkinProblem && (
             <span
               className="ml-2 inline-flex items-center"
-              style={ALLERGY_BADGE_STYLE}
+              style={SKIN_PROBLEM_BADGE_STYLE}
             >
-              🚨 성분 안전
+              ✅ 복수 선택 가능
             </span>
           )}
         </div>
         <h2 className="text-text-primary font-semibold" style={QUESTION_STYLE}>
           {question.question}
         </h2>
+
         <div className="flex flex-col gap-2.5 mt-6">
           {question.options.map((option) => {
-            const isSelected = selectedAnswer === option.value;
+            const isSelected = isSkinProblem
+              ? skinProblems.includes(option.value)
+              : selectedAnswer === option.value;
+
             return (
               <button
                 key={option.value}
@@ -273,14 +275,18 @@ export default function SurveyPage({
                     fontWeight: isSelected ? 600 : 400,
                     color: "var(--color-product-name)",
                     lineHeight: 1.4,
+                    flex: 1,
                   }}
                 >
                   {option.text}
                 </span>
                 {isSelected && (
                   <div
-                    className="ml-auto shrink-0 flex items-center justify-center bg-brand"
-                    style={CHECK_CIRCLE_STYLE}
+                    className="shrink-0 flex items-center justify-center bg-brand"
+                    style={{
+                      ...CHECK_CIRCLE_STYLE,
+                      borderRadius: isSkinProblem ? "4px" : "50%",
+                    }}
                   >
                     <svg width="11" height="8" viewBox="0 0 11 8" fill="none">
                       <path
@@ -315,14 +321,14 @@ export default function SurveyPage({
           style={{
             ...NEXT_BTN_BASE,
             backgroundColor:
-              selectedAnswer && !isPending ? "var(--color-brand)" : "#F0F0F0",
+              hasAnswer && !isPending ? "var(--color-brand)" : "#F0F0F0",
             color:
-              selectedAnswer && !isPending
+              hasAnswer && !isPending
                 ? "var(--color-bg-card)"
                 : "var(--color-text-disabled)",
-            cursor: selectedAnswer && !isPending ? "pointer" : "default",
+            cursor: hasAnswer && !isPending ? "pointer" : "default",
             boxShadow:
-              selectedAnswer && !isPending
+              hasAnswer && !isPending
                 ? "0 2px 8px rgba(162,170,123,0.3)"
                 : "none",
           }}

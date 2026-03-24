@@ -57,29 +57,11 @@ export default function RoutineAddModal({
   const currentLabel = currentStep?.label ?? "";
 
   // 카테고리 필터 메타데이터 가져오기
+  // 스텝에 속한 카테고리 — routineSteps에 ID가 직접 정의되어 있으므로 filterMeta 매칭 불필요
+  const availableCategories = currentStep?.categories ?? [];
+
+  // 추천 API의 concernId 조회용으로만 filterMeta 사용
   const { data: filterMeta } = useProductFilters();
-
-  // 현재 루틴 단계의 카테고리들을 API 메타데이터와 매칭하여 ID 포함한 정보로 변환
-  const availableCategories = useMemo(() => {
-    const stepCategories = currentStep?.categories ?? [];
-    const bigCategories = filterMeta?.bigCategories ?? [];
-
-    if (!filterMeta || stepCategories.length === 0) return [];
-
-    const allSubCategories = bigCategories.flatMap((bc) =>
-      bc.categories.map((cat) => ({
-        ...cat,
-        bigCategoryId: bc.bigCategoryId,
-      }))
-    );
-
-    return stepCategories
-      .map((categoryName) => {
-        // 정확히 일치하는 카테고리 찾기
-        return allSubCategories.find((cat) => cat.categoryName === categoryName);
-      })
-      .filter((cat): cat is NonNullable<typeof cat> => cat !== undefined);
-  }, [filterMeta, currentStep]);
 
   // selectedCategoryId가 없거나 현재 목록에 없으면 첫 번째 카테고리를 기본값으로 파생
   const effectiveCategoryId =
@@ -110,24 +92,23 @@ export default function RoutineAddModal({
       if (!columnId) {
         return Promise.reject(new Error("columnId가 설정되지 않았습니다."));
       }
-      const concernId = filterMeta?.tags?.find(
-        (tag) => tag.tag === userSkinProblems[0]
-      )?.tagId;
+      // userSkinProblems 중 filterMeta.tags와 매칭되는 첫 번째 tagId 사용
+      const concernId = userSkinProblems
+        .map((problem) => filterMeta?.tags?.find((tag) => tag.tag === problem)?.tagId)
+        .find((id) => id !== undefined);
       return productService.getRecommendations({
         skinType: currentSkinType
           ? toSkinTypeEnum(currentSkinType as SkinType)
           : undefined,
         gender: currentGender ?? undefined,
-        // filterMeta.tags에서 유저의 첫 번째 skinProblem과 일치하는 tagId를 concernId로 사용
-        // swagger: tagIds는 내부적으로 concernId로 처리됨
-        concernId,
+        ...(concernId !== undefined && { concernId }),
         targetRoutineColId: columnId,
       });
     },
     onSuccess: (data) => {
       // 응답은 Record<categoryName, RecommendResponseDto[]>
       // 현재 선택된 카테고리명과 일치하는 제품 우선 사용, 없으면 전체 합산
-      const currentCategoryName = selectedCategory?.categoryName;
+      const currentCategoryName = selectedCategory?.name;
       let productsFromApi: RecommendResponseDto[];
 
       if (currentCategoryName && data[currentCategoryName]) {
@@ -274,7 +255,7 @@ export default function RoutineAddModal({
                       className="category-pill-button"
                       data-active={isActive}
                     >
-                      {getCategoryDisplayName(cat.categoryName)}
+                      {getCategoryDisplayName(cat.name)}
                     </button>
                   );
                 })}

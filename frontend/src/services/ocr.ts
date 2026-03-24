@@ -4,6 +4,7 @@
  */
 
 import client from "./client";
+import type { ApiResponse } from "@/types/common";
 import type { OcrRecognitionResponse } from "@/types/product";
 
 export const ocrService = {
@@ -12,9 +13,9 @@ export const ocrService = {
     const formData = new FormData();
     formData.append("image", imageFile);
     return client
-      .post<OcrRecognitionResponse>("/ocr/recognize", formData, {
+      .post<ApiResponse<OcrRecognitionResponse>>("/ocr/recognize", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       })
-      .then((res) => res.data);
+      .then((res) => res.data.data);
   },
 };
