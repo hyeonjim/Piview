@@ -256,6 +256,7 @@ export default function RecommendPage() {
                 skinTypes={product.skinTypes}
                 effects={product.effects}
                 layout="grid"
+                isRecommended={true}
                 showActions={true}
                 isOwned={isOwned(product.id)}
                 onToggleOwned={() => handleToggleOwned(product.id)}

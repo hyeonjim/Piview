@@ -14,6 +14,7 @@ import {
   Scale,
   Sparkles,
   Loader2,
+  Play,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -441,7 +442,7 @@ function ProductDetailInner() {
       <div className="pb-8">
         {/* 이미지 카드 — 깔끔한 화이트 배경 */}
         <div className="mx-4 mb-3 rounded-2xl bg-white overflow-hidden border border-[#f0ede8]" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-          <div className="relative w-full aspect-[3/2]">
+          <div className="relative w-full aspect-[2/1]">
             {productData.imageUrl ? (
               <Image
                 src={productData.imageUrl}
@@ -467,7 +468,7 @@ function ProductDetailInner() {
               <p className="text-[13px] text-[#bfb6aa] font-medium mb-1">
                 {productData.brandName}
               </p>
-              <h1 className="text-[18px] font-semibold text-[#575350] leading-[1.35]">
+              <h1 className="text-[16px] font-semibold text-[#575350] leading-[1.35]">
                 {productData.productName}
               </h1>
             </div>
@@ -480,7 +481,7 @@ function ProductDetailInner() {
                   setShowRoutineCompare(true);
                 }
               }}
-              className="flex items-center gap-1 px-3 h-7 rounded-lg border cursor-pointer transition-all active:scale-[0.96] text-[12px] font-semibold shrink-0 border-[#dedbd9] bg-[#f3f0eb] text-[#5c5852]"
+              className="flex items-center gap-1 px-2 h-6.5 rounded-lg border cursor-pointer transition-all active:scale-[0.96] text-[12px] font-semibold shrink-0 border-[#dedbd9] bg-[#f3f0eb] text-[#5c5852]"
             >
               <Scale size={11} />
               내루틴 비교하기
@@ -488,7 +489,7 @@ function ProductDetailInner() {
           </div>
 
           {(skinTypes.length > 0 || tags.length > 0) && (
-            <div className="flex flex-col gap-1 mb-5 mt-3">
+            <div className="flex flex-col gap-1 mb-2 mt-3">
               {skinTypes.length > 0 && (
                 <div className="flex flex-wrap">
                   {skinTypes.map((st) => (
@@ -512,14 +513,14 @@ function ProductDetailInner() {
           )}
 
           {/* 가격 및 액션 버튼 — 구분선으로 분리 */}
-          <div className="flex items-center justify-between gap-2 pt-4 border-t border-[#f0ede8]">
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#f0ede8]">
             <div className="flex items-baseline gap-1 flex-wrap">
               {productData.price ? (
-                <p className="text-[16px] font-semibold text-[#736d66]">
+                <p className="text-[14px] font-semibold text-[#736d66]">
                   ₩{productData.price.toLocaleString()}
                 </p>
               ) : (
-                <p className="text-[14px] font-normal text-[#bfb6aa]">
+                <p className="text-[12px] font-normal text-[#bfb6aa]">
                   가격 미정
                 </p>
               )}
@@ -548,7 +549,7 @@ function ProductDetailInner() {
               )}
               <button
                 onClick={handleToggleOwned}
-                className={`flex items-center justify-center gap-1 w-15 h-7 rounded-lg cursor-pointer transition-all active:scale-[0.98] text-[12px] font-semibold border ${owned ? "border-[#bcb5ac] bg-[#eae8e6] text-[#4d453c]" : "border-[#dbd6cf] bg-[#f4f4f1] text-[#7c7874]"}`}
+                className={`flex items-center justify-center gap-1 w-17 h-7 rounded-lg cursor-pointer transition-all active:scale-[0.98] text-[12px] font-semibold border ${owned ? "border-[#bcb5ac] bg-[#eae8e6] text-[#4d453c]" : "border-[#dbd6cf] bg-[#f4f4f1] text-[#7c7874]"}`}
               >
                 {owned ? "보유중" : "보유추가"}
               </button>
@@ -573,21 +574,16 @@ function ProductDetailInner() {
         {/* AI 요약 카드 */}
         <div className="mx-5 rounded-2xl bg-white p-4 mb-3">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[16px] font-bold text-text-primary">
-              AI 분석 요약
+            <p className="text-[16px] font-semibold text-[#636262]">
+              AI 분석
             </p>
             {!aiSummary && (
               <button
                 onClick={() => fetchAiSummary()}
                 disabled={isAiFetching}
-                className="flex items-center gap-1 px-3 h-7 rounded-lg border border-brand-light bg-brand-bg text-brand text-[11px] font-semibold cursor-pointer disabled:opacity-50 transition-all active:scale-[0.96]"
+                className="flex items-center gap-1 px-3 h-7 rounded-lg border-2 bg-[#eee7d8] text-[#555454] text-[14px] font-semibold cursor-pointer disabled:opacity-50 transition-all active:scale-[0.96]"
               >
-                {isAiFetching ? (
-                  <Loader2 size={11} className="animate-spin" />
-                ) : (
-                  <Sparkles size={11} />
-                )}
-                {isAiFetching ? "분석 중..." : "AI 요약 보기"}
+                {isAiFetching ? "분석 중..." : <><Play size={12} fill="currentColor" /> Start</>}
               </button>
             )}
           </div>
