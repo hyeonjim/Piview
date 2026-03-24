@@ -58,6 +58,7 @@ public class SecurityConfig {
             .requestMatchers("/api/v1/auth/**", "/api/v1/oauth2/**").permitAll()
             .requestMatchers("/api/v1/auth/refresh").permitAll()
             .requestMatchers("/api/v1/ocr/**").permitAll()
+            .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ASYNC).permitAll()
             .requestMatchers("/auth/dev/**").permitAll()
             .requestMatchers("/api/v1/s3/**", "/api/s3/**", "/api/v1/s3/**").permitAll()
 
