@@ -5,28 +5,8 @@ import { Heart, ShoppingBag, Scale, Check, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import EWGIndicator from "./EWGIndicator";
-import {
-  CATEGORY_COLORS,
-  SKIN_FUNCTION_COLORS,
-  SKIN_TYPE_TAG_COLORS,
-} from "@/constants/categoryColors";
 import { useLike } from "@/hooks";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
-
-// ── 그림자 — border 없이 입체감을 주는 자연스러운 레이어드 shadow
-const CARD_SHADOW = "0 2px 8px rgba(0,0,0,0.10), 0 8px 28px rgba(0,0,0,0.16)";
-
-// ── 비교/보유 버튼 공통 활성/비활성 스타일
-const ACTION_BUTTON_ACTIVE = {
-  border: "1px solid #A69D92",
-  backgroundColor: "var(--color-bg-beige)",
-  color: "var(--color-text-sub)",
-};
-const ACTION_BUTTON_INACTIVE = {
-  border: "1px solid #E8E4DF",
-  backgroundColor: "var(--color-bg-card)",
-  color: "var(--color-nav-inactive)",
-};
 
 // ── 인터페이스 ──────────────────────────────────────────────────────
 interface ProductCardProps {
@@ -42,8 +22,6 @@ interface ProductCardProps {
   emoji?: string;
   skinTypes?: string[];
   effects?: string[];
-  /** 피부기능별 수치 점수 0~100 */
-  effectScores?: Record<string, number>;
   price?: number;
   reason?: string;
   isRecommended?: boolean;
@@ -75,40 +53,28 @@ interface ProductCardProps {
   priority?: boolean;
 }
 
-// ── 피부타입 태그 — 색상이 동적(상수 맵)이므로 색상만 inline style 유지
+// ── 피부타입 태그 — 나중에 색상 적용 예정, 현재 기본 스타일 유지
 // export: CompareModal 등 공통 사용
 export function SkinTypeTag({ label }: { label: string }) {
   // 영문 API 값("dry", "oily" 등)을 한글로 변환
   const koreanLabel = fromSkinTypeEnum(label);
-  const color = SKIN_TYPE_TAG_COLORS[koreanLabel] ?? {
-    bg: "#F0EDE8",
-    text: "#7A7060",
-  };
   return (
-    <span
-      className="inline-block mb-1 mr-2 text-[12px] font-semibold px-1 rounded-[3px]"
-      style={{ backgroundColor: color.bg, color: color.text }}
-    >
+    <span className="inline-block mb-1 mr-2 text-[12px] font-semibold px-1 rounded-[3px] bg-[#F0EDE8] text-[#7A7060]">
       {koreanLabel}
     </span>
   );
 }
 
-// ── 피부기능 태그 — 색상이 동적(상수 맵)이므로 색상만 inline style 유지
+// ── 피부기능 태그 — 나중에 색상 적용 예정, 현재 기본 스타일 유지
 function EffectTag({ label }: { label: string }) {
-  const color = SKIN_FUNCTION_COLORS[label];
-  if (!color) return null;
   return (
-    <span
-      className="inline-block text-[12px] mb-1 mr-1 font-semibold px-1 rounded-[3px]"
-      style={{ backgroundColor: color.chip, color: color.accent }}
-    >
+    <span className="inline-block text-[12px] mb-1 mr-1 font-semibold px-1 rounded-[3px] bg-[#EEE8E4] text-[#8A7A6E]">
       {label}
     </span>
   );
 }
 
-// ── PICK 배지 — 고정 색상이므로 Tailwind만 사용
+// ── PICK 배지
 function PickBadge() {
   return (
     <span className="text-[11px] font-semibold px-[7px] py-[3px] rounded-[10px] uppercase tracking-[0.06em] bg-[#3D3028] text-[var(--color-bg-beige)]">
@@ -117,7 +83,7 @@ function PickBadge() {
   );
 }
 
-// ── 브랜드 라벨 — 공통 스타일
+// ── 브랜드 라벨
 function BrandLabel({ brand }: { brand: string }) {
   return (
     <span className="text-[14px] font-medium text-[#BFB6AA] uppercase">
@@ -126,28 +92,16 @@ function BrandLabel({ brand }: { brand: string }) {
   );
 }
 
-// ── 카테고리 칩 — 색상이 동적이므로 색상만 inline style 유지
-function CategoryChip({
-  category,
-  categoryColor,
-}: {
-  category: string;
-  categoryColor: { chip: string; accent: string };
-}) {
+// ── 카테고리 칩 — 나중에 색상 적용 예정, 현재 기본 스타일 유지
+function CategoryChip({ category }: { category: string }) {
   return (
-    <span
-      className="text-[12px] px-1.5 py-[1px] rounded-[3px] font-semibold"
-      style={{
-        backgroundColor: categoryColor.chip,
-        color: categoryColor.accent,
-      }}
-    >
+    <span className="text-[12px] px-1.5 py-[1px] rounded-[3px] font-semibold bg-[#EAE5DA] text-[#7A6F5C]">
       {category}
     </span>
   );
 }
 
-// ── 루틴추가 버튼 — 상태에 따른 색상이 고정값이므로 Tailwind 조건부 클래스 사용
+// ── 루틴추가 버튼
 function RoutineButton({
   inRoutine,
   onAdd,
@@ -180,7 +134,7 @@ function RoutineButton({
   );
 }
 
-// ── 보유추가 버튼 — 상태에 따라 색상이 바뀌므로 inline style 유지
+// ── 보유추가 버튼 — 활성/비활성 색상이 CSS 변수 기반이라 inline style 유지
 function OwnedButton({
   isOwned,
   onToggle,
@@ -191,6 +145,16 @@ function OwnedButton({
   size?: "sm" | "md";
 }) {
   const isSmall = size === "sm";
+  const activeStyle = {
+    border: "1px solid #A69D92",
+    backgroundColor: "var(--color-bg-beige)",
+    color: "var(--color-text-sub)",
+  };
+  const inactiveStyle = {
+    border: "1px solid #E8E4DF",
+    backgroundColor: "var(--color-bg-card)",
+    color: "var(--color-nav-inactive)",
+  };
   return (
     <button
       onClick={onToggle}
@@ -199,7 +163,7 @@ function OwnedButton({
           ? "h-7 w-9 rounded-[6px]"
           : "gap-1 h-8 px-2.5 rounded-[6px] text-xs font-bold"
       }`}
-      style={isOwned ? ACTION_BUTTON_ACTIVE : ACTION_BUTTON_INACTIVE}
+      style={isOwned ? activeStyle : inactiveStyle}
       title={isOwned ? "보유 중" : "보유추가"}
     >
       <ShoppingBag size={isSmall ? 14 : 11} />
@@ -208,7 +172,7 @@ function OwnedButton({
   );
 }
 
-// ── 비교 버튼 — 선택 여부에 따라 색상이 바뀌므로 inline style 유지
+// ── 비교 버튼 — 활성/비활성 색상이 CSS 변수 기반이라 inline style 유지
 function CompareButton({
   isInCompare,
   onToggle,
@@ -219,13 +183,23 @@ function CompareButton({
   size?: "sm" | "md";
 }) {
   const isSmall = size === "sm";
+  const activeStyle = {
+    border: "1px solid #A69D92",
+    backgroundColor: "var(--color-bg-beige)",
+    color: "var(--color-text-sub)",
+  };
+  const inactiveStyle = {
+    border: "1px solid #E8E4DF",
+    backgroundColor: "var(--color-bg-card)",
+    color: "var(--color-nav-inactive)",
+  };
   return (
     <button
       onClick={onToggle}
       className={`flex items-center justify-center cursor-pointer transition-all active:scale-[0.97] shrink-0 ${
         isSmall ? "h-7 w-9 rounded-[6px]" : "gap-1 h-6 px-2 rounded-[6px] text-xs font-semibold"
       }`}
-      style={isInCompare ? ACTION_BUTTON_ACTIVE : ACTION_BUTTON_INACTIVE}
+      style={isInCompare ? activeStyle : inactiveStyle}
       title={isInCompare ? "비교 선택됨" : "비교하기"}
     >
       {isSmall ? <Scale size={14} /> : (isInCompare ? "비교중" : "비교하기")}
@@ -234,7 +208,7 @@ function CompareButton({
 }
 
 // ── 제품 이미지 — onError로 broken 이미지 fallback 처리
-// fill 모드와 fixed 모드를 모두 지원
+// fill 모드와 fixed size 모드를 모두 지원
 function ProductImage({
   imageUrl,
   name,
@@ -254,9 +228,9 @@ function ProductImage({
   height?: number;
   priority?: boolean;
 }) {
-  const [imgError, setImgError] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-  if (!imageUrl || imgError) {
+  if (!imageUrl || imageError) {
     return (
       <div className="absolute inset-0 flex items-center justify-center text-3xl bg-[#F5F2EC]">
         {emoji || "🧴"}
@@ -274,7 +248,7 @@ function ProductImage({
         height={height}
         className={className}
         priority={priority}
-        onError={() => setImgError(true)}
+        onError={() => setImageError(true)}
       />
     );
   }
@@ -288,11 +262,12 @@ function ProductImage({
       sizes={sizes}
       className={className}
       priority={priority}
-      onError={() => setImgError(true)}
+      onError={() => setImageError(true)}
     />
   );
 }
 
+// ── 좋아요 버튼
 function LikeButton({
   isLiked,
   onToggle,
@@ -368,21 +343,14 @@ export default function ProductCard({
     callback?.();
   };
 
-  const categoryColor = category ? CATEGORY_COLORS[category] : undefined;
   const showPickBadge = isRecommended || !!reason;
-
-  // 좋아요 Heart 아이콘 스타일 — 색상이 동적이므로 inline style
-  const heartStyle = {
-    color: isLiked ? "#E8715A" : "var(--color-nav-inactive)",
-    fill: isLiked ? "#E8715A" : "none",
-  };
 
   // ── 1. GRID — 2열 제품 카드 ────────────────────────────────────────
   if (layout === "grid") {
     return (
       <div
         className="relative flex flex-col py-2 overflow-hidden bg-white rounded-modal w-full min-w-0"
-        style={{ boxShadow: CARD_SHADOW }}
+        style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.10), 0 8px 28px rgba(0,0,0,0.16)" }}
       >
         <Link href={productHref} className="no-underline flex flex-col flex-1">
           <div className="relative w-full aspect-2/1 overflow-hidden">
@@ -408,7 +376,10 @@ export default function ProductCard({
                 <Heart
                   size={16}
                   className="transition-all duration-150"
-                  style={heartStyle}
+                  style={{
+                    color: isLiked ? "#E8715A" : "var(--color-nav-inactive)",
+                    fill: isLiked ? "#E8715A" : "none",
+                  }}
                 />
               </button>
             )}
@@ -440,19 +411,17 @@ export default function ProductCard({
               {name}
             </p>
             {(skinTypes.length > 0 || effects.length > 0) && (
-              <div className="flex flex-wrap mt-3">
+              <div className="flex flex-wrap mt-1.5">
                 {skinTypes.slice(0, 1).map((skinType) => (
                   <SkinTypeTag key={skinType} label={skinType} />
                 ))}
-                {effects.map((effect) => (
+                {effects.slice(0, 2).map((effect) => (
                   <EffectTag key={effect} label={effect} />
                 ))}
               </div>
             )}
           </div>
         </Link>
-
-        {/* 액션 버튼 영역 — 루틴추가/보유추가 제거, 비교는 상단으로 이동 */}
       </div>
     );
   }
@@ -475,12 +444,7 @@ export default function ProductCard({
           <div className="flex-1 px-3 py-4">
             <div className="flex items-center gap-1.5 flex-wrap">
               <BrandLabel brand={brand} />
-              {categoryColor && (
-                <CategoryChip
-                  category={category!}
-                  categoryColor={categoryColor}
-                />
-              )}
+              {category && <CategoryChip category={category} />}
             </div>
             <p className="mt-0.75 m-0 text-[16px] font-bold text-[var(--color-text-primary)] leading-[1.4]">
               {name}
@@ -512,7 +476,13 @@ export default function ProductCard({
               onClick={handleLike}
               className="p-3 shrink-0 bg-transparent border-none cursor-pointer"
             >
-              <Heart size={17} style={heartStyle} />
+              <Heart
+                size={17}
+                style={{
+                  color: isLiked ? "#E8715A" : "var(--color-nav-inactive)",
+                  fill: isLiked ? "#E8715A" : "none",
+                }}
+              />
             </button>
           )}
         </div>
@@ -547,12 +517,7 @@ export default function ProductCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                 <BrandLabel brand={brand} />
-                {categoryColor && (
-                  <CategoryChip
-                    category={category!}
-                    categoryColor={categoryColor}
-                  />
-                )}
+                {category && <CategoryChip category={category} />}
                 {showPickBadge && <PickBadge />}
               </div>
               <p className="m-0 text-[13px] font-bold text-[var(--color-text-primary)] truncate">
@@ -598,7 +563,7 @@ export default function ProductCard({
   return (
     <div
       className="relative flex flex-col overflow-hidden w-full bg-white rounded-[10px] border border-[var(--color-border)]"
-      style={{ boxShadow: CARD_SHADOW }}
+      style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.10), 0 8px 28px rgba(0,0,0,0.16)" }}
     >
       <Link href={productHref} className="no-underline">
         <div className="relative h-27 overflow-hidden">
@@ -614,12 +579,7 @@ export default function ProductCard({
         <div className="px-3.5 pt-3 pb-3.5">
           <div className="flex items-center gap-1.5 flex-wrap mb-1">
             <BrandLabel brand={brand} />
-            {categoryColor && (
-              <CategoryChip
-                category={category!}
-                categoryColor={categoryColor}
-              />
-            )}
+            {category && <CategoryChip category={category} />}
             {showPickBadge && <PickBadge />}
           </div>
 

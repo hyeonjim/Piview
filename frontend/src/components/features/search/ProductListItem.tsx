@@ -10,11 +10,6 @@
 
 import { Plus, GitCompareArrows, Heart } from "lucide-react";
 import Link from "next/link";
-import {
-  CATEGORY_COLORS,
-  SKIN_FUNCTION_COLORS,
-  SKIN_TYPE_TAG_COLORS,
-} from "@/constants/categoryColors";
 import { formatPrice, getCategoryDisplayName } from "@/utils/format";
 
 export interface ProductListItemData {
@@ -53,37 +48,15 @@ export function ProductListItem({
   onToggleLikelist,
   onToggleCompare,
 }: Props) {
-  const catColor = CATEGORY_COLORS[product.category];
   const activeConcerns = Object.entries(product.concerns)
     .filter(([, isActive]) => isActive)
     .map(([concernName]) => concernName);
 
   return (
-    <div
-      className="product-list-card"
-      data-has-color={!!catColor}
-      style={
-        catColor
-          ? ({
-              "--card-bg": catColor.bg,
-              "--card-border": catColor.border,
-            } as React.CSSProperties)
-          : undefined
-      }
-    >
+    <div className="product-list-card">
       <Link href={`/product/${product.id}`} className="flex items-start gap-3">
         {/* 이미지 */}
-        <div
-          className="product-list-thumb"
-          data-has-color={!!catColor}
-          style={
-            catColor
-              ? ({
-                  "--card-border": catColor.border,
-                } as React.CSSProperties)
-              : undefined
-          }
-        >
+        <div className="product-list-thumb">
           {product.imageUrl ? (
             <img src={product.imageUrl} alt={product.name} />
           ) : (
@@ -95,19 +68,9 @@ export function ProductListItem({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap mb-1">
             <span className="product-list-brand">{product.brand}</span>
-            {catColor && (
-              <span
-                className="product-list-badge product-list-badge-category"
-                style={
-                  {
-                    "--badge-bg": catColor.chip,
-                    "--badge-color": catColor.accent,
-                  } as React.CSSProperties
-                }
-              >
-                {getCategoryDisplayName(product.category)}
-              </span>
-            )}
+            <span className="product-list-badge product-list-badge-category">
+              {getCategoryDisplayName(product.category)}
+            </span>
             {isInRoutine && (
               <span className="product-list-badge product-list-badge-routine">
                 루틴중
@@ -121,46 +84,16 @@ export function ProductListItem({
           <div className="flex flex-wrap gap-1 mt-1.5">
             {[product.skinType1, product.skinType2]
               .filter(Boolean)
-              .map((skinType) => {
-                const skinTypeColor = SKIN_TYPE_TAG_COLORS[skinType!] ?? {
-                  bg: "var(--color-bg-muted-warm)",
-                  text: "#7A7060",
-                };
-                return (
-                  <span
-                    key={skinType}
-                    className="product-list-tag"
-                    style={
-                      {
-                        "--tag-bg": skinTypeColor.bg,
-                        "--tag-color": skinTypeColor.text,
-                      } as React.CSSProperties
-                    }
-                  >
-                    {skinType}
-                  </span>
-                );
-              })}
-            {activeConcerns.slice(0, 3).map((concernName) => {
-              const concernColor = SKIN_FUNCTION_COLORS[concernName];
-              return (
-                <span
-                  key={concernName}
-                  className="product-list-tag"
-                  style={
-                    {
-                      "--tag-bg":
-                        concernColor?.chip ??
-                        "var(--color-product-tag-default-bg)",
-                      "--tag-color":
-                        concernColor?.accent ?? "var(--color-text-warm)",
-                    } as React.CSSProperties
-                  }
-                >
-                  {concernName}
+              .map((skinType) => (
+                <span key={skinType} className="product-list-tag">
+                  {skinType}
                 </span>
-              );
-            })}
+              ))}
+            {activeConcerns.slice(0, 3).map((concernName) => (
+              <span key={concernName} className="product-list-tag">
+                {concernName}
+              </span>
+            ))}
           </div>
 
           {/* 가격 / 평점 */}

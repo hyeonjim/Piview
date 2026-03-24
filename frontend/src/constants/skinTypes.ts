@@ -41,6 +41,14 @@ export const SKIN_CONCERNS = [
   "각질",
 ] as const;
 
+/** 필터 UI용 피부 타입 레이블 */
+export const SKIN_TYPE_LABELS_FOR_FILTER = [
+  "건성",
+  "지성",
+  "복합성",
+  "수부지",
+] as const;
+
 /** 알레르기 성분 선택지 */
 export const ALLERGIES = [
   "향료",

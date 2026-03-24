@@ -9,7 +9,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { X, RotateCcw } from "lucide-react";
-import { SKIN_TYPE_LABELS_FOR_FILTER } from "@/constants/categoryColors";
+import { SKIN_TYPE_LABELS_FOR_FILTER } from "@/constants/skinTypes";
 import type { FilterState } from "@/types/common";
 import { PRICE_MAX, FILTER_INITIAL_STATE } from "@/types/common";
 import { useProductFilters } from "@/hooks";

@@ -14,11 +14,6 @@ import OcrModal from "@/components/features/mypage/OcrModal";
 import { getRoutineSteps } from "@/constants/routineSteps";
 import { useUserStore, selectGender, useRoutineStore } from "@/stores";
 import {
-  CATEGORY_COLORS,
-  SKIN_TYPE_TAG_COLORS,
-  SKIN_FUNCTION_COLORS,
-} from "@/constants/categoryColors";
-import {
   useDraftQuery,
   useRoutineListQuery,
   useRoutineDetailQuery,
@@ -723,9 +718,6 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 <p className="flex-1 text-sm font-semibold text-text-muted">
                   제품을 추가해 주세요
                 </p>
-                {!isViewingSavedRoutine && (
-                  <Plus size={14} className="shrink-0 text-[#A69D92]" />
-                )}
               </button>
             ) : (
               <div className="flex flex-col gap-2">
@@ -904,10 +896,6 @@ function RoutineProductCard({
   stepIcon,
   priority = false,
 }: RoutineProductCardProps) {
-  const categoryColor = product.categoryName
-    ? CATEGORY_COLORS[product.categoryName]
-    : undefined;
-
   return (
     <div
       data-drag-item
@@ -978,14 +966,8 @@ function RoutineProductCard({
             <span className="text-[12px] font-bold text-[#BFB6AA] uppercase tracking-[0.08em]">
               {product.brandName}
             </span>
-            {categoryColor && (
-              <span
-                className="text-[12px] px-1.5 rounded-[3px] font-semibold"
-                style={{
-                  backgroundColor: categoryColor.chip,
-                  color: categoryColor.accent,
-                }}
-              >
+            {product.categoryName && (
+              <span className="text-[12px] px-1.5 rounded-[3px] font-semibold bg-[#EAE5DA] text-[#7A6F5C]">
                 {product.categoryName}
               </span>
             )}
@@ -994,40 +976,22 @@ function RoutineProductCard({
             {product.name}
           </p>
           <div className="flex flex-wrap gap-1 mt-1">
-            {product.skinTypes?.slice(0, 1).map((skinType) => {
-              const koSkinType = fromSkinTypeEnum(skinType);
-              return (
-                <span
-                  key={skinType}
-                  className="inline-block text-[12px] font-semibold px-1.5 rounded-[3px]"
-                  style={{
-                    backgroundColor:
-                      SKIN_TYPE_TAG_COLORS[koSkinType]?.bg ?? "#F0EDE8",
-                    color: SKIN_TYPE_TAG_COLORS[koSkinType]?.text ?? "#7A7060",
-                  }}
-                >
-                  {koSkinType}
-                </span>
-              );
-            })}
-            {product.tags?.slice(0, 2).map((effect) => {
-              const color = SKIN_FUNCTION_COLORS[effect] ?? {
-                chip: "#F0EDE8",
-                accent: "#7A7060",
-              };
-              return (
-                <span
-                  key={effect}
-                  className="inline-block text-[12px] font-semibold px-1.5 rounded-[3px]"
-                  style={{
-                    backgroundColor: color.chip,
-                    color: color.accent,
-                  }}
-                >
-                  {effect}
-                </span>
-              );
-            })}
+            {product.skinTypes?.slice(0, 1).map((skinType) => (
+              <span
+                key={skinType}
+                className="inline-block text-[12px] font-semibold px-1.5 rounded-[3px] bg-[#F0EDE8] text-[#7A7060]"
+              >
+                {fromSkinTypeEnum(skinType)}
+              </span>
+            ))}
+            {product.tags?.slice(0, 2).map((effect) => (
+              <span
+                key={effect}
+                className="inline-block text-[12px] font-semibold px-1.5 rounded-[3px] bg-[#EEE8E4] text-[#8A7A6E]"
+              >
+                {effect}
+              </span>
+            ))}
           </div>
         </Link>
       </div>

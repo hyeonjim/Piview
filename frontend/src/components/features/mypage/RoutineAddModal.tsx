@@ -15,10 +15,6 @@ const MODAL_ACTION_ICON_BTN = {
 import { useState, useMemo } from "react";
 import { X, Search, Package, Heart, GitCompare, Loader2, Sparkles } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
-import {
-  SKIN_TYPE_TAG_COLORS,
-  CATEGORY_COLORS,
-} from "@/constants/categoryColors";
 import { getRoutineSteps } from "@/constants/routineSteps";
 import { useProductSearch, useProductFilters } from "@/hooks";
 import { useUserStore, selectGender, selectSkinType } from "@/stores";
@@ -283,7 +279,6 @@ export default function RoutineAddModal({
               <div className="flex flex-wrap gap-2 p-[10px_0px] min-h-[52px] mb-2">
                 {availableCategories.map((cat) => {
                   const isActive = effectiveCategoryId === cat.categoryId;
-                  const catColor = CATEGORY_COLORS[cat.categoryName];
                   return (
                     <button
                       key={cat.categoryId}
@@ -292,16 +287,6 @@ export default function RoutineAddModal({
                       }}
                       className="category-pill-button"
                       data-active={isActive}
-                      data-has-color={!!catColor}
-                      style={
-                        !isActive && catColor
-                          ? ({
-                              "--pill-bg": catColor.chip,
-                              "--pill-color": catColor.accent,
-                              "--pill-border": catColor.border,
-                            } as React.CSSProperties)
-                          : undefined
-                      }
                     >
                       {getCategoryDisplayName(cat.categoryName)}
                     </button>
@@ -434,21 +419,14 @@ function ProductCard({ product, isAdded, isRecommended = false, onAdd }: Product
           {/* 피부타입 칩 */}
           {product.skinTypes.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1.5">
-              {product.skinTypes.map((skinType) => {
-                const colorScheme = SKIN_TYPE_TAG_COLORS[skinType];
-                return colorScheme ? (
-                  <span
-                    key={skinType}
-                    className="text-[11px] px-2 py-[2px] rounded-[4px] font-semibold"
-                    style={{
-                      backgroundColor: colorScheme.bg,
-                      color: colorScheme.text,
-                    }}
-                  >
-                    {skinType}
-                  </span>
-                ) : null;
-              })}
+              {product.skinTypes.map((skinType) => (
+                <span
+                  key={skinType}
+                  className="text-[11px] px-2 py-[2px] rounded-[4px] font-semibold bg-[#F0EDE8] text-[#7A7060]"
+                >
+                  {skinType}
+                </span>
+              ))}
             </div>
           )}
           {/* 태그 칩 */}
