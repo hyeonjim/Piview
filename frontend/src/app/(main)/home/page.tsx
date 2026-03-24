@@ -113,6 +113,7 @@ export default function HomePage() {
                         brand={product.brandName ?? ""}
                         imageUrl={product.imageUrl ?? undefined}
                         layout="horizontal"
+                        category={product.categoryName ?? undefined}
                         skinTypes={
                           product.skinTypes?.map(fromSkinTypeEnum) ?? []
                         }

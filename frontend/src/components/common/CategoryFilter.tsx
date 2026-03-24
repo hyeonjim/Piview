@@ -1,7 +1,6 @@
 "use client";
 
 import { useLayoutEffect } from "react";
-import { CATEGORY_COLORS } from "@/constants/categoryColors";
 import { useProductFilters } from "@/hooks";
 import { getCategoryDisplayName } from "@/utils/format";
 import type { BigCategoryFilterDto } from "@/types/product";
@@ -96,7 +95,6 @@ export function CategoryFilter({
             ))
           : selectedBig?.categories.map((cat) => {
               const isActive = selectedCategoryId === cat.categoryId;
-              const catColor = CATEGORY_COLORS[cat.categoryName];
               return (
                 <button
                   key={cat.categoryId}
@@ -105,19 +103,7 @@ export function CategoryFilter({
                   }}
                   className="category-pill-button"
                   data-active={isActive}
-                  data-has-color={!!catColor}
-                  style={
-                    !isActive && catColor
-                      ? ({
-                          "--pill-bg": catColor.chip,
-                          "--pill-color": catColor.accent,
-                          "--pill-border": catColor.border,
-                          ...(pillFontSize ? { fontSize: pillFontSize } : {}),
-                        } as React.CSSProperties)
-                      : pillFontSize
-                        ? { fontSize: pillFontSize }
-                        : undefined
-                  }
+                  style={pillFontSize ? { fontSize: pillFontSize } : undefined}
                 >
                   {getCategoryDisplayName(cat.categoryName)}
                 </button>
