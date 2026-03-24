@@ -232,10 +232,9 @@ export default function RecommendPage() {
           }}
         >
           <div className="flex items-center gap-2">
-            <Scale size={13} style={{ color: "var(--color-text-hint)" }} />
             <span
               style={{
-                fontSize: "12px",
+                fontSize: "14px",
                 color: "var(--color-text-sub)",
                 fontWeight: 600,
               }}
@@ -246,7 +245,7 @@ export default function RecommendPage() {
           <button
             onClick={clearCompare}
             style={{
-              fontSize: "11px",
+              fontSize: "12px",
               color: "var(--color-brand)",
               border: "none",
               background: "none",
@@ -268,7 +267,7 @@ export default function RecommendPage() {
               style={{
                 fontSize: "12px",
                 color: "var(--color-bg-beige)",
-                fontWeight: 600,
+                fontWeight: 500,
               }}
             >
               2개 제품 선택 완료
@@ -291,7 +290,7 @@ export default function RecommendPage() {
               onClick={openCompare}
               style={{
                 fontSize: "12px",
-                fontWeight: 700,
+                fontWeight: 600,
                 color: "#3D3028",
                 backgroundColor: "var(--color-bg-beige)",
                 border: "none",

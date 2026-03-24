@@ -237,12 +237,11 @@ export default function SearchPage() {
           }}
         >
           <div className="flex items-center gap-2">
-            <Scale size={13} style={{ color: "var(--color-text-hint)" }} />
             <span
               style={{
-                fontSize: "12px",
+                fontSize: "14px",
                 color: "var(--color-text-sub)",
-                fontWeight: 600,
+                fontWeight: 500,
               }}
             >
               비교할 제품을 1개 더 선택하세요
@@ -251,7 +250,7 @@ export default function SearchPage() {
           <button
             onClick={clearCompare}
             style={{
-              fontSize: "11px",
+              fontSize: "12px",
               color: "var(--color-brand)",
               border: "none",
               background: "none",
@@ -268,7 +267,6 @@ export default function SearchPage() {
           style={{ backgroundColor: "#3D3028" }}
         >
           <div className="flex items-center gap-2">
-            <Scale size={13} style={{ color: "var(--color-bg-beige)" }} />
             <span
               style={{
                 fontSize: "12px",
@@ -296,7 +294,7 @@ export default function SearchPage() {
               onClick={openCompare}
               style={{
                 fontSize: "12px",
-                fontWeight: 700,
+                fontWeight: 600,
                 color: "#3D3028",
                 backgroundColor: "var(--color-bg-beige)",
                 border: "none",

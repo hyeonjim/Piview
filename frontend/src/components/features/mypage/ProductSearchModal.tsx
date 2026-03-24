@@ -8,6 +8,7 @@ import { Pagination } from "@/components/common/Pagination";
 import {
   useMyCosQuery,
   useAddMyCos,
+  useRemoveMyCos,
   useDislikedProductsQuery,
   useAddDislikedProduct,
   useRemoveDislikedProduct,
@@ -66,9 +67,10 @@ export default function ProductSearchModal({
   // ── Owned (myCos) 모드 ──────────────────────────────────────────
   const { data: myCosItems = [] } = useMyCosQuery();
   const { mutate: addMyCos } = useAddMyCos();
+  const { mutate: removeMyCos } = useRemoveMyCos();
 
-  const isAlreadyOwned = (productId: number) =>
-    myCosItems.some((item) => item.productInfo.productId === productId);
+  const getOwnedEntry = (productId: number) =>
+    myCosItems.find((item) => item.productInfo.productId === productId);
 
   // ── Avoid (disliked) 모드 ────────────────────────────────────────
   const { data: dislikedItems = [] } = useDislikedProductsQuery();
@@ -78,8 +80,6 @@ export default function ProductSearchModal({
   const getDislikedEntry = (productId: number) =>
     dislikedItems.find((item) => item.productId === productId);
 
-  const headerTitle = mode === "owned" ? "보유 제품 추가" : "피해야 할 제품 추가";
-  const HeaderIcon = mode === "owned" ? ShoppingBag : ShieldAlert;
 
   return (
     <>
@@ -93,49 +93,41 @@ export default function ProductSearchModal({
         <div className="bg-white pointer-events-auto rounded-t-modal w-full max-w-107.5 h-[92vh] flex flex-col shadow-[0_-4px_24px_rgba(0,0,0,0.12)]">
 
           {/* ── 헤더 ─────────────────────────────────────────────── */}
-          <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
-            <div className="flex items-center gap-2">
-              <HeaderIcon
-                size={16}
-                className={mode === "avoid" ? "text-danger" : "text-brand"}
-              />
-              <h3 className="text-base font-bold text-text-primary">
-                {headerTitle}
-              </h3>
-            </div>
+          <div className="flex items-center justify-between px-5 pt-5 shrink-0">
+            <h3 className="text-[16px] font-bold text-text-primary">제품 추가</h3>
             <button
               onClick={onClose}
-              className="flex items-center justify-center w-7 h-7 rounded-full bg-bg-muted-warm border-none cursor-pointer"
+              className="flex items-center justify-center w-7 h-7 cursor-pointer"
             >
               <X size={14} color="#888" />
             </button>
           </div>
 
-          {/* ── 검색바 ───────────────────────────────────────────── */}
-          <div className="relative px-5 pb-3 shrink-0">
-            <Search
-              size={16}
-              className="absolute left-8 top-1/2 -translate-y-1/2 pointer-events-none text-text-stone"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(event) => handleSearchChange(event.target.value)}
-              placeholder="제품명 또는 브랜드 검색"
-              className="w-full h-10 pl-9 pr-9 rounded-xl border border-border-warm bg-[#FAF8F5] text-sm text-text-primary outline-none"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => handleSearchChange("")}
-                className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-border-warm border-none cursor-pointer"
-              >
-                <X size={12} color="#888" />
-              </button>
-            )}
-          </div>
-
-          {/* ── 카테고리 필터 (대분류 + 소분류) ────────────────────── */}
-          <div className="shrink-0">
+          {/* ── 제품 그리드 + 페이지네이션 (스크롤 영역) ─────────── */}
+          <div className="flex-1 overflow-y-auto">
+            {/* 검색바 — 스크롤 영역 내에 포함하여 같이 스크롤됨 */}
+            <div className="relative px-5 py-3">
+              <Search
+                size={16}
+                className="absolute left-8 top-1/2 -translate-y-1/2 pointer-events-none text-text-stone"
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(event) => handleSearchChange(event.target.value)}
+                placeholder="제품명 또는 브랜드 검색"
+                className="w-full h-10 pl-9 pr-9 rounded-xl border border-border-warm bg-[#FAF8F5] text-sm text-text-primary outline-none"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => handleSearchChange("")}
+                  className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-border-warm border-none cursor-pointer"
+                >
+                  <X size={12} color="#888" />
+                </button>
+              )}
+            </div>
+            {/* 카테고리 필터 — 스크롤 영역 내에 포함하여 같이 스크롤됨 */}
             <CategoryFilter
               selectedBigCategoryId={selectedBigCategoryId}
               selectedCategoryId={selectedCategoryId}
@@ -144,10 +136,6 @@ export default function ProductSearchModal({
               bigCategoryFontSize="14px"
               pillFontSize="12px"
             />
-          </div>
-
-          {/* ── 제품 그리드 + 페이지네이션 (스크롤 영역) ─────────── */}
-          <div className="flex-1 overflow-y-auto">
             <div className="p-4">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-2 text-text-muted">
@@ -166,7 +154,8 @@ export default function ProductSearchModal({
                     const productId = product.id as number;
 
                     if (mode === "owned") {
-                      const alreadyOwned = isAlreadyOwned(productId);
+                      const ownedEntry = getOwnedEntry(productId);
+                      const alreadyOwned = !!ownedEntry;
                       return (
                         <div key={productId} className="relative">
                           <ProductCard
@@ -182,17 +171,22 @@ export default function ProductSearchModal({
                             showActions={false}
                             isOwned={alreadyOwned}
                           />
-                          {/* 추가 버튼 오버레이 */}
+                          {/* 추가/제거 토글 버튼 오버레이 */}
                           <button
-                            onClick={() => { if (!alreadyOwned) addMyCos(productId); }}
-                            disabled={alreadyOwned}
-                            className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full border-none cursor-pointer z-10 text-xs font-bold transition-colors ${
+                            onClick={() => {
+                              if (alreadyOwned && ownedEntry) {
+                                removeMyCos(ownedEntry.myCosId);
+                              } else {
+                                addMyCos(productId);
+                              }
+                            }}
+                            className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full border-none cursor-pointer z-10 text-[16px] font-bold transition-colors shadow-sm ${
                               alreadyOwned
-                                ? "bg-[#F2EFE9] text-[#A69D92] cursor-not-allowed"
-                                : "bg-brand text-white shadow-sm"
+                                ? "bg-[#F2EFE9] text-[#A69D92]"
+                                : "bg-brand text-white"
                             }`}
                           >
-                            {alreadyOwned ? "✓" : "+"}
+                            {alreadyOwned ? "−" : "+"}
                           </button>
                         </div>
                       );
