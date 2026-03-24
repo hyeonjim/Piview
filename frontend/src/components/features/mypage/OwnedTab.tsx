@@ -7,7 +7,7 @@ import { Pagination } from "@/components/common/Pagination";
 import ProductCard from "@/components/common/ProductCard";
 import ProductSearchModal from "./ProductSearchModal";
 import {
-  useMyCosQuery,
+  useMyCosWithTags,
   useRemoveMyCos,
   useDislikedProductsQuery,
   useRemoveDislikedProduct,
@@ -30,8 +30,8 @@ export default function OwnedTab() {
   const { data: draftItems = [] } = useDraftQuery();
   const draftProductIds = new Set(draftItems.map((item) => item.product.productId));
 
-  // ── 보유 제품 (myCos) ──────────────────────────────────────────
-  const { data: myCosItems = [] } = useMyCosQuery();
+  // ── 보유 제품 (myCos) — 상세 API로 tags 보완 ──────────────────
+  const { data: myCosItems = [] } = useMyCosWithTags();
   const { mutate: removeMyCos } = useRemoveMyCos();
 
   // MyCosItem → ProductCard props 변환
@@ -43,6 +43,7 @@ export default function OwnedTab() {
     category: item.productInfo.categoryName,
     imageUrl: item.productInfo.imageUrl ?? undefined,
     skinTypes: item.productInfo.skinTypes.map(fromSkinTypeEnum),
+    effects: item.productInfo.tags,
   }));
 
   const ownedTotalPages = Math.ceil(ownedProducts.length / PAGE_SIZE) || 1;
@@ -107,6 +108,7 @@ export default function OwnedTab() {
                     category={product.category}
                     imageUrl={product.imageUrl}
                     skinTypes={product.skinTypes}
+                    effects={product.effects}
                     layout="grid"
                     showLike={false}
                     inRoutine={isInRoutine(product.productId)}

@@ -11,7 +11,6 @@
 
 import Image from "next/image";
 import { X, Sparkles } from "lucide-react";
-import { SKIN_FUNCTION_COLORS } from "@/constants/categoryColors";
 import { formatPrice } from "@/utils/format";
 import { SkinTypeTag } from "@/components/common/ProductCard";
 import { useProductCompare } from "@/hooks";
@@ -131,28 +130,14 @@ export default function CompareModal({
       leftContent: (
         <div className="flex flex-wrap gap-1 justify-center">
           {(apiLeft?.skinConcerns ?? leftProduct.effects ?? []).length > 0 ? (
-            (apiLeft?.skinConcerns ?? leftProduct.effects).map((effect) => {
-              const colorConfig = SKIN_FUNCTION_COLORS[effect];
-              return colorConfig ? (
-                <span
-                  key={effect}
-                  className="text-[10px] px-1.5 py-px rounded-[4px] font-bold"
-                  style={{
-                    backgroundColor: colorConfig.chip,
-                    color: colorConfig.accent,
-                  }}
-                >
-                  {effect}
-                </span>
-              ) : (
-                <span
-                  key={effect}
-                  className="text-[10px] px-1.5 py-px rounded-[4px] font-bold bg-brand-bg text-text-primary"
-                >
-                  {effect}
-                </span>
-              );
-            })
+            (apiLeft?.skinConcerns ?? leftProduct.effects).map((effect) => (
+              <span
+                key={effect}
+                className="text-[10px] px-1.5 py-px rounded-[4px] font-bold bg-[#EEE8E4] text-[#8A7A6E]"
+              >
+                {effect}
+              </span>
+            ))
           ) : (
             <span className="text-sm text-[var(--color-nav-inactive)]">-</span>
           )}
@@ -161,28 +146,14 @@ export default function CompareModal({
       rightContent: (
         <div className="flex flex-wrap gap-1 justify-center">
           {(apiRight?.skinConcerns ?? rightProduct.effects ?? []).length > 0 ? (
-            (apiRight?.skinConcerns ?? rightProduct.effects).map((effect) => {
-              const colorConfig = SKIN_FUNCTION_COLORS[effect];
-              return colorConfig ? (
-                <span
-                  key={effect}
-                  className="text-[10px] px-1.5 py-px rounded-[4px] font-bold"
-                  style={{
-                    backgroundColor: colorConfig.chip,
-                    color: colorConfig.accent,
-                  }}
-                >
-                  {effect}
-                </span>
-              ) : (
-                <span
-                  key={effect}
-                  className="text-[10px] px-1.5 py-px rounded-[4px] font-bold bg-brand-bg text-text-primary"
-                >
-                  {effect}
-                </span>
-              );
-            })
+            (apiRight?.skinConcerns ?? rightProduct.effects).map((effect) => (
+              <span
+                key={effect}
+                className="text-[10px] px-1.5 py-px rounded-[4px] font-bold bg-[#EEE8E4] text-[#8A7A6E]"
+              >
+                {effect}
+              </span>
+            ))
           ) : (
             <span className="text-sm text-[var(--color-nav-inactive)]">-</span>
           )}
