@@ -32,7 +32,7 @@ export default function SearchBar({
         placeholder={placeholder}
         className={cn(
           "w-full h-[38px] pl-9",
-          "rounded-lg border text-sm text-text-primary",
+          "rounded-full border text-sm text-text-primary",
           "outline-none transition-colors duration-150",
           "bg-[#FAFAF8]",
           value ? "pr-[34px] border-[#C4BEB7]" : "pr-3 border-border"

@@ -175,7 +175,7 @@ export default function RecommendPage() {
               style={{
                 height: "38px",
                 padding: "0 12px",
-                borderRadius: "10px",
+                borderRadius: "9999px",
                 fontSize: "14px",
                 fontWeight: 600,
                 borderColor:
@@ -305,7 +305,7 @@ export default function RecommendPage() {
         </div>
       )}
 
-      <div style={{ padding: "16px 16px 24px" }}>
+      <div style={{ padding: "16px" }}>
         {isLoading || (isFetching && isPlaceholderData) ? (
           <div
             className="flex justify-center py-20"
@@ -336,7 +336,7 @@ export default function RecommendPage() {
             />
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-6 items-start">
+          <div className="grid grid-cols-2 gap-8 items-start">
             {products.map((product, index) => (
               <ProductCard
                 key={product.id}

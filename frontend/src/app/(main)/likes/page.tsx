@@ -67,8 +67,8 @@ export default function LikesPage() {
       )}
 
       {/* 헤더 */}
-      <div className="bg-[var(--color-bg-base)] px-5 pt-[15px] pb-4">
-        <h1 className="mt-[3px] text-[22px] font-bold text-[var(--color-text-primary)] tracking-[-0.4px]">
+      <div className="bg-[var(--color-bg-base)] px-5 pt-[15px] pb-10">
+        <h1 className="mt-[10px] text-[22px] font-bold text-[var(--color-text-primary)] tracking-[-0.4px]">
           Liked
         </h1>
       </div>
@@ -94,7 +94,7 @@ export default function LikesPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-6 items-start">
+          <div className="grid grid-cols-2 gap-8 items-start">
             {pagedProducts.map((product) => {
               const productId = product.productId;
               return (

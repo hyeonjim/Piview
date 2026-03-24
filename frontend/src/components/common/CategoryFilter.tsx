@@ -83,7 +83,7 @@ export function CategoryFilter({
       </div>
 
       {/* 소분류 pill 행 */}
-      <div className="flex flex-wrap gap-2 p-[10px_16px] bg-category-sub-bg border-b border-(--color-border) min-h-[52px]">
+      <div className="flex flex-wrap gap-2 p-[10px_16px] bg-category-sub-bg min-h-[52px]">
         {showSubSkeleton
           ? // 로딩 중 — 실제 pill과 동일한 크기의 skeleton
             [56, 72, 48, 64, 52].map((w, i) => (

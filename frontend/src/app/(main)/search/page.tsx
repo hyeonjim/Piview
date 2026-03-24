@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PAGE_SIZE } from "@/constants/pagination";
-import { FilterModal, FilterState } from "@/components/common/FilterModal";
+import { FilterModal } from "@/components/common/FilterModal";
 import { CategoryFilter } from "@/components/common/CategoryFilter";
 import ProductCard from "@/components/common/ProductCard";
 import { Pagination } from "@/components/common/Pagination";
@@ -14,7 +14,7 @@ import { useCompare, useProductSearch } from "@/hooks";
 
 import { useAddMyCos, useRemoveMyCos, useMyCosQuery } from "@/hooks";
 import { useSearchStore } from "@/stores/useSearchStore";
-import { SlidersHorizontal, Search, Scale } from "lucide-react";
+import { SlidersHorizontal, Search } from "lucide-react";
 
 import { toSkinTypeParam } from "@/utils/enumConvert";
 import { PRICE_MAX } from "@/types/common";
@@ -87,6 +87,7 @@ export default function SearchPage() {
     setPage(p);
     window.scrollTo(0, 0);
   };
+
   // 보유 상태 — API 연동
   const { data: myCosData = [] } = useMyCosQuery();
   const { mutate: addMyCos } = useAddMyCos();
@@ -136,7 +137,7 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="flex-1" style={{ backgroundColor: "#F5F2EC" }}>
+    <div className="flex-1 bg-[#F5F2EC]">
       {showCompare && canCompare && (
         <CompareModal
           compareItems={compareItems as [ProductViewModel, ProductViewModel]}
@@ -145,24 +146,9 @@ export default function SearchPage() {
       )}
 
       {/* 상단 헤더 */}
-      <div
-        style={{
-          backgroundColor: "#F5F2EC",
-          borderBottom: "1px solid #E2DDD8",
-          paddingTop: "5px",
-        }}
-      >
-        <div style={{ padding: "16px 16px 12px" }}>
-          <h1
-            style={{
-              margin: "3px 0 12px",
-              fontSize: "22px",
-              fontWeight: 700,
-              color: "var(--color-text-primary)",
-              letterSpacing: "-0.4px",
-              lineHeight: 1.2,
-            }}
-          >
+      <div className="bg-[#F5F2EC] border-b border-[#E2DDD8] pt-[5px]">
+        <div className="px-4 pt-4 pb-3">
+          <h1 className="mt-[3px] mb-3 text-[22px] font-bold text-[var(--color-text-primary)] tracking-[-0.4px] leading-[1.2]">
             All
           </h1>
           <div className="flex items-center gap-5">
@@ -173,45 +159,19 @@ export default function SearchPage() {
                 placeholder="제품명, 브랜드 검색..."
               />
             </div>
+            {/* 필터 버튼 — 활성 여부에 따라 색상 분기 */}
             <button
               onClick={() => setShowFilter(true)}
-              className="flex items-center gap-1.5 cursor-pointer border transition-all active:scale-[0.96] shrink-0"
-              style={{
-                height: "38px",
-                padding: "0 12px",
-                borderRadius: "10px",
-                fontSize: "14px",
-                fontWeight: 600,
-                borderColor:
-                  filterCount > 0
-                    ? "var(--color-brand)"
-                    : "var(--color-border)",
-                backgroundColor:
-                  filterCount > 0
-                    ? "var(--color-brand)"
-                    : "var(--color-bg-card)",
-                color:
-                  filterCount > 0
-                    ? "var(--color-bg-card)"
-                    : "var(--color-text-hint)",
-              }}
+              className={`flex items-center gap-1.5 h-[38px] px-3 rounded-full text-sm font-semibold border cursor-pointer transition-all active:scale-[0.96] shrink-0 ${
+                filterCount > 0
+                  ? "bg-[var(--color-brand)] border-[var(--color-brand)] text-[var(--color-bg-card)]"
+                  : "bg-[var(--color-bg-card)] border-[var(--color-border)] text-[var(--color-text-hint)]"
+              }`}
             >
               <SlidersHorizontal size={14} />
               필터
               {filterCount > 0 && (
-                <span
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "16px",
-                    height: "16px",
-                    borderRadius: "50%",
-                    backgroundColor: "rgba(255,255,255,0.25)",
-                    fontSize: "10px",
-                    fontWeight: 700,
-                  }}
-                >
+                <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white/25 text-[10px] font-bold">
                   {filterCount}
                 </span>
               )}
@@ -227,81 +187,37 @@ export default function SearchPage() {
         onCategorySelect={handleCategorySelect}
       />
 
-      {/* 비교 힌트 바 */}
+      {/* 비교 힌트 바 — 1개 선택 시 */}
       {compareItems.length === 1 && (
-        <div
-          className="flex items-center justify-between mx-4 mt-3 px-3 py-2.5 rounded-xl"
-          style={{
-            backgroundColor: "var(--color-bg-beige)",
-            border: "1px solid #D9D5D0",
-          }}
-        >
-          <div className="flex items-center gap-2">
-            <span
-              style={{
-                fontSize: "14px",
-                color: "var(--color-text-sub)",
-                fontWeight: 500,
-              }}
-            >
-              비교할 제품을 1개 더 선택하세요
-            </span>
-          </div>
+        <div className="flex items-center justify-between mx-4 mt-3 px-3 py-2.5 rounded-xl bg-[var(--color-bg-beige)] border border-[#D9D5D0]">
+          <span className="text-sm font-medium text-[var(--color-text-sub)]">
+            비교할 제품을 1개 더 선택하세요
+          </span>
           <button
             onClick={clearCompare}
-            style={{
-              fontSize: "12px",
-              color: "var(--color-brand)",
-              border: "none",
-              background: "none",
-              cursor: "pointer",
-            }}
+            className="text-xs text-[var(--color-brand)] bg-transparent border-none cursor-pointer"
           >
             취소
           </button>
         </div>
       )}
+
+      {/* 비교 힌트 바 — 2개 선택 완료 */}
       {canCompare && (
-        <div
-          className="flex items-center justify-between mx-4 mt-3 px-3 py-2.5 rounded-xl"
-          style={{ backgroundColor: "#3D3028" }}
-        >
-          <div className="flex items-center gap-2">
-            <span
-              style={{
-                fontSize: "12px",
-                color: "var(--color-bg-beige)",
-                fontWeight: 600,
-              }}
-            >
-              2개 제품 선택 완료
-            </span>
-          </div>
+        <div className="flex items-center justify-between mx-4 mt-3 px-3 py-2.5 rounded-xl bg-[#3D3028]">
+          <span className="text-xs font-semibold text-[var(--color-bg-beige)]">
+            2개 제품 선택 완료
+          </span>
           <div className="flex gap-2">
             <button
               onClick={clearCompare}
-              style={{
-                fontSize: "11px",
-                color: "var(--color-text-faint)",
-                border: "none",
-                background: "none",
-                cursor: "pointer",
-              }}
+              className="text-[11px] text-[var(--color-text-faint)] bg-transparent border-none cursor-pointer"
             >
               취소
             </button>
             <button
               onClick={openCompare}
-              style={{
-                fontSize: "12px",
-                fontWeight: 600,
-                color: "#3D3028",
-                backgroundColor: "var(--color-bg-beige)",
-                border: "none",
-                borderRadius: "6px",
-                padding: "4px 10px",
-                cursor: "pointer",
-              }}
+              className="text-xs font-semibold text-[#3D3028] bg-[var(--color-bg-beige)] border-none rounded-[6px] px-[10px] py-1 cursor-pointer"
             >
               비교하기
             </button>
@@ -310,30 +226,17 @@ export default function SearchPage() {
       )}
 
       {/* 제품 그리드 */}
-      <div style={{ padding: "16px 16px 24px" }}>
+      <div className="p-4">
         {isLoading || (isFetching && isPlaceholderData) ? (
-          <div
-            className="flex justify-center py-20"
-            style={{ color: "var(--color-brand)", fontSize: "14px" }}
-          >
+          <div className="flex justify-center py-20 text-sm text-[var(--color-brand)]">
             불러오는 중...
           </div>
         ) : isError ? (
-          <div
-            className="flex justify-center py-20"
-            style={{ color: "var(--color-brand)", fontSize: "14px" }}
-          >
+          <div className="flex justify-center py-20 text-sm text-[var(--color-brand)]">
             오류가 발생했어요. 다시 시도해 주세요.
           </div>
         ) : products.length === 0 ? (
-          <div
-            style={{
-              backgroundColor: "var(--color-bg-card)",
-              borderRadius: "12px",
-              border: "1px solid #E2DDD8",
-              marginTop: "8px",
-            }}
-          >
+          <div className="mt-2 rounded-xl border border-[#E2DDD8] bg-[var(--color-bg-card)]">
             <EmptyState
               icon={Search}
               title="해당하는 제품이 없어요"
@@ -341,7 +244,7 @@ export default function SearchPage() {
             />
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-6 items-start">
+          <div className="grid grid-cols-2 gap-8 items-start">
             {products.map((product, index) => (
               <ProductCard
                 key={product.id}

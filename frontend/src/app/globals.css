@@ -390,7 +390,7 @@
   .category-pill-button {
     height: 30px;
     padding: 0 12px;
-    border-radius: var(--radius-modal);
+    border-radius: 9999px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
