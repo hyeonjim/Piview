@@ -90,7 +90,7 @@ function ProductDetailInner() {
   const { mutate: removeMyCos } = useRemoveMyCos();
   const productIdNum = id ? Number(id) : null;
   const myCosItem = myCosData.find(
-    (item) => (item.productId ?? item.id) === productIdNum,
+    (item) => item.productInfo.productId === productIdNum,
   );
   const owned = !!myCosItem;
   const { toggleLike } = useLike();
@@ -221,7 +221,7 @@ function ProductDetailInner() {
 
   const handleToggleOwned = () => {
     if (!productIdNum) return;
-    if (myCosItem) removeMyCos(myCosItem.id);
+    if (myCosItem) removeMyCos(myCosItem.myCosId);
     else addMyCos(productIdNum);
   };
 

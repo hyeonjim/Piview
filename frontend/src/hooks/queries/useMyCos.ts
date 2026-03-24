@@ -65,7 +65,7 @@ export function useRemoveMyCos() {
 
       // 캐시에서 즉시 제거
       queryClient.setQueryData<MyCosItem[]>(queryKeys.myCos, (old = []) =>
-        old.filter((item) => item.id !== myCosId),
+        old.filter((item) => item.myCosId !== myCosId),
       );
 
       return { previousList };

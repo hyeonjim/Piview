@@ -68,7 +68,7 @@ export default function ProductSearchModal({
   const { mutate: addMyCos } = useAddMyCos();
 
   const isAlreadyOwned = (productId: number) =>
-    myCosItems.some((item) => (item.productId ?? item.id) === productId);
+    myCosItems.some((item) => item.productInfo.productId === productId);
 
   // ── Avoid (disliked) 모드 ────────────────────────────────────────
   const { data: dislikedItems = [] } = useDislikedProductsQuery();
