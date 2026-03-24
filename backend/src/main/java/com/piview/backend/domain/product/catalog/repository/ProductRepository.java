@@ -1,6 +1,8 @@
 package com.piview.backend.domain.product.catalog.repository;
 
 import com.piview.backend.domain.product.entity.Product;
+import com.piview.backend.domain.skin.common.SkinTypeEnum;
+import com.piview.backend.domain.skin.survey.entity.SurveyGender;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,7 +28,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
         WHERE p.category_id IN (:categoryIds) -- 루틴 스텝에 맞는 여러 소카테고리 ID 검색
           
           -- 1. 여성 유저일 경우 '남성 화장품(ID: 4)' 카테고리 원천 차단
-          AND NOT (:gender = 'women' AND c.big_category_id = 4)
+          AND NOT (:gender = 'WOMEN' AND c.big_category_id = 4)
           
           -- 2. 피부타입별 상위 25% 컷오프
           AND (
@@ -50,8 +52,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     """)
     List<Product> findInitialRecommendations(
             @Param("categoryIds") List<Long> categoryIds,
-            @Param("skinType") String skinType,
-            @Param("gender") String gender,
+            @Param("skinType") SkinTypeEnum skinType,
+            @Param("gender") SurveyGender gender,
             @Param("concernId") Long concernId
     );
 
@@ -67,7 +69,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
         WHERE p.category_id IN (:categoryIds)
           
           -- [기본 필터] 남성 화장품(ID: 4) 제외, 상위 25% 컷오프, 코메도제닉 필터
-          AND NOT (:gender = 'women' AND c.big_category_id = 4)
+          AND NOT (:gender = 'WOMEN' AND c.big_category_id = 4)
           AND (
                (:skinType = 'subuji' AND p.score_subuji >= 36) OR
                (:skinType = 'dry' AND p.score_dry >= 66) OR
@@ -95,8 +97,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     """)
     List<Product> findRoutineCandidates(
             @Param("categoryIds") List<Long> categoryIds,
-            @Param("skinType") String skinType,
-            @Param("gender") String gender,
+            @Param("skinType") SkinTypeEnum skinType,
+            @Param("gender") SurveyGender gender,
             @Param("concernId") Long concernId,
             @Param("targetM") double targetM,
             @Param("targetO") double targetO,
