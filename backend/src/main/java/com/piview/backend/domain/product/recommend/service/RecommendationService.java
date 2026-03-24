@@ -57,7 +57,7 @@ public class RecommendationService {
         // [분기 A] 루틴이 비어있거나, 씻어내는 '클렌저(1번), 쉐이빙(2번)' 스텝일 경우
         // ====================================================================
         // 워시오프는 얼굴에 남지 않으므로 루틴 누적 오차(Gap) 계산에서 제외합니다.
-        boolean isInitial = routineContext.isEmpty() || targetRoutineColId ==1L || targetRoutineColId == 2L;
+        boolean isInitial = routineContext.isEmpty() || targetRoutineColId == 1L || targetRoutineColId == 2L;
         double finalTargetM = 0.0;
         double finalTargetO = 0.0;
 
