@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <appender name="USER_ACTION_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>./logs/piview/user-events.log</file>
+        <!-- <file>/var/logs/piview/user-events.log</file> -->
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>./logs/piview/user-events-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC_USER_ACTION" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="USER_ACTION_FILE" />
+        <queueSize>1024</queueSize>
+        <neverBlock>true</neverBlock>
+    </appender>
+
+    <logger name="USER_ACTION_LOGGER" level="INFO" additivity="false">
+        <appender-ref ref="ASYNC_USER_ACTION" />
+    </logger>
+
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+</configuration>

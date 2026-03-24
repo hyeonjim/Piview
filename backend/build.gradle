@@ -47,6 +47,7 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3:3.1.1'
+    implementation 'org.duckdb:duckdb_jdbc:0.10.0' // DuckDB 공식 Java 드라이버
 }
 
 tasks.named('test') {
