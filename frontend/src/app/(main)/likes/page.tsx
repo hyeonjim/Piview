@@ -3,7 +3,7 @@
 import { Heart } from "lucide-react";
 
 import { useMyCosQuery, useAddMyCos, useRemoveMyCos } from "@/hooks";
-import { useLike, useLikedProducts, useCompare } from "@/hooks";
+import { useLikedProducts, useCompare } from "@/hooks";
 import { useLikeStore } from "@/stores";
 import ProductCard from "@/components/common/ProductCard";
 import CompareModal from "@/components/common/CompareModal";

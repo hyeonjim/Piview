@@ -36,16 +36,13 @@ export default function OwnedTab() {
 
   // MyCosItem → ProductCard props 변환
   const ownedProducts = myCosItems.map((item) => ({
-    id: item.id, // myCosId — 삭제에 사용
-    productId: item.productId,
-    brand: item.brand,
-    name: item.productName,
-    category: item.category,
-    imageUrl: item.imageUrl ?? undefined,
-    skinTypes: [
-      item.topSkinType ? fromSkinTypeEnum(item.topSkinType) : null,
-      item.top2SkinType ? fromSkinTypeEnum(item.top2SkinType) : null,
-    ].filter(Boolean) as string[],
+    id: item.myCosId, // myCosId — 삭제에 사용
+    productId: item.productInfo.productId,
+    brand: item.productInfo.brandName,
+    name: item.productInfo.name,
+    category: item.productInfo.categoryName,
+    imageUrl: item.productInfo.imageUrl ?? undefined,
+    skinTypes: item.productInfo.skinTypes.map(fromSkinTypeEnum),
   }));
 
   const ownedTotalPages = Math.ceil(ownedProducts.length / PAGE_SIZE) || 1;

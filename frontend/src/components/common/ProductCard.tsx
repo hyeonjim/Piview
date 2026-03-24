@@ -117,7 +117,7 @@ function PickBadge() {
 // ── 브랜드 라벨 — 공통 스타일
 function BrandLabel({ brand }: { brand: string }) {
   return (
-    <span className="text-[12px] font-bold text-[#BFB6AA] uppercase tracking-[0.08em]">
+    <span className="text-[14px] font-medium text-[#BFB6AA] uppercase">
       {brand}
     </span>
   );
@@ -301,10 +301,6 @@ function LikeButton({
     <button
       onClick={onToggle}
       className="flex items-center justify-center h-8 px-2.5 rounded-[6px] cursor-pointer transition-all active:scale-[0.97]"
-      style={{
-        border: `1px solid ${isLiked ? "#F5C5BB" : "#E8E4DF"}`,
-        backgroundColor: isLiked ? "#FEF2EF" : "var(--color-bg-card)",
-      }}
     >
       <Heart
         size={15}
@@ -386,7 +382,6 @@ export default function ProductCard({
         style={{ boxShadow: CARD_SHADOW }}
       >
         <Link href={productHref} className="no-underline flex flex-col flex-1">
-          {/* 이미지 — 3/2 */}
           <div className="relative w-full aspect-2/1 overflow-hidden">
             <ProductImage
               imageUrl={imageUrl}
@@ -463,18 +458,18 @@ export default function ProductCard({
   if (layout === "horizontal") {
     return (
       <Link href={productHref}>
-        <div className="flex items-center overflow-hidden h-22 bg-white rounded-[10px] border border-[var(--color-border)] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+        <div className="flex items-center overflow-hidden h-28 bg-white rounded-[10px] border border-[var(--color-border)] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
           <div className="relative shrink-0 w-22 h-full overflow-hidden">
             <ProductImage
               imageUrl={imageUrl}
               name={name}
               emoji={emoji}
-              sizes="88px"
+              sizes="68px"
               className="object-cover"
             />
           </div>
 
-          <div className="flex-1 px-3 py-2 min-w-0">
+          <div className="flex-1 px-3 py-4">
             <div className="flex items-center gap-1.5 flex-wrap">
               <BrandLabel brand={brand} />
               {categoryColor && (
@@ -625,7 +620,7 @@ export default function ProductCard({
             {showPickBadge && <PickBadge />}
           </div>
 
-          <p className="m-0 text-[18px] font-semibold text-[var(--color-text-primary)] leading-[1.45] line-clamp-2 overflow-hidden">
+          <p className="m-0 text-[16px] font-semibold text-[var(--color-text-primary)] leading-[1.45] line-clamp-2 overflow-hidden">
             {name}
           </p>
 
