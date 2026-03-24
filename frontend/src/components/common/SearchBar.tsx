@@ -24,7 +24,7 @@ export default function SearchBar({
         className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
       />
 
-      {/* 입력 필드 */}
+      {/* 입력 필드 — 깔끔한 화이트 스타일 */}
       <input
         type="text"
         value={value}
@@ -32,10 +32,10 @@ export default function SearchBar({
         placeholder={placeholder}
         className={cn(
           "w-full h-[38px] pl-9",
-          "rounded-full border text-sm text-text-primary",
+          "rounded-full border text-[13px] text-text-primary placeholder:text-[#c4beb7]",
           "outline-none transition-colors duration-150",
-          "bg-[#FAFAF8]",
-          value ? "pr-[34px] border-[#C4BEB7]" : "pr-3 border-border"
+          "bg-[#ffffff]",
+          value ? "pr-[34px] border-[#d9d5d0]" : "pr-3 border-[#eae7e3]"
         )}
       />
 

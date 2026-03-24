@@ -98,13 +98,13 @@
   --color-warm-beige: #bfb6aa;
   --color-warm-amber: #c4b5a0;
 
-  /* ─── 배경 컬러: Beige Base (#F2EFE9) ─── */
-  --color-bg-base: #f2efe9;
-  --color-bg-surface: #ece8e2;
+  /* ─── 배경 컬러: White Base ─── */
+  --color-bg-base: #ffffff;
+  --color-bg-surface: #f8f7f5;
   --color-bg-card: #ffffff;
   --color-bg-beige: #f2efe9;
-  --color-bg-chip: #ece8e2;
-  --color-bg-muted-warm: #e8e3dd;
+  --color-bg-chip: #f5f3f0;
+  --color-bg-muted-warm: #edeae6;
   --color-bg-like: #fff0f0;
 
   /* ─── 텍스트 컬러: 농도별 계층 ─── */
@@ -136,13 +136,13 @@
   --color-highlight-strong: #5a5248; /* 비교 우위 강조 텍스트 */
 
   /* ─── 🏷️ CategoryFilter 컴포넌트 ─── */
-  --color-category-active-text: #6b5445;
-  --color-category-inactive-text: #a8a39d;
-  --color-category-active-pill: #9b7d6a;
-  --color-category-sub-bg: #f5f1eb;
-  --color-category-pill-default-bg: #f2efe9;
-  --color-category-pill-default-text: #8a8278;
-  --color-category-pill-default-border: #e2ddd8;
+  --color-category-active-text: #2a2118;
+  --color-category-inactive-text: #bfb6aa;
+  --color-category-active-pill: #a69d92;
+  --color-category-sub-bg: #f5f2ed;
+  --color-category-pill-default-bg: #faf8f5;
+  --color-category-pill-default-text: #a69d92;
+  --color-category-pill-default-border: #e8e4e0;
 
   /* ─── 🧭 BottomNav 컴포넌트 ─── */
   --color-nav-bg: #fdfcfb;
@@ -190,9 +190,9 @@
   --radius-xs: 4px;
 
   /* ─── 🌑 Shadows ─── */
-  --shadow-card: 0px 5px 16px 0px rgba(166, 157, 146, 0.15);
-  --shadow-nav: 0 8px 32px rgba(166, 157, 146, 0.08);
-  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
+  --shadow-nav: 0 -1px 0 rgba(0, 0, 0, 0.04);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
 
   /* ─── 📏 Heights ─── */
   --height-header: 56px;
@@ -301,7 +301,7 @@
 
   /* ─── Body Background ─── */
   body {
-    background-color: #f2efe9; /* Beige-1 */
+    background-color: #f9f8f6; /* 미세한 웜 화이트 */
     color: #2a2118;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -309,7 +309,7 @@
 
   @media (max-width: 767px) {
     body {
-      background-color: #f2efe9;
+      background-color: #f9f8f6;
     }
   }
 
@@ -366,16 +366,16 @@
   /* 대분류 탭 버튼 */
   .category-tab-button {
     flex-shrink: 0;
-    height: 44px;
-    padding: 0 14px;
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 0.01em;
+    height: 40px;
+    padding: 0 16px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
     cursor: pointer;
     border: none;
     background: transparent;
     position: relative;
-    transition: color 0.15s;
+    transition: color 0.2s;
     color: var(--color-category-inactive-text);
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
@@ -383,19 +383,20 @@
 
   .category-tab-button[data-active="true"] {
     color: var(--color-category-active-text);
+    font-weight: 600;
     border-bottom-color: var(--color-category-active-text);
   }
 
   /* 소분류 pill 버튼 (기본 스타일) */
   .category-pill-button {
-    height: 30px;
-    padding: 0 12px;
+    height: 32px;
+    padding: 0 14px;
     border-radius: 9999px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     border: 1px solid;
-    transition: all 0.15s;
+    transition: all 0.2s;
     background-color: var(--color-category-pill-default-bg);
     color: var(--color-category-pill-default-text);
     border-color: var(--color-category-pill-default-border);
@@ -657,13 +658,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    border: 1px solid var(--color-border);
-    background-color: var(--color-bg-card);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    background-color: #fff;
     cursor: pointer;
-    transition: opacity 0.15s;
+    transition: all 0.15s;
   }
 
   .pagination-nav-button[data-disabled="true"] {
@@ -683,28 +684,27 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    border: 1px solid var(--color-border);
-    background-color: var(--color-bg-card);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background-color: transparent;
     color: var(--color-text-muted);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 400;
     cursor: pointer;
     transition: all 0.15s;
   }
 
   .pagination-page-button[data-active="true"] {
-    border-color: var(--color-text-primary);
-    background-color: var(--color-text-primary);
-    color: var(--color-bg-card);
-    font-weight: 700;
+    background-color: #a9a09a;
+    color: #fff;
+    font-weight: 600;
   }
 
   .pagination-page-button:not([data-active="true"]):hover {
-    border-color: var(--color-brand);
-    background-color: var(--color-brand-pale);
+    border-color: #e8e4e0;
+    background-color: #f5f3f0;
   }
 
   .pagination-page-button:active {

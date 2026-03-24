@@ -13,7 +13,6 @@ import {
   useRemoveDislikedProduct,
   useDraftQuery,
 } from "@/hooks";
-import { fromSkinTypeEnum } from "@/utils/enumConvert";
 import { PAGE_SIZE } from "@/constants/pagination";
 
 export default function OwnedTab() {
@@ -42,8 +41,6 @@ export default function OwnedTab() {
     name: item.productInfo.name,
     category: item.productInfo.categoryName,
     imageUrl: item.productInfo.imageUrl ?? undefined,
-    skinTypes: item.productInfo.skinTypes.map(fromSkinTypeEnum),
-    effects: item.productInfo.tags,
   }));
 
   const ownedTotalPages = Math.ceil(ownedProducts.length / PAGE_SIZE) || 1;
@@ -67,12 +64,12 @@ export default function OwnedTab() {
   );
 
   return (
-    <div className="px-7 pb-10 pt-4 flex flex-col gap-10">
+    <div className="px-7 pb-10 pt-4 flex flex-col gap-10 bg-category-pill-default-bg">
       {/* ── 보유 제품 섹션 ─────────────────────────────────────── */}
       <section>
         <div className="flex items-center justify-between mb-1">
           <div>
-            <p className="text-base font-bold text-text-primary">Owned Products</p>
+            <p className="text-base font-bold text-[#5e5c59]">Owned Products</p>
             <p className="text-xs text-text-muted mt-0.5">
               {ownedProducts.length}개 보유 중
             </p>
@@ -107,8 +104,6 @@ export default function OwnedTab() {
                     name={product.name}
                     category={product.category}
                     imageUrl={product.imageUrl}
-                    skinTypes={product.skinTypes}
-                    effects={product.effects}
                     layout="grid"
                     showLike={false}
                     inRoutine={isInRoutine(product.productId)}
@@ -139,7 +134,7 @@ export default function OwnedTab() {
           <div className="flex items-start gap-1.5">
             <Ban size={16} className="text-danger mt-0.5 shrink-0" />
             <div>
-              <p className="text-base font-bold text-text-primary">Avoid Products</p>
+              <p className="text-base font-bold text-[#5e5c59]">Avoid Products</p>
               <p className="text-xs text-text-muted mt-0.5">
                 {dislikedItems.length}개 등록됨
               </p>
@@ -175,11 +170,6 @@ export default function OwnedTab() {
                     name={item.productName}
                     category={item.categoryName}
                     imageUrl={item.imageUrl ?? undefined}
-                    skinTypes={[
-                      item.topSkinType ? fromSkinTypeEnum(item.topSkinType) : null,
-                      item.top2SkinType ? fromSkinTypeEnum(item.top2SkinType) : null,
-                    ].filter(Boolean) as string[]}
-                    effects={item.tags}
                     layout="grid"
                     showLike={false}
                   />

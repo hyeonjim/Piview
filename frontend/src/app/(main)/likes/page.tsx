@@ -67,13 +67,13 @@ export default function LikesPage() {
       )}
 
       {/* 헤더 */}
-      <div className="bg-[var(--color-bg-base)] px-5 pt-[15px] pb-10">
-        <h1 className="mt-[10px] text-[22px] font-bold text-[var(--color-text-primary)] tracking-[-0.4px]">
+      <div className="bg-[#faf8f5] px-5 pt-[15px] pb-10">
+        <h1 className="mt-[10px] text-[20px] font-bold text-[#635446]">
           Liked
         </h1>
       </div>
 
-      <div className="px-4 pb-6 pt-0">
+      <div className="px-10 pb-6 pt-0 bg-[#faf8f5]">
         {isLoading ? (
           <div className="flex items-center justify-center py-12 px-5">
             <p className="text-[14px] text-[var(--color-text-muted)]">
@@ -94,7 +94,7 @@ export default function LikesPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-8 items-start">
+          <div className="grid grid-cols-2 gap-7 items-stretch">
             {pagedProducts.map((product) => {
               const productId = product.productId;
               return (

@@ -48,9 +48,9 @@ export function CategoryFilter({
     isLoading || (bigCategories.length > 0 && !selectedBig);
 
   return (
-    <div className="bg-white">
-      {/* 대분류 탭 행 */}
-      <div className="flex min-h-[44px] overflow-x-auto border-b border-(--color-border) px-4 scrollbar-none">
+    <div className="bg-[#f7f7f5]">
+      {/* 대분류 탭 행 — 깔끔한 구분선 */}
+      <div className="flex min-h-[40px] overflow-x-auto border-b border-[#dad3c8] px-5 scrollbar-none">
         {isLoading
           ? // 로딩 중 — 실제 탭과 동일한 크기의 skeleton
             [80, 64, 72, 60].map((w, i) => (
@@ -82,14 +82,14 @@ export function CategoryFilter({
             })}
       </div>
 
-      {/* 소분류 pill 행 */}
-      <div className="flex flex-wrap gap-2 p-[10px_16px] bg-category-sub-bg min-h-[52px]">
+      {/* 소분류 pill 행 — 밝은 배경 */}
+      <div className="flex flex-wrap gap-2 p-[10px_20px] min-h-[48px]">
         {showSubSkeleton
           ? // 로딩 중 — 실제 pill과 동일한 크기의 skeleton
             [56, 72, 48, 64, 52].map((w, i) => (
               <div
                 key={i}
-                className="h-[30px] rounded-full bg-gray-200 animate-pulse"
+                className="h-[25px] rounded-full bg-[#fff] animate-pulse"
                 style={{ width: w }}
               />
             ))

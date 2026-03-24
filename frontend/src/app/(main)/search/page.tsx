@@ -137,7 +137,7 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="flex-1 bg-[#F5F2EC]">
+    <div className="flex-1 bg-[#f9f8f6]">
       {showCompare && canCompare && (
         <CompareModal
           compareItems={compareItems as [ProductViewModel, ProductViewModel]}
@@ -145,13 +145,13 @@ export default function SearchPage() {
         />
       )}
 
-      {/* 상단 헤더 */}
-      <div className="bg-[#F5F2EC] border-b border-[#E2DDD8] pt-[5px]">
-        <div className="px-4 pt-4 pb-3">
-          <h1 className="mt-[3px] mb-3 text-[22px] font-bold text-[var(--color-text-primary)] tracking-[-0.4px] leading-[1.2]">
+      {/* 상단 헤더 — 미세한 웜 베이지 */}
+      <div className="bg-[#faf8f5] pt-[5px]">
+        <div className="px-5 pt-4 pb-3">
+          <h1 className="mt-[3px] mb-3.5 text-[20px] font-semibold text-[#635446] tracking-[-0.3px] leading-[1.2]">
             All
           </h1>
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3">
             <div className="flex-1">
               <SearchBar
                 value={searchQuery}
@@ -159,19 +159,19 @@ export default function SearchPage() {
                 placeholder="제품명, 브랜드 검색..."
               />
             </div>
-            {/* 필터 버튼 — 활성 여부에 따라 색상 분기 */}
+            {/* 필터 버튼 — 미니멀 스타일 */}
             <button
               onClick={() => setShowFilter(true)}
-              className={`flex items-center gap-1.5 h-[38px] px-3 rounded-full text-sm font-semibold border cursor-pointer transition-all active:scale-[0.96] shrink-0 ${
+              className={`flex items-center gap-1.5 h-[38px] px-3.5 rounded-full text-[13px] font-medium border cursor-pointer transition-all active:scale-[0.96] shrink-0 ${
                 filterCount > 0
-                  ? "bg-[var(--color-brand)] border-[var(--color-brand)] text-[var(--color-bg-card)]"
-                  : "bg-[var(--color-bg-card)] border-[var(--color-border)] text-[var(--color-text-hint)]"
+                  ? "bg-[#5a504a] border-[#5a504a] text-white"
+                  : "bg-[#faf8f5] border-[#e8e4e0] text-[#8c8277]"
               }`}
             >
               <SlidersHorizontal size={14} />
               필터
               {filterCount > 0 && (
-                <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white/25 text-[10px] font-bold">
+                <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-white/20 text-[10px] font-semibold">
                   {filterCount}
                 </span>
               )}
@@ -189,13 +189,13 @@ export default function SearchPage() {
 
       {/* 비교 힌트 바 — 1개 선택 시 */}
       {compareItems.length === 1 && (
-        <div className="flex items-center justify-between mx-4 mt-3 px-3 py-2.5 rounded-xl bg-[var(--color-bg-beige)] border border-[#D9D5D0]">
-          <span className="text-sm font-medium text-[var(--color-text-sub)]">
+        <div className="flex items-center justify-between mx-5 mt-3 px-4 py-3 rounded-xl bg-white border border-[#e8e4e0]">
+          <span className="text-[13px] font-medium text-[#6e6358]">
             비교할 제품을 1개 더 선택하세요
           </span>
           <button
             onClick={clearCompare}
-            className="text-xs text-[var(--color-brand)] bg-transparent border-none cursor-pointer"
+            className="text-xs text-[#a69d92] bg-transparent border-none cursor-pointer"
           >
             취소
           </button>
@@ -204,20 +204,20 @@ export default function SearchPage() {
 
       {/* 비교 힌트 바 — 2개 선택 완료 */}
       {canCompare && (
-        <div className="flex items-center justify-between mx-4 mt-3 px-3 py-2.5 rounded-xl bg-[#3D3028]">
-          <span className="text-xs font-semibold text-[var(--color-bg-beige)]">
+        <div className="flex items-center justify-between mx-5 mt-3 px-4 py-3 rounded-xl bg-[#5a504a]">
+          <span className="text-[13px] font-medium text-white/90">
             2개 제품 선택 완료
           </span>
           <div className="flex gap-2">
             <button
               onClick={clearCompare}
-              className="text-[11px] text-[var(--color-text-faint)] bg-transparent border-none cursor-pointer"
+              className="text-[11px] text-white/50 bg-transparent border-none cursor-pointer"
             >
               취소
             </button>
             <button
               onClick={openCompare}
-              className="text-xs font-semibold text-[#3D3028] bg-[var(--color-bg-beige)] border-none rounded-[6px] px-[10px] py-1 cursor-pointer"
+              className="text-xs font-semibold text-[#5a504a] bg-white border-none rounded-lg px-3 py-1.5 cursor-pointer"
             >
               비교하기
             </button>
@@ -226,17 +226,17 @@ export default function SearchPage() {
       )}
 
       {/* 제품 그리드 */}
-      <div className="p-4">
+      <div className="px-5 py-4">
         {isLoading || (isFetching && isPlaceholderData) ? (
-          <div className="flex justify-center py-20 text-sm text-[var(--color-brand)]">
+          <div className="flex justify-center py-20 text-[13px] text-[#a69d92]">
             불러오는 중...
           </div>
         ) : isError ? (
-          <div className="flex justify-center py-20 text-sm text-[var(--color-brand)]">
+          <div className="flex justify-center py-20 text-[13px] text-[#a69d92]">
             오류가 발생했어요. 다시 시도해 주세요.
           </div>
         ) : products.length === 0 ? (
-          <div className="mt-2 rounded-xl border border-[#E2DDD8] bg-[var(--color-bg-card)]">
+          <div className="mt-2 rounded-2xl border border-[#eee] bg-white">
             <EmptyState
               icon={Search}
               title="해당하는 제품이 없어요"
@@ -244,7 +244,7 @@ export default function SearchPage() {
             />
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-8 items-start">
+          <div className="grid grid-cols-2 gap-7 items-stretch">
             {products.map((product, index) => (
               <ProductCard
                 key={product.id}

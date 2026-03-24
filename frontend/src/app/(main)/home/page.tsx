@@ -48,15 +48,15 @@ export default function HomePage() {
   const hasRoutine = mainRoutineItems.length > 0;
 
   return (
-    <div className="flex-1 bg-[#F5F2EC]">
-      <div className="bg-[#F5F2EC] pt-3.75 pb-5 px-5">
+    <div className="flex-1 bg-[#faf8f5]">
+      <div className="bg-[#faf8f5] pt-3.75 pb-5 px-5">
         <div className="flex items-center gap-1.5">
           {greeting.icon}
           <span className="text-base font-normal text-[#B0A99F] tracking-[0.12em] uppercase italic [font-family:var(--font-english),serif]">
             {greeting.text}
           </span>
         </div>
-        <h1 className="mt-2.5 mb-1.25 text-[20px] font-bold text-[#1C1C1E] tracking-[-0.5px] leading-[1.2]">
+        <h1 className="mb-1.25 text-[20px] font-bold text-[#6c6b66] tracking-[-0.5px] leading-[1.2]">
           {nickname}님,
         </h1>
         <p className="mt-1 text-sm text-[#B0A99F]">
@@ -69,16 +69,16 @@ export default function HomePage() {
         <div className="bg-white rounded-xl border border-[#E2DDD8]">
           {/* 루틴 헤더 */}
           <div className="flex items-center justify-between py-3.5 px-4 border-b border-[#EDE9E3] rounded-t-xl">
-            <span className="text-[16px] font-bold text-[#2A2118] tracking-[-0.2px]">
+            <span className="text-[16px] font-bold text-[#71706a] tracking-[-0.2px]">
               메인 루틴
             </span>
             {hasRoutine ? (
               <div className="flex items-center gap-2">
                 {/* 루틴 이름 */}
-                <span className="text-[14px] font-semibold text-[#2A2118] truncate max-w-30">
+                <span className="text-[14px] font-semibold text-[#52514d] truncate max-w-30">
                   {mainRoutineData?.title}
                 </span>
-                <span className="text-[12px] font-semibold py-0.75 px-2.5 rounded-xl bg-[#F2EFE9] text-[#A69D92]">
+                <span className="text-[12px] font-semibold py-0.75 px-2.5 rounded-xl bg-[#F2EFE9] text-[#70685d]">
                   {mainRoutineItems.length}단계
                 </span>
               </div>
@@ -93,7 +93,7 @@ export default function HomePage() {
 
           {/* 루틴 리스트 */}
           {hasRoutine ? (
-            <div className="p-3 flex flex-col gap-3">
+            <div className="py-3 px-5 flex flex-col gap-3">
               {mainRoutineItems.map(({ step, product }, index) => {
 
                 return (
@@ -102,7 +102,7 @@ export default function HomePage() {
                     className="flex items-center gap-3"
                   >
                     {/* 스텝 번호 */}
-                    <span className="text-[18px] font-bold text-[#BFB6AA] w-4 shrink-0 [font-family:var(--font-english),serif]">
+                    <span className="text-[18px] font-bold text-[#756f67] w-4 shrink-0 [font-family:var(--font-english),serif]">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     {/* zoom으로 홈페이지에서만 카드 축소 — ProductCard 컴포넌트 수정 없이 비율 유지 */}
