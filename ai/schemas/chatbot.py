@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -44,6 +44,7 @@ class ChatbotCitation(BaseModel):
 class ChatbotQueryResponse(BaseModel):
     # appliedFilters/citations는 retrieval이 붙었을 때 응답 설명력을 높이기 위한 확장 필드입니다.
     sessionId: str
+    responseType: Literal["product_recommendation", "clarifying_question", "informational", "fallback"]
     answer: str
     products: list[ChatbotProductCandidate] = Field(default_factory=list)
     appliedFilters: dict[str, Any] = Field(default_factory=dict)
