@@ -49,14 +49,7 @@ CHATBOT_MODEL=gemini-2.5-flash
   - 챗봇 질의응답
   - `application/json`
 
-## Verification
-
-- 검증 스크립트는 `scripts/verify_skin_pipeline_full.py` 입니다.
-- 명령은 프로젝트의 `ai/` 디렉터리에서 실행합니다.
-- 검증 범위는 `원본 이미지 -> ROI 추출 -> global/regional/moisture` 입니다.
-
 ## Integration Notes
 
 - 로컬에서 AI 서버 기본 주소는 `http://localhost:8000`입니다.
 - 백엔드는 `fastapi.base-url` 설정을 기준으로 AI 서버를 호출합니다.
-- 챗봇 smoke test는 `python scripts/chatbot_smoke_test.py`로 확인할 수 있습니다.
