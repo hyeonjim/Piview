@@ -140,7 +140,7 @@ export function FilterModal({
             <div className="flex items-center gap-3">
               <button
                 onClick={handleReset}
-                className="flex items-center gap-1 border-none bg-transparent cursor-pointer text-xs"
+                className="flex items-center gap-1 border-none bg-transparent cursor-pointer text-[14px]"
                 style={{ color: "#A69D92" }}
               >
                 <RotateCcw size={12} /> 초기화
@@ -312,9 +312,9 @@ function FilterSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="py-[16px]">
+    <div className="py-[20px]">
       <div className="flex items-center justify-between mb-3">
-        <p className="m-0 text-base font-bold tracking-tight" style={{ color: "#5C5550" }}>
+        <p className="m-0 text-base font-semibold tracking-tight" style={{ color: "#5C5550" }}>
           {title}
         </p>
         {rightLabel && (
@@ -359,7 +359,7 @@ function FilterChip({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`h-8 px-[14px] rounded-md text-[14px] font-semibold transition-all border ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+      className={`h-7 px-[10px] rounded-md text-[14px] font-semibold transition-all border ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
       style={active ? activeStyle : disabled ? disabledStyle : inactiveStyle}
     >
       {label}

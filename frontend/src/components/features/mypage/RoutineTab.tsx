@@ -510,9 +510,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
 
       {/* ── 저장된 루틴 슬라이더 ── */}
       {routineList.length > 0 && (
-        <div className="mb-2">
+        <div className="mb-5">
           <div className="flex items-center justify-between mb-5">
-            <p className="text-[16px] font-bold text-[#5b5b59]">My routines</p>
+            <p className="text-[16px] font-bold text-[#7c7c7a]">My routine list</p>
             <button
               onClick={handleNewRoutine}
               className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-xs text-brand cursor-pointer bg-[#fcfcfb]"
@@ -522,20 +522,13 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
           </div>
           <div
             ref={savedRoutineScrollRef}
-            className="flex gap-5 overflow-x-auto pb-1"
+            className="flex gap-5 overflow-x-auto pb-1 snap-x snap-mandatory overscroll-x-contain cursor-grab select-none [scrollbar-width:none]"
             onScroll={handleSavedRoutineScroll}
             onPointerDown={handleSliderPointerDown}
             onPointerMove={handleSliderPointerMove}
             onPointerUp={handleSliderPointerUp}
             onPointerCancel={handleSliderPointerUp}
             onClickCapture={handleSliderClickCapture}
-            style={{
-              scrollbarWidth: "none",
-              scrollSnapType: "x mandatory",
-              overscrollBehaviorX: "contain",
-              cursor: "grab",
-              userSelect: "none",
-            }}
           >
             {routineList.map((saved) => (
               <SavedRoutineCard
@@ -575,11 +568,11 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       )}
 
       {/* ── 헤더 ── */}
-      <div className="flex flex-col gap-2 mb-1">
+      <div className="flex flex-col gap-1 mb-1">
         {/* 루틴 이름 & 메인 루틴 설정 버튼 & 액션 버튼 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
-            <h2 className="text-lg font-bold text-[#636260] truncate">
+            <h2 className="text-[16px] font-bold text-[#636260] truncate">
               {isViewingSavedRoutine
                 ? selectedRoutineDetail.title
                 : editingRoutineId !== null
@@ -595,15 +588,12 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 }
                 handleSetMainRoutine(selectedRoutineId);
               }}
-              className="text-[16px] cursor-pointer bg-transparent border-none leading-none shrink-0"
-              style={{
-                color:
-                  selectedRoutineId !== null &&
-                  routineList.find((r) => r.routineId === selectedRoutineId)
-                    ?.isMain
-                    ? "#C8A96E"
-                    : "#D9D5D0",
-              }}
+              className={`text-[14px] cursor-pointer bg-transparent border-none leading-none shrink-0 ${
+                selectedRoutineId !== null &&
+                routineList.find((r) => r.routineId === selectedRoutineId)?.isMain
+                  ? "text-[#C8A96E]"
+                  : "text-[#D9D5D0]"
+              }`}
               aria-label="메인 루틴으로 설정"
             >
               ★ Main
@@ -611,17 +601,16 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
           </div>
 
           {/* 액션 버튼 */}
-          <div className="flex gap-1.5 text-[14px] shrink-0">
+          <div className="flex gap-1.5 text-[12px] shrink-0">
             {/* OCR 버튼 — 아이콘 + Tooltip */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setShowOcrModal(true)}
-                  className="flex items-center justify-center p-1.5 rounded-full border border-border cursor-pointer bg-transparent"
-                  style={{ color: "#636260" }}
+                  className="flex items-center justify-center p-1.5 rounded-full border border-border cursor-pointer bg-transparent text-[#636260]"
                   aria-label="OCR로 제품 추가"
                 >
-                  <Scan size={16} />
+                  <Scan size={12} />
                 </button>
               </TooltipTrigger>
               <TooltipContent>OCR로 제품 추가</TooltipContent>
@@ -632,8 +621,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               <button
                 onClick={handleOpenEditSaveModal}
                 disabled={isUpdating}
-                className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-sky-100 disabled:opacity-50"
-                style={{ color: "#636260" }}
+                className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#dde1e2] disabled:opacity-50"
               >
                 {isUpdating ? "저장 중..." : "Edit Save"}
               </button>
@@ -642,19 +630,17 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               <button
                 onClick={handleEditRoutine}
                 disabled={selectedRoutineId === null || isLoadingToEdit}
-                className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-transparent disabled:opacity-50"
-                style={{ color: "#636260" }}
+                className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-transparent disabled:opacity-50 text-[#636260]"
               >
-                {isLoadingToEdit ? "불러오는 중..." : <><SquarePen size={13} />Edit Mode</>}
+                {isLoadingToEdit ? "불러오는 중..." : <><SquarePen size={12} />Edit Mode</>}
               </button>
             )}
             <button
               onClick={handleOpenSaveModal}
               disabled={isCreating || filledCount === 0}
-              className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-transparent disabled:opacity-50"
-              style={{ color: "#636260" }}
+              className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-transparent disabled:opacity-50 text-[#636260]"
             >
-              {isCreating ? "저장 중..." : <><Save size={13} />Save</>}
+              {isCreating ? "저장 중..." : <><Save size={12} />Save</>}
             </button>
           </div>
         </div>
@@ -673,12 +659,12 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
           dragState?.toStepCode === step.code;
 
         return (
-          <div key={step.code} className="mt-3">
+          <div key={step.code} className="mt-3 mx-7">
             {/* 스텝 섹션 헤더 */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1.5">
-                <span className="text-base font-semibold text-brand">{stepIndex + 1}단계</span>
-                <span className="text-[16px] font-semibold text-[#3b3b38]">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5 text-[#63635e] text-[14px] ">
+                <span className="font-bold">{stepIndex + 1}단계</span>
+                <span className="font-semibold ">
                   {step.label}
                 </span>
               </div>
@@ -704,17 +690,15 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                     ? undefined
                     : () => onOpenModal(step.code, step.columnId)
                 }
-                className="w-full rounded-2xl px-4 py-3 flex items-center gap-3 border-none text-left"
-                style={{
-                  cursor: isViewingSavedRoutine ? "default" : "pointer",
-                  backgroundColor: isDropTarget
-                    ? "rgba(166,157,146,0.12)"
-                    : "var(--color-warm-bg)",
-                  border: isDropTarget
-                    ? "2px dashed #A69D92"
-                    : "1px solid var(--color-border-subtle)",
-                  transition: "background-color 0.1s, border 0.1s",
-                }}
+                className={`w-full rounded-2xl px-4 py-3 flex items-center gap-3 text-left transition-[background-color,border] ${
+                  isViewingSavedRoutine ? "cursor-default" : "cursor-pointer"
+                } ${
+                  isDropTarget ? "bg-[rgba(166,157,146,0.12)]" : "bg-(--color-warm-bg)"
+                } ${
+                  isDropTarget
+                    ? "border-2 border-dashed border-[#A69D92]"
+                    : "border border-border-subtle"
+                }`}
               >
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold text-text-muted shrink-0 bg-[#fbfaf8]">
                   {step.code}
@@ -773,7 +757,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       <div className="mt-10 p-4 rounded-2xl bg-(--color-warm-bg) border border-[#E2DDD8]">
         <div className="flex items-center gap-3">
           <div className="relative w-14 h-14 shrink-0 flex items-center justify-center">
-            <svg width="56" height="56" className="absolute">
+            <svg width="60" height="60" className="absolute">
               <circle
                 cx="28"
                 cy="28"
@@ -944,21 +928,23 @@ function RoutineProductCard({
             </div>
           )}
 
-          {/* 이미지 */}
-          <div className="absolute inset-0 bg-[#F5F2EC]">
-            {product.imageUrl && !imgError ? (
-              <Image
-                src={product.imageUrl}
-                alt={product.name ?? ""}
-                fill
-                sizes="88px"
-                priority={priority}
-                className="object-cover"
-                onError={() => setImgError(true)}
-              />
-            ) : (
-              <div className="absolute inset-0 bg-gray-100" />
-            )}
+          {/* 이미지 — py-5 패딩을 주기 위해 relative 래퍼로 감쌈 (fill은 positioned 조상 기준) */}
+          <div className="absolute inset-0 py-2">
+            <div className="relative w-full h-full">
+              {product.imageUrl && !imgError ? (
+                <Image
+                  src={product.imageUrl}
+                  alt={product.name ?? ""}
+                  fill
+                  sizes="80px"
+                  priority={priority}
+                  className="object-contain"
+                  onError={() => setImgError(true)}
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gray-100" />
+              )}
+            </div>
           </div>
         </div>
 
@@ -968,23 +954,23 @@ function RoutineProductCard({
           className="flex-1 px-3 py-2 min-w-0 no-underline"
         >
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[12px] font-bold text-[#BFB6AA] uppercase tracking-[0.08em]">
+            <span className="text-[13px] font-semibold text-[#999289] tracking-[0.08em]">
               {product.brandName}
             </span>
             {product.categoryName && (
-              <span className="text-[12px] px-1.5 rounded-[3px] font-semibold bg-[#EAE5DA] text-[#7A6F5C]">
+              <span className="text-[10px] px-1 py-px rounded-[10px] font-medium bg-[#f1efea] text-[#968d7e]">
                 {product.categoryName}
               </span>
             )}
           </div>
-          <p className="my-1.5 text-[16px] font-semibold text-[#5b5b59] leading-[1.4] line-clamp-1">
+          <p className="my-1.5 text-[14px] font-semibold text-[#5e544a] leading-[1.4] line-clamp-2">
             {product.name}
           </p>
           <div className="flex flex-wrap mt-1">
             {product.skinTypes?.slice(0, 1).map((skinType) => (
               <span
                 key={skinType}
-                className="inline-block mb-1 mr-1 text-[11px] font-medium px-1.5 py-[1px] rounded bg-[#f4eddf] text-[#514a42]"
+                className="inline-block mb-1 mr-1.5 text-[10px] font-medium px-1.5 py-px rounded bg-[#f7f2ea] text-[#514a42]"
               >
                 {fromSkinTypeEnum(skinType)}
               </span>
@@ -992,7 +978,7 @@ function RoutineProductCard({
             {product.tags?.slice(0, 2).map((effect) => (
               <span
                 key={effect}
-                className="inline-block text-[11px] mb-1 mr-1 font-medium px-1.5 py-[1px] rounded border bg-[#f8f8f6] text-[#7a664e]"
+                className="inline-block text-[10px] mb-1 mr-1.5 font-medium px-1.5 py-px border rounded-3xl bg-[#fcfcfc] text-[#7a664e]"
               >
                 {effect}
               </span>
@@ -1020,7 +1006,7 @@ function SavedRoutineCard({
 }: SavedRoutineCardProps) {
   // 선택된 카드만 금색 스타일 — 메인 여부와 무관하게 isSelected가 우선
   const borderStyle = isSelected ? "1.5px solid #C8A96E" : "1px solid #E2DDD8";
-  const backgroundStyle = isSelected ? "#FBF7EF" : "#F8F6F2";
+  const backgroundStyle = "#fff";
 
   return (
     <div

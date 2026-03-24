@@ -35,8 +35,8 @@ import type { SkinType } from "@/types/user";
 function chipClassName(isActive: boolean) {
   return `inline-flex items-center gap-1 px-3 py-1.5 rounded-chip text-sm font-semibold cursor-pointer transition-all border select-none ${
     isActive
-      ? "bg-brand text-white border-brand shadow-[0_2px_8px_rgba(162,170,123,0.2)]"
-      : "bg-white text-text-primary border-border"
+      ? "bg-[#c9c3c3] text-white"
+      : "bg-white text-[#696363] border-border"
   }`;
 }
 
@@ -173,7 +173,7 @@ export default function SettingsPage() {
           <button
             onClick={handleSave}
             disabled={isPending}
-            className="w-50 h-12 rounded-button bg-brand text-white font-bold text-[16px] border-none cursor-pointer shadow-[0_4px_16px_rgba(162,170,123,0.2)] transition-all active:scale-[0.98] disabled:opacity-60"
+            className="w-50 h-12 rounded-button bg-[#9b9494] text-white font-bold text-[16px] border-none cursor-pointer shadow-[0_4px_16px_rgba(162,170,123,0.2)] transition-all active:scale-[0.98] disabled:opacity-60"
           >
             {isPending ? "저장 중..." : "저장하기"}
           </button>
@@ -183,7 +183,7 @@ export default function SettingsPage() {
         <div className="mt-20 mb-10 flex justify-center">
           <button
             onClick={handleLogout}
-            className="w-50 h-11 rounded-button text-gray-700 font-bold text-[16px] border border-border cursor-pointer transition-all active:scale-[0.98] hover:bg-red-100 hover:text-red-800 hover:border-red-200"
+            className="w-50 h-11 rounded-button text-gray-700 font-bold text-[16px] border border-border cursor-pointer transition-all active:scale-[0.98] hover:bg-red-100 hover:text-red-900 hover:border-red-200"
           >
             로그아웃
           </button>

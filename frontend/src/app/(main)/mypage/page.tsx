@@ -128,7 +128,7 @@ export default function MyPage() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-[22px] font-semibold text-white">
+              <span className="text-[20px] font-semibold text-white">
                 {userName.charAt(0).toUpperCase()}
               </span>
             )}
@@ -136,8 +136,8 @@ export default function MyPage() {
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <p className="text-[20px] font-bold text-text-primary tracking-[-0.3px]">
+              <div className="flex items-center gap-1">
+                <p className="text-[20px] font-bold text-[#555454] tracking-[-0.3px]">
                   {userName}님
                 </p>
                 {/* 개발 도구 - 성별 스위칭 버튼 (나중에 삭제 예정) */}
@@ -168,16 +168,16 @@ export default function MyPage() {
                 피부 타입을 진단해보세요
               </p>
             ) : (
-              <div className="flex flex-wrap gap-1 mt-4">
-                {/* 피부 타입 배지 */}
-                <span className="text-[14px] py-0.5 px-2 rounded-full bg-[#E8E3DC] text-[#5A504A] font-semibold">
+              <div className="flex flex-wrap gap-1 mt-2">
+                {/* 피부 타입 배지 — ProductCard SkinTypeTag 배경색 스타일 */}
+                <span className="text-[12px] py-0.5 px-2 rounded-full border bg-[#e9ded3] text-[#514a42] font-semibold">
                   {savedSkinType}
                 </span>
-                {/* 피부 고민 배지 */}
+                {/* 피부 고민 배지 — ProductCard EffectTag 스타일 */}
                 {savedConcerns.map((concern, index) => (
                   <span
                     key={`${concern}-${index}`}
-                    className="text-[14px] py-0.5 px-2 rounded-full bg-[#EEF0E8] text-[#6B7257] font-semibold"
+                    className="text-[12px] py-0.5 px-2 rounded-full border bg-[#f0eded] text-[#7a664e] font-semibold"
                   >
                     {concern}
                   </span>
@@ -186,7 +186,7 @@ export default function MyPage() {
                 {savedAvoidContents.map((item, index) => (
                   <span
                     key={`${item.avoidContent}-${index}`}
-                    className="text-sm font-medium py-0.5 px-2 rounded-full bg-[#F5EDE8] text-[#8C5A4A]"
+                    className="text-[12px] font-medium py-0.5 px-2 rounded-full bg-[#F5EDE8] text-[#8C5A4A]"
                   >
                     {item.avoidContent}
                   </span>
@@ -205,11 +205,11 @@ export default function MyPage() {
             onClick={() => setActiveTab(tabType)}
             className={`relative flex-1 pt-3 pb-2.75 text-base flex items-center justify-center gap-1.5 cursor-pointer bg-transparent border-none transition-colors duration-200 -mb-px ${
               activeTab === tabType
-                ? "font-semibold text-text-primary"
-                : "font-normal text-text-faint"
+                ? "font-semibold text-[#535353]"
+                : "font-semibold text-text-faint"
             }`}
           >
-            {tabType === "routine" ? <>My routine</> : <>Owned</>}
+            {tabType === "routine" ? <>My routine</> : <>My product</>}
             {/* 선택 인디케이터 — 하단 라인 */}
             <span
               className={`absolute bottom-0 left-0 right-0 h-[2.5px] rounded-t-full transition-all duration-200 ${

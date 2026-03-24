@@ -68,7 +68,7 @@ export default function LikesPage() {
 
       {/* 헤더 */}
       <div className="bg-[#faf8f5] px-5 pt-[15px] pb-10">
-        <h1 className="mt-[10px] text-[20px] font-bold text-[#635446]">
+        <h1 className="mt-[10px] text-[20px] font-semibold text-[#635446]">
           Liked
         </h1>
       </div>
