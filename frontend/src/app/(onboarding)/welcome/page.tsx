@@ -3,240 +3,224 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { WELCOME_SLIDES } from "@/constants/_mock/welcomeSlides";
+import { useUserStore } from "@/stores";
+import { authService } from "@/services/auth";
 
-// ── 스타일 상수 ──────────────────────────────────────────────────────
-const BRAND_TEXT_STYLE = {
-  fontFamily: "'Raleway', sans-serif",
-  fontSize: "35px",
-  fontWeight: 700,
-  color: "rgba(255,255,255,0.85)",
-  letterSpacing: "4px",
-  textTransform: "uppercase" as const,
-};
-const SLIDE_MIN_H_STYLE = { minHeight: "140px" };
-const TITLE_STYLE = {
-  fontFamily: "'Raleway', sans-serif",
-  fontSize: "42px",
-  fontWeight: 300,
-  color: "#FFFFFF",
-  lineHeight: 1.15,
-  letterSpacing: "-0.5px",
-  whiteSpace: "pre-line" as const,
-  margin: 0,
-  transition: "opacity 0.5s",
-};
-const DESC_STYLE = {
-  fontFamily: "'Raleway', sans-serif",
-  fontSize: "16px",
-  fontWeight: 400,
-  color: "rgba(255,255,255,0.6)",
-  lineHeight: 1.7,
-  marginTop: "16px",
-  whiteSpace: "pre-line" as const,
-  letterSpacing: "0.2px",
-};
-
-const OVERLAY =
+const GRADIENT_OVERLAY =
   "linear-gradient(to top, rgba(30,27,36,0.92) 0%, rgba(30,27,36,0.5) 40%, rgba(30,27,36,0.1) 65%, transparent 100%)";
 
 export default function WelcomePage() {
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
-  // 로그인 바텀시트 열림/닫힘 상태
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
+  // Auto-slide effect
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % WELCOME_SLIDES.length);
+      setCurrentSlide((previous) => (previous + 1) % WELCOME_SLIDES.length);
     }, 5000);
     return () => clearInterval(interval);
   }, []);
 
+  // Navigation handlers
   const goNext = useCallback(
-    () => setCurrentSlide((prev) => (prev + 1) % WELCOME_SLIDES.length),
+    () => setCurrentSlide((previous) => (previous + 1) % WELCOME_SLIDES.length),
     [],
   );
-  const goPrev = useCallback(
+
+  const goPrevious = useCallback(
     () =>
       setCurrentSlide(
-        (prev) => (prev - 1 + WELCOME_SLIDES.length) % WELCOME_SLIDES.length,
+        (previous) =>
+          (previous - 1 + WELCOME_SLIDES.length) % WELCOME_SLIDES.length,
       ),
     [],
   );
 
-  const handleTouchStart = (e: React.TouchEvent) =>
-    setTouchStart(e.touches[0].clientX);
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  // Touch gesture handlers
+  const handleTouchStart = (event: React.TouchEvent) =>
+    setTouchStart(event.touches[0].clientX);
+
+  const handleTouchEnd = (event: React.TouchEvent) => {
     if (touchStart === null) return;
-    const diff = touchStart - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) diff > 0 ? goNext() : goPrev();
+    const difference = touchStart - event.changedTouches[0].clientX;
+    if (Math.abs(difference) > 50) {
+      if (difference > 0) {
+        goNext();
+      } else {
+        goPrevious();
+      }
+    }
     setTouchStart(null);
   };
 
   /**
-   * 카카오 로그인 버튼 클릭 핸들러
-   * window.location.href로 이동 → 백엔드가 카카오 인증 서버로 리다이렉트
-   * redirect_uri로 현재 환경의 프론트 URL을 넘겨서 로컬/배포 자동 분기
+   * 카카오 로그인 핸들러
+   * 백엔드로 리다이렉트하여 OAuth2 인증 시작
    */
   const handleKakaoLogin = () => {
-    const frontendUrl = window.location.origin; // 로컬: http://localhost:3000, 배포: https://j14e101.p.ssafy.io:3000
+    const frontendUrl = window.location.origin;
     const redirectUri = `${frontendUrl}/oauth2/redirect`;
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/oauth2/authorization/kakao?redirect_uri=${encodeURIComponent(redirectUri)}`;
   };
 
   /**
-   * 관리자로 바로 시작 — 마이페이지로 이동
-   * ⚠️ API 연동 시 관리자 인증 로직으로 교체
+   * 관리자 로그인 (개발/테스트 전용)
+   * 백엔드 개발용 API를 호출하여 실제 Access Token 발급
    */
-  const handleAdminLogin = () => {
-    router.push("/mypage");
+  const handleAdminLogin = async () => {
+    try {
+      // 개발용 API 호출 - Access Token 발급
+      const accessToken = await authService.devLogin("admin@test.com");
+
+      // 받은 토큰을 Zustand store에 저장
+      useUserStore.getState().setAccessToken(accessToken);
+
+      // 마이페이지로 이동
+      // useUserQuery가 /users/me를 호출하여 실제 사용자 정보를 가져옴
+      router.push("/mypage");
+    } catch (error) {
+      console.error("개발용 로그인 실패:", error);
+      // 실패 시 fallback으로 로컬 스토어에만 설정 (기존 방식)
+      useUserStore.getState().setUser({
+        id: 999999,
+        userId: 999999,
+        provider: "test",
+        providerId: "test-admin",
+        email: "admin@test.com",
+        name: "User",
+        imageUrl: null,
+        gender: "WOMEN",
+        ageGroup: null,
+        mySkinType: null,
+        exist: true,
+        skinProblems: [],
+      });
+      router.push("/mypage");
+    }
   };
 
   const slide = WELCOME_SLIDES[currentSlide];
 
   return (
     <div
-      className="relative flex flex-col overflow-hidden"
-      style={{
-        height: "100%",
-        minHeight: "100dvh",
-        backgroundColor: "#1E1B24",
-      }}
+      className="relative flex flex-col overflow-hidden h-full min-h-[100dvh] bg-[#1E1B24]"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* 배경 이미지 크로스페이드 */}
-      {WELCOME_SLIDES.map((s, i) => (
+      {/* Background images with crossfade */}
+      {WELCOME_SLIDES.map((slideItem, index) => (
         <div
-          key={i}
-          className="absolute inset-0"
+          key={index}
+          className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
           style={{
-            opacity: i === currentSlide ? 1 : 0,
-            transition: "opacity 1s ease",
+            opacity: index === currentSlide ? 1 : 0,
           }}
         >
           <img
-            src={s.image}
+            src={slideItem.image}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ objectPosition: "center 30%" }}
+            className="absolute inset-0 w-full h-full object-cover object-[center_30%]"
           />
         </div>
       ))}
 
-      {/* 그라디언트 오버레이 */}
+      {/* Gradient overlay */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: OVERLAY }}
+        style={{ background: GRADIENT_OVERLAY }}
       />
 
-      {/* 브랜드명 */}
+      {/* Brand logo */}
       <div className="relative z-10 flex justify-center pt-14">
-        <p style={BRAND_TEXT_STYLE}>피뷰</p>
+        <p
+          className="text-[35px] font-bold text-white/85 tracking-[4px] uppercase m-0"
+          style={{ fontFamily: "var(--font-english)" }}
+        >
+          PIVIEW
+        </p>
       </div>
 
       <div className="flex-1" />
 
-      {/* 하단 콘텐츠 */}
-      <div className="relative z-10 px-7 pb-10">
-        <div style={SLIDE_MIN_H_STYLE}>
-          <h1 style={TITLE_STYLE}>{slide.title}</h1>
-          <p style={DESC_STYLE}>{slide.subtitle}</p>
+      {/* Bottom content area */}
+      <div className="relative z-10 px-7 pb-20">
+        {/* Slide content */}
+        <div className="min-h-[140px]">
+          <h1
+            className="text-[42px] font-light text-white leading-[1.15] tracking-[-0.5px] whitespace-pre-line m-0 transition-opacity duration-500"
+            style={{ fontFamily: "var(--font-korean)" }}
+          >
+            {slide.title}
+          </h1>
+          <p
+            className="mt-4 text-base font-normal text-white/60 leading-[1.7] whitespace-pre-line tracking-[0.2px]"
+            style={{ fontFamily: "var(--font-korean)" }}
+          >
+            {slide.subtitle}
+          </p>
         </div>
 
-        {/* 페이지네이션 dots */}
+        {/* Pagination dots */}
         <div className="flex items-center gap-2 mt-8">
-          {WELCOME_SLIDES.map((_, i) => (
+          {WELCOME_SLIDES.map((_, index) => (
             <button
-              key={i}
-              onClick={() => setCurrentSlide(i)}
-              className="border-none cursor-pointer p-0"
+              key={index}
+              onClick={() => setCurrentSlide(index)}
+              className="h-1.5 rounded-[3px] border-none cursor-pointer p-0 transition-all duration-[400ms] ease-in-out"
               style={{
-                width: i === currentSlide ? "24px" : "6px",
-                height: "6px",
-                borderRadius: "3px",
+                width: index === currentSlide ? "24px" : "6px",
                 backgroundColor:
-                  i === currentSlide
+                  index === currentSlide
                     ? "var(--color-brand)"
                     : "rgba(255,255,255,0.3)",
-                transition: "all 0.4s ease",
               }}
             />
           ))}
         </div>
 
-        {/* 로그인 링크 버튼 */}
+        {/* Login button */}
         <div className="mt-8 flex justify-center">
           <button
             onClick={() => setIsLoginOpen(true)}
-            className="cursor-pointer border-none bg-transparent"
-            style={{
-              fontSize: "15px",
-              fontWeight: 600,
-              color: "rgba(255,255,255,0.75)",
-              letterSpacing: "0.2px",
-              textDecoration: "underline",
-              textUnderlineOffset: "3px",
-            }}
+            className="px-10 py-3 rounded-full bg-white/10 backdrop-blur-sm border-[1.5px] border-white/30 text-white text-[22px] font-black tracking-[0.3px] cursor-pointer transition-all duration-300 hover:bg-white/40 hover:border-white/40 active:scale-95"
           >
-            이미 계정이 있으신가요? 로그인
+            Login
           </button>
         </div>
       </div>
 
-      {/* 바텀시트 오버레이 */}
+      {/* Bottom sheet overlay */}
       <div
-        className="absolute inset-0 z-20"
+        className="absolute inset-0 z-20 bg-black/50 transition-opacity duration-300 ease-in-out"
         style={{
-          backgroundColor: "rgba(0,0,0,0.5)",
           opacity: isLoginOpen ? 1 : 0,
           pointerEvents: isLoginOpen ? "auto" : "none",
-          transition: "opacity 0.3s ease",
         }}
         onClick={() => setIsLoginOpen(false)}
       />
 
-      {/* 로그인 바텀시트 */}
+      {/* Login bottom sheet */}
       <div
-        className="absolute bottom-0 left-0 right-0 z-30"
+        className="absolute bottom-0 left-0 right-0 z-30 rounded-t-[28px] bg-[#F5F0E8] px-25 pt-9 pb-10"
         style={{
-          borderRadius: "28px 28px 0 0",
-          backgroundColor: "#F5F0E8",
-          padding: "36px 28px 40px",
           transform: isLoginOpen ? "translateY(0)" : "translateY(100%)",
           transition: "transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)",
         }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
       >
-        {/* 타이틀 */}
         <h2
-          style={{
-            fontFamily: "'Raleway', sans-serif",
-            fontSize: "28px",
-            fontWeight: 700,
-            color: "#1E1B24",
-            textAlign: "center",
-            lineHeight: 1.25,
-            marginBottom: "32px",
-          }}
+          className="text-[24px] font-bold text-[#1E1B24] text-center leading-tight mb-12 whitespace-pre-line"
+          style={{ fontFamily: "var(--font-english)" }}
         >
           Welcome Back{"\n"}to PiView !
         </h2>
 
-        {/* 카카오 로그인 버튼 */}
         <button
           onClick={handleKakaoLogin}
-          className="w-full flex items-center justify-center gap-3 cursor-pointer border-none rounded-2xl"
-          style={{
-            backgroundColor: "#FEE500",
-            height: "54px",
-            fontSize: "16px",
-            fontWeight: 600,
-            color: "rgba(0,0,0,0.85)",
-          }}
+          className="w-full h-[54px] bg-[#FEE500] text-black/85 text-base font-semibold flex items-center justify-center gap-3 cursor-pointer border-none rounded-2xl"
         >
-          {/* 카카오 말풍선 아이콘 */}
           <svg
             width="20"
             height="20"
@@ -248,28 +232,16 @@ export default function WelcomePage() {
           카카오로 시작하기
         </button>
 
-        {/* 구분선 */}
         <div className="flex items-center gap-3 my-5">
-          <div style={{ flex: 1, height: "1px", backgroundColor: "#D0C8B8" }} />
-          <span style={{ fontSize: "13px", color: "#9E9585", fontWeight: 400 }}>
-            또는
-          </span>
-          <div style={{ flex: 1, height: "1px", backgroundColor: "#D0C8B8" }} />
+          <div className="flex-1 h-px bg-[#D0C8B8]" />
+          <span className="text-[13px] text-[#9E9585] font-normal">또는</span>
+          <div className="flex-1 h-px bg-[#D0C8B8]" />
         </div>
 
-        {/* 관리자로 바로 시작 버튼 */}
         <button
           onClick={handleAdminLogin}
-          className="w-full flex items-center justify-center gap-3 cursor-pointer border-none rounded-2xl"
-          style={{
-            backgroundColor: "#E5DFD3",
-            height: "54px",
-            fontSize: "16px",
-            fontWeight: 600,
-            color: "#5A5248",
-          }}
+          className="w-full h-[54px] bg-[#E5DFD3] text-[#5A5248] text-base font-semibold flex items-center justify-center gap-3 cursor-pointer border-none rounded-2xl"
         >
-          {/* 방패 아이콘 */}
           <svg
             width="18"
             height="18"
@@ -285,26 +257,13 @@ export default function WelcomePage() {
           관리자로 바로 시작
         </button>
 
-        {/* 약관 동의 안내 */}
-        <p
-          style={{
-            fontSize: "12px",
-            color: "#9E9585",
-            textAlign: "center",
-            marginTop: "20px",
-            lineHeight: 1.6,
-          }}
-        >
+        <p className="text-xs text-[#9E9585] text-center mt-5 leading-[1.6]">
           로그인 시{" "}
-          <span
-            style={{ textDecoration: "underline", textUnderlineOffset: "2px" }}
-          >
+          <span className="underline underline-offset-[2px]">
             서비스 이용약관
           </span>{" "}
           및{" "}
-          <span
-            style={{ textDecoration: "underline", textUnderlineOffset: "2px" }}
-          >
+          <span className="underline underline-offset-[2px]">
             개인정보처리방침
           </span>
           에 동의합니다.
