@@ -10,7 +10,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class RecommendationService {
+public class AiRecommendationService {
 
   private final MySkinRepository mySkinRepository;
 
