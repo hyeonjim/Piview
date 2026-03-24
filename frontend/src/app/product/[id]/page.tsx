@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
-  Package,
   Check,
   Plus,
   ChevronDown,
@@ -14,10 +13,13 @@ import {
   Heart,
   Scale,
   Sparkles,
+  Loader2,
+  Play,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useProductDetail,
+  useProductAiSummary,
   useLike,
   useAddMyCos,
   useRemoveMyCos,
@@ -44,6 +46,7 @@ function getEwgColor(grade: number | null | undefined): {
 }
 import { getRoutineSteps } from "@/constants/routineSteps";
 import CompareModal from "@/components/common/CompareModal";
+import { SkinTypeTag } from "@/components/common/ProductCard";
 import type { ProductViewModel } from "@/types/product/myCos";
 import { useMainRoutineQuery } from "@/hooks";
 import { useUserStore, selectGender } from "@/stores";
@@ -94,11 +97,9 @@ function ProductDetailInner() {
   );
   const owned = !!myCosItem;
   const { toggleLike } = useLike();
-  // 초기값은 API 응답의 liked, 토글 시 로컬에서 즉시 반전
   const [isLiked, setIsLiked] = useState<boolean | null>(null);
   const resolvedIsLiked =
     isLiked !== null ? isLiked : (productData?.liked ?? false);
-
 
   const [showRoutineCompare, setShowRoutineCompare] = useState(false);
   const [selectedRoutineProductIndex, setSelectedRoutineProductIndex] =
@@ -109,12 +110,17 @@ function ProductDetailInner() {
   const { mutate: removeDraftItem } = useRemoveProductFromDraftMutation();
   const { data: draftItems = [] } = useDraftQuery();
 
-  // 성별에 따라 올바른 루틴 스텝 선택 (남성: 쉐이빙/올인원 포함)
   const gender = useUserStore(selectGender);
   const routineSteps = getRoutineSteps(gender);
 
+  // AI 요약 — 버튼 클릭 시 refetch()로 수동 호출
+  const {
+    data: aiSummary,
+    isFetching: isAiFetching,
+    refetch: fetchAiSummary,
+  } = useProductAiSummary(id ? Number(id) : null);
+
   // 내루틴 비교 — 메인 루틴 API에서 같은 스텝 제품 추출
-  // productData.categoryName API 미지원 → ProductCard href로 넘어온 category searchParam 사용
   const { data: mainRoutineData } = useMainRoutineQuery();
 
   const categoryFromUrl = searchParams.get("category");
@@ -137,15 +143,13 @@ function ProductDetailInner() {
 
   const sameCategoryRoutineProducts = effectiveCategoryName
     ? (() => {
-        // 현재 제품 카테고리가 속한 stepCode
         const currentStepCode = routineSteps.find((step) =>
-          step.categories.includes(effectiveCategoryName),
+          step.categories.some((c) => c.name === effectiveCategoryName),
         )?.code;
-        if (!currentStepCode) return allMainRoutineProducts; // categoryName 없으면 전체 표시
-        // 루틴 제품 중 같은 stepCode에 속한 것만
+        if (!currentStepCode) return allMainRoutineProducts;
         return allMainRoutineProducts.filter((p) => {
           const pStepCode = routineSteps.find((step) =>
-            step.categories.includes(p.category ?? ""),
+            step.categories.some((c) => c.name === (p.category ?? "")),
           )?.code;
           return pStepCode === currentStepCode;
         });
@@ -206,9 +210,9 @@ function ProductDetailInner() {
       return;
     }
     const matchedStep = routineSteps.find((step) =>
-      step.categories.includes(effectiveCategoryName ?? ""),
+      step.categories.some((c) => c.name === (effectiveCategoryName ?? "")),
     );
-    const columnId = matchedStep?.columnId ?? 3; // 기본값: PR(토너) columnId
+    const columnId = matchedStep?.columnId ?? 3;
     addDraftItem(
       { columnId, productId: productIdNum },
       {
@@ -247,7 +251,6 @@ function ProductDetailInner() {
   const total = safe + caution + danger + unknown;
   const allergenList = productData.allergenIngredients ?? [];
   const dangerIngredients = productData.cautionIngredients ?? [];
-  // 피부타입별 점수 — 순서 고정(건성/지성/복합성/수부지) + 한글 변환
   const SKIN_TYPE_ORDER = ["dry", "oily", "combination", "subuji"];
   const SKIN_TYPE_KO: Record<string, string> = {
     dry: "건성",
@@ -272,7 +275,7 @@ function ProductDetailInner() {
     .filter(Boolean) as string[];
 
   return (
-    <div className="flex flex-col min-h-screen relative bg-bg-beige pb-nav">
+    <div className="flex flex-col min-h-screen relative bg-[#f9f8f6] pb-nav">
       {showCompareModal && selectedRoutineCompare && (
         <CompareModal
           compareItems={[currentProductAsCompare, selectedRoutineCompare]}
@@ -410,12 +413,13 @@ function ProductDetailInner() {
         </div>
       )}
 
-      <div className="flex items-center justify-between px-4 h-12 bg-bg-beige">
+      {/* 상단 네비게이션 — 미니멀 화이트 */}
+      <div className="flex items-center justify-between px-5 h-12 bg-[#f9f8f6]">
         <button
           onClick={() => router.back()}
-          className="size-9 flex items-center justify-center rounded-full bg-white/70 border-none cursor-pointer"
+          className="size-9 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer transition-all active:scale-[0.95]"
         >
-          <ChevronLeft size={22} color="var(--color-product-name)" />
+          <ChevronLeft size={22} color="#2a2118" />
         </button>
         <button
           onClick={() => {
@@ -425,10 +429,10 @@ function ProductDetailInner() {
           className="size-9 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer transition-all active:scale-[0.93]"
         >
           <Heart
-            size={22}
+            size={20}
             className="transition-all duration-150"
             style={{
-              color: resolvedIsLiked ? "#E8715A" : "var(--color-nav-inactive)",
+              color: resolvedIsLiked ? "#E8715A" : "#d9d5d0",
               fill: resolvedIsLiked ? "#E8715A" : "none",
             }}
           />
@@ -436,28 +440,35 @@ function ProductDetailInner() {
       </div>
 
       <div className="pb-8">
-        {/* 이미지 카드 — 아래 섹션과 동일한 스타일, 이미지보다 살짝 큰 패딩 */}
-        <div className="mx-5 mb-3 rounded-2xl bg-white overflow-hidden">
-          <div className="relative w-full aspect-2/1">
+        {/* 이미지 카드 — 깔끔한 화이트 배경 */}
+        <div className="mx-4 mb-3 rounded-2xl bg-white overflow-hidden border border-[#f0ede8]" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+          <div className="relative w-full aspect-[2/1]">
             {productData.imageUrl ? (
               <Image
                 src={productData.imageUrl}
                 alt={productData.productName ?? ""}
                 fill
                 sizes="(max-width: 640px) 100vw, 640px"
-                className="object-contain p-4"
+                className="object-contain p-5"
               />
             ) : null}
+            <span
+              className="absolute inset-0 flex items-center justify-center text-[80px]"
+              hidden={!!productData.imageUrl}
+            >
+              🧴
+            </span>
           </div>
         </div>
 
-        <div className="mx-5 rounded-2xl bg-white p-4 mb-3">
-          <div className="flex items-start justify-between gap-2 mb-3">
+        {/* 제품 정보 섹션 — 깔끔한 화이트 카드 */}
+        <div className="mx-4 rounded-2xl bg-white p-5 mb-3 border border-[#f0ede8]" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+          <div className="flex items-start justify-between gap-2 mb-2">
             <div className="flex-1 min-w-0">
-              <p className="text-[16px] text-text-muted font-semibold mb-0.5">
+              <p className="text-[13px] text-[#bfb6aa] font-medium mb-1">
                 {productData.brandName}
               </p>
-              <h1 className="text-[18px] font-semibold text-text-primary leading-[1.35]">
+              <h1 className="text-[16px] font-semibold text-[#575350] leading-[1.35]">
                 {productData.productName}
               </h1>
             </div>
@@ -470,32 +481,28 @@ function ProductDetailInner() {
                   setShowRoutineCompare(true);
                 }
               }}
-              className="flex items-center gap-1 px-2.5 h-7 rounded-lg border cursor-pointer transition-all active:scale-[0.96] text-[12px] font-semibold shrink-0 border-border bg-white text-text-hint"
+              className="flex items-center gap-1 px-2 h-6.5 rounded-lg border cursor-pointer transition-all active:scale-[0.96] text-[12px] font-semibold shrink-0 border-[#dedbd9] bg-[#f3f0eb] text-[#5c5852]"
             >
-              내루틴과 비교하기
+              <Scale size={11} />
+              내루틴 비교하기
             </button>
           </div>
 
           {(skinTypes.length > 0 || tags.length > 0) && (
-            <div className="flex flex-col gap-1.5 mb-7">
+            <div className="flex flex-col gap-1 mb-2 mt-3">
               {skinTypes.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap">
                   {skinTypes.map((st) => (
-                    <span
-                      key={st}
-                      className="text-[14px] px-2 py-0.5 rounded-[6px] bg-brand-bg text-brand"
-                    >
-                      {st}
-                    </span>
+                    <SkinTypeTag key={st} label={st} />
                   ))}
                 </div>
               )}
               {tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap">
                   {tags.map((tag) => (
                     <span
                       key={tag}
-                      className="text-xs px-2.25 py-0.5 rounded-xl bg-bg-chip text-text-hint border border-border-warm"
+                      className="inline-block text-[11px] mb-1 mr-1 font-medium px-1.5 py-[1px] rounded border bg-[#f8f8f6] text-[#7a664e]"
                     >
                       {tag}
                     </span>
@@ -505,28 +512,29 @@ function ProductDetailInner() {
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 flex-wrap">
+          {/* 가격 및 액션 버튼 — 구분선으로 분리 */}
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#f0ede8]">
+            <div className="flex items-baseline gap-1 flex-wrap">
               {productData.price ? (
-                <p className="text-base font-normal text-text-primary">
+                <p className="text-[14px] font-semibold text-[#736d66]">
                   ₩{productData.price.toLocaleString()}
                 </p>
               ) : (
-                <p className="text-base font-normal text-text-hint">
+                <p className="text-[12px] font-normal text-[#bfb6aa]">
                   가격 미정
                 </p>
               )}
               {productData.volume && (
-                <span className="text-base text-text-hint font-normal">
+                <span className="text-[13px] text-[#bfb6aa] font-normal">
                   / {productData.volume}
                 </span>
               )}
             </div>
-            <div className="flex gap-1.5 shrink-0">
+            <div className="flex gap-2 shrink-0">
               {gender !== "WOMEN" && (
                 <button
                   onClick={handleAddRoutine}
-                  className={`flex items-center justify-center gap-1 w-20 h-8 rounded-xl border-none cursor-pointer transition-all active:scale-[0.98] text-xs font-bold ${routineAdded ? "bg-[#F0F0F0] text-text-muted" : "bg-brand text-white"}`}
+                  className={`flex items-center justify-center gap-1 w-20 h-8 rounded-lg border-none cursor-pointer transition-all active:scale-[0.98] text-[12px] font-semibold ${routineAdded ? "bg-[#f5f3f0] text-[#a69d92]" : "bg-[#5a504a] text-white"}`}
                 >
                   {routineAdded ? (
                     <>
@@ -541,38 +549,90 @@ function ProductDetailInner() {
               )}
               <button
                 onClick={handleToggleOwned}
-                className={`flex items-center justify-center gap-1 w-17 h-8 rounded-xl cursor-pointer transition-all active:scale-[0.98] text-[12px] font-semibold border ${owned ? "border-brand-light bg-brand-bg text-brand" : "border-border-warm bg-white text-text-hint"}`}
+                className={`flex items-center justify-center gap-1 w-17 h-7 rounded-lg cursor-pointer transition-all active:scale-[0.98] text-[12px] font-semibold border ${owned ? "border-[#bcb5ac] bg-[#eae8e6] text-[#4d453c]" : "border-[#dbd6cf] bg-[#f4f4f1] text-[#7c7874]"}`}
               >
-                {owned ? "보유 중" : "보유추가"}
+                {owned ? "보유중" : "보유추가"}
               </button>
             </div>
           </div>
         </div>
 
         {recommendReason && (
-          <div className="mx-5 rounded-2xl bg-white p-4 mb-3">
+          <div className="mx-4 rounded-2xl bg-white p-5 mb-3 border border-[#f0ede8]" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
             <div className="flex items-center gap-2.5 mb-2">
-              <div className="size-7 rounded-full flex items-center justify-center bg-brand-bg shrink-0">
-                <Sparkles size={14} className="text-brand" />
+              <div className="size-7 rounded-full flex items-center justify-center bg-[#f5f3f0] shrink-0">
+                <Sparkles size={14} className="text-[#a69d92]" />
               </div>
-              <p className="font-semibold text-text-sub">추천 이유</p>
+              <p className="font-semibold text-[#6e6358] text-[14px]">추천 이유</p>
             </div>
-            <p className="text-xs text-text-primary leading-[1.6] pl-[22px]">
+            <p className="text-[13px] text-[#2a2118] leading-[1.7] pl-[22px]">
               {recommendReason}
             </p>
           </div>
         )}
 
+        {/* AI 요약 카드 */}
+        <div className="mx-5 rounded-2xl bg-white p-4 mb-3">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[16px] font-semibold text-[#636262]">
+              AI 분석
+            </p>
+            {!aiSummary && (
+              <button
+                onClick={() => fetchAiSummary()}
+                disabled={isAiFetching}
+                className="flex items-center gap-1 px-3 h-7 rounded-lg border-2 bg-[#eee7d8] text-[#555454] text-[14px] font-semibold cursor-pointer disabled:opacity-50 transition-all active:scale-[0.96]"
+              >
+                {isAiFetching ? "분석 중..." : <><Play size={12} fill="currentColor" /> Start</>}
+              </button>
+            )}
+          </div>
+
+          {isAiFetching && (
+            <div className="flex items-center justify-center py-6 gap-2 text-text-muted">
+              <Loader2 size={18} className="animate-spin opacity-50" />
+              <p className="text-xs">AI가 제품을 분석하고 있어요...</p>
+            </div>
+          )}
+
+          {aiSummary && !isAiFetching && (
+            <div className="flex flex-col gap-3">
+              {aiSummary.line1AiSummary && (
+                <p className="text-xs text-text-primary leading-[1.6]">
+                  {aiSummary.line1AiSummary}
+                </p>
+              )}
+              {aiSummary.line2PersonalizedMsg && (
+                <p className="text-xs text-brand leading-[1.6] font-semibold">
+                  {aiSummary.line2PersonalizedMsg}
+                </p>
+              )}
+              {aiSummary.line3AiSummary && (
+                <p className="text-xs text-text-primary leading-[1.6]">
+                  {aiSummary.line3AiSummary}
+                </p>
+              )}
+            </div>
+          )}
+
+          {!aiSummary && !isAiFetching && (
+            <p className="text-xs text-text-muted">
+              버튼을 눌러 이 제품의 AI 분석 요약을 확인해보세요.
+            </p>
+          )}
+        </div>
+
         {ingredients.length > 0 && (
           <div
             ref={ewgSectionRef}
-            className="mx-5 rounded-2xl bg-white p-4 mb-3"
+            className="mx-4 rounded-2xl bg-white p-5 mb-3 border border-[#f0ede8]"
+            style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}
           >
             <div className="mb-3">
-              <p className="text-[16px] font-bold text-text-primary">
+              <p className="text-[15px] font-semibold text-[#58514b]">
                 EWG 성분 분석
               </p>
-              <p className="text-xs text-text-muted">총 {total}개 성분</p>
+              <p className="text-[12px] text-[#a69d92] mt-0.5">총 {total}개 성분</p>
             </div>
             <div className="flex h-3 gap-0.5 rounded-full overflow-hidden mb-3">
               <div className="rounded bg-ewg-safe" style={{ flex: safe }} />
@@ -616,16 +676,16 @@ function ProductDetailInner() {
                 },
               ].map((grade) => (
                 <div key={grade.sub}>
-                  <p className="text-xs text-text-sub mb-0.5">
+                  <p className="text-[11px] text-[#a69d92] mb-0.5">
                     • {grade.label}
                   </p>
                   <p
-                    className="text-lg font-bold"
+                    className="text-[18px] font-bold"
                     style={{ color: grade.color }}
                   >
                     {grade.count}
                   </p>
-                  <p className="text-[14px] text-text-muted mt-0.5">
+                  <p className="text-[12px] text-[#bfb6aa] mt-0.5">
                     {grade.sub}
                   </p>
                 </div>
@@ -636,7 +696,7 @@ function ProductDetailInner() {
 
         {ingredients.length > 0 &&
           (dangerIngredients.length > 0 || allergenList.length > 0) && (
-            <div className="mx-5 p-4 rounded-2xl mb-3 bg-[#FFF8F0] border border-[#FFE0B2]">
+            <div className="mx-4 p-4 rounded-2xl mb-3 bg-[#FFFAF5] border border-[#f5e6d5]">
               {dangerIngredients.length > 0 && (
                 <>
                   <div className="flex items-center gap-2 mb-2">
@@ -686,10 +746,10 @@ function ProductDetailInner() {
             </div>
           )}
 
-        <div className="mx-5 my-5">
+        <div className="mx-4 my-4">
           {/* 4번: 성분 없으면 탭 숨김 */}
           {ingredients.length > 0 && (
-            <div className="flex rounded-xl p-1 bg-[#EEEBE4]">
+            <div className="flex rounded-xl p-1 bg-[#f0ede8]">
               {[
                 { key: "ingredients" as const, label: "전성분 분석" },
                 { key: "skintype" as const, label: "피부타입별" },
@@ -697,10 +757,10 @@ function ProductDetailInner() {
                 <button
                   key={key}
                   onClick={() => setActiveTab(key)}
-                  className={`flex-1 h-9 rounded-[10px] border-none cursor-pointer transition-all text-[16px] ${
+                  className={`flex-1 h-9 rounded-[10px] border-none cursor-pointer transition-all text-[14px] ${
                     activeTab === key
-                      ? "bg-white text-text-primary font-bold shadow-[0_1px_4px_rgba(0,0,0,0.1)]"
-                      : "bg-transparent text-text-muted font-semibold"
+                      ? "bg-white text-[#4d433a] font-semibold shadow-[0_1px_4px_rgba(0,0,0,0.06)]"
+                      : "bg-transparent text-[#80776c] font-medium"
                   }`}
                 >
                   {label}
@@ -710,42 +770,41 @@ function ProductDetailInner() {
           )}
         </div>
 
-        <div className="mx-5 mb-8">
+        <div className="mx-4 mb-8">
           {/* 4번: 성분 없을 때 안내 */}
           {ingredients.length === 0 ? (
-            <div className="rounded-2xl bg-white p-6 flex flex-col items-center gap-2">
-              <p className="text-sm font-semibold text-text-muted">
+            <div className="rounded-2xl bg-white p-6 flex flex-col items-center gap-2 border border-[#f0ede8]">
+              <p className="text-[14px] font-medium text-[#a69d92]">
                 성분 정보가 없어요
               </p>
-              <p className="text-xs text-text-hint text-center leading-relaxed">
+              <p className="text-[12px] text-[#bfb6aa] text-center leading-relaxed">
                 아직 등록된 성분 정보가 없습니다
               </p>
             </div>
           ) : (
             <>
               {activeTab === "ingredients" && (
-                <div className="rounded-2xl bg-white overflow-hidden">
-                  {/* 제품 설명 — 피그마 순서: 설명 먼저 */}
+                <div className="rounded-2xl bg-white overflow-hidden border border-[#f0ede8]" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+                  {/* 제품 설명 */}
                   {productData.description && (
-                    <div className="p-4 border-b border-[#F5F5F5]">
-                      <p className="font-semibold text-text-sub mb-1.5">
+                    <div className="p-5 border-b border-[#f5f3f0]">
+                      <p className="font-semibold text-[#6e6358] text-[14px] mb-2">
                         제품 설명
                       </p>
-                      <p className="text-xs text-text-primary leading-[1.7]">
+                      <p className="text-[13px] text-[#2a2118] leading-[1.7]">
                         {productData.description}
                       </p>
                     </div>
                   )}
-                  {/* 전성분 — 펼치기/접기 */}
                   {ingredientsKr.length > 0 && (
-                    <div className="p-4 border-b border-[#F5F5F5]">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <p className="font-semibold text-text-sub">전성분</p>
+                    <div className="p-5 border-b border-[#f5f3f0]">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-semibold text-[#6e6358] text-[14px]">전성분</p>
                         <button
                           onClick={() =>
                             setIsIngredientTextOpen((prev) => !prev)
                           }
-                          className="flex items-center gap-0.5 text-xs text-text-muted bg-transparent border-none cursor-pointer"
+                          className="flex items-center gap-0.5 text-[12px] text-[#a69d92] bg-transparent border-none cursor-pointer"
                         >
                           {isIngredientTextOpen ? (
                             <>
@@ -759,7 +818,7 @@ function ProductDetailInner() {
                         </button>
                       </div>
                       <p
-                        className="text-xs text-text-primary leading-[1.7]"
+                        className="text-[12px] text-[#6e6358] leading-[1.8]"
                         style={
                           isIngredientTextOpen
                             ? undefined
@@ -775,14 +834,11 @@ function ProductDetailInner() {
                       </p>
                     </div>
                   )}
-                  {/* 성분 상세 리스트 */}
                   <div>
                     {(isIngredientListOpen
                       ? ingredients
                       : ingredients.slice(0, 3)
                     ).map((ingredient) => {
-                      // 5번: ewgScore 우선, 없으면 ewgGrade로 fallback
-                      // 정제수(Water;Aqua) — ewgScore 없을 시 1 하드코딩
                       const isWater =
                         ingredient.nameEn
                           ?.toLowerCase()
@@ -800,8 +856,6 @@ function ProductDetailInner() {
                                 ? 8
                                 : null);
                       const ewgColorInfo = getEwgColor(resolvedScore);
-
-                      // functions 쉼표 분리 → 칩 배열
                       const functionChips = ingredient.functions
                         ? ingredient.functions
                             .split(",")
@@ -812,13 +866,12 @@ function ProductDetailInner() {
                       return (
                         <div
                           key={`${ingredient.position}-${ingredient.nameKo}`}
-                          className="flex items-start gap-3 px-4 py-3 not-last:border-b not-last:border-[#F5F5F5]"
+                          className="flex items-start gap-3 px-5 py-3.5 not-last:border-b not-last:border-[#f5f3f0]"
                         >
-                          {/* EWG 물방울 + 숫자 */}
                           <div className="flex flex-col items-center shrink-0 w-7">
                             <EwgDropIcon color={ewgColorInfo.barColor} />
                             <span
-                              className="text-[10px] font-bold mt-0.5"
+                              className="text-[10px] font-semibold mt-0.5"
                               style={{ color: ewgColorInfo.text }}
                             >
                               {resolvedScore ?? "?"}
@@ -826,18 +879,17 @@ function ProductDetailInner() {
                           </div>
                           <div className="flex-1 min-w-0">
                             {/* 성분명 한글 */}
-                            <p className="text-sm font-semibold text-text-primary leading-[1.3]">
+                            <p className="text-[13px] font-semibold text-[#2a2118] leading-[1.3]">
                               {ingredient.nameKo}
                             </p>
-                            {/* 성분명 영문 */}
                             {ingredient.nameEn && (
-                              <p className="text-xs text-text-muted my-0.5">
+                              <p className="text-[11px] text-[#bfb6aa] my-0.5">
                                 {ingredient.nameEn}
                               </p>
                             )}
-                            {/* 기능 칩 — 피그마: "피부컨디셔닝제, 용제" */}
+                            {/* 기능 칩 */}
                             {functionChips.length > 0 && (
-                              <p className="text-xs text-text-hint leading-[1.6] mt-0.5">
+                              <p className="text-[11px] text-[#a69d92] leading-[1.6] mt-0.5">
                                 {functionChips.join(", ")}
                               </p>
                             )}
@@ -849,7 +901,7 @@ function ProductDetailInner() {
                     {ingredients.length > 3 && (
                       <button
                         onClick={() => setIsIngredientListOpen((prev) => !prev)}
-                        className="flex items-center justify-center gap-1 w-full py-3 border-t border-[#F5F5F5] bg-transparent border-x-0 border-b-0 cursor-pointer text-xs text-text-muted"
+                        className="flex items-center justify-center gap-1 w-full py-3.5 border-t border-[#f5f3f0] bg-transparent border-x-0 border-b-0 cursor-pointer text-[12px] text-[#a69d92]"
                       >
                         {isIngredientListOpen ? (
                           <>
@@ -868,16 +920,16 @@ function ProductDetailInner() {
               )}
 
               {activeTab === "skintype" && (
-                <div className="rounded-2xl bg-white p-4 flex flex-col gap-4">
+                <div className="rounded-2xl bg-white p-5 flex flex-col gap-5 border border-[#f0ede8]" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
                   {skinTypeScores.map(([label, score]) => (
                     <div key={label}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-text-primary">{label}</span>
-                        <span className="font-bold text-brand">{score}</span>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[14px] text-[#2a2118] font-medium">{label}</span>
+                        <span className="text-[14px] font-semibold text-[#a69d92]">{score}</span>
                       </div>
-                      <div className="h-1.5 rounded-[3px] bg-bg-muted-warm overflow-hidden">
+                      <div className="h-[5px] rounded-full bg-[#f0ede8] overflow-hidden">
                         <div
-                          className="h-full rounded-[3px] bg-brand transition-[width] duration-600 ease-in-out"
+                          className="h-full rounded-full bg-[#a69d92] transition-[width] duration-600 ease-in-out"
                           style={{ width: `${score}%` }}
                         />
                       </div>
@@ -898,9 +950,10 @@ function ProductDetailInner() {
           >
             <button
               onClick={scrollToTop}
-              className="absolute bottom-6 right-4 flex items-center justify-center size-10 rounded-full bg-white/90 backdrop-blur-[10px] border-none cursor-pointer pointer-events-auto transition-all active:scale-[0.93] shadow-[0_2px_12px_rgba(0,0,0,0.15),0_0_0_1px_rgba(0,0,0,0.05)]"
+              className="absolute bottom-6 right-4 flex items-center justify-center size-10 rounded-full bg-white border border-[#e8e4e0] cursor-pointer pointer-events-auto transition-all active:scale-[0.93]"
+              style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}
             >
-              <ChevronUp size={20} color="var(--color-product-name)" />
+              <ChevronUp size={18} color="#5a504a" />
             </button>
           </div>
         </div>

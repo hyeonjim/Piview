@@ -46,6 +46,10 @@ export const queryKeys = {
   productCompare: (productIds: [number, number]) =>
     ["productCompare", ...productIds] as const,
 
+  // 제품 AI 요약 — GET /products/{productId}/summary
+  productAiSummary: (productId: number) =>
+    ["productAiSummary", productId] as const,
+
   // 피부 분석 상태 — GET /skin/analysis/{analysisId}
   analysisStatus: (analysisId: string) =>
     ["analysisStatus", analysisId] as const,

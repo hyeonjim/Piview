@@ -35,8 +35,8 @@ import type { SkinType } from "@/types/user";
 function chipClassName(isActive: boolean) {
   return `inline-flex items-center gap-1 px-3 py-1.5 rounded-chip text-sm font-semibold cursor-pointer transition-all border select-none ${
     isActive
-      ? "bg-brand text-white border-brand shadow-[0_2px_8px_rgba(162,170,123,0.2)]"
-      : "bg-white text-text-primary border-border"
+      ? "bg-[#c9c3c3] text-white"
+      : "bg-white text-[#696363] border-border"
   }`;
 }
 
@@ -89,16 +89,16 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-warm-bg">
+    <div className="min-h-screen bg-[#faf8f5]">
       {/* 헤더 */}
-      <div className="px-5 pt-5 pb-3 flex items-center gap-3 bg-warm-bg">
+      <div className="px-5 pt-5 pb-3 flex items-center gap-3 bg-[#faf8f5]">
         <button
           onClick={() => router.back()}
           className="flex items-center justify-center w-7.5 h-7.5 rounded-full bg-white border-none cursor-pointer shadow-[0_1px_4px_rgba(0,0,0,0.06)]"
         >
           <ChevronLeft size={20} className="text-text-primary" />
         </button>
-        <h2 className="text-lg font-bold text-text-primary tracking-[0.5px]">
+        <h2 className="text-lg font-bold text-[#635446] tracking-[0.5px]">
           Settings
         </h2>
       </div>
@@ -106,7 +106,7 @@ export default function SettingsPage() {
       <div className="px-7.5">
         {/* 피부타입 */}
         <div className="mt-5">
-          <h3 className="text-base font-bold text-text-primary mb-1.5">나의 피부타입</h3>
+          <h3 className="text-base font-bold text-[#635446] mb-1.5">나의 피부타입</h3>
           <p className="text-[14px] text-text-muted mb-5">하나를 선택해주세요</p>
           <div className="flex flex-wrap gap-2">
             {SETTINGS_SKIN_TYPES.map((st) => (
@@ -125,7 +125,7 @@ export default function SettingsPage() {
 
         {/* 피부고민 */}
         <div>
-          <h3 className="text-base font-bold text-text-primary mb-1.5">피부 고민</h3>
+          <h3 className="text-base font-bold text-[#635446] mb-1.5">피부 고민</h3>
           <p className="text-xs text-text-muted mb-5">
             해당하는 고민을 모두 선택해주세요
           </p>
@@ -146,7 +146,7 @@ export default function SettingsPage() {
 
         {/* 재진단 */}
         <div>
-          <h3 className="text-base font-bold text-text-primary mb-1.5">피부 진단 다시하기</h3>
+          <h3 className="text-base font-bold text-[#635446] mb-1.5">피부 진단 다시하기</h3>
           <p className="text-xs text-text-muted mb-5">
             AI 사진 분석으로 피부 상태를 다시 진단할 수 있어요
           </p>
@@ -173,7 +173,7 @@ export default function SettingsPage() {
           <button
             onClick={handleSave}
             disabled={isPending}
-            className="w-50 h-12 rounded-button bg-brand text-white font-bold text-[18px] border-none cursor-pointer shadow-[0_4px_16px_rgba(162,170,123,0.2)] transition-all active:scale-[0.98] disabled:opacity-60"
+            className="w-50 h-12 rounded-button bg-[#9b9494] text-white font-bold text-[16px] border-none cursor-pointer shadow-[0_4px_16px_rgba(162,170,123,0.2)] transition-all active:scale-[0.98] disabled:opacity-60"
           >
             {isPending ? "저장 중..." : "저장하기"}
           </button>
@@ -183,7 +183,7 @@ export default function SettingsPage() {
         <div className="mt-20 mb-10 flex justify-center">
           <button
             onClick={handleLogout}
-            className="w-50 h-11 rounded-button text-gray-700 font-bold text-[16px] border border-border cursor-pointer transition-all active:scale-[0.98] hover:bg-red-100 hover:text-red-800 hover:border-red-200"
+            className="w-50 h-11 rounded-button text-gray-700 font-bold text-[16px] border border-border cursor-pointer transition-all active:scale-[0.98] hover:bg-red-100 hover:text-red-900 hover:border-red-200"
           >
             로그아웃
           </button>

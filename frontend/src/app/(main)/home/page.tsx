@@ -7,6 +7,7 @@ import { useUserQuery, useMainRoutineQuery } from "@/hooks";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
 import ProductCard from "@/components/common/ProductCard";
+import DataSourcesSection from "@/components/features/home/DataSourcesSection";
 
 // 시간대별 인사말과 아이콘 반환
 function getGreeting(): { text: string; icon: React.ReactNode } {
@@ -48,15 +49,15 @@ export default function HomePage() {
   const hasRoutine = mainRoutineItems.length > 0;
 
   return (
-    <div className="flex-1 bg-[#F5F2EC]">
-      <div className="bg-[#F5F2EC] pt-3.75 pb-5 px-5">
+    <div className="flex-1 bg-[#faf8f5]">
+      <div className="bg-[#faf8f5] pt-3.75 pb-7 px-5">
         <div className="flex items-center gap-1.5">
           {greeting.icon}
           <span className="text-base font-normal text-[#B0A99F] tracking-[0.12em] uppercase italic [font-family:var(--font-english),serif]">
             {greeting.text}
           </span>
         </div>
-        <h1 className="mt-2.5 mb-1.25 text-[20px] font-bold text-[#1C1C1E] tracking-[-0.5px] leading-[1.2]">
+        <h1 className="my-2 text-[20px] font-bold text-[#6c6b66] tracking-[-0.5px] leading-[1.2]">
           {nickname}님,
         </h1>
         <p className="mt-1 text-sm text-[#B0A99F]">
@@ -65,23 +66,31 @@ export default function HomePage() {
       </div>
 
       {/* 메인 루틴 카드 */}
-      <div className="py-3 px-4">
-        <div className="bg-white rounded-xl border border-[#E2DDD8]">
+      <div className="py-3 px-5">
+        <div className="bg-category-pill-default-bg rounded-xl overflow-hidden">
           {/* 루틴 헤더 */}
-          <div className="flex items-center justify-between py-3.5 px-4 border-b border-[#EDE9E3] rounded-t-xl">
-            <span className="text-[16px] font-bold text-[#2A2118] tracking-[-0.2px]">
-              메인 루틴
-            </span>
-            {hasRoutine ? (
-              <div className="flex items-center gap-2">
-                {/* 루틴 이름 */}
-                <span className="text-[14px] font-semibold text-[#2A2118] truncate max-w-30">
-                  {mainRoutineData?.title}
-                </span>
-                <span className="text-[12px] font-semibold py-0.75 px-2.5 rounded-xl bg-[#F2EFE9] text-[#A69D92]">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[16px] font-bold text-[#52514d] tracking-[-0.2px] uppercase [font-family:var(--font-english),serif]">
+                Main routine
+              </span>
+              {hasRoutine && (
+                <span className="text-[12px] font-medium py-0.5 px-2 rounded-full bg-[#F2EFE9] text-[#70685d]">
                   {mainRoutineItems.length}단계
                 </span>
-              </div>
+              )}
+            </div>
+            {hasRoutine ? (
+              <Link href="/mypage">
+                <span className="flex mr-5 items-center gap-1 text-[14px] text-[#A69D92]">
+                  {mainRoutineData?.title && (
+                    <span className="text-[14px] font-semibold text-[#8a7f74] truncate max-w-28 mr-0.5">
+                      {mainRoutineData.title}
+                    </span>
+                  )}
+                  <ChevronRight size={14} />
+                </span>
+              </Link>
             ) : (
               <Link href="/mypage">
                 <span className="flex items-center gap-0.5 text-xs text-[#A69D92]">
@@ -93,38 +102,37 @@ export default function HomePage() {
 
           {/* 루틴 리스트 */}
           {hasRoutine ? (
-            <div className="p-3 flex flex-col gap-3">
-              {mainRoutineItems.map(({ step, product }, index) => {
-
-                return (
-                  <div
-                    key={`${step.code}-${product.name}`}
-                    className="flex items-center gap-3"
-                  >
-                    {/* 스텝 번호 */}
-                    <span className="text-[18px] font-bold text-[#BFB6AA] w-4 shrink-0 [font-family:var(--font-english),serif]">
+            <div className="px-4 py-4 flex flex-col gap-0">
+              {mainRoutineItems.map(({ step, product }, index) => (
+                <div
+                  key={`${step.code}-${product.name}`}
+                  className="flex items-center py-2.5 first:pt-1 last:pb-1"
+                >
+                  {/* 스텝 번호 뱃지 */}
+                  <div className="shrink-0 w-6 h-6 rounded-full bg-[#F2EFE9] flex items-center justify-center">
+                    <span className="text-[15px] font-bold text-[#756f67] [font-family:var(--font-english),serif]">
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    {/* zoom으로 홈페이지에서만 카드 축소 — ProductCard 컴포넌트 수정 없이 비율 유지 */}
-                    <div className="flex-1">
-                      <ProductCard
-                        id={product.productId}
-                        name={product.name ?? ""}
-                        brand={product.brandName ?? ""}
-                        imageUrl={product.imageUrl ?? undefined}
-                        layout="horizontal"
-                        category={product.categoryName ?? undefined}
-                        skinTypes={
-                          product.skinTypes?.map(fromSkinTypeEnum) ?? []
-                        }
-                        effects={product.tags ?? []}
-                        showLike={false}
-                        showEwg={false}
-                      />
-                    </div>
                   </div>
-                );
-              })}
+                  {/* 제품 카드 — modal variant로 잘림 없이 표시 */}
+                  <div className="flex-1 min-w-0">
+                    <ProductCard
+                      id={product.productId}
+                      name={product.name ?? ""}
+                      brand={product.brandName ?? ""}
+                      imageUrl={product.imageUrl ?? undefined}
+                      variant="modal"
+                      category={product.categoryName ?? undefined}
+                      skinTypes={
+                        product.skinTypes?.map(fromSkinTypeEnum) ?? []
+                      }
+                      effects={product.tags ?? []}
+                      showLike={false}
+                      showEwg={false}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             /* 루틴 없음 빈 상태 */
@@ -146,13 +154,8 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="pt-5 px-4 pb-6">
-        <div className="flex items-baseline gap-2 mb-3.75">
-          <h2 className="text-[18px] font-bold text-[#2A2118] tracking-[-0.3px]">
-            Skincare Tips
-          </h2>
-        </div>
-      </div>
+      {/* 참고 데이터소스 — 성분 분석 기반 사이트 */}
+      <DataSourcesSection />
     </div>
   );
 }

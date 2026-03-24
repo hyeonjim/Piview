@@ -16,9 +16,15 @@ export {
 // TanStack Query / 스토어 래퍼 훅 (queries/ 폴더)
 export { useUserQuery } from "./queries/useUserQuery";
 export { useLike, useLikedProducts, useToggleLike } from "./queries/useLike";
-export { useMyCosQuery, useMyCosWithTags, useAddMyCos, useRemoveMyCos } from "./queries/useMyCos";
+export {
+  useMyCosQuery,
+  useMyCosWithTags,
+  useAddMyCos,
+  useRemoveMyCos,
+} from "./queries/useMyCos";
 export { useProductSearch } from "./queries/useProductSearch";
 export { useProductDetail } from "./queries/useProductDetail";
+export { useProductAiSummary } from "./queries/useProductAi";
 export { useProductFilters } from "./queries/useProductFilters";
 export { useProductCompare } from "./queries/useProductCompare";
 export { useSurveySubmit } from "./queries/useSurveySubmit";
