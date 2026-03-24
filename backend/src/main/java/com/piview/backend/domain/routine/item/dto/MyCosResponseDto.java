@@ -1,16 +1,9 @@
 package com.piview.backend.domain.routine.item.dto;
 
-import com.piview.backend.domain.skin.common.SkinTypeEnum;
-import lombok.Builder;
+import com.piview.backend.domain.product.catalog.dto.ProductSummaryResponse;
 
-@Builder
-public record MyCosResponseDto (
-    Long id,
-    Long productId,
-    String brand,
-    String productName,
-    String category,
-    String imageUrl,
-    SkinTypeEnum topSkinType,
-    SkinTypeEnum top2SkinType
-){}
+public record MyCosResponseDto(
+    Long myCosId,
+    ProductSummaryResponse productInfo
+) {}
+
