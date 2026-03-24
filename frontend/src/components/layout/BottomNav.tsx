@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { Home, Search, Sparkles, Heart, User } from "lucide-react";
+import { Home, Search, Star, Heart, User } from "lucide-react";
 
 // 홈을 중간(index 2)에 배치한 탭 순서
 const TABS = [
   { id: "search",    href: "/search",    icon: Search},
-  { id: "recommend", href: "/recommend", icon: Sparkles},
+  { id: "recommend", href: "/recommend", icon: Star},
   { id: "home",      href: "/home",      icon: Home},
   { id: "likes",     href: "/likes",     icon: Heart },
   { id: "mypage",    href: "/mypage",    icon: User},
@@ -66,7 +66,7 @@ export default function BottomNav() {
                 className="bottom-nav-icon"
                 data-active={isActive}
                 style={{
-                  fill: tab.id === "likes" && isActive ? "currentColor" : "none",
+                  fill: (tab.id === "likes" || tab.id === "recommend") && isActive ? "currentColor" : "none",
                 }}
               />
               {/* 활성 표시 — 하단 선 */}

@@ -8,6 +8,7 @@
 export { useCompare } from "./useCompare";
 export {
   useDislikedProductsQuery,
+  useDislikedProductsWithTags,
   useAddDislikedProduct,
   useRemoveDislikedProduct,
 } from "./queries/useDislikedProducts";

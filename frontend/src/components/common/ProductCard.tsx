@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Heart, ShoppingBag, Scale, Check, Plus } from "lucide-react";
+import { Heart, Check, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import EWGIndicator from "./EWGIndicator";
@@ -134,6 +134,41 @@ function RoutineButton({
   );
 }
 
+// ── 비교 버튼 — 활성/비활성 색상이 CSS 변수 기반이라 inline style 유지
+function CompareButton({
+  isInCompare,
+  onToggle,
+  size = "sm",
+}: {
+  isInCompare?: boolean;
+  onToggle: (event: React.MouseEvent) => void;
+  size?: "sm" | "md";
+}) {
+  const isSmall = size === "sm";
+  const activeStyle = {
+    border: "1px solid #A69D92",
+    backgroundColor: "var(--color-bg-beige)",
+    color: "var(--color-text-sub)",
+  };
+  const inactiveStyle = {
+    border: "1px solid #E8E4DF",
+    backgroundColor: "var(--color-bg-card)",
+    color: "var(--color-nav-inactive)",
+  };
+  return (
+    <button
+      onClick={onToggle}
+      className={`flex items-center justify-center cursor-pointer transition-all active:scale-[0.97] shrink-0 ${
+        isSmall ? "h-7 w-8 rounded-[6px]" : "gap-1 h-6 px-1 rounded-[6px] text-xs font-semibold"
+      }`}
+      style={isInCompare ? activeStyle : inactiveStyle}
+      title={isInCompare ? "비교 선택됨" : "비교하기"}
+    >
+      {isInCompare ? "비교중" : "비교하기"}
+    </button>
+  );
+}
+
 // ── 보유추가 버튼 — 활성/비활성 색상이 CSS 변수 기반이라 inline style 유지
 function OwnedButton({
   isOwned,
@@ -166,46 +201,11 @@ function OwnedButton({
       style={isOwned ? activeStyle : inactiveStyle}
       title={isOwned ? "보유 중" : "보유추가"}
     >
-      <ShoppingBag size={isSmall ? 14 : 11} />
       {!isSmall && (isOwned ? "보유중" : "보유추가")}
     </button>
   );
 }
 
-// ── 비교 버튼 — 활성/비활성 색상이 CSS 변수 기반이라 inline style 유지
-function CompareButton({
-  isInCompare,
-  onToggle,
-  size = "sm",
-}: {
-  isInCompare?: boolean;
-  onToggle: (event: React.MouseEvent) => void;
-  size?: "sm" | "md";
-}) {
-  const isSmall = size === "sm";
-  const activeStyle = {
-    border: "1px solid #A69D92",
-    backgroundColor: "var(--color-bg-beige)",
-    color: "var(--color-text-sub)",
-  };
-  const inactiveStyle = {
-    border: "1px solid #E8E4DF",
-    backgroundColor: "var(--color-bg-card)",
-    color: "var(--color-nav-inactive)",
-  };
-  return (
-    <button
-      onClick={onToggle}
-      className={`flex items-center justify-center cursor-pointer transition-all active:scale-[0.97] shrink-0 ${
-        isSmall ? "h-7 w-9 rounded-[6px]" : "gap-1 h-6 px-2 rounded-[6px] text-xs font-semibold"
-      }`}
-      style={isInCompare ? activeStyle : inactiveStyle}
-      title={isInCompare ? "비교 선택됨" : "비교하기"}
-    >
-      {isSmall ? <Scale size={14} /> : (isInCompare ? "비교중" : "비교하기")}
-    </button>
-  );
-}
 
 // ── 제품 이미지 — onError로 broken 이미지 fallback 처리
 // fill 모드와 fixed size 모드를 모두 지원
@@ -394,7 +394,7 @@ export default function ProductCard({
           {/* 텍스트 영역 — 고정 높이로 카드 간 높이 통일 */}
           <div
             className="px-3 pt-2.5 pb-2 overflow-hidden"
-            style={{ height: "140px" }}
+            style={{ height: "120px" }}
           >
             {/* 브랜드명 + 비교 버튼 한 줄 */}
             <div className="flex items-center justify-between">
@@ -407,11 +407,11 @@ export default function ProductCard({
                 />
               )}
             </div>
-            <p className="mt-0.75 m-0 text-[16px] font-semibold text-[var(--color-text-primary)] leading-[1.4] line-clamp-2 overflow-hidden">
+            <p className="text-[15px] font-semibold text-[var(--color-text-primary)] leading-[1.4] line-clamp-2 overflow-hidden">
               {name}
             </p>
             {(skinTypes.length > 0 || effects.length > 0) && (
-              <div className="flex flex-wrap mt-1.5">
+              <div className="flex flex-wrap mt-2">
                 {skinTypes.slice(0, 1).map((skinType) => (
                   <SkinTypeTag key={skinType} label={skinType} />
                 ))}
@@ -635,7 +635,6 @@ export default function ProductCard({
             <CompareButton
               isInCompare={isInCompare}
               onToggle={(event) => handleAction(event, onToggleCompare)}
-              size="md"
             />
           )}
         </div>

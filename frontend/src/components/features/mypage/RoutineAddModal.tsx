@@ -1,19 +1,7 @@
 "use client";
 
-// ── 스타일 상수 ──────────────────────────────────────────────────────
-const SEARCH_INPUT_PADDING_CLEAR = 36;
-const SEARCH_INPUT_PADDING_DEFAULT = 12;
-const MODAL_ACTION_ICON_BTN = {
-  width: "36px",
-  height: "36px",
-  borderRadius: "50%",
-  border: "1px solid var(--color-border-warm)",
-  backgroundColor: "white",
-  cursor: "pointer",
-};
-
 import { useState, useMemo } from "react";
-import { X, Search, Package, Heart, GitCompare, Loader2, Sparkles } from "lucide-react";
+import { X, Search, Package, Heart, GitCompare, Loader2, Star } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { getRoutineSteps } from "@/constants/routineSteps";
 import { useProductSearch, useProductFilters } from "@/hooks";
@@ -67,14 +55,15 @@ export default function RoutineAddModal({
   // 현재 루틴 단계 정보
   const currentStep = routineSteps.find((step) => step.code === openStep);
   const currentLabel = currentStep?.label ?? "";
-  const stepCategories = currentStep?.categories ?? [];
 
   // 카테고리 필터 메타데이터 가져오기
   const { data: filterMeta } = useProductFilters();
-  const bigCategories = filterMeta?.bigCategories ?? [];
 
   // 현재 루틴 단계의 카테고리들을 API 메타데이터와 매칭하여 ID 포함한 정보로 변환
   const availableCategories = useMemo(() => {
+    const stepCategories = currentStep?.categories ?? [];
+    const bigCategories = filterMeta?.bigCategories ?? [];
+
     if (!filterMeta || stepCategories.length === 0) return [];
 
     const allSubCategories = bigCategories.flatMap((bc) =>
@@ -90,7 +79,7 @@ export default function RoutineAddModal({
         return allSubCategories.find((cat) => cat.categoryName === categoryName);
       })
       .filter((cat): cat is NonNullable<typeof cat> => cat !== undefined);
-  }, [filterMeta, stepCategories, bigCategories]);
+  }, [filterMeta, currentStep]);
 
   // selectedCategoryId가 없거나 현재 목록에 없으면 첫 번째 카테고리를 기본값으로 파생
   const effectiveCategoryId =
@@ -212,18 +201,18 @@ export default function RoutineAddModal({
                   onClick={handleRecommendationToggle}
                   disabled={recommendationMutation.isPending}
                   className={[
-                    "flex items-center gap-1 h-7 px-2.5 rounded-full border cursor-pointer text-[11px] font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+                    "flex items-center gap-1 h-7 px-2.5 rounded-full border cursor-pointer text-[14px] font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed",
                     isRecommendMode
                       ? "bg-(--color-brand) text-white border-(--color-brand)"
                       : "bg-bg-muted-warm text-text-stone border-border-warm",
                   ].join(" ")}
                 >
                   {recommendationMutation.isPending ? (
-                    <Loader2 size={11} className="animate-spin" />
+                    <Loader2 size={14} className="animate-spin" />
                   ) : (
-                    <Sparkles size={11} />
+                    <Star size={14} />
                   )}
-                  피뷰추천
+                  Piview pick
                 </button>
                 {/* 닫기 버튼 */}
                 <button
@@ -237,10 +226,9 @@ export default function RoutineAddModal({
 
             {/* 추천 모드 활성 시 안내 배너 */}
             {isRecommendMode && (
-              <div className="flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-(--color-brand-bg) text-(--color-brand)">
-                <Sparkles size={11} />
+              <div className="flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-xl text-[12px] font-normal bg-(--color-brand-bg) text-(--color-brand)">
                 {recommendedProducts.length > 0
-                  ? `피부 맞춤 ${recommendedProducts.length}개 제품 추천`
+                  ? `사용자 맞춤 ${recommendedProducts.length}개 제품 추천`
                   : "추천 결과가 없습니다"}
               </div>
             )}
@@ -257,12 +245,10 @@ export default function RoutineAddModal({
                 value={searchQuery}
                 onChange={(event) => handleSearchChange(event.target.value)}
                 placeholder="제품명 또는 브랜드 검색"
-                className="w-full h-10 pl-9 pr-3 rounded-xl border border-border-warm bg-[#FAF8F5] text-xs text-[#2A2A2A] outline-none"
-                style={{
-                  paddingRight: searchQuery
-                    ? SEARCH_INPUT_PADDING_CLEAR
-                    : SEARCH_INPUT_PADDING_DEFAULT,
-                }}
+                className={[
+                  "w-full h-10 pl-9 rounded-xl border border-border-warm bg-[#FAF8F5] text-xs text-[#2A2A2A] outline-none",
+                  searchQuery ? "pr-9" : "pr-3",
+                ].join(" ")}
               />
               {searchQuery && (
                 <button
@@ -336,12 +322,12 @@ export default function RoutineAddModal({
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className="w-7 h-7 rounded-full border text-xs font-semibold cursor-pointer transition-colors"
-                        style={{
-                          borderColor: currentPage === page ? "var(--color-brand)" : "var(--color-border-warm)",
-                          backgroundColor: currentPage === page ? "var(--color-brand)" : "white",
-                          color: currentPage === page ? "white" : "var(--color-text-muted)",
-                        }}
+                        className={[
+                          "w-7 h-7 rounded-full border text-xs font-semibold cursor-pointer transition-colors",
+                          currentPage === page
+                            ? "border-(--color-brand) bg-(--color-brand) text-white"
+                            : "border-border-warm bg-white text-text-muted",
+                        ].join(" ")}
                       >
                         {page}
                       </button>
@@ -376,18 +362,17 @@ interface ProductCardProps {
 function ProductCard({ product, isAdded, isRecommended = false, onAdd }: ProductCardProps) {
   return (
     <div
-      className="rounded-[14px] p-4 border"
-      style={{
-        borderColor: isAdded
-          ? "var(--color-brand-light)"
-          : "var(--color-border-warm)",
-        backgroundColor: isAdded ? "var(--color-brand-bg)" : "white",
-      }}
+      className={[
+        "rounded-[14px] p-4 border",
+        isAdded
+          ? "border-(--color-brand-light) bg-(--color-brand-bg)"
+          : "border-border-warm bg-white",
+      ].join(" ")}
     >
       {/* 제품 정보 행 */}
       <div className="flex gap-3">
         {/* 이미지 컨테이너 — PICK 배지 포함 */}
-        <div className="relative shrink-0" style={{ width: 72, height: 72 }}>
+        <div className="relative w-[72px] h-[72px] shrink-0">
           <div className="w-full h-full flex items-center justify-center rounded-xl bg-[#F5F2EC] overflow-hidden">
             {product.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -451,28 +436,21 @@ function ProductCard({ product, isAdded, isRecommended = false, onAdd }: Product
         <button
           onClick={onAdd}
           disabled={isAdded}
-          className="flex items-center justify-center gap-1 flex-1 h-9 rounded-[40px] border-none cursor-pointer transition-all text-sm font-bold"
-          style={{
-            backgroundColor: isAdded
-              ? "var(--color-brand-bg)"
-              : "var(--color-brand)",
-            color: isAdded ? "var(--color-brand)" : "white",
-          }}
+          className={[
+            "flex items-center justify-center gap-1 flex-1 h-9 rounded-[40px] border-none cursor-pointer transition-all text-sm font-bold",
+            isAdded
+              ? "bg-(--color-brand-bg) text-(--color-brand)"
+              : "bg-(--color-brand) text-white",
+          ].join(" ")}
         >
           + {isAdded ? "추가됨" : "루틴추가"}
         </button>
         {/* 찜 — ⚠️ API 연동 시 useLike 훅으로 연결 */}
-        <button
-          className="flex items-center justify-center cursor-pointer"
-          style={MODAL_ACTION_ICON_BTN}
-        >
+        <button className="flex items-center justify-center w-9 h-9 rounded-full border border-border-warm bg-white cursor-pointer">
           <Heart size={15} className="text-text-muted" />
         </button>
         {/* 비교 — ⚠️ API 연동 시 useCompare 훅으로 연결 */}
-        <button
-          className="flex items-center justify-center cursor-pointer"
-          style={MODAL_ACTION_ICON_BTN}
-        >
+        <button className="flex items-center justify-center w-9 h-9 rounded-full border border-border-warm bg-white cursor-pointer">
           <GitCompare size={15} className="text-text-muted" />
         </button>
       </div>
