@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Check, Camera } from "lucide-react";
 import Link from "next/link";
 import {
   SETTINGS_SKIN_TYPES,
   SETTINGS_SKIN_CONCERNS,
-  SETTINGS_ALLERGIES,
 } from "@/constants/userSettings";
 import { useUserStore, selectSkinType } from "@/stores/useUserStore";
+import { useUpdateProfile } from "@/hooks/queries/useUserQuery";
+import { toSkinTypeEnum } from "@/utils/enumConvert";
 import type { SkinType } from "@/types/user";
 
 function SectionTitle({ icon, title }: { icon: string; title: string }) {
@@ -30,57 +31,31 @@ export default function SettingsPage() {
 
   // store에서 기존 설정값 읽기
   const storedSkinType = useUserStore(selectSkinType);
-  const storedAvoidContents = useUserStore((s) => s.avoidContents);
   const storedConcerns = useUserStore((s) => s.concerns);
-  const { setSkinType, setAvoidContents, setConcerns: setConcernsStore } = useUserStore();
+  const { mutate: updateProfile, isPending } = useUpdateProfile();
 
   // 로컬 상태 — store 값으로 초기화
   const [skinType, setSkinTypeLocal] = useState<string>(storedSkinType ?? "");
   const [concerns, setConcernsLocal] = useState<Set<string>>(new Set(storedConcerns));
-  const [allergies, setAllergies] = useState<Set<string>>(
-    new Set(storedAvoidContents.map((a) => a.avoidContent)),
-  );
-
-  // store 값 변경 시 동기화 (페이지 재진입 대응)
-  useEffect(() => {
-    if (storedSkinType) setSkinTypeLocal(storedSkinType);
-  }, [storedSkinType]);
-
-  useEffect(() => {
-    setConcernsLocal(new Set(storedConcerns));
-  }, [storedConcerns]);
 
   const toggleConcern = (label: string) =>
     setConcernsLocal((prev: Set<string>) => {
-      const n = new Set(prev);
-      n.has(label) ? n.delete(label) : n.add(label);
-      return n;
-    });
-
-  const toggleAllergy = (label: string) =>
-    setAllergies((prev) => {
-      const n = new Set(prev);
-      n.has(label) ? n.delete(label) : n.add(label);
-      return n;
+      const next = new Set(prev);
+      if (next.has(label)) { next.delete(label); } else { next.add(label); }
+      return next;
     });
 
   const handleSave = () => {
-    // 피부타입 저장
-    if (skinType) setSkinType(skinType as SkinType);
-
-    // 알러지 성분 저장 — ⚠️ API 연동 시 avoidContentsService.save()로 교체
-    setAvoidContents(
-      [...allergies].map((label, idx) => ({
-        id: idx,
-        userId: 0,
-        avoidContent: label,
-      })),
+    // 피부타입 + 피부 고민 → PATCH /users/me로 저장
+    updateProfile(
+      {
+        ...(skinType && {
+          mySkinType: toSkinTypeEnum(skinType as SkinType),
+        }),
+        skinProblems: [...concerns],
+      },
+      { onSuccess: () => router.back() },
     );
-
-    // 피부 고민 저장 — ⚠️ API 연동 시 mySkinProblemsService.save()로 교체
-    setConcernsStore([...concerns]);
-
-    router.back();
   };
 
   return (
@@ -94,7 +69,7 @@ export default function SettingsPage() {
           <ChevronLeft size={20} className="text-text-primary" />
         </button>
         <h2 className="text-lg font-semibold text-text-primary tracking-[0.5px]">
-          피부 설정
+          Settings
         </h2>
       </div>
 
@@ -154,35 +129,6 @@ export default function SettingsPage() {
 
         <Divider />
 
-        {/* 알러지 */}
-        <div>
-          <SectionTitle icon="⚠️" title="알러지 / 기피 성분" />
-          <p className="text-xs text-text-muted mb-5">
-            피하고 싶은 성분을 선택해주세요
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {SETTINGS_ALLERGIES.map((a) => {
-              const isActive = allergies.has(a.label);
-              return (
-                <button
-                  key={a.id}
-                  onClick={() => toggleAllergy(a.label)}
-                  className={`inline-flex items-center gap-1 px-4 py-2 rounded-chip text-sm font-semibold cursor-pointer transition-all border select-none ${
-                    isActive
-                      ? "bg-warm text-white border-warm shadow-[0_2px_8px_rgba(194,140,126,0.25)]"
-                      : "bg-white text-text-primary border-border"
-                  }`}
-                >
-                  {isActive && <Check size={14} />}
-                  {a.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <Divider />
-
         {/* 재진단 */}
         <div>
           <SectionTitle icon="🔄" title="피부 진단 다시하기" />
@@ -212,9 +158,26 @@ export default function SettingsPage() {
         <div className="m-6 flex justify-center">
           <button
             onClick={handleSave}
-            className="w-[200px] h-11 rounded-button bg-brand text-white font-semibold text-[16px] border-none cursor-pointer shadow-[0_4px_16px_rgba(162,170,123,0.2)] transition-all active:scale-[0.98]"
+            disabled={isPending}
+            className="w-[200px] h-11 rounded-button bg-brand text-white font-semibold text-[16px] border-none cursor-pointer shadow-[0_4px_16px_rgba(162,170,123,0.2)] transition-all active:scale-[0.98] disabled:opacity-60"
           >
-            저장하기
+            {isPending ? "저장 중..." : "저장하기"}
+          </button>
+        </div>
+
+        {/* 로그아웃 버튼 */}
+        <div className="mt-20 mb-10 flex justify-center">
+          <button
+            onClick={() => {
+              // TODO: 로그아웃 로직 구현
+              // 예: localStorage.removeItem('token'), router.push('/login')
+              if (confirm('로그아웃 하시겠습니까?')) {
+                router.push('/');
+              }
+            }}
+            className="w-[200px] h-11 rounded-button text-gray-700 font-bold text-[16px] border border-border cursor-pointer transition-all active:scale-[0.98] hover:bg-red-100 hover:text-red-800 hover:border-red-200"
+          >
+            로그아웃
           </button>
         </div>
       </div>

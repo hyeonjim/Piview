@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, SwitchCamera, ImagePlus } from "lucide-react";
-import { useOcr } from "@/hooks";
-
+import { useCaptureAnalysis, useAnalysisStatus } from "@/hooks";
+import { useSurveyStore } from "@/stores";
 
 // ── 스타일 상수 ──────────────────────────────────────────────────────
 const CAMERA_Z_INDEX = { zIndex: 1 };
@@ -231,16 +231,23 @@ export default function PhotoAnalysisPage() {
 
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState(false);
+  const [cameraLoading, setCameraLoading] = useState(true);
   const [preview, setPreview] = useState<string | null>(null);
   const [capturedFile, setCapturedFile] = useState<File | null>(null);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [scanning, setScanning] = useState(true);
   const [flash, setFlash] = useState(false);
 
-  const { mutate: recognize, isPending: isAnalyzing } = useOcr();
+  const { mutate: capture, isPending: isCapturing } = useCaptureAnalysis();
+  const setAnalysisId = useSurveyStore((s) => s.setAnalysisId);
+  const analysisId = useSurveyStore((s) => s.analysisId);
+  const { data: analysisStatus } = useAnalysisStatus(analysisId);
+
+  const isAnalyzing = isCapturing || analysisStatus?.status === "PENDING";
 
   /* ── 카메라 시작 ── */
   const startCamera = useCallback(async (facing: "user" | "environment") => {
+    setCameraLoading(true);
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
@@ -255,17 +262,30 @@ export default function PhotoAnalysisPage() {
         audio: false,
       });
       streamRef.current = stream;
+      // videoRef가 이미 있으면 바로 연결, 없으면 useEffect에서 연결
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        try {
+          await videoRef.current.play();
+        } catch {}
       }
       setCameraActive(true);
       setCameraError(false);
+      setCameraLoading(false);
     } catch {
       setCameraError(true);
       setCameraActive(false);
+      setCameraLoading(false);
     }
   }, []);
+
+  // videoRef 마운트 후 stream이 이미 있으면 연결 (타이밍 엇갈린 경우 보정)
+  useEffect(() => {
+    if (videoRef.current && streamRef.current && !videoRef.current.srcObject) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch(() => {});
+    }
+  });
 
   useEffect(() => {
     startCamera(facingMode);
@@ -273,6 +293,18 @@ export default function PhotoAnalysisPage() {
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
   }, []);
+
+  // 권한 허용 후 탭으로 돌아올 때 카메라 재시도
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && !cameraActive && !preview) {
+        startCamera(facingMode);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibility);
+  }, [cameraActive, preview, facingMode]);
 
   const switchCamera = () => {
     const next = facingMode === "user" ? "environment" : "user";
@@ -298,9 +330,16 @@ export default function PhotoAnalysisPage() {
     setTimeout(() => setFlash(false), 150);
     setPreview(canvas.toDataURL("image/jpeg", 0.9));
     // canvas → File 변환
-    canvas.toBlob((blob) => {
-      if (blob) setCapturedFile(new File([blob], "capture.jpg", { type: "image/jpeg" }));
-    }, "image/jpeg", 0.9);
+    canvas.toBlob(
+      (blob) => {
+        if (blob)
+          setCapturedFile(
+            new File([blob], "capture.jpg", { type: "image/jpeg" }),
+          );
+      },
+      "image/jpeg",
+      0.9,
+    );
     setScanning(false);
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
@@ -332,27 +371,34 @@ export default function PhotoAnalysisPage() {
   };
 
   const handleShutterClick = () => {
+    if (cameraLoading) return;
     if (cameraActive) capturePhoto();
     else if (cameraError) fileRef.current?.click();
   };
 
+  /* ── COMPLETED 감지 → survey 페이지 이동 ── */
+  useEffect(() => {
+    if (analysisStatus?.status === "COMPLETED") {
+      router.push("/skin-test/survey/1");
+    }
+    if (analysisStatus?.status === "FAILED") {
+      // AI 분석 실패 → analysisId 초기화 후 재촬영 유도
+      setAnalysisId("");
+      alert(
+        analysisStatus.errorMessage ?? "분석에 실패했어요. 다시 촬영해주세요.",
+      );
+    }
+  }, [analysisStatus?.status]);
+
   /* ── AI 분석 시작 ── */
   const handleAnalysisStart = () => {
     if (!capturedFile || isAnalyzing) return;
-    recognize(capturedFile, {
-      onSuccess: (result) => {
-        if (result.success && result.productId) {
-          // OCR 성공 → 제품 상세 페이지로 이동
-          // ⚠️ GET /products/{id} 미구현 시 mock 유지
-          router.push(`/product/${result.productId}`);
-        } else {
-          // 인식 실패 → 직접 선택 페이지로 이동
-          router.push("/skin-test/select");
-        }
+    capture(capturedFile, {
+      onSuccess: ({ analysisId: id }) => {
+        setAnalysisId(id);
       },
       onError: () => {
-        // API 오류 → 직접 선택 페이지로 이동
-        router.push("/skin-test/select");
+        router.push("/skin-test/survey/1");
       },
     });
   };
@@ -519,14 +565,7 @@ export default function PhotoAnalysisPage() {
               </button>
             </div>
 
-            {/* 건너뛰기 */}
-            <button
-              onClick={() => router.push("/skin-test/survey/1")}
-              className="bg-transparent border-none cursor-pointer"
-              style={HINT_BOTTOM_TEXT}
-            >
-              건너뛰기
-            </button>
+            {/* 건너뛰기 버튼 제거 — 사진 없이 설문 제출 불가 */}
           </div>
         ) : (
           /* 프리뷰 모드 */
@@ -544,7 +583,9 @@ export default function PhotoAnalysisPage() {
                 color: "#fff",
                 fontSize: "15px",
                 fontWeight: 600,
-                boxShadow: isAnalyzing ? "none" : "0 4px 16px rgba(162,170,123,0.4)",
+                boxShadow: isAnalyzing
+                  ? "none"
+                  : "0 4px 16px rgba(162,170,123,0.4)",
                 cursor: isAnalyzing ? "default" : "pointer",
               }}
             >
@@ -557,13 +598,6 @@ export default function PhotoAnalysisPage() {
                 style={UPLOAD_BTN_STYLE}
               >
                 다시 촬영
-              </button>
-              <button
-                onClick={() => router.push("/skin-test/survey/1")}
-                className="flex-1 transition-all active:scale-[0.97] cursor-pointer border-none"
-                style={RETRY_BTN_STYLE}
-              >
-                건너뛰기
               </button>
             </div>
           </div>
