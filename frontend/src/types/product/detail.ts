@@ -155,3 +155,17 @@ export interface ProductCompareRequest {
 export interface ProductCompareResponse {
   products: ComparedProductData[];
 }
+
+// ── AI 요약 및 추천 API ───────────────────────────────────────────
+
+/**
+ * GET /api/v1/products/{productId}/summary
+ * 스웨거: ProductLine12SummaryResponse
+ */
+export interface ProductAiSummaryResponse {
+  productId: number;
+  productName: string;
+  line1AiSummary: string;       // AI 3줄 요약 1번째
+  line2PersonalizedMsg: string; // 맞춤형 추천 메시지
+  line3AiSummary: string;       // AI 3줄 요약 3번째
+}

@@ -13,7 +13,6 @@ import {
   useRemoveDislikedProduct,
   useDraftQuery,
 } from "@/hooks";
-import { fromSkinTypeEnum } from "@/utils/enumConvert";
 import { PAGE_SIZE } from "@/constants/pagination";
 
 export default function OwnedTab() {
@@ -42,8 +41,6 @@ export default function OwnedTab() {
     name: item.productInfo.name,
     category: item.productInfo.categoryName,
     imageUrl: item.productInfo.imageUrl ?? undefined,
-    skinTypes: item.productInfo.skinTypes.map(fromSkinTypeEnum),
-    effects: item.productInfo.tags,
   }));
 
   const ownedTotalPages = Math.ceil(ownedProducts.length / PAGE_SIZE) || 1;
@@ -67,19 +64,19 @@ export default function OwnedTab() {
   );
 
   return (
-    <div className="px-7 pb-10 pt-4 flex flex-col gap-10">
+    <div className="px-7 pb-10 pt-4 flex flex-col gap-10 bg-category-pill-default-bg">
       {/* ── 보유 제품 섹션 ─────────────────────────────────────── */}
       <section>
         <div className="flex items-center justify-between mb-1">
           <div>
-            <p className="text-base font-bold text-text-primary">Owned Products</p>
+            <p className="text-base font-bold text-[#5e5c59]">Owned</p>
             <p className="text-xs text-text-muted mt-0.5">
               {ownedProducts.length}개 보유 중
             </p>
           </div>
           <button
             onClick={() => setOpenOwnedModal(true)}
-            className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-brand font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
+            className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-[#636264] font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
           >
             + 추가
           </button>
@@ -95,7 +92,7 @@ export default function OwnedTab() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-3 mt-3 [&_p.line-clamp-2]:text-[14px]!">
+            <div className="grid grid-cols-3 gap-3 mt-5 [&_p.line-clamp-2]:text-[14px]!">
               {pagedOwned.map((product) => (
                 <div key={product.id} className="relative">
                   <ProductCard
@@ -107,8 +104,6 @@ export default function OwnedTab() {
                     name={product.name}
                     category={product.category}
                     imageUrl={product.imageUrl}
-                    skinTypes={product.skinTypes}
-                    effects={product.effects}
                     layout="grid"
                     showLike={false}
                     inRoutine={isInRoutine(product.productId)}
@@ -137,9 +132,11 @@ export default function OwnedTab() {
       <section>
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-start gap-1.5">
-            <Ban size={16} className="text-danger mt-0.5 shrink-0" />
             <div>
-              <p className="text-base font-bold text-text-primary">Avoid Products</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-base font-bold text-[#b33232]">Avoid</p>
+                <Ban size={14} className="text-[#b33232]" />
+              </div>
               <p className="text-xs text-text-muted mt-0.5">
                 {dislikedItems.length}개 등록됨
               </p>
@@ -147,7 +144,7 @@ export default function OwnedTab() {
           </div>
           <button
             onClick={() => setOpenAvoidModal(true)}
-            className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-brand font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
+            className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-[#636264] font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
           >
             + 추가
           </button>
@@ -166,7 +163,7 @@ export default function OwnedTab() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-3 mt-3 [&_p.line-clamp-2]:text-[14px]!">
+            <div className="grid grid-cols-3 gap-3 mt-5 [&_p.line-clamp-2]:text-[14px]!">
               {pagedAvoid.map((item) => (
                 <div key={item.dislikedProductId} className="relative">
                   <ProductCard
@@ -175,11 +172,6 @@ export default function OwnedTab() {
                     name={item.productName}
                     category={item.categoryName}
                     imageUrl={item.imageUrl ?? undefined}
-                    skinTypes={[
-                      item.topSkinType ? fromSkinTypeEnum(item.topSkinType) : null,
-                      item.top2SkinType ? fromSkinTypeEnum(item.top2SkinType) : null,
-                    ].filter(Boolean) as string[]}
-                    effects={item.tags}
                     layout="grid"
                     showLike={false}
                   />
