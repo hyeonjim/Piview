@@ -1,5 +1,7 @@
 package com.piview.backend.domain.routine.item.service;
 
+import com.piview.backend.domain.product.catalog.dto.ProductSummaryResponse;
+import com.piview.backend.domain.product.like.repository.ProductLikeRepository;
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.domain.product.catalog.repository.ProductRepository;
@@ -9,6 +11,8 @@ import com.piview.backend.domain.routine.item.entity.MyCos;
 import com.piview.backend.domain.routine.item.repository.MyCosRepository;
 import com.piview.backend.domain.user.login.entity.User;
 import com.piview.backend.domain.user.login.repository.UserRepository;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,25 +27,33 @@ public class MyCosService {
     private final MyCosRepository myCosRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final ProductLikeRepository productLikeRepository;
+
     // 보유 제품 조회해서 list로 반환
     public List<MyCosResponseDto> getMyCosList(Long userId) {
-        // 1. 레포지토리에서 Fetch Join이 적용된 쿼리 호출
+
+        // 내 보관함 제품 리스트 가져오기 (Fetch Join 적용된 쿼리 권장)
         List<MyCos> myCosList = myCosRepository.findAllByUserIdWithProduct(userId);
 
-        // 2. 엔티티 리스트를 Record DTO로 변환
+        // 내가 찜한 제품의 productId 목록을 Set으로 가져오기 (N+1 방지)
+        // Set을 쓰면 contains() 메서드가 O(1) 성능이라 매우 빠릅니다.
+        Set<Long> likedProductIds = new HashSet<>(productLikeRepository.findLikedProductIdsByUserId(userId));
+
+        // 매핑 로직 (N+1 쿼리 없이 매우 빠름)
         return myCosList.stream()
-            .map(mc -> MyCosResponseDto.builder()
-                .id(mc.getId())
-                .productId(mc.getProduct().getProductId())
-                .brand(mc.getProduct().getBrand().getBrandName())      // Product -> Brand 접근
-                .productName(mc.getProduct().getName())           // Product 이름
-                .category(mc.getProduct().getCategory().getCategoryName()) // Product -> Category 접근
-                .imageUrl(mc.getProduct().getImage().getUrl()) // Product -> Image 접근
-                .topSkinType(mc.getProduct().getTopSkinType())
-                .top2SkinType(mc.getProduct().getTop2SkinType())
-                .build())
-                .toList(); // Stream을 List로 변환
+            .map(mc -> {
+                Product product = mc.getProduct();
+
+                // 내 찜 목록에 이 제품의 productId가 들어있는지 확인
+                boolean isLiked = likedProductIds.contains(product.getProductId());
+
+                ProductSummaryResponse summary = ProductSummaryResponse.from(product, isLiked);
+
+                return new MyCosResponseDto(mc.getId(), summary);
+            })
+            .toList();
     }
+
 
     @Transactional
     public Long saveMyCos(Long userId, Long productId) {
