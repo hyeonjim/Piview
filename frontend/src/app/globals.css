@@ -464,7 +464,7 @@
   }
 
   .bottom-nav-home-circle[data-active="true"] {
-    background-color: var(--color-nav-home-active-bg);
+    background-color: #6c6763;
     box-shadow: var(--shadow-nav-home-active);
   }
 

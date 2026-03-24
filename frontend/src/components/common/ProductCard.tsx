@@ -350,7 +350,7 @@ export default function ProductCard({
       >
         <Link href={productHref} className="no-underline flex flex-col flex-1">
           {/* 이미지 영역 — 밝은 배경 */}
-          <div className="relative w-full aspect-[4/3] overflow-hidden">
+          <div className="relative w-full aspect-[5/3] overflow-hidden">
             <ProductImage
               imageUrl={imageUrl}
               name={name}
@@ -496,22 +496,22 @@ export default function ProductCard({
   if (variant === "modal") {
     return (
       <div
-        className="rounded-[10px] p-3"
+        className="rounded-2xl p-3 bg-white"
         style={{
-          border: "1px solid var(--color-border-modal)",
-          backgroundColor: "var(--color-bg-card)",
+          boxShadow:
+            "0 1px 2px rgba(0,0,0,0.04), 0 3px 7px rgba(180,155,120,0.09), 0 7px 18px rgba(0,0,0,0.06), 0 14px 32px rgba(180,155,120,0.04)",
         }}
       >
         <Link href={productHref} className="no-underline">
           <div className="flex items-center gap-3">
             {/* 썸네일 */}
-            <div className="relative shrink-0 w-15 h-15 overflow-hidden rounded-lg bg-[#F5F2EC]">
+            <div className="relative shrink-0 w-18 h-18 overflow-hidden rounded-lg">
               <ProductImage
                 imageUrl={imageUrl}
                 name={name}
                 emoji={emoji}
-                width={50}
-                height={50}
+                width={72}
+                height={72}
                 className="object-cover rounded-lg"
               />
             </div>
@@ -522,7 +522,7 @@ export default function ProductCard({
                 {category && <CategoryChip category={category} />}
                 {showPickBadge && <PickBadge />}
               </div>
-              <p className="m-0 text-[13px] font-bold text-[var(--color-text-primary)] truncate">
+              <p className="m-0 text-[13px] font-bold text-[#463a2e] truncate">
                 {name}
               </p>
               <div className="mt-1.25">

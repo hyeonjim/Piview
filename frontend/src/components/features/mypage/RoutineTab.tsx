@@ -903,10 +903,13 @@ function RoutineProductCard({
       data-drag-item
       data-step-code={stepCode}
       data-item-index={index}
-      className="relative h-25 rounded-[10px] overflow-hidden bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
+      className="relative h-25 rounded-2xl overflow-hidden bg-white"
       style={{
         opacity: isDragging ? 0.4 : 1,
-        border: isDropTarget ? "2px solid #A69D92" : "1px solid #E2DDD8",
+        border: isDropTarget ? "2px solid #A69D92" : "none",
+        boxShadow: isDropTarget
+          ? "none"
+          : "0 1px 2px rgba(0,0,0,0.04), 0 3px 7px rgba(180,155,120,0.09), 0 7px 18px rgba(0,0,0,0.06), 0 14px 32px rgba(180,155,120,0.04)",
         transition: "opacity 0.15s, border-color 0.1s",
       }}
     >
@@ -972,14 +975,14 @@ function RoutineProductCard({
               </span>
             )}
           </div>
-          <p className="my-1.5 text-[16px] font-semibold text-[#2A2118] leading-[1.4] line-clamp-1">
+          <p className="my-1.5 text-[16px] font-semibold text-[#5b5b59] leading-[1.4] line-clamp-1">
             {product.name}
           </p>
-          <div className="flex flex-wrap gap-1 mt-1">
+          <div className="flex flex-wrap mt-1">
             {product.skinTypes?.slice(0, 1).map((skinType) => (
               <span
                 key={skinType}
-                className="inline-block text-[12px] font-semibold px-1.5 rounded-[3px] bg-[#F0EDE8] text-[#7A7060]"
+                className="inline-block mb-1 mr-1 text-[11px] font-medium px-1.5 py-[1px] rounded bg-[#f4eddf] text-[#514a42]"
               >
                 {fromSkinTypeEnum(skinType)}
               </span>
@@ -987,7 +990,7 @@ function RoutineProductCard({
             {product.tags?.slice(0, 2).map((effect) => (
               <span
                 key={effect}
-                className="inline-block text-[12px] font-semibold px-1.5 rounded-[3px] bg-[#EEE8E4] text-[#8A7A6E]"
+                className="inline-block text-[11px] mb-1 mr-1 font-medium px-1.5 py-[1px] rounded border bg-[#f8f8f6] text-[#7a664e]"
               >
                 {effect}
               </span>

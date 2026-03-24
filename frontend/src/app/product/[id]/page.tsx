@@ -472,7 +472,7 @@ function ProductDetailInner() {
                   setShowRoutineCompare(true);
                 }
               }}
-              className="flex items-center gap-1 px-3 h-7 rounded-lg border cursor-pointer transition-all active:scale-[0.96] text-[11px] font-medium shrink-0 border-[#dedbd9] bg-[#f3f0eb] text-[#5c5852]"
+              className="flex items-center gap-1 px-3 h-7 rounded-lg border cursor-pointer transition-all active:scale-[0.96] text-[12px] font-semibold shrink-0 border-[#dedbd9] bg-[#f3f0eb] text-[#5c5852]"
             >
               내루틴과 비교하기
             </button>
@@ -539,7 +539,7 @@ function ProductDetailInner() {
               )}
               <button
                 onClick={handleToggleOwned}
-                className={`flex items-center justify-center gap-1 w-15 h-7 rounded-lg cursor-pointer transition-all active:scale-[0.98] text-[11px] font-medium border ${owned ? "border-[#bcb5ac] bg-[#f5f3f0] text-[#4d453c]" : "border-[#dbd6cf] bg-white text-[#7c7874]"}`}
+                className={`flex items-center justify-center gap-1 w-15 h-7 rounded-lg cursor-pointer transition-all active:scale-[0.98] text-[12px] font-semibold border ${owned ? "border-[#bcb5ac] bg-[#eae8e6] text-[#4d453c]" : "border-[#dbd6cf] bg-[#f4f4f1] text-[#7c7874]"}`}
               >
                 {owned ? "보유중" : "보유추가"}
               </button>

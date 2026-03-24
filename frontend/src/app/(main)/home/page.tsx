@@ -66,22 +66,30 @@ export default function HomePage() {
 
       {/* 메인 루틴 카드 */}
       <div className="py-3 px-4">
-        <div className="bg-white rounded-xl border border-[#E2DDD8]">
+        <div className="bg-category-pill-default-bg rounded-xl overflow-hidden">
           {/* 루틴 헤더 */}
-          <div className="flex items-center justify-between py-3.5 px-4 border-b border-[#EDE9E3] rounded-t-xl">
-            <span className="text-[16px] font-bold text-[#71706a] tracking-[-0.2px]">
-              메인 루틴
-            </span>
-            {hasRoutine ? (
-              <div className="flex items-center gap-2">
-                {/* 루틴 이름 */}
-                <span className="text-[14px] font-semibold text-[#52514d] truncate max-w-30">
-                  {mainRoutineData?.title}
-                </span>
-                <span className="text-[12px] font-semibold py-0.75 px-2.5 rounded-xl bg-[#F2EFE9] text-[#70685d]">
+          <div className="flex items-center justify-between px-4">
+            <div className="flex items-center gap-2">
+              <span className="text-[15px] font-bold text-[#52514d] tracking-[-0.2px]">
+                메인 루틴
+              </span>
+              {hasRoutine && (
+                <span className="text-[11px] font-semibold py-0.5 px-2 rounded-full bg-[#F2EFE9] text-[#70685d]">
                   {mainRoutineItems.length}단계
                 </span>
-              </div>
+              )}
+            </div>
+            {hasRoutine ? (
+              <Link href="/mypage">
+                <span className="flex items-center gap-0.5 text-xs text-[#A69D92]">
+                  {mainRoutineData?.title && (
+                    <span className="text-[12px] font-semibold text-[#8a7f74] truncate max-w-28 mr-0.5">
+                      {mainRoutineData.title}
+                    </span>
+                  )}
+                  <ChevronRight size={12} />
+                </span>
+              </Link>
             ) : (
               <Link href="/mypage">
                 <span className="flex items-center gap-0.5 text-xs text-[#A69D92]">
@@ -93,38 +101,37 @@ export default function HomePage() {
 
           {/* 루틴 리스트 */}
           {hasRoutine ? (
-            <div className="py-3 px-5 flex flex-col gap-3">
-              {mainRoutineItems.map(({ step, product }, index) => {
-
-                return (
-                  <div
-                    key={`${step.code}-${product.name}`}
-                    className="flex items-center gap-3"
-                  >
-                    {/* 스텝 번호 */}
-                    <span className="text-[18px] font-bold text-[#756f67] w-4 shrink-0 [font-family:var(--font-english),serif]">
+            <div className="px-4 py-3 flex flex-col gap-0">
+              {mainRoutineItems.map(({ step, product }, index) => (
+                <div
+                  key={`${step.code}-${product.name}`}
+                  className="flex items-center gap-3 py-2.5 first:pt-1 last:pb-1"
+                >
+                  {/* 스텝 번호 뱃지 */}
+                  <div className="shrink-0 w-6 h-6 rounded-full bg-[#F2EFE9] flex items-center justify-center">
+                    <span className="text-[15px] font-bold text-[#756f67] [font-family:var(--font-english),serif]">
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    {/* zoom으로 홈페이지에서만 카드 축소 — ProductCard 컴포넌트 수정 없이 비율 유지 */}
-                    <div className="flex-1">
-                      <ProductCard
-                        id={product.productId}
-                        name={product.name ?? ""}
-                        brand={product.brandName ?? ""}
-                        imageUrl={product.imageUrl ?? undefined}
-                        layout="horizontal"
-                        category={product.categoryName ?? undefined}
-                        skinTypes={
-                          product.skinTypes?.map(fromSkinTypeEnum) ?? []
-                        }
-                        effects={product.tags ?? []}
-                        showLike={false}
-                        showEwg={false}
-                      />
-                    </div>
                   </div>
-                );
-              })}
+                  {/* 제품 카드 — modal variant로 잘림 없이 표시 */}
+                  <div className="flex-1 min-w-0">
+                    <ProductCard
+                      id={product.productId}
+                      name={product.name ?? ""}
+                      brand={product.brandName ?? ""}
+                      imageUrl={product.imageUrl ?? undefined}
+                      variant="modal"
+                      category={product.categoryName ?? undefined}
+                      skinTypes={
+                        product.skinTypes?.map(fromSkinTypeEnum) ?? []
+                      }
+                      effects={product.tags ?? []}
+                      showLike={false}
+                      showEwg={false}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             /* 루틴 없음 빈 상태 */
