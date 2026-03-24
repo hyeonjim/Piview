@@ -448,12 +448,6 @@ function ProductDetailInner() {
                 className="object-contain p-4"
               />
             ) : null}
-            <span
-              className="absolute inset-0 flex items-center justify-center text-[80px]"
-              hidden={!!productData.imageUrl}
-            >
-              🧴
-            </span>
           </div>
         </div>
 
@@ -476,10 +470,9 @@ function ProductDetailInner() {
                   setShowRoutineCompare(true);
                 }
               }}
-              className="flex items-center gap-1 px-2.5 h-7 rounded-lg border cursor-pointer transition-all active:scale-[0.96] text-[11px] font-semibold shrink-0 border-border bg-white text-text-hint"
+              className="flex items-center gap-1 px-2.5 h-7 rounded-lg border cursor-pointer transition-all active:scale-[0.96] text-[12px] font-semibold shrink-0 border-border bg-white text-text-hint"
             >
-              <Scale size={11} />
-              내루틴 비교하기
+              내루틴과 비교하기
             </button>
           </div>
 
@@ -548,9 +541,9 @@ function ProductDetailInner() {
               )}
               <button
                 onClick={handleToggleOwned}
-                className={`flex items-center justify-center gap-1 w-20 h-8 rounded-xl cursor-pointer transition-all active:scale-[0.98] text-xs font-semibold border ${owned ? "border-brand-light bg-brand-bg text-brand" : "border-border-warm bg-white text-text-hint"}`}
+                className={`flex items-center justify-center gap-1 w-17 h-8 rounded-xl cursor-pointer transition-all active:scale-[0.98] text-[12px] font-semibold border ${owned ? "border-brand-light bg-brand-bg text-brand" : "border-border-warm bg-white text-text-hint"}`}
               >
-                <Package size={11} /> {owned ? "보유 중" : "보유추가"}
+                {owned ? "보유 중" : "보유추가"}
               </button>
             </div>
           </div>

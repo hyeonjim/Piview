@@ -91,7 +91,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-warm-bg">
       {/* 헤더 */}
-      <div className="sticky top-0 z-10 px-5 pt-5 pb-3 flex items-center gap-3 bg-warm-bg">
+      <div className="px-5 pt-5 pb-3 flex items-center gap-3 bg-warm-bg">
         <button
           onClick={() => router.back()}
           className="flex items-center justify-center w-7.5 h-7.5 rounded-full bg-white border-none cursor-pointer shadow-[0_1px_4px_rgba(0,0,0,0.06)]"

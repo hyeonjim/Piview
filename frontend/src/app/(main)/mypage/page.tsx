@@ -91,7 +91,6 @@ export default function MyPage() {
    */
   const handleAddToRoutine = (productId: number) => {
     if (!openStep) return;
-    console.log("🔍 루틴 추가 요청:", { columnId: openColumnId, productId, stepCode: openStep });
     addDraftItem(
       { columnId: openColumnId, productId },
       {
@@ -99,8 +98,7 @@ export default function MyPage() {
           toast("✓ 루틴에 추가되었습니다!");
           setOpenStep(null);
         },
-        onError: (error) => {
-          console.error("❌ 루틴 추가 실패:", error);
+        onError: () => {
           toast("제품 추가에 실패했습니다. 다시 시도해주세요.");
         },
       },
@@ -137,7 +135,6 @@ export default function MyPage() {
           </div>
 
           <div className="flex-1 min-w-0">
-            {/* 이름 + 설정/로그아웃 버튼 행 */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <p className="text-[20px] font-bold text-text-primary tracking-[-0.3px]">
