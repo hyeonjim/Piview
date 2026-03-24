@@ -1,6 +1,7 @@
 "use client";
 
-import { Heart, Plus, Check, ShoppingBag, Scale } from "lucide-react";
+import React, { useState } from "react";
+import { Heart, ShoppingBag, Scale, Check, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import EWGIndicator from "./EWGIndicator";
@@ -9,7 +10,7 @@ import {
   SKIN_FUNCTION_COLORS,
   SKIN_TYPE_TAG_COLORS,
 } from "@/constants/categoryColors";
-import { useLikeStore } from "@/stores/useLikeStore";
+import { useLike } from "@/hooks";
 
 // ── 그림자 — border 없이 입체감을 주는 자연스러운 레이어드 shadow
 const CARD_SHADOW = "0 2px 8px rgba(0,0,0,0.10), 0 8px 28px rgba(0,0,0,0.16)";
@@ -17,13 +18,13 @@ const CARD_SHADOW = "0 2px 8px rgba(0,0,0,0.10), 0 8px 28px rgba(0,0,0,0.16)";
 // ── 비교/보유 버튼 공통 활성/비활성 스타일
 const ACTION_BUTTON_ACTIVE = {
   border: "1px solid #A69D92",
-  backgroundColor: "#F2EFE9",
-  color: "#6B6258",
+  backgroundColor: "var(--color-bg-beige)",
+  color: "var(--color-text-sub)",
 };
 const ACTION_BUTTON_INACTIVE = {
   border: "1px solid #E8E4DF",
-  backgroundColor: "#FFFFFF",
-  color: "#C4BEB7",
+  backgroundColor: "var(--color-bg-card)",
+  color: "var(--color-nav-inactive)",
 };
 
 // ── 인터페이스 ──────────────────────────────────────────────────────
@@ -40,7 +41,7 @@ interface ProductCardProps {
   emoji?: string;
   skinTypes?: string[];
   effects?: string[];
-  /** 피부기능별 수치 점수 0~100 — ⚠️ API 연동 시 서버 값으로 교체 */
+  /** 피부기능별 수치 점수 0~100 */
   effectScores?: Record<string, number>;
   price?: number;
   reason?: string;
@@ -51,9 +52,9 @@ interface ProductCardProps {
   onDetailClick?: () => void;
   /** 상세페이지 링크 override — 미지정 시 /product/{id} */
   href?: string;
-  /** 액션 버튼 영역 표시 여부 — true 일 때 루틴추가/보유추가/비교 버튼 노출 */
+  /** 액션 버튼 영역 표시 여부 — true 일 때 보유추가/비교 버튼 노출 */
   showActions?: boolean;
-  /** 루틴추가 콜백 */
+  /** 루틴추가 콜백 — 넘기면 버튼 표시, 안 넘기면 숨김 */
   onAddRoutine?: () => void;
   /** 루틴 추가 상태 */
   inRoutine?: boolean;
@@ -69,6 +70,8 @@ interface ProductCardProps {
   showLike?: boolean;
   /** EWG 지표 표시 여부 — false 시 피부타입·기능 태그로 대체 (기본값 true, horizontal 전용) */
   showEwg?: boolean;
+  /** LCP 최적화 — 화면 상단 첫 카드에만 true (기본값 false) */
+  priority?: boolean;
 }
 
 // ── 피부타입 태그 — 색상이 동적(상수 맵)이므로 색상만 inline style 유지
@@ -80,7 +83,7 @@ export function SkinTypeTag({ label }: { label: string }) {
   };
   return (
     <span
-      className="inline-block mb-2 text-[12px] font-semibold px-1.5 py-0.5 rounded-[3px]"
+      className="inline-block mb-1 mr-2 text-[12px] font-semibold px-1 rounded-[3px]"
       style={{ backgroundColor: color.bg, color: color.text }}
     >
       {label}
@@ -94,7 +97,7 @@ function EffectTag({ label }: { label: string }) {
   if (!color) return null;
   return (
     <span
-      className="inline-block text-[12px] mb-2 font-semibold px-1.5 py-0.5 rounded-[3px]"
+      className="inline-block text-[12px] mb-1 mr-1 font-semibold px-1 rounded-[3px]"
       style={{ backgroundColor: color.chip, color: color.accent }}
     >
       {label}
@@ -105,7 +108,7 @@ function EffectTag({ label }: { label: string }) {
 // ── PICK 배지 — 고정 색상이므로 Tailwind만 사용
 function PickBadge() {
   return (
-    <span className="text-[11px] font-semibold px-[7px] py-[3px] rounded-[10px] uppercase tracking-[0.06em] bg-[#3D3028] text-[#F2EFE9]">
+    <span className="text-[11px] font-semibold px-[7px] py-[3px] rounded-[10px] uppercase tracking-[0.06em] bg-[#3D3028] text-[var(--color-bg-beige)]">
       PICK
     </span>
   );
@@ -157,8 +160,8 @@ function RoutineButton({
       disabled={inRoutine}
       className={`flex items-center justify-center gap-1 h-6 rounded-[6px] text-xs font-semibold border-none cursor-pointer transition-all active:scale-[0.97] ${
         inRoutine
-          ? "bg-[#F2EFE9] text-[#A69D92]"
-          : "bg-[#3D3028] text-[#F2EFE9]"
+          ? "bg-[var(--color-bg-beige)] text-[var(--color-brand)]"
+          : "bg-[#3D3028] text-[var(--color-bg-beige)]"
       } ${className}`}
     >
       {inRoutine ? (
@@ -227,7 +230,66 @@ function CompareButton({
   );
 }
 
-// ── 좋아요 버튼 (standalone, vertical/modal 하단 액션용)
+// ── 제품 이미지 — onError로 broken 이미지 fallback 처리
+// fill 모드와 fixed 모드를 모두 지원
+function ProductImage({
+  imageUrl,
+  name,
+  emoji,
+  sizes,
+  className,
+  width,
+  height,
+  priority = false,
+}: {
+  imageUrl?: string | null;
+  name: string;
+  emoji?: string;
+  sizes?: string;
+  className?: string;
+  width?: number;
+  height?: number;
+  priority?: boolean;
+}) {
+  const [imgError, setImgError] = useState(false);
+
+  if (!imageUrl || imgError) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center text-3xl bg-[#F5F2EC]">
+        {emoji || "🧴"}
+      </div>
+    );
+  }
+
+  // fixed size 모드 (modal variant 썸네일)
+  if (width && height) {
+    return (
+      <Image
+        src={imageUrl}
+        alt={name}
+        width={width}
+        height={height}
+        className={className}
+        priority={priority}
+        onError={() => setImgError(true)}
+      />
+    );
+  }
+
+  // fill 모드
+  return (
+    <Image
+      src={imageUrl}
+      alt={name}
+      fill
+      sizes={sizes}
+      className={className}
+      priority={priority}
+      onError={() => setImgError(true)}
+    />
+  );
+}
+
 function LikeButton({
   isLiked,
   onToggle,
@@ -241,13 +303,13 @@ function LikeButton({
       className="flex items-center justify-center h-8 px-2.5 rounded-[6px] cursor-pointer transition-all active:scale-[0.97]"
       style={{
         border: `1px solid ${isLiked ? "#F5C5BB" : "#E8E4DF"}`,
-        backgroundColor: isLiked ? "#FEF2EF" : "#FFFFFF",
+        backgroundColor: isLiked ? "#FEF2EF" : "var(--color-bg-card)",
       }}
     >
       <Heart
         size={15}
         style={{
-          color: isLiked ? "#E8715A" : "#C4BEB7",
+          color: isLiked ? "#E8715A" : "var(--color-nav-inactive)",
           fill: isLiked ? "#E8715A" : "none",
         }}
       />
@@ -283,14 +345,17 @@ export default function ProductCard({
   onToggleCompare = () => {},
   showLike = true,
   showEwg = true,
+  priority = false,
 }: ProductCardProps) {
-  // likedIds를 직접 구독 — isLiked() 함수 호출 결과는 store 변경 시 재계산되지 않음
-  const likedIds = useLikeStore((state) => state.likedIds);
-  const toggleLike = useLikeStore((state) => state.toggleLike);
-  const isLiked = !!likedIds[String(id)];
+  const { likeList, toggleLike } = useLike();
+  const isLiked = !!likeList[String(id)];
 
-  // 상세페이지 링크 — href prop 우선, 없으면 기본 경로
-  const productHref = href ?? `/product/${id}`;
+  // 상세페이지 링크 — href prop 우선, 없으면 category searchParam 포함
+  const productHref =
+    href ??
+    (category
+      ? `/product/${id}?category=${encodeURIComponent(category)}`
+      : `/product/${id}`);
 
   const handleLike = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -309,7 +374,7 @@ export default function ProductCard({
 
   // 좋아요 Heart 아이콘 스타일 — 색상이 동적이므로 inline style
   const heartStyle = {
-    color: isLiked ? "#E8715A" : "#C4BEB7",
+    color: isLiked ? "#E8715A" : "var(--color-nav-inactive)",
     fill: isLiked ? "#E8715A" : "none",
   };
 
@@ -317,19 +382,20 @@ export default function ProductCard({
   if (layout === "grid") {
     return (
       <div
-        className="relative flex flex-col overflow-hidden bg-white rounded-modal w-full min-w-0"
+        className="relative flex flex-col py-2 overflow-hidden bg-white rounded-modal w-full min-w-0"
         style={{ boxShadow: CARD_SHADOW }}
       >
         <Link href={productHref} className="no-underline flex flex-col flex-1">
-          {/* 이미지 — 3:2 비율 */}
-          <div className="relative w-full aspect-3/2 bg-[#F5F2EC]">
-            {imageUrl ? (
-              <Image src={imageUrl} alt={name} fill className="object-cover" />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-2xl">
-                {emoji || "🧴"}
-              </div>
-            )}
+          {/* 이미지 — 3/2 */}
+          <div className="relative w-full aspect-2/1 overflow-hidden">
+            <ProductImage
+              imageUrl={imageUrl}
+              name={name}
+              emoji={emoji}
+              sizes="(max-width: 500px) 50vw, 250px"
+              className="object-contain"
+              priority={priority}
+            />
 
             {/* 좋아요 버튼 — showLike=false 시 숨김 */}
             {showLike && (
@@ -359,7 +425,7 @@ export default function ProductCard({
           {/* 텍스트 영역 — 고정 높이로 카드 간 높이 통일 */}
           <div
             className="px-3 pt-2.5 pb-2 overflow-hidden"
-            style={{ height: "96px" }}
+            style={{ height: "140px" }}
           >
             {/* 브랜드명 + 비교 버튼 한 줄 */}
             <div className="flex items-center justify-between">
@@ -372,15 +438,15 @@ export default function ProductCard({
                 />
               )}
             </div>
-            <p className="mt-0.75 m-0 text-[17px] font-semibold text-[#2A2118] leading-[1.4] line-clamp-2 overflow-hidden">
+            <p className="mt-0.75 m-0 text-[17px] font-semibold text-[var(--color-text-primary)] leading-[1.4] line-clamp-2 overflow-hidden">
               {name}
             </p>
             {(skinTypes.length > 0 || effects.length > 0) && (
-              <div className="flex flex-wrap gap-1.25 mt-1.5">
+              <div className="flex flex-wrap mt-1.5">
                 {skinTypes.slice(0, 1).map((skinType) => (
                   <SkinTypeTag key={skinType} label={skinType} />
                 ))}
-                {effects.slice(0, 1).map((effect) => (
+                {effects.map((effect) => (
                   <EffectTag key={effect} label={effect} />
                 ))}
               </div>
@@ -397,20 +463,28 @@ export default function ProductCard({
   if (layout === "horizontal") {
     return (
       <Link href={productHref}>
-        <div className="flex items-center overflow-hidden h-22 bg-white rounded-[10px] border border-[#E2DDD8] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-          <div className="relative shrink-0 w-22 h-full bg-[#F5F2EC]">
-            {imageUrl ? (
-              <Image src={imageUrl} alt={name} fill className="object-cover" />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-[28px]">
-                {emoji || "🧴"}
-              </div>
-            )}
+        <div className="flex items-center overflow-hidden h-22 bg-white rounded-[10px] border border-[var(--color-border)] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+          <div className="relative shrink-0 w-22 h-full overflow-hidden">
+            <ProductImage
+              imageUrl={imageUrl}
+              name={name}
+              emoji={emoji}
+              sizes="88px"
+              className="object-cover"
+            />
           </div>
 
           <div className="flex-1 px-3 py-2 min-w-0">
-            <BrandLabel brand={brand} />
-            <p className="mt-0.75 m-0 text-[13px] font-bold text-[#2A2118] leading-[1.4]">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <BrandLabel brand={brand} />
+              {categoryColor && (
+                <CategoryChip
+                  category={category!}
+                  categoryColor={categoryColor}
+                />
+              )}
+            </div>
+            <p className="mt-0.75 m-0 text-[16px] font-bold text-[var(--color-text-primary)] leading-[1.4]">
               {name}
             </p>
             {showEwg ? (
@@ -427,7 +501,7 @@ export default function ProductCard({
                 {skinTypes.slice(0, 1).map((skinType) => (
                   <SkinTypeTag key={skinType} label={skinType} />
                 ))}
-                {effects.slice(0, 2).map((effect) => (
+                {effects.map((effect) => (
                   <EffectTag key={effect} label={effect} />
                 ))}
               </div>
@@ -454,28 +528,22 @@ export default function ProductCard({
       <div
         className="rounded-[10px] p-3"
         style={{
-          // 루틴 추가 여부에 따라 배경/테두리 색이 바뀌므로 inline style 유지
-          border: `1px solid ${inRoutine ? "#D9D5D0" : "#EDEBE8"}`,
-          backgroundColor: inRoutine ? "#F2EFE9" : "#FFFFFF",
+          border: "1px solid var(--color-border-modal)",
+          backgroundColor: "var(--color-bg-card)",
         }}
       >
         <Link href={productHref} className="no-underline">
           <div className="flex items-center gap-3">
             {/* 썸네일 */}
-            <div className="shrink-0 w-15 h-15 flex items-center justify-center rounded-lg bg-[#F5F2EC]">
-              {emoji ? (
-                <span className="text-[26px]">{emoji}</span>
-              ) : imageUrl ? (
-                <Image
-                  src={imageUrl}
-                  alt={name}
-                  width={60}
-                  height={60}
-                  className="object-cover rounded-lg"
-                />
-              ) : (
-                <span className="text-[22px]">🧴</span>
-              )}
+            <div className="relative shrink-0 w-15 h-15 overflow-hidden rounded-lg bg-[#F5F2EC]">
+              <ProductImage
+                imageUrl={imageUrl}
+                name={name}
+                emoji={emoji}
+                width={50}
+                height={50}
+                className="object-cover rounded-lg"
+              />
             </div>
 
             <div className="flex-1 min-w-0">
@@ -489,14 +557,14 @@ export default function ProductCard({
                 )}
                 {showPickBadge && <PickBadge />}
               </div>
-              <p className="m-0 text-[13px] font-bold text-[#2A2118] truncate">
+              <p className="m-0 text-[13px] font-bold text-[var(--color-text-primary)] truncate">
                 {name}
               </p>
               <div className="flex flex-wrap gap-0.75 mt-1.25">
                 {skinTypes.map((skinType) => (
                   <SkinTypeTag key={skinType} label={skinType} />
                 ))}
-                {effects.slice(0, 3).map((effect) => (
+                {effects.map((effect) => (
                   <EffectTag key={effect} label={effect} />
                 ))}
               </div>
@@ -517,7 +585,7 @@ export default function ProductCard({
             {showDetailButton && (
               <button
                 onClick={(event) => handleAction(event, onDetailClick)}
-                className="flex items-center justify-center h-8 px-3 rounded-[6px] text-xs text-[#8A8278] bg-white border border-[#E8E4DF] cursor-pointer active:scale-[0.97]"
+                className="flex items-center justify-center h-8 px-3 rounded-[6px] text-xs text-[var(--color-text-hint)] bg-white border border-[#E8E4DF] cursor-pointer active:scale-[0.97]"
               >
                 상세보기
               </button>
@@ -531,18 +599,18 @@ export default function ProductCard({
   // ── 4. VERTICAL — 기본값 ──────────────────────────────────────────
   return (
     <div
-      className="relative flex flex-col overflow-hidden w-full bg-white rounded-[10px] border border-[#E2DDD8]"
+      className="relative flex flex-col overflow-hidden w-full bg-white rounded-[10px] border border-[var(--color-border)]"
       style={{ boxShadow: CARD_SHADOW }}
     >
       <Link href={productHref} className="no-underline">
-        <div className="relative h-27 bg-[#F5F2EC]">
-          {imageUrl ? (
-            <Image src={imageUrl} alt={name} fill className="object-cover" />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-[30px]">
-              {emoji || "🧴"}
-            </div>
-          )}
+        <div className="relative h-27 overflow-hidden">
+          <ProductImage
+            imageUrl={imageUrl}
+            name={name}
+            emoji={emoji}
+            sizes="(max-width: 500px) 50vw, 250px"
+            className="object-cover"
+          />
         </div>
 
         <div className="px-3.5 pt-3 pb-3.5">
@@ -557,7 +625,7 @@ export default function ProductCard({
             {showPickBadge && <PickBadge />}
           </div>
 
-          <p className="m-0 text-[18px] font-semibold text-[#2A2118] leading-[1.45] line-clamp-2 overflow-hidden">
+          <p className="m-0 text-[18px] font-semibold text-[var(--color-text-primary)] leading-[1.45] line-clamp-2 overflow-hidden">
             {name}
           </p>
 
@@ -582,7 +650,7 @@ export default function ProductCard({
       </Link>
 
       {reason && (
-        <p className="m-0 text-[13px] text-[#A69D92] px-3.5 pb-2 leading-[1.55]">
+        <p className="m-0 text-[13px] text-[var(--color-brand)] px-3.5 pb-2 leading-[1.55]">
           {reason}
         </p>
       )}

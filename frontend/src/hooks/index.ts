@@ -6,15 +6,26 @@
  */
 
 export { useCompare } from "./useCompare";
+export {
+  useDislikedProductsQuery,
+  useAddDislikedProduct,
+  useRemoveDislikedProduct,
+} from "./queries/useDislikedProducts";
 
 // TanStack Query / 스토어 래퍼 훅 (queries/ 폴더)
 export { useUserQuery } from "./queries/useUserQuery";
-export { useLike } from "./queries/useLike";
-export { useSyncRoutineDraft } from "./queries/useSyncRoutineDraft";
+export { useLike, useLikedProducts, useToggleLike } from "./queries/useLike";
 export { useMyCosQuery, useAddMyCos, useRemoveMyCos } from "./queries/useMyCos";
 export { useProductSearch } from "./queries/useProductSearch";
+export { useProductDetail } from "./queries/useProductDetail";
+export { useProductFilters } from "./queries/useProductFilters";
+export { useProductCompare } from "./queries/useProductCompare";
 export { useSurveySubmit } from "./queries/useSurveySubmit";
 export { useOcr } from "./queries/useOcr";
+export {
+  useCaptureAnalysis,
+  useAnalysisStatus,
+} from "./queries/useSkinAnalysis";
 
 // 루틴 쿼리 훅
 export {
@@ -22,10 +33,14 @@ export {
   useRoutineListQuery,
   useMainRoutineQuery,
   useRoutineDetailQuery,
+  useAddDraftItemMutation,
+  useSyncDraftMutation,
   useClearDraftMutation,
   useRemoveProductFromDraftMutation,
   useCreateRoutineMutation,
   useSetMainRoutineMutation,
   useUpdateRoutineOrderMutation,
   useDeleteRoutineMutation,
+  useLoadRoutineToDraftMutation,
+  useUpdateRoutineMutation,
 } from "./queries/useRoutineQueries";

@@ -2,18 +2,86 @@
  * services/product.ts
  * 제품 API
  *
- * GET /products — 검색/필터 조회 (Slice 기반 페이지네이션)
+ * GET /products              — 검색/필터 조회
+ * GET /products/{productId}  — 상세 조회
  */
 
 import client from "./client";
 import type { ApiResponse } from "@/types/common";
-import type { ProductSearchParams, ProductPageResponse } from "@/types/product";
+import type {
+  ProductSearchParams,
+  ProductPageResponse,
+  ProductDetailResponse,
+  ProductSummaryResponse,
+  ProductFilterMetaResponse,
+  ProductCompareRequest,
+  ProductCompareResponse,
+} from "@/types/product";
 
 export const productService = {
   // GET /products
-  // ApiResponse<ProductPageResponse> 래퍼로 내려옴
-  search: (params: ProductSearchParams): Promise<ProductPageResponse> =>
+  search: (
+    params: ProductSearchParams,
+    signal?: AbortSignal,
+  ): Promise<ProductPageResponse> =>
     client
-      .get<ApiResponse<ProductPageResponse>>("/products", { params })
+      .get<ApiResponse<ProductPageResponse>>("/products", { params, signal })
+      .then((res) => res.data.data),
+
+  // GET /products/{productId}
+  getDetail: (productId: number): Promise<ProductDetailResponse> =>
+    client
+      .get<ApiResponse<ProductDetailResponse>>(`/products/${productId}`)
+      .then((res) => {
+        const data = res.data.data;
+        // 정제수(Water/Aqua) — ewgScore/ewgGrade 무관하게 항상 1(안전)로 정규화
+        // 모든 소비처에서 동일하게 안전 성분으로 취급
+        if (data.ingredients) {
+          data.ingredients = data.ingredients.map((ingredient) => {
+            const isWater =
+              ingredient.nameEn
+                ?.toLowerCase()
+                .replace(/[\s/;,()\-]/g, "")
+                .match(/water|aqua/) != null ||
+              ingredient.nameKo?.replace(/\s/g, "").includes("정제수");
+            if (isWater) {
+              return {
+                ...ingredient,
+                ewgScore: 1,
+                ewgGrade: "low" as const,
+              };
+            }
+            return ingredient;
+          });
+        }
+        return data;
+      }),
+
+  // POST /products/{productId}/likes/toggle
+  toggleLike: (productId: number): Promise<boolean> =>
+    client
+      .post<ApiResponse<boolean>>(`/products/${productId}/likes/toggle`)
+      .then((res) => res.data.data),
+
+  // GET /products/likes
+  getLiked: (): Promise<ProductSummaryResponse[]> =>
+    client
+      .get<ApiResponse<ProductSummaryResponse[]>>("/products/likes")
+      .then((res) => res.data.data),
+
+  // GET /products/filters
+  getFilters: (): Promise<ProductFilterMetaResponse> =>
+    client
+      .get<ApiResponse<ProductFilterMetaResponse>>("/products/filters")
+      .then((res) => res.data.data),
+
+  // POST /products/compare
+  compareProducts: (
+    productIds: [number, number],
+  ): Promise<ProductCompareResponse> =>
+    client
+      .post<ApiResponse<ProductCompareResponse>>("/products/compare", {
+        productIds,
+      } as ProductCompareRequest)
       .then((res) => res.data.data),
 };

@@ -1,9 +1,30 @@
 /**
  * types/skin.ts
- * 피부 진단 API 요청/응답 타입 — POST /skin/surveys
+ * 피부 진단 API 요청/응답 타입
+ *
+ * 플로우: capture → polling(status) → submitSurvey
  */
 
-// POST /skin/surveys 요청 body
+// ── POST /skin/analysis/capture ───────────────────────────────────
+
+// 응답 — analysisId + PENDING 즉시 반환
+export interface SkinAnalysisCaptureResponse {
+  analysisId: string;
+  status: "PENDING" | "COMPLETED" | "FAILED";
+}
+
+// ── GET /skin/analysis/{analysisId} ──────────────────────────────
+
+// 응답 — FAILED일 때만 errorMessage 채워짐
+export interface SkinAnalysisStatusResponse {
+  analysisId: string;
+  status: "PENDING" | "COMPLETED" | "FAILED";
+  errorMessage: string | null;
+}
+
+// ── POST /skin/surveys/{analysisId} ──────────────────────────────
+
+// 요청 body
 // ⚠️ 프론트 enum과 다름 → enumConvert.ts로 변환 후 전송
 export interface SurveySubmitRequest {
   gender: "MEN" | "WOMEN";
@@ -15,8 +36,9 @@ export interface SurveySubmitRequest {
   skinProblems: string[];
 }
 
-// POST /skin/surveys 응답
+// 응답
 export interface SurveySubmitResponse {
-  mySkinType: "DRY" | "OILY" | "COMBINATION" | "DEHYDRATED_OILY";
+  analysisId: string;
+  mySkinType: "dry" | "oily" | "combination" | "subuji";
   skinProblems: string[];
 }
