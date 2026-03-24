@@ -13,7 +13,6 @@ import type {
   RoutineListResponse,
   RoutineResponse,
   CreateRoutineRequest,
-  RoutineOrderUpdateRequest,
   EditRoutineLoadResponse,
   UpdateRoutineRequest,
 } from "@/types/routine";
@@ -100,15 +99,6 @@ export const routineService = {
    */
   setMainRoutine: (routineId: number) =>
     client.patch<ApiResponse<void>>(`/routines/${routineId}/main`),
-
-  /**
-   * 루틴 내 제품 순서 수정
-   * PATCH /api/v1/routines/{routineId}/order
-   * @param routineId - 순서를 변경할 루틴 ID
-   * @param request   - 변경할 순서 목록
-   */
-  updateRoutineOrder: (routineId: number, request: RoutineOrderUpdateRequest) =>
-    client.patch<ApiResponse<void>>(`/routines/${routineId}/order`, request),
 
   /**
    * 루틴 삭제

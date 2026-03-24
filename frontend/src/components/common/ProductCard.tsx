@@ -11,6 +11,7 @@ import {
   SKIN_TYPE_TAG_COLORS,
 } from "@/constants/categoryColors";
 import { useLike } from "@/hooks";
+import { fromSkinTypeEnum } from "@/utils/enumConvert";
 
 // ── 그림자 — border 없이 입체감을 주는 자연스러운 레이어드 shadow
 const CARD_SHADOW = "0 2px 8px rgba(0,0,0,0.10), 0 8px 28px rgba(0,0,0,0.16)";
@@ -77,7 +78,9 @@ interface ProductCardProps {
 // ── 피부타입 태그 — 색상이 동적(상수 맵)이므로 색상만 inline style 유지
 // export: CompareModal 등 공통 사용
 export function SkinTypeTag({ label }: { label: string }) {
-  const color = SKIN_TYPE_TAG_COLORS[label] ?? {
+  // 영문 API 값("dry", "oily" 등)을 한글로 변환
+  const koreanLabel = fromSkinTypeEnum(label);
+  const color = SKIN_TYPE_TAG_COLORS[koreanLabel] ?? {
     bg: "#F0EDE8",
     text: "#7A7060",
   };
@@ -86,7 +89,7 @@ export function SkinTypeTag({ label }: { label: string }) {
       className="inline-block mb-1 mr-2 text-[12px] font-semibold px-1 rounded-[3px]"
       style={{ backgroundColor: color.bg, color: color.text }}
     >
-      {label}
+      {koreanLabel}
     </span>
   );
 }
@@ -220,12 +223,12 @@ function CompareButton({
     <button
       onClick={onToggle}
       className={`flex items-center justify-center cursor-pointer transition-all active:scale-[0.97] shrink-0 ${
-        isSmall ? "h-7 w-9 rounded-[6px]" : "h-8 px-2.5 rounded-[6px]"
+        isSmall ? "h-7 w-9 rounded-[6px]" : "gap-1 h-6 px-2 rounded-[6px] text-xs font-semibold"
       }`}
       style={isInCompare ? ACTION_BUTTON_ACTIVE : ACTION_BUTTON_INACTIVE}
       title={isInCompare ? "비교 선택됨" : "비교하기"}
     >
-      <Scale size={isSmall ? 14 : 15} />
+      {isSmall ? <Scale size={14} /> : (isInCompare ? "비교중" : "비교하기")}
     </button>
   );
 }
@@ -429,7 +432,7 @@ export default function ProductCard({
                 <CompareButton
                   isInCompare={isInCompare}
                   onToggle={(event) => handleAction(event, onToggleCompare)}
-                  size="sm"
+                  size="md"
                 />
               )}
             </div>
@@ -437,7 +440,7 @@ export default function ProductCard({
               {name}
             </p>
             {(skinTypes.length > 0 || effects.length > 0) && (
-              <div className="flex flex-wrap mt-1.5">
+              <div className="flex flex-wrap mt-3">
                 {skinTypes.slice(0, 1).map((skinType) => (
                   <SkinTypeTag key={skinType} label={skinType} />
                 ))}

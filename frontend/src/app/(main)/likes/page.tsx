@@ -28,13 +28,13 @@ export default function LikesPage() {
   const { mutate: removeMyCos } = useRemoveMyCos();
 
   const isOwned = (productId: number) =>
-    myCosData.some((item) => (item.productId ?? item.id) === productId);
+    myCosData.some((item) => item.productInfo.productId === productId);
 
   const handleToggleOwned = (productId: number) => {
     const owned = myCosData.find(
-      (item) => (item.productId ?? item.id) === productId,
+      (item) => item.productInfo.productId === productId,
     );
-    if (owned) removeMyCos(owned.id);
+    if (owned) removeMyCos(owned.myCosId);
     else addMyCos(productId);
   };
 

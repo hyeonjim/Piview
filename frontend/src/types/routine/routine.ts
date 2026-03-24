@@ -85,19 +85,3 @@ export interface UpdateRoutineRequest {
   title: string;
 }
 
-/**
- * PATCH /api/v1/routines/{routineId}/order 요청 아이템
- * 스웨거: RoutineDetailOrderDto
- */
-export interface RoutineDetailOrderDto {
-  routineDetailId: number;
-  stepOrder: number;
-}
-
-/**
- * PATCH /api/v1/routines/{routineId}/order 요청 body
- * 스웨거: RoutineOrderUpdateRequest
- */
-export interface RoutineOrderUpdateRequest {
-  updatedOrders: RoutineDetailOrderDto[];
-}
