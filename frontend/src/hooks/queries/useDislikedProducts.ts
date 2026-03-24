@@ -7,9 +7,10 @@
  * useRemoveDislikedProduct — DELETE /users/me/disliked/products/{id} 삭제 (낙관적 업데이트)
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { dislikedService } from "@/services/disliked";
+import { productService } from "@/services/product";
 import { queryKeys } from "@/lib/queryKeys";
 import type { DislikedProduct } from "@/types/product/detail";
 
@@ -81,4 +82,31 @@ export function useRemoveDislikedProduct() {
       queryClient.invalidateQueries({ queryKey: queryKeys.dislikedProducts });
     },
   });
+}
+
+// ── GET /users/me/disliked/products + 각 제품 상세 병렬 조회 (tags 보완) ──
+// 목록 API에 tags가 없으므로 상세 API로 보완
+
+export function useDislikedProductsWithTags() {
+  const dislikedQuery = useDislikedProductsQuery();
+  const dislikedItems = dislikedQuery.data ?? [];
+
+  const detailQueries = useQueries({
+    queries: dislikedItems.map((item) => ({
+      queryKey: queryKeys.productDetail(item.productId),
+      queryFn: () => productService.getDetail(item.productId),
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+
+  // dislikedItems에 상세의 tags를 병합
+  const data: (DislikedProduct & { tags: string[] })[] = dislikedItems.map((item, index) => {
+    const detail = detailQueries[index]?.data;
+    return {
+      ...item,
+      tags: detail?.tags?.length ? detail.tags : [],
+    };
+  });
+
+  return { ...dislikedQuery, data };
 }

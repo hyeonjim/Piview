@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Package, ShieldAlert, Minus } from "lucide-react";
+import { Package, ShieldAlert, Minus, Ban } from "lucide-react";
 import { EmptyState } from "@/components/common";
 import { Pagination } from "@/components/common/Pagination";
 import ProductCard from "@/components/common/ProductCard";
@@ -9,7 +9,7 @@ import ProductSearchModal from "./ProductSearchModal";
 import {
   useMyCosWithTags,
   useRemoveMyCos,
-  useDislikedProductsQuery,
+  useDislikedProductsWithTags,
   useRemoveDislikedProduct,
   useDraftQuery,
 } from "@/hooks";
@@ -56,8 +56,8 @@ export default function OwnedTab() {
   const isInRoutine = (productId?: number) =>
     !!productId && draftProductIds.has(productId);
 
-  // ── 기피 제품 (disliked) ───────────────────────────────────────
-  const { data: dislikedItems = [] } = useDislikedProductsQuery();
+  // ── 기피 제품 (disliked) — 상세 API로 tags 보완 ──────────────
+  const { data: dislikedItems = [] } = useDislikedProductsWithTags();
   const { mutate: removeDisliked } = useRemoveDislikedProduct();
 
   const avoidTotalPages = Math.ceil(dislikedItems.length / PAGE_SIZE) || 1;
@@ -67,7 +67,7 @@ export default function OwnedTab() {
   );
 
   return (
-    <div className="px-4 pb-20 pt-4 flex flex-col gap-20">
+    <div className="px-7 pb-10 pt-4 flex flex-col gap-10">
       {/* ── 보유 제품 섹션 ─────────────────────────────────────── */}
       <section>
         <div className="flex items-center justify-between mb-1">
@@ -137,7 +137,7 @@ export default function OwnedTab() {
       <section>
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-start gap-1.5">
-            <ShieldAlert size={16} className="text-danger mt-0.5 shrink-0" />
+            <Ban size={16} className="text-danger mt-0.5 shrink-0" />
             <div>
               <p className="text-base font-bold text-text-primary">Avoid Products</p>
               <p className="text-xs text-text-muted mt-0.5">
@@ -179,6 +179,7 @@ export default function OwnedTab() {
                       item.topSkinType ? fromSkinTypeEnum(item.topSkinType) : null,
                       item.top2SkinType ? fromSkinTypeEnum(item.top2SkinType) : null,
                     ].filter(Boolean) as string[]}
+                    effects={item.tags}
                     layout="grid"
                     showLike={false}
                   />

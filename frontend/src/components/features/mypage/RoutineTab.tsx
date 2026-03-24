@@ -2,7 +2,7 @@
 
 import { toast } from "sonner";
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Plus, X, ArrowUpDown, ScanText } from "lucide-react";
+import { Plus, X, ArrowUpDown, Scan, SquarePen, Save } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -511,8 +511,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       {/* ── 저장된 루틴 슬라이더 ── */}
       {routineList.length > 0 && (
         <div className="mb-2">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[16px] font-bold text-text-muted">Saved routine</p>
+          <div className="flex items-center justify-between mb-5">
+            <p className="text-[16px] font-bold text-text-muted">My routines</p>
             <button
               onClick={handleNewRoutine}
               className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-xs text-brand cursor-pointer bg-transparent"
@@ -522,7 +522,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
           </div>
           <div
             ref={savedRoutineScrollRef}
-            className="flex gap-2 overflow-x-auto pb-1"
+            className="flex gap-5 overflow-x-auto pb-1"
             onScroll={handleSavedRoutineScroll}
             onPointerDown={handleSliderPointerDown}
             onPointerMove={handleSliderPointerMove}
@@ -620,7 +620,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                   className="flex items-center justify-center p-1.5 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent"
                   aria-label="OCR로 제품 추가"
                 >
-                  <ScanText size={16} />
+                  <Scan size={16} />
                 </button>
               </TooltipTrigger>
               <TooltipContent>OCR로 제품 추가</TooltipContent>
@@ -642,7 +642,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 disabled={selectedRoutineId === null || isLoadingToEdit}
                 className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent disabled:opacity-50"
               >
-                {isLoadingToEdit ? "불러오는 중..." : "Edit Mode"}
+                {isLoadingToEdit ? "불러오는 중..." : <><SquarePen size={13} />Edit Mode</>}
               </button>
             )}
             <button
@@ -650,7 +650,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               disabled={isCreating || filledCount === 0}
               className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-text-secondary cursor-pointer bg-transparent disabled:opacity-50"
             >
-              {isCreating ? "저장 중..." : "Save"}
+              {isCreating ? "저장 중..." : <><Save size={13} />Save</>}
             </button>
           </div>
         </div>
@@ -754,7 +754,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                       onRemove={
                         isViewingSavedRoutine ? () => {} : handleRemoveProduct
                       }
-                      stepIcon={step.icon}
+
                       priority={index === 0}
                     />
                   );
@@ -881,7 +881,6 @@ interface RoutineProductCardProps {
     index: number,
   ) => void;
   onRemove: (productId: number) => void;
-  stepIcon: string;
 }
 
 function RoutineProductCard({
@@ -893,7 +892,6 @@ function RoutineProductCard({
   isEditMode,
   onDragHandlePointerDown,
   onRemove,
-  stepIcon,
   priority = false,
 }: RoutineProductCardProps) {
   return (
@@ -950,9 +948,7 @@ function RoutineProductCard({
                 className="object-cover"
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-[26px]">
-                {stepIcon}
-              </div>
+              <div className="absolute inset-0 bg-gray-100" />
             )}
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ShieldAlert, Minus } from "lucide-react";
+import { ArrowLeft, Minus, Ban } from "lucide-react";
 import {
   AGE_GROUPS,
   GENDER_OPTIONS,
@@ -224,18 +224,18 @@ export default function SelectPage() {
         </section>
 
         {/* 기피 제품 섹션 */}
-        <section className="mt-8">
+        <section className="mt-13">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-start gap-1.5">
-              <ShieldAlert size={16} className="text-danger mt-0.5 shrink-0" />
+              <Ban size={16} className="text-danger mt-0.5 shrink-0" />
               <div>
-                <h2 className="text-text-primary font-semibold text-[15px]">기피 제품</h2>
+                <h2 className="text-text-primary font-semibold text-[15px]">Avoid Products</h2>
                 <p className="text-xs text-text-muted mt-0.5">{dislikedItems.length}개 등록됨</p>
               </div>
             </div>
             <button
               onClick={() => setOpenAvoidModal(true)}
-              className="text-[13px] px-3 py-1 rounded-full bg-bg-like text-danger font-semibold cursor-pointer border-none transition-colors hover:opacity-80"
+              className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-brand font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
             >
               + 추가
             </button>
@@ -247,14 +247,14 @@ export default function SelectPage() {
               style={{ borderColor: "var(--color-bg-like)" }}
             >
               <EmptyState
-                icon={ShieldAlert}
+                icon={Ban}
                 title="등록된 제품이 없습니다"
                 description={"트러블을 유발했거나 맞지 않았던\n제품을 등록해보세요"}
               />
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-3 gap-3 mt-3 [&_p.line-clamp-2]:text-[14px]!">
+              <div className="grid grid-cols-3 gap-3 mt-7 [&_p.line-clamp-2]:text-[14px]!">
                 {pagedAvoid.map((item) => (
                   <div key={item.dislikedProductId} className="relative">
                     <ProductCard

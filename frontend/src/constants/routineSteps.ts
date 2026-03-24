@@ -16,7 +16,6 @@ export interface RoutineStep {
   columnId: number;  // 백엔드 RoutineColumn ID
   key: string;       // 영문 키
   label: string;     // 화면 표시 라벨
-  icon: string;      // 이모지 아이콘
   categories: string[]; // 해당 스텝에 속하는 카테고리 목록
 }
 
@@ -27,7 +26,6 @@ export const WOMEN_ROUTINE_STEPS: RoutineStep[] = [
     columnId: 1,
     key: "cleanser",
     label: "클렌저",
-    icon: "🫧",
     categories: [
       "클렌징폼",
       "클렌징젤",
@@ -43,7 +41,6 @@ export const WOMEN_ROUTINE_STEPS: RoutineStep[] = [
     columnId: 3,
     key: "toner",
     label: "스킨/토너/패드/미스트",
-    icon: "💧",
     categories: ["스킨/토너", "미스트", "토너패드"],
   },
   {
@@ -51,7 +48,6 @@ export const WOMEN_ROUTINE_STEPS: RoutineStep[] = [
     columnId: 4,
     key: "serum",
     label: "에센스/앰플/세럼",
-    icon: "✨",
     categories: ["에센스/앰플/세럼", "에센스/세럼"],
   },
   {
@@ -59,7 +55,6 @@ export const WOMEN_ROUTINE_STEPS: RoutineStep[] = [
     columnId: 5,
     key: "lotion",
     label: "로션/에멀전",
-    icon: "🧴",
     categories: ["로션/에멀젼"],
   },
   {
@@ -67,7 +62,6 @@ export const WOMEN_ROUTINE_STEPS: RoutineStep[] = [
     columnId: 6,
     key: "cream",
     label: "크림/오일",
-    icon: "🤍",
     categories: ["크림", "페이스오일"],
   },
   {
@@ -75,7 +69,6 @@ export const WOMEN_ROUTINE_STEPS: RoutineStep[] = [
     columnId: 7,
     key: "sunscreen",
     label: "선크림",
-    icon: "☀️",
     categories: ["선크림", "선스틱"],
   },
 ];
@@ -87,7 +80,6 @@ export const MEN_ROUTINE_STEPS: RoutineStep[] = [
     columnId: 1,
     key: "cleanser",
     label: "클렌저",
-    icon: "🫧",
     categories: [
       "클렌징폼",
       "클렌징젤",
@@ -103,7 +95,6 @@ export const MEN_ROUTINE_STEPS: RoutineStep[] = [
     columnId: 2,
     key: "shaving",
     label: "쉐이빙",
-    icon: "🪒",
     categories: ["쉐이빙"],
   },
   {
@@ -111,7 +102,6 @@ export const MEN_ROUTINE_STEPS: RoutineStep[] = [
     columnId: 3,
     key: "toner",
     label: "스킨/토너/패드/미스트",
-    icon: "💧",
     categories: ["스킨/토너", "미스트", "토너패드"],
   },
   {
@@ -119,7 +109,6 @@ export const MEN_ROUTINE_STEPS: RoutineStep[] = [
     columnId: 4,
     key: "serum",
     label: "에센스/앰플/세럼",
-    icon: "✨",
     categories: ["에센스/앰플/세럼", "에센스/세럼"],
   },
   {
@@ -127,7 +116,6 @@ export const MEN_ROUTINE_STEPS: RoutineStep[] = [
     columnId: 5,
     key: "lotion",
     label: "로션/에멀젼/올인원",
-    icon: "🧴",
     categories: ["로션/에멀젼", "올인원"],
   },
   {
@@ -135,7 +123,6 @@ export const MEN_ROUTINE_STEPS: RoutineStep[] = [
     columnId: 6,
     key: "cream",
     label: "크림",
-    icon: "🤍",
     categories: ["크림"],
   },
   {
@@ -143,7 +130,6 @@ export const MEN_ROUTINE_STEPS: RoutineStep[] = [
     columnId: 7,
     key: "sunscreen",
     label: "선크림",
-    icon: "☀️",
     categories: ["선크림", "선스틱"],
   },
 ];
