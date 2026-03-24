@@ -6,8 +6,6 @@ import { toast } from "sonner";
 import { useOcr, useProductDetail } from "@/hooks";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
 import ProductCard from "@/components/common/ProductCard";
-import { useRoutineStore } from "@/stores";
-import { ROUTINE_STEPS } from "@/constants/routineSteps";
 
 interface OcrModalProps {
   onClose: () => void;
@@ -26,8 +24,6 @@ export default function OcrModal({ onClose }: OcrModalProps) {
   const { mutate: recognize, isPending: isRecognizing } = useOcr();
   const { data: product, isLoading: isLoadingProduct } =
     useProductDetail(recognizedProductId);
-  const addStepProduct = useRoutineStore((s) => s.addStepProduct);
-
   const handleFile = (file: File) => {
     setOcrDone(false);
     setOcrFailed(false);
@@ -52,21 +48,7 @@ export default function OcrModal({ onClose }: OcrModalProps) {
   const handleAddProduct = () => {
     if (!product) return;
 
-    const matchedStep = ROUTINE_STEPS.find((step) =>
-      step.categories.includes(product.categoryName ?? ""),
-    );
-
-    addStepProduct(matchedStep?.code ?? "PR", {
-      id: String(product.productId),
-      brand: product.brandName ?? "",
-      name: product.productName ?? "",
-      category: product.categoryName ?? "",
-      emoji: "🧴",
-      skinTypes: (product.skinTypes ?? []).map(fromSkinTypeEnum),
-      effects: product.tags ?? [],
-      matchScore: 0,
-      imageUrl: product.imageUrl ?? undefined,
-    });
+    // ⚠️ OCR 구현 시 루틴 추가 로직 연동 (ROUTINE_STEPS로 카테고리 매칭 후 추가)
 
     toast(`✓ ${product.productName} 루틴에 추가됨!`);
     onClose();

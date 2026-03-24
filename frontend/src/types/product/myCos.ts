@@ -3,48 +3,31 @@
  * 내 제품 관리 + UI 타입
  */
 
-// ── 기존 타입 (유지) ──────────────────────────────────────────────
-
-// GET /my-cos 응답 아이템
-// 실제 응답 예시: { id, brand, productName, category, imageUrl, topSkinType, top2SkinType }
+// GET /my-cos 응답 — swagger: MyCosResponseDto
+// { myCosId, productInfo: ProductSummaryResponse }
 export interface MyCosItem {
-  id: number; // myCosId (보관함 레코드 PK)
-  productId?: number; // 상품 ID — 백엔드 응답에 포함 시 사용
-  brand: string;
-  productName: string;
-  category: string;
-  imageUrl: string | null;
-  topSkinType: string | null;
-  top2SkinType: string | null;
+  myCosId: number; // 보관함 레코드 PK (삭제 시 사용)
+  productInfo: {
+    productId: number;
+    name: string;
+    brandName: string;
+    categoryId: number;
+    categoryName: string;
+    imageUrl: string | null;
+    skinTypes: string[]; // 피부 타입 배열
+    liked: boolean;
+    tags: string[];
+  };
 }
 
 // POST /my-cos/{productId} 응답 — 생성된 myCosId (Long)
 export type MyCosCreateResponse = number;
 
-// ── 새로 추가: MyCosProduct (MyCosItem 대체용) ─────────────────────
-
-/**
- * MyCos 제품 타입 (GET /my-cos)
- * swagger: MyCosResponseDto 기반
- * MyCosItem과 호환되지만 더 명확한 타입
- */
-export interface MyCosProduct {
-  id: number; // myCosId
-  productId: number;
-  brand: string;
-  productName: string;
-  category: string;
-  imageUrl: string | null;
-  topSkinType: string | null;
-  top2SkinType: string | null;
-}
-
-// ── 새로 추가: ProductViewModel (UI 안전 타입) ────────────────────
+// ── UI 안전 제품 타입 (null 방어 처리됨) ─────────────────────────
 
 /**
  * UI 안전 제품 타입 (null 방어 처리됨)
  * 컴포넌트에서 안전하게 사용하기 위한 타입
- * OwnedProduct 대체용
  */
 export interface ProductViewModel {
   id: number; // 범용 ID (productId, myCosId 등)
@@ -61,4 +44,3 @@ export interface ProductViewModel {
   ewgDanger?: number;
   price?: number;
 }
-

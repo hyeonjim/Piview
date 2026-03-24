@@ -12,17 +12,23 @@ const MODAL_ACTION_ICON_BTN = {
   cursor: "pointer",
 };
 
-import { useState, useMemo, useEffect } from "react";
-import { X, Search, Package, Heart, GitCompare, Loader2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { X, Search, Package, Heart, GitCompare, Loader2, Sparkles } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
 import {
   SKIN_TYPE_TAG_COLORS,
   CATEGORY_COLORS,
 } from "@/constants/categoryColors";
 import { getRoutineSteps } from "@/constants/routineSteps";
 import { useProductSearch, useProductFilters } from "@/hooks";
-import { useUserStore, selectGender } from "@/stores";
+import { useUserStore, selectGender, selectSkinType } from "@/stores";
 import { getCategoryDisplayName } from "@/utils/format";
+import { toSkinTypeEnum } from "@/utils/enumConvert";
+import { mapRecommendResponse } from "@/utils/productMapper";
 import type { MappedProduct } from "@/utils/productMapper";
+import { productService } from "@/services/product";
+import type { RecommendResponseDto } from "@/types/product";
+import type { SkinType } from "@/types/user";
 
 interface RoutineAddModalProps {
   /** 현재 열린 스텝 코드 (CL, PR, SR ...) */
@@ -39,14 +45,27 @@ interface RoutineAddModalProps {
 export default function RoutineAddModal({
   openStep,
   draftProductIds,
+  columnId,
   onClose,
   onAdd,
 }: RoutineAddModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 7;
+
+  // 피뷰추천 활성화 여부
+  const [isRecommendMode, setIsRecommendMode] = useState(false);
+  // 추천 API 결과 제품 목록 (최대 5개)
+  const [recommendedProducts, setRecommendedProducts] = useState<MappedProduct[]>([]);
+  // 추천 제품 ID 집합 — PICK 배지 표시 O(1) 조회용
+  const [recommendedProductIdSet, setRecommendedProductIdSet] = useState<Set<number>>(new Set());
 
   // 성별에 따른 루틴 스텝 가져오기
   const currentGender = useUserStore(selectGender);
+  // 추천 API 요청에 필요한 유저 피부 타입 및 피부 고민
+  const currentSkinType = useUserStore(selectSkinType);
+  const userSkinProblems = useUserStore((state) => state.user?.skinProblems ?? []);
   const routineSteps = getRoutineSteps(currentGender);
 
   // 현재 루틴 단계 정보
@@ -77,27 +96,103 @@ export default function RoutineAddModal({
       .filter((cat): cat is NonNullable<typeof cat> => cat !== undefined);
   }, [filterMeta, stepCategories, bigCategories]);
 
-  // 모달이 열릴 때 첫 번째 카테고리 자동 선택
-  useEffect(() => {
-    if (availableCategories.length > 0) {
-      setSelectedCategoryId(availableCategories[0].categoryId);
-    }
-  }, [availableCategories]);
+  // selectedCategoryId가 없거나 현재 목록에 없으면 첫 번째 카테고리를 기본값으로 파생
+  const effectiveCategoryId =
+    selectedCategoryId !== null &&
+    availableCategories.some((cat) => cat.categoryId === selectedCategoryId)
+      ? selectedCategoryId
+      : (availableCategories[0]?.categoryId ?? null);
 
   // 실제 제품 검색 API 연동
   // 검색어와 카테고리 ID로 필터링
   const selectedCategory = availableCategories.find(
-    (cat) => cat.categoryId === selectedCategoryId
+    (cat) => cat.categoryId === effectiveCategoryId
   );
 
   const searchParams = useMemo(() => ({
     q: searchQuery || undefined,
     bigCategoryId: selectedCategory?.bigCategoryId ?? undefined,
-    categoryId: selectedCategoryId ?? undefined,
+    categoryId: effectiveCategoryId ?? undefined,
     size: 20,
-  }), [searchQuery, selectedCategory, selectedCategoryId]);
+  }), [searchQuery, selectedCategory, effectiveCategoryId]);
 
   const { products, isLoading } = useProductSearch(searchParams);
+
+  // 피뷰추천 API 뮤테이션 — POST /recommendations/products
+  const recommendationMutation = useMutation({
+    mutationFn: () => {
+      // columnId가 0이면 모달이 아직 제대로 초기화되지 않은 상태 — 요청 차단
+      if (!columnId) {
+        return Promise.reject(new Error("columnId가 설정되지 않았습니다."));
+      }
+      const concernId = filterMeta?.tags?.find(
+        (tag) => tag.tag === userSkinProblems[0]
+      )?.tagId;
+      return productService.getRecommendations({
+        skinType: currentSkinType
+          ? toSkinTypeEnum(currentSkinType as SkinType)
+          : undefined,
+        gender: currentGender ?? undefined,
+        // filterMeta.tags에서 유저의 첫 번째 skinProblem과 일치하는 tagId를 concernId로 사용
+        // swagger: tagIds는 내부적으로 concernId로 처리됨
+        concernId,
+        targetRoutineColId: columnId,
+      });
+    },
+    onSuccess: (data) => {
+      // 응답은 Record<categoryName, RecommendResponseDto[]>
+      // 현재 선택된 카테고리명과 일치하는 제품 우선 사용, 없으면 전체 합산
+      const currentCategoryName = selectedCategory?.categoryName;
+      let productsFromApi: RecommendResponseDto[];
+
+      if (currentCategoryName && data[currentCategoryName]) {
+        productsFromApi = data[currentCategoryName];
+      } else {
+        productsFromApi = Object.values(data).flat();
+      }
+
+      // 최대 5개 표시
+      const limitedProducts = productsFromApi.slice(0, 5).map(mapRecommendResponse);
+      setRecommendedProducts(limitedProducts);
+      setRecommendedProductIdSet(new Set(limitedProducts.map((product) => product.id)));
+      setIsRecommendMode(true);
+      setCurrentPage(1);
+    },
+    onError: (error) => {
+      console.error("❌ 피뷰추천 API 실패:", error);
+    },
+  });
+
+  // 피뷰추천 버튼 클릭 — 추천 모드 토글
+  const handleRecommendationToggle = () => {
+    if (isRecommendMode) {
+      setIsRecommendMode(false);
+      setRecommendedProducts([]);
+      setRecommendedProductIdSet(new Set());
+      setCurrentPage(1);
+    } else {
+      recommendationMutation.mutate();
+    }
+  };
+
+  // 추천 모드면 추천 제품, 아니면 검색 결과 사용
+  const displayProducts = isRecommendMode ? recommendedProducts : products;
+  const totalPages = Math.ceil(displayProducts.length / PAGE_SIZE);
+  const pagedProducts = displayProducts.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
+  // 검색어 또는 카테고리가 바뀌면 1페이지로 리셋
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryChange = (categoryId: number) => {
+    setSelectedCategoryId(categoryId);
+    setCurrentPage(1);
+  };
 
   return (
     <>
@@ -109,18 +204,50 @@ export default function RoutineAddModal({
       <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none py-10 px-5">
         <div className="bg-white flex flex-col pointer-events-auto rounded-[20px] w-full max-w-[420px] max-h-full shadow-[0_8px_40px_rgba(0,0,0,0.18)] overflow-hidden">
           <div className="px-6 pb-6 overflow-y-auto flex-1 min-h-0">
-            {/* 헤더 */}
+            {/* 헤더 — 타이틀, 피뷰추천 버튼, 닫기 버튼 */}
             <div className="flex items-center justify-between mt-[15px]">
               <h3 className="text-base font-bold text-text-primary">
-                {currentLabel} 선택
+                {currentLabel}
               </h3>
-              <button
-                onClick={onClose}
-                className="flex items-center justify-center w-7 h-7 rounded-full bg-[var(--color-bg-muted-warm)] border-none cursor-pointer"
-              >
-                <X size={14} color="#888" />
-              </button>
+              {/* 우측 버튼 그룹 */}
+              <div className="flex items-center gap-2">
+                {/* 피뷰추천 버튼 — 토글 시 브랜드 컬러로 활성화 */}
+                <button
+                  onClick={handleRecommendationToggle}
+                  disabled={recommendationMutation.isPending}
+                  className={[
+                    "flex items-center gap-1 h-7 px-2.5 rounded-full border cursor-pointer text-[11px] font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+                    isRecommendMode
+                      ? "bg-(--color-brand) text-white border-(--color-brand)"
+                      : "bg-bg-muted-warm text-text-stone border-border-warm",
+                  ].join(" ")}
+                >
+                  {recommendationMutation.isPending ? (
+                    <Loader2 size={11} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={11} />
+                  )}
+                  피뷰추천
+                </button>
+                {/* 닫기 버튼 */}
+                <button
+                  onClick={onClose}
+                  className="flex items-center justify-center w-7 h-7 rounded-full bg-bg-muted-warm border-none cursor-pointer"
+                >
+                  <X size={14} color="#888" />
+                </button>
+              </div>
             </div>
+
+            {/* 추천 모드 활성 시 안내 배너 */}
+            {isRecommendMode && (
+              <div className="flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-(--color-brand-bg) text-(--color-brand)">
+                <Sparkles size={11} />
+                {recommendedProducts.length > 0
+                  ? `피부 맞춤 ${recommendedProducts.length}개 제품 추천`
+                  : "추천 결과가 없습니다"}
+              </div>
+            )}
 
             {/* 검색바 */}
             <div className="relative mt-3 mb-3">
@@ -132,7 +259,7 @@ export default function RoutineAddModal({
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
+                onChange={(event) => handleSearchChange(event.target.value)}
                 placeholder="제품명 또는 브랜드 검색"
                 className="w-full h-10 pl-9 pr-3 rounded-xl border border-border-warm bg-[#FAF8F5] text-xs text-[#2A2A2A] outline-none"
                 style={{
@@ -143,7 +270,7 @@ export default function RoutineAddModal({
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => handleSearchChange("")}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-border-warm border-none cursor-pointer"
                 >
                   <X size={12} color="#888" />
@@ -155,13 +282,13 @@ export default function RoutineAddModal({
             {availableCategories.length > 0 && (
               <div className="flex flex-wrap gap-2 p-[10px_0px] min-h-[52px] mb-2">
                 {availableCategories.map((cat) => {
-                  const isActive = selectedCategoryId === cat.categoryId;
+                  const isActive = effectiveCategoryId === cat.categoryId;
                   const catColor = CATEGORY_COLORS[cat.categoryName];
                   return (
                     <button
                       key={cat.categoryId}
                       onClick={() => {
-                        if (!isActive) setSelectedCategoryId(cat.categoryId);
+                        if (!isActive) handleCategoryChange(cat.categoryId);
                       }}
                       className="category-pill-button"
                       data-active={isActive}
@@ -183,28 +310,67 @@ export default function RoutineAddModal({
               </div>
             )}
 
-            {/* 로딩 상태 */}
-            {isLoading ? (
+            {/* 로딩 상태 — 일반 검색 로딩 또는 추천 API 로딩 */}
+            {(isLoading && !isRecommendMode) || recommendationMutation.isPending ? (
               <div className="flex flex-col items-center justify-center py-10 gap-2 text-text-muted">
                 <Loader2 size={24} className="animate-spin opacity-50" />
                 <p className="text-xs">제품을 불러오는 중...</p>
               </div>
-            ) : products.length === 0 ? (
+            ) : displayProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-[var(--color-text-stone)]">
                 <Package size={32} className="mb-2 opacity-50" />
-                <p className="text-xs">검색 결과가 없습니다</p>
+                <p className="text-xs">
+                  {isRecommendMode ? "추천 결과가 없습니다" : "검색 결과가 없습니다"}
+                </p>
               </div>
             ) : (
-              <div className="flex flex-col gap-3">
-                {products.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    isAdded={draftProductIds.includes(product.id)}
-                    onAdd={() => onAdd(product.id)}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="flex flex-col gap-3">
+                  {pagedProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      isAdded={draftProductIds.includes(product.id)}
+                      isRecommended={recommendedProductIdSet.has(product.id)}
+                      onAdd={() => onAdd(product.id)}
+                    />
+                  ))}
+                </div>
+
+                {/* 페이지네이션 */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-1 mt-4 mb-1">
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="w-7 h-7 rounded-full border border-border-warm bg-white text-xs text-text-muted disabled:opacity-30 cursor-pointer disabled:cursor-default"
+                    >
+                      ‹
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className="w-7 h-7 rounded-full border text-xs font-semibold cursor-pointer transition-colors"
+                        style={{
+                          borderColor: currentPage === page ? "var(--color-brand)" : "var(--color-border-warm)",
+                          backgroundColor: currentPage === page ? "var(--color-brand)" : "white",
+                          color: currentPage === page ? "white" : "var(--color-text-muted)",
+                        }}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="w-7 h-7 rounded-full border border-border-warm bg-white text-xs text-text-muted disabled:opacity-30 cursor-pointer disabled:cursor-default"
+                    >
+                      ›
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -217,10 +383,12 @@ export default function RoutineAddModal({
 interface ProductCardProps {
   product: MappedProduct;
   isAdded: boolean;
+  /** 피뷰추천 결과 제품 여부 — true이면 PICK 배지 표시 */
+  isRecommended?: boolean;
   onAdd: () => void;
 }
 
-function ProductCard({ product, isAdded, onAdd }: ProductCardProps) {
+function ProductCard({ product, isAdded, isRecommended = false, onAdd }: ProductCardProps) {
   return (
     <div
       className="rounded-[14px] p-4 border"
@@ -233,21 +401,26 @@ function ProductCard({ product, isAdded, onAdd }: ProductCardProps) {
     >
       {/* 제품 정보 행 */}
       <div className="flex gap-3">
-        {/* 이미지 */}
-        <div
-          className="shrink-0 flex items-center justify-center rounded-xl bg-[#F5F2EC] overflow-hidden"
-          style={{ width: 72, height: 72 }}
-        >
-          {product.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={product.imageUrl}
-              alt={product.name ?? "제품 이미지"}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <span className="text-[11px] font-bold text-text-muted">
-              {product.category?.slice(0, 2) ?? "🧴"}
+        {/* 이미지 컨테이너 — PICK 배지 포함 */}
+        <div className="relative shrink-0" style={{ width: 72, height: 72 }}>
+          <div className="w-full h-full flex items-center justify-center rounded-xl bg-[#F5F2EC] overflow-hidden">
+            {product.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={product.imageUrl}
+                alt={product.name ?? "제품 이미지"}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-[11px] font-bold text-text-muted">
+                {product.category?.slice(0, 2) ?? "🧴"}
+              </span>
+            )}
+          </div>
+          {/* PICK 배지 — 추천 제품에만 표시 */}
+          {isRecommended && (
+            <span className="absolute bottom-1 right-1 text-[9px] font-bold px-1.5 py-[2px] rounded-[4px] bg-(--color-brand) text-white">
+              PICK
             </span>
           )}
         </div>

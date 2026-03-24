@@ -30,12 +30,10 @@ import {
   useSyncDraftMutation,
   useLoadRoutineToDraftMutation,
   useUpdateRoutineMutation,
-  useUpdateRoutineOrderMutation,
 } from "@/hooks";
 import type {
   DraftItemDto,
   RoutineListResponse,
-  RoutineDetailOrderDto,
 } from "@/types/routine";
 import type { ProductSummaryResponse } from "@/types/product/product";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
@@ -140,7 +138,6 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     useLoadRoutineToDraftMutation();
   const { mutate: updateRoutine, isPending: isUpdating } =
     useUpdateRoutineMutation();
-  const { mutate: updateRoutineOrder } = useUpdateRoutineOrderMutation();
 
   // ── 로컬 드래그용 상태 (서버 데이터 기반으로 초기화) ──────────────────
   // 드래그 중 UI 반영을 위해 서버 상태를 로컬 React 상태로 미러링
@@ -161,8 +158,6 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   const [editingRoutineId, setEditingRoutineId] = useState<number | null>(null);
   // 편집 시작 시점의 루틴 이름 — 수정 저장 모달에 미리 채워줄 기본값
   const [editingRoutineTitle, setEditingRoutineTitle] = useState<string>("");
-  // Edit Mode 진입 시 productId → routineDetailId 매핑 — PATCH /order 호출에 사용
-  const [editingDetailIdMap, setEditingDetailIdMap] = useState<Map<number, number>>(new Map());
 
   // 카드 클릭 시 상세 보기 대상 루틴 ID — store에서 관리해 재방문 시 복원
   const selectedRoutineId = useRoutineStore((state) => state.selectedRoutineId);
@@ -273,128 +268,106 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   );
 
   // ── 드래그 핸들러 ────────────────────────────────────────────────────
+  // dragStateRef: window 이벤트 핸들러에서 최신 dragState를 클로저 없이 참조하기 위한 ref
+  const dragStateRef = useRef<DragState | null>(null);
+
   const handleDragHandlePointerDown = (
     event: React.PointerEvent<HTMLDivElement>,
     stepCode: string,
     index: number,
   ) => {
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setDragState({
+    event.preventDefault();
+    const initialState: DragState = {
       fromStepCode: stepCode,
       fromIndex: index,
       toStepCode: stepCode,
       toIndex: index,
-    });
+    };
+    dragStateRef.current = initialState;
+    setDragState(initialState);
   };
 
-  const handleDragHandlePointerMove = (
-    event: React.PointerEvent<HTMLDivElement>,
-  ) => {
-    if (!dragState) return;
-    const elementUnder = document.elementFromPoint(
-      event.clientX,
-      event.clientY,
-    );
+  // window 레벨 pointermove — 드래그 중 어느 요소 위에 있든 감지 가능
+  useEffect(() => {
+    const onPointerMove = (event: PointerEvent) => {
+      const current = dragStateRef.current;
+      if (!current) return;
 
-    const itemElement = elementUnder?.closest(
-      "[data-drag-item]",
-    ) as HTMLElement | null;
-    if (itemElement) {
-      const toStepCode = itemElement.getAttribute("data-step-code");
-      const indexStr = itemElement.getAttribute("data-item-index");
-      if (!toStepCode || indexStr === null) return;
-      const toIndex = parseInt(indexStr, 10);
-      if (
-        toStepCode !== dragState.toStepCode ||
-        toIndex !== dragState.toIndex
-      ) {
-        setDragState((prev) =>
-          prev ? { ...prev, toStepCode, toIndex } : null,
-        );
+      const elementUnder = document.elementFromPoint(event.clientX, event.clientY);
+
+      const itemElement = elementUnder?.closest("[data-drag-item]") as HTMLElement | null;
+      if (itemElement) {
+        const toStepCode = itemElement.getAttribute("data-step-code");
+        const indexStr = itemElement.getAttribute("data-item-index");
+        if (!toStepCode || indexStr === null) return;
+        const toIndex = parseInt(indexStr, 10);
+        if (toStepCode !== current.toStepCode || toIndex !== current.toIndex) {
+          const next = { ...current, toStepCode, toIndex };
+          dragStateRef.current = next;
+          setDragState(next);
+        }
+        return;
       }
-      return;
-    }
 
-    const dropZone = elementUnder?.closest(
-      "[data-drop-zone]",
-    ) as HTMLElement | null;
-    if (dropZone) {
-      const toStepCode = dropZone.getAttribute("data-step-code");
-      const toIndex = parseInt(
-        dropZone.getAttribute("data-drop-index") ?? "0",
-        10,
-      );
-      if (
-        toStepCode &&
-        (toStepCode !== dragState.toStepCode || toIndex !== dragState.toIndex)
-      ) {
-        setDragState((prev) =>
-          prev ? { ...prev, toStepCode, toIndex } : null,
-        );
-      }
-    }
-  };
-
-  /**
-   * 드래그 종료 — 순서 변경 처리
-   * 1) 로컬 상태 즉시 반영 (UI 업데이트)
-   * 2) PUT /api/v1/routines/draft — draft 순서 항상 동기화 (Edit Save 시 기준이 됨)
-   * 3) Edit Mode 한정: PATCH /api/v1/routines/{routineId}/order — 저장된 루틴에도 즉시 반영
-   */
-  const handleDragHandlePointerUp = () => {
-    if (!dragState) return;
-
-    const { fromStepCode, fromIndex, toStepCode, toIndex } = dragState;
-    let newDraftByStep = { ...localDraftByStep };
-
-    if (fromStepCode === toStepCode) {
-      if (fromIndex !== toIndex) {
-        const products = [...(newDraftByStep[fromStepCode] ?? [])];
-        const [removed] = products.splice(fromIndex, 1);
-        products.splice(toIndex, 0, removed);
-        newDraftByStep = { ...newDraftByStep, [fromStepCode]: products };
-      }
-    } else {
-      const fromProducts = [...(newDraftByStep[fromStepCode] ?? [])];
-      const [removed] = fromProducts.splice(fromIndex, 1);
-      newDraftByStep[fromStepCode] = fromProducts;
-      const toProducts = [...(newDraftByStep[toStepCode] ?? [])];
-      toProducts.splice(toIndex, 0, removed);
-      newDraftByStep[toStepCode] = toProducts;
-    }
-
-    setLocalDraftByStep(newDraftByStep);
-    setDragState(null);
-
-    // draft 순서는 Edit Mode/새 루틴 모드 모두 항상 동기화
-    // — Edit Save(PUT /routines/{routineId})가 draft 기준으로 덮어쓰기 때문
-    const draftItems = buildDraftItems(newDraftByStep, routineSteps);
-    syncDraft(draftItems, {
-      onError: () => notify("순서 변경 저장에 실패했습니다."),
-    });
-
-    if (editingRoutineId !== null && editingDetailIdMap.size > 0) {
-      // Edit Mode: PATCH /api/v1/routines/{routineId}/order 로 저장된 루틴에도 즉시 반영
-      // routineDetailId가 있는 제품만 포함 (새로 추가된 제품은 Edit Save 시 반영)
-      const updatedOrders: RoutineDetailOrderDto[] = [];
-      let stepOrder = 1;
-      for (const step of routineSteps) {
-        for (const product of newDraftByStep[step.code] ?? []) {
-          const routineDetailId = editingDetailIdMap.get(product.productId);
-          if (routineDetailId !== undefined) {
-            updatedOrders.push({ routineDetailId, stepOrder });
-          }
-          stepOrder++;
+      const dropZone = elementUnder?.closest("[data-drop-zone]") as HTMLElement | null;
+      if (dropZone) {
+        const toStepCode = dropZone.getAttribute("data-step-code");
+        const toIndex = parseInt(dropZone.getAttribute("data-drop-index") ?? "0", 10);
+        if (toStepCode && (toStepCode !== current.toStepCode || toIndex !== current.toIndex)) {
+          const next = { ...current, toStepCode, toIndex };
+          dragStateRef.current = next;
+          setDragState(next);
         }
       }
-      if (updatedOrders.length > 0) {
-        updateRoutineOrder(
-          { routineId: editingRoutineId, request: { updatedOrders } },
-          { onError: () => notify("순서 변경 저장에 실패했습니다.") },
-        );
-      }
-    }
-  };
+    };
+
+    const onPointerUp = () => {
+      if (!dragStateRef.current) return;
+      // React state 기준으로 처리하기 위해 setDragState 플러시 후 처리
+      // — dragStateRef로 최신값 직접 읽어서 처리
+      const state = dragStateRef.current;
+      dragStateRef.current = null;
+
+      const { fromStepCode, fromIndex, toStepCode, toIndex } = state;
+      setDragState(null);
+
+      // 위치 변화 없으면 무시
+      if (fromStepCode === toStepCode && fromIndex === toIndex) return;
+
+      setLocalDraftByStep((prev) => {
+        let next = { ...prev };
+        if (fromStepCode === toStepCode) {
+          const products = [...(next[fromStepCode] ?? [])];
+          const [removed] = products.splice(fromIndex, 1);
+          products.splice(toIndex, 0, removed);
+          next = { ...next, [fromStepCode]: products };
+        } else {
+          const fromProducts = [...(next[fromStepCode] ?? [])];
+          const [removed] = fromProducts.splice(fromIndex, 1);
+          next[fromStepCode] = fromProducts;
+          const toProducts = [...(next[toStepCode] ?? [])];
+          toProducts.splice(toIndex, 0, removed);
+          next[toStepCode] = toProducts;
+        }
+
+        // draft 동기화 — 로컬 상태 업데이트 직후 최신값으로 호출
+        const items = buildDraftItems(next, routineSteps);
+        syncDraft(items, {
+          onError: () => notify("순서 변경 저장에 실패했습니다."),
+        });
+
+        return next;
+      });
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    };
+  }, [routineSteps, syncDraft]);
+
 
   // ── 루틴 저장 핸들러 ──────────────────────────────────────────────────
   const handleOpenSaveModal = () => {
@@ -429,7 +402,6 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             setSaveModalName("");
             setEditingRoutineId(null);
             setEditingRoutineTitle("");
-            setEditingDetailIdMap(new Map());
             notify(`"${trimmedName}" 루틴이 수정되었습니다!`);
           },
           onError: () => notify("루틴 수정에 실패했습니다. 다시 시도해주세요."),
@@ -483,7 +455,6 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   const handleNewRoutine = () => {
     setEditingRoutineId(null);
     setEditingRoutineTitle("");
-    setEditingDetailIdMap(new Map());
     setSelectedRoutineId(null);
     clearDraft(undefined, {
       onSuccess: () => notify("새 루틴 작성을 시작합니다."),
@@ -501,18 +472,6 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     const currentTitle =
       routineList.find((routine) => routine.routineId === selectedRoutineId)
         ?.title ?? "";
-
-    // Edit Mode 진입 시 productId → routineDetailId 매핑 저장
-    // PATCH /api/v1/routines/{routineId}/order 호출 시 routineDetailId가 필요함
-    if (selectedRoutineDetail) {
-      const map = new Map<number, number>();
-      for (const stepGroup of selectedRoutineDetail.steps) {
-        for (const item of stepGroup.products) {
-          map.set(item.product.productId, item.routineDetailId);
-        }
-      }
-      setEditingDetailIdMap(map);
-    }
 
     loadRoutineToDraft(selectedRoutineId, {
       onSuccess: () => {
@@ -558,7 +517,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       {routineList.length > 0 && (
         <div className="mb-2">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-[14px] font-bold text-text-muted">Saved routine</p>
+            <p className="text-[16px] font-bold text-text-muted">Saved routine</p>
             <button
               onClick={handleNewRoutine}
               className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-xs text-brand cursor-pointer bg-transparent"
@@ -641,7 +600,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 }
                 handleSetMainRoutine(selectedRoutineId);
               }}
-              className="text-lg cursor-pointer bg-transparent border-none leading-none shrink-0"
+              className="text-[16px] cursor-pointer bg-transparent border-none leading-none shrink-0"
               style={{
                 color:
                   selectedRoutineId !== null &&
@@ -701,24 +660,25 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
           </div>
         </div>
 
-        {/* 진행 상황 */}
-        <p className="text-[14px] font-bold text-text-muted">
-          {filledCount}/{routineSteps.length}단계 완성 · Edit Mode에서 변경
+        <p className="text-[14px] font-semibold text-text-muted">
+          Edit Mode에서 변경
         </p>
       </div>
 
       {/* ── 루틴 스텝별 섹션 ── */}
-      {routineSteps.map((step) => {
+      {routineSteps.map((step, stepIndex) => {
         const products = viewByStep[step.code] ?? [];
         const isDropTarget =
-          !isViewingSavedRoutine && dragState?.toStepCode === step.code;
+          !isViewingSavedRoutine &&
+          editingRoutineId !== null &&
+          dragState?.toStepCode === step.code;
 
         return (
           <div key={step.code} className="mt-3">
             {/* 스텝 섹션 헤더 */}
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
-                <span className="text-base">{step.icon}</span>
+                <span className="text-base font-semibold text-brand">{stepIndex + 1}단계</span>
                 <span className="text-[16px] font-semibold text-text-primary">
                   {step.label}
                 </span>
@@ -770,12 +730,15 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             ) : (
               <div className="flex flex-col gap-2">
                 {products.map((product, index) => {
+                  // edit mode: 저장된 루틴 편집 중(editingRoutineId !== null)일 때만 드래그 허용
+                  const canDrag = !isViewingSavedRoutine && editingRoutineId !== null;
+
                   const isDraggingThis =
-                    !isViewingSavedRoutine &&
+                    canDrag &&
                     dragState?.fromStepCode === step.code &&
                     dragState.fromIndex === index;
                   const isProductDropTarget =
-                    !isViewingSavedRoutine &&
+                    canDrag &&
                     !!dragState &&
                     dragState.toStepCode === step.code &&
                     dragState.toIndex === index &&
@@ -792,20 +755,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                       index={index}
                       isDragging={isDraggingThis}
                       isDropTarget={isProductDropTarget}
+                      isEditMode={canDrag}
                       onDragHandlePointerDown={
-                        isViewingSavedRoutine
-                          ? () => {}
-                          : handleDragHandlePointerDown
-                      }
-                      onDragHandlePointerMove={
-                        isViewingSavedRoutine
-                          ? () => {}
-                          : handleDragHandlePointerMove
-                      }
-                      onDragHandlePointerUp={
-                        isViewingSavedRoutine
-                          ? () => {}
-                          : handleDragHandlePointerUp
+                        canDrag ? handleDragHandlePointerDown : () => {}
                       }
                       onRemove={
                         isViewingSavedRoutine ? () => {} : handleRemoveProduct
@@ -928,14 +880,14 @@ interface RoutineProductCardProps {
   index: number;
   isDragging: boolean;
   isDropTarget: boolean;
+  /** true이면 드래그 핸들 표시 및 순서 변경 허용 */
+  isEditMode: boolean;
   priority?: boolean;
   onDragHandlePointerDown: (
     event: React.PointerEvent<HTMLDivElement>,
     stepCode: string,
     index: number,
   ) => void;
-  onDragHandlePointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
-  onDragHandlePointerUp: () => void;
   onRemove: (productId: number) => void;
   stepIcon: string;
 }
@@ -946,9 +898,8 @@ function RoutineProductCard({
   index,
   isDragging,
   isDropTarget,
+  isEditMode,
   onDragHandlePointerDown,
-  onDragHandlePointerMove,
-  onDragHandlePointerUp,
   onRemove,
   stepIcon,
   priority = false,
@@ -962,7 +913,7 @@ function RoutineProductCard({
       data-drag-item
       data-step-code={stepCode}
       data-item-index={index}
-      className="relative h-22 rounded-[10px] overflow-hidden bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
+      className="relative h-25 rounded-[10px] overflow-hidden bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
       style={{
         opacity: isDragging ? 0.4 : 1,
         border: isDropTarget ? "2px solid #A69D92" : "1px solid #E2DDD8",
@@ -975,25 +926,29 @@ function RoutineProductCard({
         className="absolute top-1 right-1 z-10 w-5 h-5 flex items-center justify-center cursor-pointer bg-transparent border-none"
         aria-label="제품 삭제"
       >
-        <X size={12} className="text-[#C4BEB7]" />
+        <X size={16} className="text-[#C4BEB7]" />
       </button>
 
       <div className="flex items-center h-full">
-        {/* 드래그 가능한 이미지 영역 */}
+        {/* 이미지 영역 — edit mode일 때만 드래그 핸들 활성화 */}
         <div
-          className="relative shrink-0 w-22 h-full cursor-grab active:cursor-grabbing select-none"
-          style={{ touchAction: "none" }}
-          onPointerDown={(event) =>
-            onDragHandlePointerDown(event, stepCode, index)
+          className="relative shrink-0 w-22 h-full select-none"
+          style={{
+            touchAction: isEditMode ? "none" : "auto",
+            cursor: isEditMode ? "grab" : "default",
+          }}
+          onPointerDown={
+            isEditMode
+              ? (event) => onDragHandlePointerDown(event, stepCode, index)
+              : undefined
           }
-          onPointerMove={onDragHandlePointerMove}
-          onPointerUp={onDragHandlePointerUp}
-          onPointerCancel={onDragHandlePointerUp}
         >
-          {/* 드래그 아이콘 */}
-          <div className="absolute top-1 left-1 z-10">
-            <ArrowUpDown size={10} className="text-[#C4BEB7] opacity-70" />
-          </div>
+          {/* 드래그 아이콘 — edit mode일 때만 표시 */}
+          {isEditMode && (
+            <div className="absolute top-1 left-1 z-10">
+              <ArrowUpDown size={15} className="text-[#C4BEB7]" />
+            </div>
+          )}
 
           {/* 이미지 */}
           <div className="absolute inset-0 bg-[#F5F2EC]">
@@ -1025,7 +980,7 @@ function RoutineProductCard({
             </span>
             {categoryColor && (
               <span
-                className="text-[12px] px-1.5 py-[1px] rounded-[3px] font-semibold"
+                className="text-[12px] px-1.5 rounded-[3px] font-semibold"
                 style={{
                   backgroundColor: categoryColor.chip,
                   color: categoryColor.accent,
@@ -1035,7 +990,7 @@ function RoutineProductCard({
               </span>
             )}
           </div>
-          <p className="mt-0.75 m-0 text-[16px] font-bold text-[#2A2118] leading-[1.4] line-clamp-1">
+          <p className="my-1.5 text-[16px] font-semibold text-[#2A2118] leading-[1.4] line-clamp-1">
             {product.name}
           </p>
           <div className="flex flex-wrap gap-1 mt-1">
@@ -1044,7 +999,7 @@ function RoutineProductCard({
               return (
                 <span
                   key={skinType}
-                  className="inline-block text-[12px] font-semibold px-1.5 py-0.5 rounded-[3px]"
+                  className="inline-block text-[12px] font-semibold px-1.5 rounded-[3px]"
                   style={{
                     backgroundColor:
                       SKIN_TYPE_TAG_COLORS[koSkinType]?.bg ?? "#F0EDE8",
@@ -1063,7 +1018,7 @@ function RoutineProductCard({
               return (
                 <span
                   key={effect}
-                  className="inline-block text-[12px] font-semibold px-1.5 py-0.5 rounded-[3px]"
+                  className="inline-block text-[12px] font-semibold px-1.5 rounded-[3px]"
                   style={{
                     backgroundColor: color.chip,
                     color: color.accent,
@@ -1101,7 +1056,7 @@ function SavedRoutineCard({
   return (
     <div
       onClick={onClick}
-      className="relative shrink-0 flex flex-col gap-1 pt-7 pb-3 rounded-xl transition-all cursor-pointer"
+      className="relative shrink-0 flex flex-col gap-1 pt-5 pb-3 rounded-xl transition-all cursor-pointer"
       style={{
         minWidth: "calc(38% - 4px)",
         maxWidth: "calc(38% - 4px)",
@@ -1114,7 +1069,7 @@ function SavedRoutineCard({
       {/* 메인 루틴만 별표 배지 표시 */}
       {saved.isMain && (
         <span
-          className="absolute top-1.5 left-1.5 w-4 h-4 flex items-center justify-center text-[11px] leading-none"
+          className="absolute top-1.5 left-1.5 w-6 h-6 flex items-center justify-center text-[16px] leading-none"
           style={{ color: "#C8A96E" }}
         >
           ★
@@ -1127,18 +1082,18 @@ function SavedRoutineCard({
           event.stopPropagation();
           onDelete();
         }}
-        className="absolute top-1.5 right-1.5 w-4 h-4 flex items-center justify-center rounded-full border-none cursor-pointer bg-[#E8E4DF]"
+        className="absolute top-1.5 right-1.5 w-4 h-4 flex items-center justify-center rounded-full border-none cursor-pointer"
       >
-        <X size={11} className="text-[#8A8278]" />
+        <X size={14} className="text-[#8A8278]" />
       </button>
 
       {/* 루틴 이름 */}
-      <p className="text-sm font-semibold text-[#2A2118] truncate leading-tight px-2 text-center">
+      <p className="text-sm font-semibold text-[#2A2118] truncate leading-tight text-center">
         {saved.title}
       </p>
 
       {/* 제품 수 */}
-      <p className="text-[10px] font-bold text-[#A69D92] text-center">
+      <p className="text-[12px] font-semibold text-[#A69D92] text-center">
         {saved.productCount}개 제품
       </p>
     </div>

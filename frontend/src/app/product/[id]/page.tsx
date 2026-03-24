@@ -26,8 +26,22 @@ import {
   useRemoveProductFromDraftMutation,
   useDraftQuery,
 } from "@/hooks";
-import { getEwgColor } from "@/constants/categoryColors";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
+
+/** EWG 등급 → 배경·텍스트·바 색상 반환 */
+function getEwgColor(grade: number | null | undefined): {
+  bg: string;
+  text: string;
+  barColor: string;
+} {
+  if (grade == null)
+    return { bg: "#F5F5F5", text: "#9E9E9E", barColor: "#E0E0E0" };
+  if (grade <= 2)
+    return { bg: "#E8F5E9", text: "#2E7D32", barColor: "#4CAF50" };
+  if (grade <= 6)
+    return { bg: "#FFF8E1", text: "#F57F17", barColor: "#FFB300" };
+  return { bg: "#FFEBEE", text: "#C62828", barColor: "#F44336" };
+}
 import { getRoutineSteps } from "@/constants/routineSteps";
 import CompareModal from "@/components/common/CompareModal";
 import type { ProductViewModel } from "@/types/product/myCos";
@@ -76,7 +90,7 @@ function ProductDetailInner() {
   const { mutate: removeMyCos } = useRemoveMyCos();
   const productIdNum = id ? Number(id) : null;
   const myCosItem = myCosData.find(
-    (item) => (item.productId ?? item.id) === productIdNum,
+    (item) => item.productInfo.productId === productIdNum,
   );
   const owned = !!myCosItem;
   const { toggleLike } = useLike();
@@ -207,7 +221,7 @@ function ProductDetailInner() {
 
   const handleToggleOwned = () => {
     if (!productIdNum) return;
-    if (myCosItem) removeMyCos(myCosItem.id);
+    if (myCosItem) removeMyCos(myCosItem.myCosId);
     else addMyCos(productIdNum);
   };
 
@@ -430,6 +444,7 @@ function ProductDetailInner() {
                 src={productData.imageUrl}
                 alt={productData.productName ?? ""}
                 fill
+                sizes="(max-width: 640px) 100vw, 640px"
                 className="object-contain p-4"
               />
             ) : null}

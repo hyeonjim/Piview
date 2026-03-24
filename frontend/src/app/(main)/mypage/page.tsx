@@ -13,7 +13,6 @@ import {
 import RoutineTab from "@/components/features/mypage/RoutineTab";
 import RoutineAddModal from "@/components/features/mypage/RoutineAddModal";
 import OwnedTab from "@/components/features/mypage/OwnedTab";
-import { useRoutineStore } from "@/stores";
 import { useUserStore, selectSkinType, selectGender } from "@/stores";
 import { useSearchStore } from "@/stores/useSearchStore";
 import { useRecommendStore } from "@/stores/useRecommendStore";
@@ -108,15 +107,10 @@ export default function MyPage() {
     );
   };
 
-  // OwnedTab 루틴 배지 표시용 localRoutine
-  const routineForOwnedTab = useRoutineStore((state) => state.localRoutine);
-
   return (
     <div className="flex-1 bg-[#F5F2EC]">
-      {/* 프로필 헤더 */}
       <div className="pt-3.75 px-5 pb-5 relative border-b border-border">
         <div className="flex items-center gap-4">
-          {/* 아바타 — 카카오 프로필 이미지 또는 기본 그라디언트 배경 */}
           <div
             className="w-18 h-18 rounded-full flex items-center justify-center shadow-[0_2px_12px_rgba(166,157,146,0.25)] shrink-0 overflow-hidden"
             style={
@@ -236,7 +230,7 @@ export default function MyPage() {
         <RoutineTab onOpenModal={handleOpenModal} />
       )}
       {activeTab === "owned" && (
-        <OwnedTab routine={routineForOwnedTab} />
+        <OwnedTab />
       )}
 
       {/* 제품 추가 모달 — openStep이 있을 때만 렌더링 */}
