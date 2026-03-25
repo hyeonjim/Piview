@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 from services.chatbot.search.keyword.models import KeywordCandidateRow
 from services.chatbot.search.vector import ProductSearchResult
 
@@ -21,8 +23,7 @@ def score_row(row: KeywordCandidateRow, terms: list[str]) -> KeywordCandidateRow
         if term in fields["description"]:
             score += 2.0
 
-    row.keyword_score = score
-    return row
+    return replace(row, keyword_score=score)
 
 
 def to_search_result(row: KeywordCandidateRow) -> ProductSearchResult:

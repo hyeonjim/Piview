@@ -24,6 +24,7 @@ class VectorCollectionStore:
 
         client = self._get_client()
         settings = get_settings()
+        # get_or_create_collection을 쓰므로, 인덱스 빌드 단계와 질의 단계가 같은 이름만 맞추면 같은 저장소를 공유합니다.
         self._collection = client.get_or_create_collection(
             name=settings.chatbot_vector_collection,
             embedding_function=self._embedding_function,
@@ -58,7 +59,7 @@ class VectorCollectionStore:
 
         settings = get_settings()
         vector_dir = Path(settings.chatbot_vector_dir)
-        # 디렉터리가 없으면 로컬/컨테이너 어디서든 바로 컬렉션을 만들 수 있게 합니다.
+        # 디렉터리가 없으면 로컬/컨테이너 어디서든 첫 실행 시 바로 영속 저장소를 만들 수 있게 합니다.
         vector_dir.mkdir(parents=True, exist_ok=True)
         self._client = chromadb.PersistentClient(path=str(vector_dir))
         return self._client

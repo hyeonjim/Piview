@@ -5,11 +5,11 @@
 LLM 실패 시 복구 전략만 관리합니다.
 """
 
-import asyncio
+import logging
 from uuid import uuid4
 
 from schemas.chatbot import ChatbotQueryRequest, ChatbotQueryResponse
-from services.chatbot.generation.helpers import model_to_dict
+from services.chatbot.generation.helpers import build_effective_client_context, model_to_dict
 from services.chatbot.generation.postprocess import postprocess_answer
 from services.chatbot.generation.templates import (
     build_clarifying_answer,
@@ -18,6 +18,10 @@ from services.chatbot.generation.templates import (
 )
 from services.chatbot.generation.llm import chatbot_llm_service
 from services.chatbot.retrieval import RetrievalBundle, chatbot_retrieval_service
+from services.chatbot.session import chat_session_store
+
+
+logger = logging.getLogger(__name__)
 
 
 class ChatbotService:
@@ -31,18 +35,46 @@ class ChatbotService:
         4. 마지막에 후처리와 응답 스키마 변환을 한다.
         """
         # 검색 결과와 생성 단계를 분리해 두면 추천 규칙이 바뀌어도 API 계약은 안정적으로 유지됩니다.
-        retrieval_bundle = await chatbot_retrieval_service.retrieve(request)
+        session_id = request.sessionId or str(uuid4())
+        session_snapshot = chat_session_store.get_snapshot(
+            session_id=session_id,
+            user_id=request.userContext.userId if request.userContext else None,
+        )
+        session_context = session_snapshot.to_prompt_payload()
+        client_context = build_effective_client_context(request, session_context)
+        retrieval_bundle = await chatbot_retrieval_service.retrieve(
+            request,
+            session_context=session_context,
+        )
         response_type = retrieval_bundle.response_type
 
         if response_type == "clarifying_question":
             answer = build_clarifying_answer(request.message)
         else:
-            answer, response_type = await self._build_answer(request, retrieval_bundle, response_type)
+            answer, response_type = await self._build_answer(
+                request,
+                retrieval_bundle,
+                response_type,
+                client_context=client_context,
+                session_context=session_context,
+            )
+
+        final_answer = postprocess_answer(answer)
+        chat_session_store.remember_turn(
+            session_id=session_id,
+            request=request,
+            answer=final_answer,
+            product_ids=[
+                product.productId
+                for product in retrieval_bundle.products
+                if product.productId is not None
+            ],
+        )
 
         return ChatbotQueryResponse(
-            sessionId=request.sessionId or str(uuid4()),
+            sessionId=session_id,
             responseType=response_type,
-            answer=postprocess_answer(answer),
+            answer=final_answer,
             products=retrieval_bundle.products,
             appliedFilters=retrieval_bundle.applied_filters,
             citations=retrieval_bundle.citations,
@@ -53,42 +85,47 @@ class ChatbotService:
         request: ChatbotQueryRequest,
         retrieval_bundle: RetrievalBundle,
         response_type: str,
+        client_context: dict | None,
+        session_context: dict | None,
     ) -> tuple[str, str]:
         """LLM 생성 실패까지 포함해 최종 answer/response_type 조합을 결정합니다."""
         try:
-            return await self._generate_answer_with_retry(request, retrieval_bundle), response_type
-        except RuntimeError:
+            return (
+                await self._generate_answer(
+                    request,
+                    retrieval_bundle,
+                    client_context=client_context,
+                    session_context=session_context,
+                ),
+                response_type,
+            )
+        except RuntimeError as exc:
+            logger.warning("Chatbot generation fell back to template response: %s", exc)
             # 후보 상품이 있으면 최소한 카드와 모순되지 않는 템플릿 답변은 만들 수 있습니다.
             if retrieval_bundle.products:
                 return build_grounded_template_answer(request, retrieval_bundle), response_type
             # 후보도 없으면 검색 문맥을 활용할 수 없으므로 fallback 타입으로 내려 보냅니다.
             return build_fallback_answer(request, retrieval_bundle), "fallback"
 
-    async def _generate_answer_with_retry(
+    async def _generate_answer(
         self,
         request: ChatbotQueryRequest,
         retrieval_bundle: RetrievalBundle,
+        client_context: dict | None,
+        session_context: dict | None,
     ) -> str:
         """외부 LLM 호출을 감싸는 얇은 래퍼입니다.
 
         userContext는 pydantic 모델이라, 하위 LLM 서비스에는 dict 형태로 넘깁니다.
         """
         user_context = model_to_dict(request.userContext) if request.userContext else None
-
-        try:
-            return await chatbot_llm_service.generate_answer(
-                message=request.message,
-                user_context=user_context,
-                retrieval_context=retrieval_bundle.retrieval_context,
-            )
-        except RuntimeError:
-            # 외부 LLM 응답이 일시적으로 흔들릴 때만 짧게 한 번 더 시도합니다.
-            await asyncio.sleep(1.5)
-            return await chatbot_llm_service.generate_answer(
-                message=request.message,
-                user_context=user_context,
-                retrieval_context=retrieval_bundle.retrieval_context,
-            )
+        return await chatbot_llm_service.generate_answer(
+            message=request.message,
+            user_context=user_context,
+            retrieval_context=retrieval_bundle.retrieval_context,
+            client_context=client_context,
+            session_context=session_context,
+        )
 
 
 chatbot_service = ChatbotService()

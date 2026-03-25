@@ -4,6 +4,8 @@
 전수 스캔 여부는 성능/품질 실험에 따라 바뀔 수 있으므로, 여기서는 흐름만 단순하게 둡니다.
 """
 
+import asyncio
+
 from services.chatbot.search.keyword.repository import product_keyword_repository
 from services.chatbot.search.keyword.scorer import score_row, to_search_result
 from services.chatbot.search.keyword.tokenizer import extract_terms
@@ -11,6 +13,9 @@ from services.chatbot.search.vector import ProductSearchResult
 
 
 class ProductKeywordService:
+    async def search_async(self, query_text: str, limit: int) -> list[ProductSearchResult]:
+        return await asyncio.to_thread(self.search, query_text, limit)
+
     def search(self, query_text: str, limit: int) -> list[ProductSearchResult]:
         """질문 문자열을 키워드 후보 리스트로 바꿉니다.
 
@@ -23,8 +28,8 @@ class ProductKeywordService:
         if not terms:
             return []
 
-        # 전수 스캔 전략을 유지하기 때문에, 후보 축소보다 점수 함수 일관성이 더 중요합니다.
-        scored_rows = [score_row(row, terms) for row in product_keyword_repository.get_candidates()]
+        # DB prefilter + TTL cache로 요청마다 전체 상품을 다시 읽는 비용을 줄입니다.
+        scored_rows = [score_row(row, terms) for row in product_keyword_repository.get_candidates(terms)]
         filtered_rows = [row for row in scored_rows if row.keyword_score > 0]
         filtered_rows.sort(key=lambda row: (-row.keyword_score, row.product_id))
         return [to_search_result(row) for row in filtered_rows[:limit]]
