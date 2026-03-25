@@ -76,6 +76,21 @@ def user_context_to_payload(user_context: UserContext | None) -> dict[str, objec
     return payload
 
 
+def user_context_to_prompt_payload(user_context: UserContext | None) -> dict[str, object]:
+    """LLM에는 개인화에 직접 쓰는 요약 정보만 전달합니다."""
+    if user_context is None:
+        return {}
+
+    payload: dict[str, object] = {}
+    if user_context.my_skin_type:
+        payload["mySkinType"] = user_context.my_skin_type
+    if user_context.skin_problems:
+        payload["skinProblems"] = user_context.skin_problems[:3]
+    if user_context.disliked_ingredient_names:
+        payload["dislikedIngredientNames"] = user_context.disliked_ingredient_names[:5]
+    return payload
+
+
 def client_context_to_payload(client_context: ClientContext | None) -> dict[str, object]:
     if client_context is None:
         return {}
@@ -85,6 +100,17 @@ def client_context_to_payload(client_context: ClientContext | None) -> dict[str,
         payload["screen"] = client_context.screen
     if client_context.current_product_id is not None:
         payload["currentProductId"] = client_context.current_product_id
+    return payload
+
+
+def client_context_to_prompt_payload(client_context: ClientContext | None) -> dict[str, object]:
+    """화면 맥락만 짧게 전달하고 raw product id는 제외합니다."""
+    if client_context is None:
+        return {}
+
+    payload: dict[str, object] = {}
+    if client_context.screen:
+        payload["screen"] = client_context.screen
     return payload
 
 

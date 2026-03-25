@@ -52,32 +52,26 @@ def build_chatbot_user_prompt(
     client_context: dict[str, Any] | None = None,
     session_context: dict[str, Any] | None = None,
 ) -> str:
-    # 구조화된 사용자 문맥은 모델이 임의 추측 대신 명시값을 우선 사용하도록 그대로 직렬화합니다.
-    serialized_user_context = json.dumps(user_context or {}, ensure_ascii=False, indent=2)
-    serialized_client_context = json.dumps(client_context or {}, ensure_ascii=False, indent=2)
-    serialized_session_context = json.dumps(session_context or {}, ensure_ascii=False, indent=2)
+    sections = [
+        f"사용자 질문:\n{message}",
+        _build_json_section("사용자 문맥", user_context),
+        _build_json_section("화면 문맥", client_context),
+        _build_json_section("세션 메모", session_context),
+        f"검색 근거:\n{retrieval_context}",
+        (
+            "지시:\n"
+            "- 사용자 문맥은 신뢰 가능한 구조화 정보로 간주한다.\n"
+            "- 화면 문맥과 세션 메모리는 대화 연속성을 위한 보조 정보로만 사용한다.\n"
+            "- 사용자 문맥과 검색 근거에 없는 고민, 성분, 제품 특징은 추측하지 않는다.\n"
+            "- 제품 후보가 없으면 일반적인 선택 기준만 설명하고 특정 상품을 지어내지 않는다.\n"
+            "- 검색 근거에 짧게 되묻는 편이 낫다는 안내가 있으면 확인 질문을 우선한다."
+        ),
+    ]
+    return "\n\n".join(section for section in sections if section)
 
-    return f"""사용자 질문:
-{message}
 
-사용자 문맥:
-{serialized_user_context}
-
-클라이언트 문맥:
-{serialized_client_context}
-
-세션 메모리:
-{serialized_session_context}
-
-검색 근거:
-{retrieval_context}
-
-위 정보를 바탕으로 답변해라.
-사용자 문맥은 신뢰 가능한 구조화 정보로 간주해라.
-클라이언트 문맥과 세션 메모리는 대화 연속성을 위한 보조 정보로만 사용해라.
-screen, currentProductId, recentProductIds 같은 식별자만으로 보이지 않은 상품 정보를 추측하지 마라.
-사용자 문맥에 명시된 값만 사용하고, 없는 고민이나 성분을 추측해서 쓰지 마라.
-제품 후보가 없다면 일반적인 선택 기준만 설명하고, 특정 상품을 지어내지 마라.
-검색 근거에 'clarifying question' 성격의 안내가 있으면 제품 추천보다 짧은 확인 질문을 우선해라.
-검색 근거에 적힌 근거 문장과 전성분 메모를 우선 사용하고, 없으면 보수적으로 표현해라.
-"""
+def _build_json_section(title: str, payload: dict[str, Any] | None) -> str:
+    if not payload:
+        return ""
+    serialized = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    return f"{title}:\n{serialized}"
