@@ -22,6 +22,11 @@ public enum ErrorCode {
     PRODUCT_COMPARE_REQUIRES_TWO_IDS(HttpStatus.BAD_REQUEST, "비교할 상품 ID는 정확히 2개여야 합니다."),
     PRODUCT_COMPARE_DUPLICATE_IDS(HttpStatus.BAD_REQUEST, "비교할 상품 ID는 서로 달라야 합니다."),
 
+    // 502 BAD_GATEWAY
+    AI_SERVER_BAD_REQUEST(HttpStatus.BAD_GATEWAY, "AI 서버 요청 형식이 올바르지 않습니다."),
+    AI_SERVER_ERROR(HttpStatus.BAD_GATEWAY, "AI 서버 처리 중 오류가 발생했습니다."),
+    AI_SERVER_INVALID_RESPONSE(HttpStatus.BAD_GATEWAY, "AI 서버 응답 형식이 올바르지 않습니다."),
+
     // 403 FORBIDDEN
     UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "본인의 화장품 목록만 접근 및 삭제할 수 있습니다."),
     SKIN_ANALYSIS_ACCESS_DENIED(HttpStatus.FORBIDDEN, "본인의 피부 분석만 확인할 수 있습니다."),
