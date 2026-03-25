@@ -1,13 +1,8 @@
-from services.chatbot.search.embedding.client import (
-    GmsOpenAIEmbeddingService,
-    gms_openai_embedding_service,
-)
-from services.chatbot.search.embedding.function import (
-    GmsOpenAIEmbeddingFunction,
-)
+from services.chatbot.search.embedding.client import ChatbotEmbeddingService, chatbot_embedding_service
+from services.chatbot.search.embedding.function import ChatbotEmbeddingFunction
 
 __all__ = [
-    "GmsOpenAIEmbeddingFunction",
-    "GmsOpenAIEmbeddingService",
-    "gms_openai_embedding_service",
+    "ChatbotEmbeddingFunction",
+    "ChatbotEmbeddingService",
+    "chatbot_embedding_service",
 ]
