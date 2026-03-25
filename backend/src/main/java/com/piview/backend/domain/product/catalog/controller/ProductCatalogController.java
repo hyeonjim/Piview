@@ -41,7 +41,7 @@ public class ProductCatalogController {
     public ApiResponse<ProductPageResponse> searchProducts(
             @Parameter(description = "검색어", example = "독도") @RequestParam(required = false) String q,
             @Parameter(description = "대카테고리 ID", example = "1") @RequestParam(required = false) Integer bigCategoryId,
-            @Parameter(description = "카테고리 ID", example = "10") @RequestParam(required = false) Long categoryId,
+            @Parameter(description = "카테고리 ID(단건/다건)", example = "1,16") @RequestParam(required = false) List<Long> categoryId,
             @Parameter(description = "피부타입(dry, oily, combination, subuji)", example = "독도") @RequestParam(required = false) String skinType,
             @Parameter(description = "태그 ID 목록(내부 concernId로 처리)", example = "1, 2, 3") @RequestParam(name = "tagIds", required = false) List<Long> concernIds,
             @Parameter(description = "브랜드 ID 목록", example = "4, 5") @RequestParam(required = false) List<Long> brandIds,
