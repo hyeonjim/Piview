@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Search, Package, Loader2 } from "lucide-react";
+import { X, Search, Package, Loader2, Star } from "lucide-react";
 import ProductCard from "@/components/common/ProductCard";
 import { useMutation } from "@tanstack/react-query";
 import { getRoutineSteps } from "@/constants/routineSteps";
@@ -182,16 +182,18 @@ export default function RoutineAddModal({
                   onClick={handleRecommendationToggle}
                   disabled={recommendationMutation.isPending}
                   className={[
-                    "flex items-center gap-1.5 h-6 px-2.5 rounded-full cursor-pointer text-[12px] font-semibold transition-all duration-200 border-none disabled:opacity-50 disabled:cursor-not-allowed",
+                    "flex items-center gap-1 h-8 px-3 rounded-full cursor-pointer text-[13px] font-bold transition-all duration-200 disabled:cursor-not-allowed active:scale-[0.96] active:shadow-none",
                     isRecommendMode
-                      ? "bg-[#f7d2e5] text-[#636161]"
-                      : "bg-[#faf0b9] text-[#7A6F5C] hover:bg-[#e2e1e2]",
+                      ? "bg-[#f3b8d3] text-[#fdfdfb] shadow-[0_3px_8px_rgba(166,157,146,0.95),inset_0_1px_0_rgba(255,255,255,0.18)]"
+                      : "bg-[#f0b8d2] text-[#fdfdfb] shadow-[0_3px_7px_rgba(200,160,180,0.7),inset_0_1px_0_rgba(255,255,255,0.8)] hover:shadow-[0_4px_10px_rgba(200,160,180,0.85)] hover:bg-[#f7d6e5]",
                   ].join(" ")}
                 >
-                  {recommendationMutation.isPending && (
-                    <Loader2 size={14} className="animate-spin" />
+                  {recommendationMutation.isPending ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <Star size={15} fill={isRecommendMode ? "#fee03d" : "none"} color={isRecommendMode ? "#f7ecaf" : "currentColor"} />
                   )}
-                  Piview pick
+                  AI 추천
                 </button>
                 {/* 닫기 버튼 */}
                 <button

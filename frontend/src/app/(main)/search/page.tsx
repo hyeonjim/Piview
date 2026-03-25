@@ -189,7 +189,7 @@ export default function SearchPage() {
 
       {/* 비교 힌트 바 — 1개 선택 시 */}
       {compareItems.length === 1 && (
-        <div className="flex items-center justify-between mx-5 mt-3 px-4 py-3 rounded-xl bg-white border border-[#e8e4e0]">
+        <div className="flex items-center justify-between mx-5 px-4 py-2 rounded-xl bg-white border border-[#e8e4e0]">
           <span className="text-[13px] font-medium text-[#6e6358]">
             비교할 제품을 1개 더 선택하세요
           </span>
@@ -204,20 +204,20 @@ export default function SearchPage() {
 
       {/* 비교 힌트 바 — 2개 선택 완료 */}
       {canCompare && (
-        <div className="flex items-center justify-between mx-5 mt-3 px-4 py-3 rounded-xl bg-[#5a504a]">
-          <span className="text-[13px] font-medium text-white/90">
+        <div className="flex items-center justify-between mx-5 px-4 py-2 rounded-xl bg-[#e9c8b3]">
+          <span className="text-[13px] font-medium text-[#fff]">
             2개 제품 선택 완료
           </span>
           <div className="flex gap-2">
             <button
               onClick={clearCompare}
-              className="text-[11px] text-white/50 bg-transparent border-none cursor-pointer"
+              className="text-[11px] text-white/90 bg-transparent border-none cursor-pointer"
             >
               취소
             </button>
             <button
               onClick={openCompare}
-              className="text-xs font-semibold text-[#5a504a] bg-white border-none rounded-lg px-3 py-1.5 cursor-pointer"
+              className="text-xs font-semibold text-[#716b67] bg-white border-none rounded-lg px-3 py-1.5 cursor-pointer"
             >
               비교하기
             </button>
