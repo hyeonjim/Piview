@@ -389,6 +389,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
 
     // 편집 모드: 기존 루틴 덮어쓰기
     if (editingRoutineId !== null) {
+      // 클로저 캡처 — onSuccess 시점에 editingRoutineId가 null로 초기화되어 있으므로 미리 저장
+      const savedRoutineId = editingRoutineId;
       updateRoutine(
         { routineId: editingRoutineId, request: { title: trimmedName } },
         {
@@ -397,6 +399,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             setSaveModalName("");
             setEditingRoutineId(null);
             setEditingRoutineTitle("");
+            // 저장 완료 후 수정된 루틴을 보기 모드로 바로 표시
+            setSelectedRoutineId(savedRoutineId);
             notify(`"${trimmedName}" 루틴이 수정되었습니다!`);
           },
           onError: () => notify("루틴 수정에 실패했습니다. 다시 시도해주세요."),
@@ -414,9 +418,11 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     createRoutine(
       { userId: user.userId, title: trimmedName },
       {
-        onSuccess: () => {
+        onSuccess: (newRoutineId) => {
           setShowSaveModal(false);
           setSaveModalName("");
+          // 새로 생성된 루틴을 바로 보기 모드로 표시
+          setSelectedRoutineId(newRoutineId);
           notify(`"${trimmedName}" 루틴이 저장되었습니다!`);
         },
         onError: () => notify("루틴 저장에 실패했습니다. 다시 시도해주세요."),
@@ -515,9 +521,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             <p className="text-[16px] font-bold text-[#7c7c7a]">My routine list</p>
             <button
               onClick={handleNewRoutine}
-              className="flex items-center gap-1 font-bold px-2.5 py-1 rounded-full border border-border text-xs text-brand cursor-pointer bg-[#fcfcfb]"
+              className="flex items-center gap-1 font-bold px-2 py-1 rounded-full border border-border text-[13px] text-[#bfba1b] cursor-pointer bg-[#fcfcfb]"
             >
-              <Plus size={13} /> New
+              <Plus size={12} /> New
             </button>
           </div>
           <div
@@ -572,7 +578,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         {/* 루틴 이름 & 메인 루틴 설정 버튼 & 액션 버튼 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
-            <h2 className="text-[16px] font-bold text-[#636260] truncate">
+            <h2 className="text-[18px] font-bold text-[#636260] truncate">
               {isViewingSavedRoutine
                 ? selectedRoutineDetail.title
                 : editingRoutineId !== null
@@ -607,10 +613,10 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setShowOcrModal(true)}
-                  className="flex items-center justify-center p-1.5 rounded-full border border-border cursor-pointer bg-[#fff] text-[#636260]"
+                  className="flex items-center justify-center px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] text-[#636260]"
                   aria-label="OCR로 제품 추가"
                 >
-                  <Scan size={12} />
+                  <Scan size={13} />
                 </button>
               </TooltipTrigger>
               <TooltipContent>OCR로 제품 추가</TooltipContent>
@@ -630,7 +636,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               <button
                 onClick={handleEditRoutine}
                 disabled={selectedRoutineId === null || isLoadingToEdit}
-                className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] disabled:opacity-50 text-[#636260]"
+                className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] disabled:opacity-50 text-[#787775]"
               >
                 {isLoadingToEdit ? "불러오는 중..." : <><SquarePen size={12} />Edit Mode</>}
               </button>
@@ -638,14 +644,14 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             <button
               onClick={handleOpenSaveModal}
               disabled={isCreating || filledCount === 0}
-              className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] disabled:opacity-50 text-[#636260]"
+              className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] disabled:opacity-50 text-[#787775]"
             >
               {isCreating ? "저장 중..." : <><Save size={12} />Save</>}
             </button>
           </div>
         </div>
 
-        <p className="text-[14px] font-semibold text-text-muted">
+        <p className="text-[13px] font-semibold text-text-muted">
           Edit Mode에서 변경
         </p>
       </div>

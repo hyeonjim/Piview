@@ -75,7 +75,7 @@ export default function HomePage() {
                 Main routine
               </span>
               {hasRoutine && (
-                <span className="text-[12px] font-medium py-0.5 px-2 rounded-full bg-[#e9ebf0] text-[#70685d]">
+                <span className="text-[12px] font-medium py-0.5 px-2 rounded-full bg-[#f1f2f4] text-[#70685d]">
                   {mainRoutineItems.length}단계
                 </span>
               )}
@@ -109,7 +109,7 @@ export default function HomePage() {
                   className="flex items-center py-2.5 first:pt-1 last:pb-1"
                 >
                   {/* 스텝 번호 뱃지 */}
-                  <div className="shrink-0 w-6 h-6 rounded-full bg-[#e9ebf0] flex items-center justify-center">
+                  <div className="shrink-0 w-6 h-6 rounded-full bg-[#f1f2f4] flex items-center justify-center">
                     <span className="text-[16px] font-bold text-[#756f67] [font-family:var(--font-english),serif]">
                       {String(index + 1).padStart(2, "0")}
                     </span>

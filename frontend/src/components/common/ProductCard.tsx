@@ -548,16 +548,16 @@ export default function ProductCard({
 
         {/* 제품 정보 행 — 클릭 시 상세 페이지 이동 */}
         <Link href={productHref} className="no-underline">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* 이미지 */}
-          <div className="relative w-18 h-18 shrink-0">
-            <div className="w-full h-full flex items-center justify-center rounded-xl bg-[#faf9f7] overflow-hidden">
+          <div className="relative w-20 h-20 shrink-0">
+            <div className="w-full h-full flex items-center mt-5 rounded-xl bg-[#faf9f7] overflow-hidden">
               <ProductImage
                 imageUrl={imageUrl}
                 name={name}
                 emoji={emoji}
-                width={72}
-                height={72}
+                width={80}
+                height={80}
                 className="object-cover"
               />
             </div>
