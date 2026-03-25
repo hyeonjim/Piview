@@ -143,7 +143,7 @@ export const MEN_ROUTINE_STEPS: RoutineStep[] = [
     icon: "✨",
     categories: [
       { categoryId: 3,  bigCategoryId: 1, name: "에센스/앰플/세럼" },
-      { categoryId: 21, bigCategoryId: 4, name: "에센스/세럼"      },
+      { categoryId: 21, bigCategoryId: 4, name: "에센스/앰플/세럼" },
     ],
   },
   {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PAGE_SIZE } from "@/constants/pagination";
 import { FilterModal } from "@/components/common/FilterModal";
 import { CategoryFilter } from "@/components/common/CategoryFilter";
@@ -17,6 +17,7 @@ import { useSearchStore } from "@/stores/useSearchStore";
 import { SlidersHorizontal, Search } from "lucide-react";
 
 import { toSkinTypeParam } from "@/utils/enumConvert";
+import { trackEvent } from "@/utils/trackEvent";
 import { PRICE_MAX } from "@/types/common";
 import type { SkinType } from "@/types/user";
 
@@ -121,6 +122,20 @@ export default function SearchPage() {
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
   };
+
+  // SEARCH 이벤트 — 타이핑 멈춘 후 2초 뒤 전송 (빈 문자열 제외)
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!searchQuery.trim()) return;
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      trackEvent("SEARCH", null, searchQuery.trim());
+    }, 2000);
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [searchQuery]);
+
   const handleBigCategorySelect = (bigCategoryId: number | null) => {
     setSelectedBigCategoryId(bigCategoryId);
   };

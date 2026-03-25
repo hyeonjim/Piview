@@ -171,3 +171,14 @@ export interface ProductAiSummaryResponse {
   line2PersonalizedMsg: string; // 맞춤형 추천 메시지
   line3AiSummary: string; // AI 3줄 요약 3번째
 }
+
+// ── AI 비교 분석 API ──────────────────────────────────────────────
+
+/**
+ * GET /api/v1/products/compare/ai-summary?productIds=[id1,id2]
+ * 두 제품 비교 AI 줄글 추천
+ * swagger: AiComparisonResponse
+ */
+export interface AiComparisonResponse {
+  comparisonText: string;
+}

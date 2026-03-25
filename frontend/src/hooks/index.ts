@@ -25,7 +25,7 @@ export {
 } from "./queries/useMyCos";
 export { useProductSearch } from "./queries/useProductSearch";
 export { useProductDetail } from "./queries/useProductDetail";
-export { useProductAiSummary } from "./queries/useProductAi";
+export { useProductAiSummary, useAiComparisonSummary } from "./queries/useProductAi";
 export { useProductFilters } from "./queries/useProductFilters";
 export { useProductCompare } from "./queries/useProductCompare";
 export { useSurveySubmit } from "./queries/useSurveySubmit";
