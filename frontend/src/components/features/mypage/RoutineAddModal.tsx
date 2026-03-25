@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Search, Package, Loader2 } from "lucide-react";
+import { X, Search, Package, Loader2, Star } from "lucide-react";
 import ProductCard from "@/components/common/ProductCard";
 import { useMutation } from "@tanstack/react-query";
 import { getRoutineSteps } from "@/constants/routineSteps";
@@ -73,6 +73,23 @@ export default function RoutineAddModal({
   // 카테고리 필터 메타데이터 가져오기
   const availableCategories = currentStep?.categories ?? [];
 
+  // 탭 표시용 — 같은 name의 카테고리를 하나로 합침 (남성 스킨/토너 중복 방지)
+  const uniqueCategoryTabs = availableCategories.reduce<
+    { name: string; categoryId: number; categoryIds: number[] }[]
+  >((acc, cat) => {
+    const existing = acc.find((t) => t.name === cat.name);
+    if (existing) {
+      existing.categoryIds.push(cat.categoryId);
+    } else {
+      acc.push({
+        name: cat.name,
+        categoryId: cat.categoryId,
+        categoryIds: [cat.categoryId],
+      });
+    }
+    return acc;
+  }, []);
+
   // 추천 API의 concernId 조회용으로만 filterMeta 사용
   const { data: filterMeta } = useProductFilters();
 
@@ -87,6 +104,14 @@ export default function RoutineAddModal({
   const selectedCategory = availableCategories.find(
     (cat) => cat.categoryId === effectiveCategoryId,
   );
+
+  // 선택된 탭 (uniqueCategoryTabs 기준 — 같은 name 묶음)
+  const selectedTab =
+    uniqueCategoryTabs.find((tab) =>
+      tab.categoryIds.includes(effectiveCategoryId ?? -1),
+    ) ??
+    uniqueCategoryTabs[0] ??
+    null;
 
   const searchParams = {
     q: searchQuery || undefined,
@@ -148,12 +173,14 @@ export default function RoutineAddModal({
   // 카테고리 미선택 or 해당 카테고리 데이터 없으면 전체 flat
   const recommendedProducts: MappedProduct[] = isRecommendMode
     ? (() => {
-        const categoryName = selectedCategory?.name;
-        const fromCategory = categoryName
-          ? recommendedData[categoryName]
-          : undefined;
-        const source = fromCategory ?? Object.values(recommendedData).flat();
-        return source.map(mapRecommendResponse);
+        const tabName = selectedTab?.name;
+        if (!tabName)
+          return Object.values(recommendedData)
+            .flat()
+            .map(mapRecommendResponse);
+        const fromCategory = recommendedData[tabName];
+        // 매핑 안 되는 카테고리 선택 시 빈 배열 반환 — 전체 노출 방지
+        return (fromCategory ?? []).map(mapRecommendResponse);
       })()
     : [];
 
@@ -198,16 +225,22 @@ export default function RoutineAddModal({
                   onClick={handleRecommendationToggle}
                   disabled={recommendationMutation.isPending}
                   className={[
-                    "flex items-center gap-1.5 h-6 px-2.5 rounded-full cursor-pointer text-[12px] font-semibold transition-all duration-200 border-none disabled:opacity-50 disabled:cursor-not-allowed",
+                    "flex items-center gap-1 h-8 px-3 rounded-full cursor-pointer text-[13px] font-bold transition-all duration-200 disabled:cursor-not-allowed active:scale-[0.96] active:shadow-none",
                     isRecommendMode
-                      ? "bg-[#f7d2e5] text-[#636161]"
-                      : "bg-[#faf0b9] text-[#7A6F5C] hover:bg-[#e2e1e2]",
+                      ? "bg-[#f3b8d3] text-[#fdfdfb] shadow-[0_3px_8px_rgba(166,157,146,0.95),inset_0_1px_0_rgba(255,255,255,0.18)]"
+                      : "bg-[#f0b8d2] text-[#fdfdfb] shadow-[0_3px_7px_rgba(200,160,180,0.7),inset_0_1px_0_rgba(255,255,255,0.8)] hover:shadow-[0_4px_10px_rgba(200,160,180,0.85)] hover:bg-[#f7d6e5]",
                   ].join(" ")}
                 >
-                  {recommendationMutation.isPending && (
-                    <Loader2 size={14} className="animate-spin" />
+                  {recommendationMutation.isPending ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <Star
+                      size={15}
+                      fill={isRecommendMode ? "#fee03d" : "none"}
+                      color={isRecommendMode ? "#f7ecaf" : "currentColor"}
+                    />
                   )}
-                  Piview pick
+                  AI 추천
                 </button>
                 {/* 닫기 버튼 */}
                 <button
@@ -258,20 +291,22 @@ export default function RoutineAddModal({
             )}
 
             {/* 카테고리 필터 - 현재 루틴 단계의 소분류만 표시 */}
-            {availableCategories.length > 0 && (
+            {uniqueCategoryTabs.length > 0 && (
               <div className="flex flex-wrap gap-2 p-[5px_0px] min-h-[32px] mb-2">
-                {availableCategories.map((cat) => {
-                  const isActive = effectiveCategoryId === cat.categoryId;
+                {uniqueCategoryTabs.map((tab) => {
+                  const isActive = tab.categoryIds.includes(
+                    effectiveCategoryId ?? -1,
+                  );
                   return (
                     <button
-                      key={cat.categoryId}
+                      key={tab.categoryId}
                       onClick={() => {
-                        if (!isActive) handleCategoryChange(cat.categoryId);
+                        if (!isActive) handleCategoryChange(tab.categoryId);
                       }}
                       className="category-pill-button"
                       data-active={isActive}
                     >
-                      {getCategoryDisplayName(cat.name)}
+                      {getCategoryDisplayName(tab.name)}
                     </button>
                   );
                 })}

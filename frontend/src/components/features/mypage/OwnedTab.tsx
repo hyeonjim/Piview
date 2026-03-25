@@ -67,19 +67,19 @@ export default function OwnedTab() {
     <div className="px-7 pb-10 pt-4 flex flex-col gap-10 bg-category-pill-default-bg">
       {/* ── 보유 제품 섹션 ─────────────────────────────────────── */}
       <section>
-        <div className="flex items-center justify-between mb-1">
-          <div>
+        <div className="mb-1">
+          <div className="flex items-center justify-between">
             <p className="text-base font-bold text-[#5e5c59]">Owned</p>
-            <p className="text-xs text-text-muted mt-0.5">
-              {ownedProducts.length}개 보유 중
-            </p>
+            <button
+              onClick={() => setOpenOwnedModal(true)}
+              className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-[#636264] font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
+            >
+              + 추가
+            </button>
           </div>
-          <button
-            onClick={() => setOpenOwnedModal(true)}
-            className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-[#636264] font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
-          >
-            + 추가
-          </button>
+          <p className="text-[13px] font-semibold text-[#787879] mt-0.5">
+            {ownedProducts.length}개 보유 중
+          </p>
         </div>
 
         {ownedProducts.length === 0 ? (
@@ -130,24 +130,23 @@ export default function OwnedTab() {
 
       {/* ── 기피 제품 섹션 ─────────────────────────────────────── */}
       <section>
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-start gap-1.5">
-            <div>
-              <div className="flex items-center gap-1.5">
-                <p className="text-base font-bold text-[#b33232]">Avoid</p>
-                <Ban size={14} className="text-[#b33232]" />
-              </div>
-              <p className="text-xs text-text-muted mt-0.5">
-                {dislikedItems.length}개 등록됨
-              </p>
+        <div className="mb-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <p className="text-base font-bold text-[#db1c1c]">Avoid</p>
+              <Ban size={14} className="text-[#db1c1c]" />
             </div>
+            <button
+              onClick={() => setOpenAvoidModal(true)}
+              className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-[#636264] font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
+            >
+              + 추가
+            </button>
           </div>
-          <button
-            onClick={() => setOpenAvoidModal(true)}
-            className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-[#636264] font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
-          >
-            + 추가
-          </button>
+          <p className="text-[13px] font-semibold text-[#787879] mt-0.5">
+            {dislikedItems.length}개 등록됨
+            <br />등록된 제품은 추천에서 제외됩니다
+          </p>
         </div>
 
         {dislikedItems.length === 0 ? (
