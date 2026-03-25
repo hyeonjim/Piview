@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { useUserStore } from "@/stores";
 import { authService } from "@/services/auth";
 import { getCookieAndClear } from "@/services/client";
+import { concernDbToLabel } from "@/utils/enumConvert";
 
 export default function OAuthCallbackPage() {
   const router = useRouter();
@@ -46,6 +47,9 @@ export default function OAuthCallbackPage() {
         // 3. 유저 정보 조회 후 store에 저장
         const user = await authService.getMe();
         useUserStore.getState().setUser(user);
+        useUserStore
+          .getState()
+          .setConcerns((user.skinProblems ?? []).map(concernDbToLabel));
 
         // 4. 피부 타입 진단 여부에 따라 분기
         if (!user.mySkinType) {

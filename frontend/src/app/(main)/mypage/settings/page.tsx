@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Camera } from "lucide-react";
 import Link from "next/link";
@@ -8,27 +8,27 @@ import { useUserStore, selectSkinType } from "@/stores/useUserStore";
 
 /** 설정 페이지 피부타입 (id = 한글 레이블, settings에서 직접 저장) */
 const SETTINGS_SKIN_TYPES = [
-  { id: "건성",  label: "건성"  },
-  { id: "지성",  label: "지성"  },
+  { id: "건성", label: "건성" },
+  { id: "지성", label: "지성" },
   { id: "복합성", label: "복합성" },
   { id: "수부지", label: "수부지" },
 ] as const;
 
 /** 설정 페이지 피부 고민 — 백엔드 SkinProblemMapper 키값과 일치 */
 const SETTINGS_SKIN_CONCERNS = [
-  { id: "acne",         label: "여드름"          },
-  { id: "whitening",    label: "미백"            },
+  { id: "acne", label: "여드름" },
+  { id: "whitening", label: "미백" },
   { id: "pigmentation", label: "기미/주근깨/잡티" },
-  { id: "wrinkles",     label: "주름/탄력"       },
-  { id: "sebum",        label: "피지"            },
-  { id: "blackhead",    label: "블랙헤드"        },
-  { id: "innerDryness", label: "속건조"          },
-  { id: "redness",      label: "홍조"            },
-  { id: "keratin",      label: "각질"            },
+  { id: "wrinkles", label: "주름/탄력" },
+  { id: "sebum", label: "피지" },
+  { id: "blackhead", label: "블랙헤드" },
+  { id: "innerDryness", label: "속건조" },
+  { id: "redness", label: "홍조" },
+  { id: "keratin", label: "각질" },
 ] as const;
 import { useUpdateProfile } from "@/hooks/queries/useUserQuery";
+import { useLogout } from "@/hooks";
 import { toSkinTypeEnum } from "@/utils/enumConvert";
-import { authService } from "@/services/auth";
 import type { SkinType } from "@/types/user";
 
 /** 피부타입·피부고민 선택 칩 공통 클래스 */
@@ -50,17 +50,31 @@ export default function SettingsPage() {
   // store에서 기존 설정값 읽기
   const storedSkinType = useUserStore(selectSkinType);
   const storedConcerns = useUserStore((s) => s.concerns);
-  const clearUser = useUserStore((s) => s.clearUser);
   const { mutate: updateProfile, isPending } = useUpdateProfile();
+  const { logout } = useLogout();
 
   // 로컬 상태 — store 값으로 초기화
   const [skinType, setSkinTypeLocal] = useState<string>(storedSkinType ?? "");
-  const [concerns, setConcernsLocal] = useState<Set<string>>(new Set(storedConcerns));
+  const [concerns, setConcernsLocal] = useState<Set<string>>(new Set());
+  const [initialized, setInitialized] = useState(false);
+
+  // storedConcerns는 비동기로 채워지므로 useEffect로 최초 1회만 동기화
+  // store가 비어있다가 API 응답 후 채워지는 타이밍 문제 해결
+  useEffect(() => {
+    if (!initialized && storedConcerns.length > 0) {
+      setConcernsLocal(new Set(storedConcerns));
+      setInitialized(true);
+    }
+  }, [storedConcerns, initialized]);
 
   const toggleConcern = (label: string) =>
     setConcernsLocal((prev: Set<string>) => {
       const next = new Set(prev);
-      if (next.has(label)) { next.delete(label); } else { next.add(label); }
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
       return next;
     });
 
@@ -75,17 +89,6 @@ export default function SettingsPage() {
       },
       { onSuccess: () => router.back() },
     );
-  };
-
-  // 로그아웃 — 백엔드 쿠키 만료 후 store 초기화
-  const handleLogout = async () => {
-    if (!confirm("로그아웃 하시겠습니까?")) return;
-    try {
-      await authService.logout();
-    } finally {
-      clearUser();
-      router.push("/");
-    }
   };
 
   return (
@@ -106,8 +109,12 @@ export default function SettingsPage() {
       <div className="px-7.5">
         {/* 피부타입 */}
         <div className="mt-5">
-          <h3 className="text-base font-bold text-[#635446] mb-1.5">나의 피부타입</h3>
-          <p className="text-[14px] text-text-muted mb-5">하나를 선택해주세요</p>
+          <h3 className="text-base font-bold text-[#635446] mb-1.5">
+            나의 피부타입
+          </h3>
+          <p className="text-[14px] text-text-muted mb-5">
+            하나를 선택해주세요
+          </p>
           <div className="flex flex-wrap gap-2">
             {SETTINGS_SKIN_TYPES.map((st) => (
               <button
@@ -125,8 +132,10 @@ export default function SettingsPage() {
 
         {/* 피부고민 */}
         <div>
-          <h3 className="text-base font-bold text-[#635446] mb-1.5">피부 고민</h3>
-          <p className="text-xs text-text-muted mb-5">
+          <h3 className="text-base font-bold text-[#635446] mb-1.5">
+            피부 고민
+          </h3>
+          <p className="text-[14px] text-text-muted mb-5">
             해당하는 고민을 모두 선택해주세요
           </p>
           <div className="flex flex-wrap gap-2">
@@ -146,8 +155,10 @@ export default function SettingsPage() {
 
         {/* 재진단 */}
         <div>
-          <h3 className="text-base font-bold text-[#635446] mb-1.5">피부 진단 다시하기</h3>
-          <p className="text-xs text-text-muted mb-5">
+          <h3 className="text-base font-bold text-[#635446] mb-1.5">
+            피부 진단 다시하기
+          </h3>
+          <p className="text-[14px] text-text-muted mb-5">
             AI 사진 분석으로 피부 상태를 다시 진단할 수 있어요
           </p>
           <Link
@@ -182,7 +193,7 @@ export default function SettingsPage() {
         {/* 로그아웃 버튼 */}
         <div className="mt-20 mb-10 flex justify-center">
           <button
-            onClick={handleLogout}
+            onClick={logout}
             className="w-50 h-11 rounded-button text-gray-700 font-bold text-[16px] border border-border cursor-pointer transition-all active:scale-[0.98] hover:bg-red-100 hover:text-red-900 hover:border-red-200"
           >
             로그아웃

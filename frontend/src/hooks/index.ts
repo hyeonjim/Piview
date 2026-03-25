@@ -6,6 +6,7 @@
  */
 
 export { useCompare } from "./useCompare";
+export { useLogout } from "./useLogout";
 export {
   useDislikedProductsQuery,
   useDislikedProductsWithTags,

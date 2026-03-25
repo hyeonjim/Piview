@@ -31,6 +31,7 @@ export interface ProductDetailResponse {
   imageUrl: string | null;
   brandName: string | null;
   productName: string | null;
+  categoryId?: number | null;
   categoryName?: string | null;
   description: string | null;
   skinTypes: string[];
@@ -96,7 +97,8 @@ export interface OcrRecognitionResponse {
   productId: number | null;
   brandName: string | null;
   productName: string | null;
-  matchAccuracy: number; // 0~100
+  matchAccuracy: number;
+  categoryId?: number | null;
   success: boolean;
 }
 
@@ -165,7 +167,7 @@ export interface ProductCompareResponse {
 export interface ProductAiSummaryResponse {
   productId: number;
   productName: string;
-  line1AiSummary: string;       // AI 3줄 요약 1번째
+  line1AiSummary: string; // AI 3줄 요약 1번째
   line2PersonalizedMsg: string; // 맞춤형 추천 메시지
-  line3AiSummary: string;       // AI 3줄 요약 3번째
+  line3AiSummary: string; // AI 3줄 요약 3번째
 }

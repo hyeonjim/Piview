@@ -33,57 +33,67 @@ const DATA_SOURCES = [
     url: "https://coos.kr/",
     accent: "#8a6b9e",
   },
+  {
+    name: "식품의약품안전처",
+    description: "화장품 원료 안전 기준",
+    url: "https://www.mfds.go.kr/index.do",
+    accent: "#7a9e6b",
+  },
+  {
+    name: "PubMed",
+    description: "성분 임상 연구 논문",
+    url: "https://pubmed.ncbi.nlm.nih.gov/",
+    accent: "#5a8a9e",
+  },
 ] as const;
 
 export default function DataSourcesSection() {
   return (
-    <div className="px-5 pt-7 pb-8">
+    <div className="px-5 pt-15 pb-10">
       {/* 섹션 헤더 */}
-      <div className="flex items-center gap-2 mb-7">
+      <div className="flex items-center gap-2 mb-5">
         <span className="text-[16px] font-bold text-[#52514d] tracking-[0.06em] uppercase [font-family:var(--font-english),serif]">
           Sourced by Websites
         </span>
       </div>
 
       {/* 메인 문구 */}
-      <p className="text-[14px] font-semibold text-[#A69D92] leading-relaxed mb-4 tracking-[-0.3px]">
-        4개의 사이트를 참고해 화장품 성분
-        <br />
-        데이터베이스를 분석합니다
+      <p className="text-[14px] font-semibold text-[#7e7870] leading-relaxed mb-7 px-3 tracking-[-0.3px]">
+        과학적 근거가 있는 데이터베이스를 기반으로 내 피부에 맞는 성분의 화장품을
+        추천해서 최적의 루틴을 생성해드립니다.
       </p>
 
-      {/* 데이터소스 그리드 — 2x2 */}
-      <div className="grid grid-cols-2 gap-4 px-5">
+      <div className="grid grid-cols-3 gap-3 px-3">
         {DATA_SOURCES.map((source) => (
           <a
             key={source.name}
             href={source.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="group relative flex flex-col justify-between p-3.5 rounded-xl bg-white border border-[#eee] transition-all duration-200 active:scale-[0.97] no-underline"
+            className="group relative flex flex-col justify-between p-2.5 rounded-xl bg-white border border-[#eee] transition-all duration-200 active:scale-[0.97] no-underline"
           >
             {/* 상단: 사이트명 + 외부링크 아이콘 */}
             <div className="flex items-start justify-between mb-2">
               <span
-                className="text-[13px] font-bold tracking-[-0.2px]"
+                className="text-[12px] mt-1 font-semibold tracking-[-0.2px] leading-tight"
                 style={{ color: source.accent }}
               >
                 {source.name}
               </span>
               <ExternalLink
                 size={11}
-                className="text-[#D9D5D0] mt-0.5 group-hover:text-[#A69D92] transition-colors"
+                className="text-[#D9D5D0] mt-0.5 mb-2 group-hover:text-[#A69D92] transition-colors"
               />
             </div>
 
             {/* 하단: 역할 설명 */}
-            <span className="text-[11px] font-medium text-[#A69D92]">
+            <span className="text-[10px] font-medium text-[#A69D92]">
               {source.description}
             </span>
 
             {/* 좌측 상단 악센트 바 */}
             <div
-              className="absolute top-0 left-3.5 w-5 h-[2px] rounded-b-full"
+              className="absolute top-0 left-2.5 w-4 h-[2px] rounded-b-full"
               style={{ backgroundColor: source.accent, opacity: 0.5 }}
             />
           </a>
