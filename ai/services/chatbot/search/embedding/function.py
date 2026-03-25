@@ -1,6 +1,7 @@
 """Chroma embedding_function 규약 어댑터."""
 
 from typing import Sequence
+import numpy as np
 
 from core.settings import get_settings
 from services.chatbot.providers import embedding_provider
@@ -15,7 +16,8 @@ class ChatbotEmbeddingFunction:
 
     def embed_documents(self, input: Sequence[str]) -> list[list[float]]:
         """문서 배치 임베딩."""
-        return chatbot_embedding_service.embed_texts(list(input))
+        embeddings = chatbot_embedding_service.embed_texts(list(input))
+        return [np.asarray(embedding, dtype=np.float32) for embedding in embeddings]
 
     def embed_query(self, input: str | Sequence[str]) -> list[list[float]]:
         """질의 임베딩.
@@ -26,7 +28,7 @@ class ChatbotEmbeddingFunction:
         embeddings = chatbot_embedding_service.embed_texts(query_texts)
         if not embeddings:
             raise RuntimeError("Failed to create query embedding")
-        return embeddings
+        return [np.asarray(embedding, dtype=np.float32) for embedding in embeddings]
 
     def __call__(self, input: Sequence[str]) -> list[list[float]]:
         """Chroma가 callable embedding function으로 사용할 수 있게 맞춥니다."""
