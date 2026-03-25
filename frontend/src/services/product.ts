@@ -100,6 +100,15 @@ export const productService = {
       )
       .then((res) => res.data.data),
 
+  // GET /api/v1/dynamic/recommendations — 행동 데이터 기반 맞춤 추천
+  getDynamicRecommendations: (params: {
+    bigCategoryId?: number;
+    categoryId?: number;
+  }): Promise<ProductPageResponse> =>
+    client
+      .get<ApiResponse<ProductPageResponse>>("/dynamic/recommendations", { params })
+      .then((res) => res.data.data),
+
   // GET /products/{productId}/summary — AI 3줄 요약 + 맞춤 추천 메시지
   getAiSummary: (productId: number): Promise<ProductAiSummaryResponse> =>
     client

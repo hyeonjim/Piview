@@ -26,6 +26,8 @@ export {
 export { useProductSearch } from "./queries/useProductSearch";
 export { useProductDetail } from "./queries/useProductDetail";
 export { useProductAiSummary, useAiComparisonSummary } from "./queries/useProductAi";
+export { useDynamicRecommendations } from "./queries/useDynamicRecommendations";
+export { useChatbot } from "./queries/useChatbot";
 export { useProductFilters } from "./queries/useProductFilters";
 export { useProductCompare } from "./queries/useProductCompare";
 export { useSurveySubmit } from "./queries/useSurveySubmit";

@@ -15,6 +15,7 @@ import { useCompare, useProductSearch } from "@/hooks";
 import { useAddMyCos, useRemoveMyCos, useMyCosQuery } from "@/hooks";
 import { useSearchStore } from "@/stores/useSearchStore";
 import { SlidersHorizontal, Search } from "lucide-react";
+import ChatbotWidget from "@/components/common/ChatbotWidget";
 
 import { toSkinTypeParam } from "@/utils/enumConvert";
 import { trackEvent } from "@/utils/trackEvent";
@@ -299,6 +300,7 @@ export default function SearchPage() {
         totalPages={totalPages}
         onChange={handlePageChange}
       />
+      <ChatbotWidget context={{ screen: "search", currentProductId: null }} />
 
       <FilterModal
         open={showFilter}

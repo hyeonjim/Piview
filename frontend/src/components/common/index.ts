@@ -12,3 +12,4 @@ export { Pagination } from "./Pagination";
 export { CategoryFilter } from "./CategoryFilter";
 export { FilterModal } from "./FilterModal";
 export { TokenInitializer } from "./TokenInitializer";
+export { default as ChatbotWidget } from "./ChatbotWidget";
