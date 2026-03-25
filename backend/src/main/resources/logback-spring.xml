@@ -3,7 +3,8 @@
 
     <appender name="USER_ACTION_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>./logs/piview/user-events.log</file>
-        <!-- <file>/var/logs/piview/user-events.log</file> -->
+
+        <prudent>true</prudent>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>./logs/piview/user-events-%d{yyyy-MM-dd}.log</fileNamePattern>

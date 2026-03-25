@@ -1,22 +1,25 @@
 package com.piview.backend.domain.product.catalog.repository;
 
+import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import com.piview.backend.domain.product.catalog.dto.ProductSearchCondition;
 import com.piview.backend.domain.product.entity.Product;
 import com.piview.backend.domain.skin.common.SkinTypeEnum;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
 import static com.piview.backend.domain.product.entity.QBigCategory.bigCategory;
@@ -25,6 +28,7 @@ import static com.piview.backend.domain.product.entity.QCategory.category;
 import static com.piview.backend.domain.product.entity.QImage.image;
 import static com.piview.backend.domain.product.entity.QProduct.product;
 import static com.piview.backend.domain.product.entity.QProductConcernCache.productConcernCache;
+import static com.piview.backend.domain.product.dynamic.entity.QRecommendationScore.recommendationScore;
 
 @Repository
 @RequiredArgsConstructor
@@ -100,6 +104,68 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .fetchOne();
 
     return result != null ? result : 0L;
+  }
+
+  @Override
+  public Page<Product> findRecommendedProducts(Long userId, String userSkinType, Integer bigCategoryId, Long categoryId, Pageable pageable) {
+    // ✅ 1. 유저 피부 타입에 맞춰 2순위 정렬 기준을 동적으로 결정하는 로직
+    NumberExpression<BigDecimal> skinTypeScore;
+    if (userSkinType != null) {
+      if ("dry".equalsIgnoreCase(userSkinType)) {
+        skinTypeScore = product.scoreDry;
+      } else if ("oily".equalsIgnoreCase(userSkinType)) {
+        skinTypeScore = product.scoreOily;
+      } else if ("subuji".equalsIgnoreCase(userSkinType)) {
+        skinTypeScore = product.scoreSubuji;
+      } else {
+        skinTypeScore = product.scoreCombination;
+      }
+    } else {
+      // 피부 타입 정보가 없는 유저의 경우 기본 조합성 점수 사용
+      skinTypeScore = product.scoreCombination;
+    }
+
+    List<Product> content = queryFactory
+        .selectFrom(product)
+        // INNER JOIN -> LEFT JOIN 으로 변경 (점수 없는 상품도 가져오기 위해)
+        .leftJoin(recommendationScore)
+        .on(product.productId.eq(recommendationScore.productId)
+            .and(recommendationScore.userId.eq(userId)))
+        .join(product.brand, brand).fetchJoin()
+        .join(product.image, image).fetchJoin()
+        .join(product.category, category).fetchJoin()
+        .join(category.bigCategory, bigCategory).fetchJoin()
+        .where(
+            // 이제 recommendationScore.userId.eq(userId) 조건은 WHERE 절에서 빼야 합니다!
+            // (ON 절로 들어갔기 때문에)
+            categoryId != null ? category.categoryId.eq(categoryId) : null,
+            (categoryId == null && bigCategoryId != null) ? bigCategory.bigCategoryId.eq(bigCategoryId) : null
+        )
+        .orderBy(
+            // 1순위: 내 클릭/좋아요 점수 (null이면 0점으로 처리)
+            recommendationScore.score.coalesce(BigDecimal.ZERO).desc(),
+            // 2순위: 내 피부 타입에 맞는 화장품 적합도 점수
+            skinTypeScore.coalesce(BigDecimal.ZERO).desc(),
+            // 3순위: 동점자 처리용
+            product.productId.desc()
+        )
+        .offset(pageable.getOffset())
+        .limit(pageable.getPageSize())
+        .fetch();
+
+    // 카운트 쿼리도 수정 (마찬가지로 LEFT JOIN으로 바꾸거나 조인을 아예 뺍니다)
+    JPAQuery<Long> countQuery = queryFactory
+        .select(product.count())
+        .from(product)
+        // 필터링 조건에 따라 조인 최적화
+        .join(product.category, category)
+        .join(category.bigCategory, bigCategory)
+        .where(
+            categoryId != null ? category.categoryId.eq(categoryId) : null,
+            (categoryId == null && bigCategoryId != null) ? bigCategory.bigCategoryId.eq(bigCategoryId) : null
+        );
+
+    return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
   }
 
 //  /**
