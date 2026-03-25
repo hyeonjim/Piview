@@ -52,6 +52,7 @@ class ChatSessionStore:
     def _log_backend_failure(self, exc: RuntimeError) -> None:
         if self._backend is self._memory_backend or self._fallback_warning_logged:
             return
+        self._backend = self._memory_backend
         logger.warning("Chat session store fell back to in-memory backend: %s", exc)
         self._fallback_warning_logged = True
 
