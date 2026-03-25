@@ -215,7 +215,7 @@ export default function RoutineAddModal({
           <div className="px-6 pb-6 overflow-y-auto flex-1 min-h-0">
             {/* 헤더 — 타이틀, 피뷰추천 버튼, 닫기 버튼 */}
             <div className="flex items-center justify-between mt-[15px]">
-              <h3 className="text-[14px] font-bold text-text-primary">
+              <h3 className="text-[16px] font-bold text-[#656563]">
                 {currentLabel}
               </h3>
               {/* 우측 버튼 그룹 */}
@@ -225,7 +225,7 @@ export default function RoutineAddModal({
                   onClick={handleRecommendationToggle}
                   disabled={recommendationMutation.isPending}
                   className={[
-                    "flex items-center gap-1 h-8 px-3 rounded-full cursor-pointer text-[13px] font-bold transition-all duration-200 disabled:cursor-not-allowed active:scale-[0.96] active:shadow-none",
+                    "flex items-center gap-1 h-8 px-3 rounded-full cursor-pointer text-[14px] font-bold transition-all duration-200 disabled:cursor-not-allowed active:scale-[0.96] active:shadow-none",
                     isRecommendMode
                       ? "bg-[#f3b8d3] text-[#fdfdfb] shadow-[0_3px_8px_rgba(166,157,146,0.95),inset_0_1px_0_rgba(255,255,255,0.18)]"
                       : "bg-[#f0b8d2] text-[#fdfdfb] shadow-[0_3px_7px_rgba(200,160,180,0.7),inset_0_1px_0_rgba(255,255,255,0.8)] hover:shadow-[0_4px_10px_rgba(200,160,180,0.85)] hover:bg-[#f7d6e5]",
@@ -240,7 +240,7 @@ export default function RoutineAddModal({
                       color={isRecommendMode ? "#f7ecaf" : "currentColor"}
                     />
                   )}
-                  AI 추천
+                  피뷰 추천
                 </button>
                 {/* 닫기 버튼 */}
                 <button
@@ -254,10 +254,10 @@ export default function RoutineAddModal({
 
             {/* 추천 모드 활성 시 안내 배너 */}
             {isRecommendMode && (
-              <div className="flex items-center gap-1.5 mt-2 px-2 py-1 rounded-xl text-[12px] font-medium bg-[#fff] text-[#555454]">
-                {displayProducts.length > 0
-                  ? `맞춤 추천 ${displayProducts.length}개`
-                  : "이 카테고리 추천 결과가 없어요"}
+              <div className="flex items-center gap-1.5 mt-2 px-2 rounded-xl text-[14px] font-semibold bg-[#fff] text-[#555454]">
+                {recommendedProducts.length > 0
+                  ? `사용자 맞춤형 ${recommendedProducts.length}개 제품 추천`
+                  : "추천 결과가 없습니다"}
               </div>
             )}
 

@@ -51,6 +51,8 @@ interface ProductCardProps {
   showEwg?: boolean;
   /** LCP 최적화 — 화면 상단 첫 카드에만 true (기본값 false) */
   priority?: boolean;
+  /** modal variant 이미지 컨테이너 추가 클래스 — 페이지별 이미지 정렬 override용 */
+  imageContainerClassName?: string;
 }
 
 // 안티에이징 태그를 제외할 카테고리 목록
@@ -334,6 +336,7 @@ export default function ProductCard({
   showEwg = true,
   priority = false,
   onToggleLike,
+  imageContainerClassName,
 }: ProductCardProps) {
   const { likeList, toggleLike } = useLike();
   const isLiked = !!likeList[String(id)];
@@ -551,7 +554,7 @@ export default function ProductCard({
         <div className="flex items-center gap-2">
           {/* 이미지 */}
           <div className="relative w-20 h-20 shrink-0">
-            <div className="w-full h-full flex items-center mt-5 rounded-xl bg-[#faf9f7] overflow-hidden">
+            <div className={`w-full h-full flex items-center rounded-xl bg-[#faf9f7] overflow-hidden${imageContainerClassName ? ` ${imageContainerClassName}` : " mt-5"}`}>
               <ProductImage
                 imageUrl={imageUrl}
                 name={name}
