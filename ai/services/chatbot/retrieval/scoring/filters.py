@@ -1,5 +1,9 @@
 from services.chatbot.search.vector import ProductSearchResult
-from services.chatbot.retrieval.constants import AVOID_TERM_ALIASES, SAFE_FREE_PATTERNS
+from services.chatbot.retrieval.constants import (
+    AVOID_TERM_ALIASES,
+    NOISY_AVOID_ALIASES,
+    SAFE_FREE_PATTERNS,
+)
 from services.chatbot.retrieval.parsers import has_strict_filter_request
 
 
@@ -29,7 +33,9 @@ def matches_specific_avoid_term(
             result.document.lower(),
         ]
     )
-    aliases = AVOID_TERM_ALIASES.get(avoid_term, ())
+    aliases = tuple(
+        alias for alias in AVOID_TERM_ALIASES.get(avoid_term, ()) if alias.lower() not in NOISY_AVOID_ALIASES
+    )
     safe_patterns = SAFE_FREE_PATTERNS.get(avoid_term, ())
     if any(pattern.lower() in search_targets for pattern in safe_patterns):
         return False

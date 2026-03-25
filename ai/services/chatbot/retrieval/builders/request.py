@@ -6,6 +6,11 @@
 
 from services.chatbot.domain import QueryRequest
 from services.chatbot.retrieval.parsers import canonicalize_avoid_term, extract_preferred_categories
+from services.chatbot.search.product_data import (
+    build_ingredient_preview,
+    product_search_data_repository,
+    truncate_text,
+)
 
 
 FOLLOW_UP_HINTS: tuple[str, ...] = (
@@ -22,11 +27,27 @@ FOLLOW_UP_HINTS: tuple[str, ...] = (
     "아까",
 )
 
+ANCHOR_PRODUCT_HINTS: tuple[str, ...] = (
+    "이거",
+    "그거",
+    "이 제품",
+    "그 제품",
+    "방금",
+    "아까",
+    "지금 본",
+    "비슷",
+    "유사",
+    "대신",
+    "보다",
+    "같은",
+)
+
 
 def collect_applied_filters(
     request: QueryRequest,
     session_context: dict[str, object] | None = None,
     used_session_memory: bool = False,
+    used_anchor_products: bool = False,
 ) -> dict[str, object]:
     """응답에 다시 노출할 filter snapshot만 수집합니다."""
     applied_filters: dict[str, object] = {}
@@ -51,6 +72,8 @@ def collect_applied_filters(
         applied_filters["currentProductId"] = effective_product_id
     if used_session_memory:
         applied_filters["usedSessionMemory"] = True
+    if used_anchor_products:
+        applied_filters["usedAnchorProducts"] = True
 
     if not request.user_context:
         return applied_filters
@@ -67,19 +90,18 @@ def collect_applied_filters(
 def build_search_query(
     request: QueryRequest,
     session_context: dict[str, object] | None = None,
-) -> tuple[str, bool]:
+) -> tuple[str, bool, bool]:
     """검색용 질의 문자열을 만듭니다.
 
     카테고리 의도가 이미 질문에 명시돼 있으면 원문을 우선합니다.
     그렇지 않으면 userContext의 고민/회피성분/피부타입을 덧붙여 검색 recall을 보완합니다.
     """
     message = request.message.strip()
-    if extract_preferred_categories(message):
-        return message, False
-
     parts = [message]
+    has_explicit_category = bool(extract_preferred_categories(message))
     used_session_memory = False
-    if _should_use_session_memory(message, session_context):
+    used_anchor_products = False
+    if not has_explicit_category and _should_use_session_memory(message, session_context):
         recent_messages = [
             str(item).strip()
             for item in (session_context or {}).get("recentUserMessages", [])
@@ -89,7 +111,12 @@ def build_search_query(
             parts.append(f"직전 대화 주제: {recent_messages[-1]}")
             used_session_memory = True
 
-    if request.user_context:
+    anchor_context_lines = _build_anchor_product_context(message, request, session_context)
+    if anchor_context_lines:
+        parts.extend(anchor_context_lines)
+        used_anchor_products = True
+
+    if not has_explicit_category and request.user_context:
         if request.user_context.skin_problems:
             parts.append(f"피부고민: {', '.join(request.user_context.skin_problems)}")
         if request.user_context.disliked_ingredient_names and not any(
@@ -100,7 +127,7 @@ def build_search_query(
             parts.append(f"피하고 싶은 성분: {', '.join(request.user_context.disliked_ingredient_names)}")
         if request.user_context.my_skin_type:
             parts.append(f"피부타입: {request.user_context.my_skin_type}")
-    return "\n".join(parts), used_session_memory
+    return "\n".join(parts), used_session_memory, used_anchor_products
 
 
 def build_excluded_product_ids(request: QueryRequest) -> set[int]:
@@ -131,3 +158,81 @@ def _ingredient_already_mentioned(ingredient: str, message: str) -> bool:
     if canonical_term and canonical_term.lower() in lowered_message:
         return True
     return False
+
+
+def _build_anchor_product_context(
+    message: str,
+    request: QueryRequest,
+    session_context: dict[str, object] | None,
+) -> list[str]:
+    anchor_product_ids = _collect_anchor_product_ids(request, session_context)
+    if not anchor_product_ids or not _should_use_anchor_product_context(message, anchor_product_ids):
+        return []
+
+    try:
+        rows = product_search_data_repository.fetch_products_for_indexing(
+            product_ids=anchor_product_ids[:2]
+        )
+    except Exception:
+        return []
+
+    if not rows:
+        return []
+
+    lines = ["기준 상품 정보:"]
+    for row in rows[:2]:
+        parts = [f"- 상품명 {row.name}"]
+        if row.brand_name:
+            parts.append(f"브랜드 {row.brand_name}")
+        if row.category_name:
+            parts.append(f"카테고리 {row.category_name}")
+        if row.concern_names:
+            parts.append(f"관련 고민 {', '.join(row.concern_names[:3])}")
+        description = truncate_text(row.description, 140)
+        if description:
+            parts.append(f"설명 {description}")
+        ingredient_preview = build_ingredient_preview(
+            row.ingredient_text_ko,
+            row.ingredient_text_en,
+            limit=6,
+        )
+        if ingredient_preview:
+            parts.append(f"전성분 메모 {ingredient_preview}")
+        lines.append(" / ".join(parts))
+    return lines
+
+
+def _collect_anchor_product_ids(
+    request: QueryRequest,
+    session_context: dict[str, object] | None,
+) -> list[int]:
+    candidate_ids: list[int] = []
+    if request.client_context and request.client_context.current_product_id is not None:
+        candidate_ids.append(request.client_context.current_product_id)
+    elif session_context and session_context.get("currentProductId") is not None:
+        candidate_ids.append(int(session_context["currentProductId"]))
+
+    if session_context:
+        for product_id in session_context.get("recentProductIds", []):
+            try:
+                candidate_ids.append(int(product_id))
+            except (TypeError, ValueError):
+                continue
+
+    ordered_ids: list[int] = []
+    seen: set[int] = set()
+    for product_id in candidate_ids:
+        if product_id in seen:
+            continue
+        seen.add(product_id)
+        ordered_ids.append(product_id)
+    return ordered_ids
+
+
+def _should_use_anchor_product_context(message: str, anchor_product_ids: list[int]) -> bool:
+    if not anchor_product_ids:
+        return False
+    collapsed_message = message.lower().replace(" ", "")
+    if any(hint.replace(" ", "") in collapsed_message for hint in ANCHOR_PRODUCT_HINTS):
+        return True
+    return len(collapsed_message) <= 24

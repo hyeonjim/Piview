@@ -5,9 +5,8 @@ from services.chatbot.retrieval.constants import (
     AVOID_TERM_ALIASES,
     CANONICAL_AVOID_TERM_LOOKUP,
     CONCERN_HINTS,
+    NOISY_AVOID_ALIASES,
 )
-
-NOISY_AVOID_ALIASES = {"오일"}
 
 
 def extract_preferred_concerns(request: QueryRequest) -> set[str]:

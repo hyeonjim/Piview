@@ -6,6 +6,7 @@ from services.chatbot.retrieval.constants.category import (
 from services.chatbot.retrieval.constants.filters import (
     AVOID_TERM_ALIASES,
     CANONICAL_AVOID_TERM_LOOKUP,
+    NOISY_AVOID_ALIASES,
     SAFE_FREE_PATTERNS,
     STRICT_FILTER_PATTERNS,
 )
@@ -43,6 +44,7 @@ __all__ = [
     "HEAVY_TEXTURE_TERMS",
     "LIGHTWEIGHT_HINTS",
     "MISSING_CATEGORY_MARKERS",
+    "NOISY_AVOID_ALIASES",
     "NON_SKINCARE_TERMS",
     "SAFE_FREE_PATTERNS",
     "SIMILAR_CANDIDATE_HINTS",
