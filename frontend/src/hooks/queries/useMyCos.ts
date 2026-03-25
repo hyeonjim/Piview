@@ -3,18 +3,15 @@
  * 보유제품 TanStack Query 훅
  *
  * useMyCosQuery    — GET  /my-cos 목록 조회
- * useAddMyCos      — POST /my-cos 추가 (409 중복 처리 포함)
+ * useAddMyCos      — POST /my-cos/{productId} 추가 (409 중복 처리 포함)
  * useRemoveMyCos   — DELETE /my-cos/{id} 삭제 (낙관적 업데이트)
- *
- * ⚠️ 연동 전까지 페이지에서 import해도 아무 영향 없음
- *    페이지에서 useOwnedStore 대신 이 훅으로 교체하는 시점에 실제 연동됨
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { myCosService } from "@/services/myCos";
 import { queryKeys } from "@/lib/queryKeys";
-import type { MyCosItem, MyCosCreateRequest } from "@/types/product";
+import type { MyCosItem } from "@/types/product";
 
 // ── GET /my-cos ──────────────────────────────────────────────────
 
@@ -32,7 +29,7 @@ export function useAddMyCos() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: MyCosCreateRequest) => myCosService.add(body),
+    mutationFn: (productId: number) => myCosService.add(productId),
 
     onSuccess: () => {
       // 추가 성공 → 목록 캐시 무효화해서 재조회
@@ -62,7 +59,9 @@ export function useRemoveMyCos() {
       await queryClient.cancelQueries({ queryKey: queryKeys.myCos });
 
       // 현재 캐시 스냅샷 저장 (에러 시 롤백용)
-      const previousList = queryClient.getQueryData<MyCosItem[]>(queryKeys.myCos);
+      const previousList = queryClient.getQueryData<MyCosItem[]>(
+        queryKeys.myCos,
+      );
 
       // 캐시에서 즉시 제거
       queryClient.setQueryData<MyCosItem[]>(queryKeys.myCos, (old = []) =>

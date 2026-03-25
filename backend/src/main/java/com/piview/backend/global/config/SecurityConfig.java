@@ -58,6 +58,7 @@ public class SecurityConfig {
             .requestMatchers("/api/v1/auth/**", "/api/v1/oauth2/**").permitAll()
             .requestMatchers("/api/v1/auth/refresh").permitAll()
             .requestMatchers("/api/v1/ocr/**").permitAll()
+            .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ASYNC).permitAll()
             .requestMatchers("/auth/dev/**").permitAll()
             .requestMatchers("/api/v1/s3/**", "/api/s3/**", "/api/v1/s3/**").permitAll()
 
@@ -111,9 +112,6 @@ public class SecurityConfig {
 
     // Authorization 헤더 노출 추가
     configuration.setExposedHeaders(List.of("Set-Cookie", "Authorization"));
-
-    // 프론트엔드가 쿠키만 읽을 수 있게 Set-Cookie만 남기기
-    configuration.setExposedHeaders(List.of("Set-Cookie"));
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);

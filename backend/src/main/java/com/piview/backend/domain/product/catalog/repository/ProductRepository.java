@@ -1,6 +1,8 @@
 package com.piview.backend.domain.product.catalog.repository;
 
 import com.piview.backend.domain.product.entity.Product;
+import com.piview.backend.domain.skin.common.SkinTypeEnum;
+import com.piview.backend.domain.skin.survey.entity.SurveyGender;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,23 +28,23 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
         WHERE p.category_id IN (:categoryIds) -- 루틴 스텝에 맞는 여러 소카테고리 ID 검색
           
           -- 1. 여성 유저일 경우 '남성 화장품(ID: 4)' 카테고리 원천 차단
-          AND NOT (:gender = 'women' AND c.big_category_id = 4)
+          AND NOT (:#{#gender.name()} = 'WOMEN' AND c.big_category_id = 4)
           
           -- 2. 피부타입별 상위 25% 컷오프
           AND (
-               (:skinType = 'subuji' AND p.score_subuji >= 36) OR
-               (:skinType = 'dry' AND p.score_dry >= 66) OR
-               (:skinType = 'oily' AND p.score_oily >= 70) OR
-               (:skinType = 'combination' AND p.score_combination >= 39)
+               (:#{#skinType.name()} = 'subuji' AND p.score_subuji >= 36) OR
+               (:#{#skinType.name()} = 'dry' AND p.score_dry >= 66) OR
+               (:#{#skinType.name()} = 'oily' AND p.score_oily >= 70) OR
+               (:#{#skinType.name()} = 'combination' AND p.score_combination >= 39)
           )
           
           -- 3. 코메도제닉 필터 (수부지/지성일 때 모공 막는 성분 무조건 Drop!)
-          AND (p.has_comedogenic = FALSE OR :skinType IN ('dry', 'combination'))
+          AND (p.has_comedogenic = FALSE OR :#{#skinType.name()} IN ('dry', 'combination'))
           
         ORDER BY (
-            CASE WHEN :skinType = 'subuji' THEN p.score_subuji
-                 WHEN :skinType = 'dry' THEN p.score_dry
-                 WHEN :skinType = 'oily' THEN p.score_oily
+            CASE WHEN :#{#skinType.name()} = 'subuji' THEN p.score_subuji
+                 WHEN :#{#skinType.name()} = 'dry' THEN p.score_dry
+                 WHEN :#{#skinType.name()} = 'oily' THEN p.score_oily
                  ELSE p.score_combination END
             + COALESCE(pcc.total_concern_score, 0)
         ) DESC 
@@ -50,8 +52,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     """)
     List<Product> findInitialRecommendations(
             @Param("categoryIds") List<Long> categoryIds,
-            @Param("skinType") String skinType,
-            @Param("gender") String gender,
+            @Param("skinType") SkinTypeEnum skinType,
+            @Param("gender") SurveyGender gender,
             @Param("concernId") Long concernId
     );
 
@@ -67,23 +69,23 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
         WHERE p.category_id IN (:categoryIds)
           
           -- [기본 필터] 남성 화장품(ID: 4) 제외, 상위 25% 컷오프, 코메도제닉 필터
-          AND NOT (:gender = 'women' AND c.big_category_id = 4)
+          AND NOT (:#{#gender.name()} = 'WOMEN' AND c.big_category_id = 4)
           AND (
-               (:skinType = 'subuji' AND p.score_subuji >= 36) OR
-               (:skinType = 'dry' AND p.score_dry >= 66) OR
-               (:skinType = 'oily' AND p.score_oily >= 70) OR
-               (:skinType = 'combination' AND p.score_combination >= 39)
+               (:#{#skinType.name()} = 'subuji' AND p.score_subuji >= 36) OR
+               (:#{#skinType.name()} = 'dry' AND p.score_dry >= 66) OR
+               (:#{#skinType.name()} = 'oily' AND p.score_oily >= 70) OR
+               (:#{#skinType.name()} = 'combination' AND p.score_combination >= 39)
           )
-          AND (p.has_comedogenic = FALSE OR :skinType IN ('dry', 'combination'))
+          AND (p.has_comedogenic = FALSE OR :#{#skinType.name()} IN ('dry', 'combination'))
           
           -- 4. 이미 장바구니(Redis)에 담긴 제품은 추천에서 제외!
           AND p.product_id NOT IN (:currentIds)
           
         ORDER BY (
             -- [기본 점수] 피부타입 점수 + 피부고민 점수
-            (CASE WHEN :skinType = 'subuji' THEN p.score_subuji
-                  WHEN :skinType = 'dry' THEN p.score_dry
-                  WHEN :skinType = 'oily' THEN p.score_oily
+            (CASE WHEN :#{#skinType.name()} = 'subuji' THEN p.score_subuji
+                  WHEN :#{#skinType.name()} = 'dry' THEN p.score_dry
+                  WHEN :#{#skinType.name()} = 'oily' THEN p.score_oily
                   ELSE p.score_combination END)
             + COALESCE(pcc.total_concern_score, 0)
             
@@ -95,8 +97,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     """)
     List<Product> findRoutineCandidates(
             @Param("categoryIds") List<Long> categoryIds,
-            @Param("skinType") String skinType,
-            @Param("gender") String gender,
+            @Param("skinType") SkinTypeEnum skinType,
+            @Param("gender") SurveyGender gender,
             @Param("concernId") Long concernId,
             @Param("targetM") double targetM,
             @Param("targetO") double targetO,
