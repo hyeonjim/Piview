@@ -2,8 +2,6 @@ import asyncio
 import logging
 
 from core.settings import Settings
-from services.chatbot.retrieval.scoring.category import category_priority
-from services.chatbot.retrieval.scoring.filters import matches_avoid_term
 from services.chatbot.search.keyword import product_keyword_service
 from services.chatbot.search.vector import product_vector_service
 from services.chatbot.retrieval.workflow.models import RetrievalPlan, SearchExecutionResult
@@ -49,10 +47,8 @@ async def execute_retrieval_searches(
         for result in keyword_results
         if result.product_id not in plan.excluded_product_ids
     ]
-    filtered_vector_results = _apply_retrieval_constraints(vector_results, plan)
-    filtered_keyword_results = _apply_retrieval_constraints(filtered_keyword_results, plan)
     return SearchExecutionResult(
-        vector_results=filtered_vector_results,
+        vector_results=list(vector_results),
         keyword_results=filtered_keyword_results,
         had_search_error=had_search_error,
     )
@@ -76,28 +72,3 @@ def _resolve_search_limit(plan: RetrievalPlan, settings: Settings) -> int:
 
 def _resolve_keyword_prefilter_limit(search_limit: int, settings: Settings) -> int:
     return max(settings.chatbot_keyword_prefilter_limit, search_limit * 12)
-
-
-def _apply_retrieval_constraints(
-    results,
-    plan: RetrievalPlan,
-):
-    if not results:
-        return []
-
-    filtered_results = list(results)
-    required_categories = plan.preferred_categories or plan.missing_categories
-    if required_categories:
-        category_matched = [
-            result for result in filtered_results if category_priority(result, required_categories) > 0
-        ]
-        filtered_results = category_matched
-
-    if plan.avoid_terms:
-        filtered_results = [
-            result
-            for result in filtered_results
-            if not matches_avoid_term(result, plan.avoid_terms)
-        ]
-
-    return filtered_results
