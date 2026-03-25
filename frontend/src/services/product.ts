@@ -19,6 +19,7 @@ import type {
   RecommendRequestDto,
   RecommendResponseDto,
   ProductAiSummaryResponse,
+  AiComparisonResponse,
 } from "@/types/product";
 
 export const productService = {
@@ -103,5 +104,13 @@ export const productService = {
   getAiSummary: (productId: number): Promise<ProductAiSummaryResponse> =>
     client
       .get<ApiResponse<ProductAiSummaryResponse>>(`/products/${productId}/summary`)
+      .then((res) => res.data.data),
+
+  // GET /products/compare/ai-summary?productIds=[id1,id2] — 비교 AI 줄글 분석
+  getAiComparisonSummary: (productIds: [number, number]): Promise<AiComparisonResponse> =>
+    client
+      .get<ApiResponse<AiComparisonResponse>>("/products/compare/ai-summary", {
+        params: { productIds },
+      })
       .then((res) => res.data.data),
 };

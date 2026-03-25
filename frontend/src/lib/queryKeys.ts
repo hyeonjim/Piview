@@ -50,6 +50,10 @@ export const queryKeys = {
   productAiSummary: (productId: number) =>
     ["productAiSummary", productId] as const,
 
+  // 비교 AI 분석 — GET /products/compare/ai-summary
+  productAiComparison: (productIds: [number, number]) =>
+    ["productAiComparison", ...productIds] as const,
+
   // 피부 분석 상태 — GET /skin/analysis/{analysisId}
   analysisStatus: (analysisId: string) =>
     ["analysisStatus", analysisId] as const,
