@@ -55,9 +55,10 @@ AVOID_TERM_ALIASES: dict[str, tuple[str, ...]] = {
         "오렌지껍질오일",
         "페퍼민트오일",
         "유칼립투스잎오일",
-        "오일",
     ),
 }
+
+NOISY_AVOID_ALIASES: tuple[str, ...] = ("오일",)
 
 SAFE_FREE_PATTERNS: dict[str, tuple[str, ...]] = {
     "향료": ("무향료", "향료 무첨가", "fragrance-free", "fragrance free", "parfum-free"),

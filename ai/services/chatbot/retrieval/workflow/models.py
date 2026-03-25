@@ -17,6 +17,7 @@ class RetrievalPlan:
     excluded_product_ids: set[int] = field(default_factory=set)
     search_query: str = ""
     used_session_memory: bool = False
+    used_anchor_products: bool = False
     needs_clarifying_question: bool = False
 
 

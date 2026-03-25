@@ -36,7 +36,7 @@ def build_retrieval_plan(
             needs_clarifying_question=True,
         )
 
-    search_query, used_session_memory = build_search_query(
+    search_query, used_session_memory, used_anchor_products = build_search_query(
         request,
         session_context=session_context,
     )
@@ -47,6 +47,7 @@ def build_retrieval_plan(
             request,
             session_context=session_context,
             used_session_memory=used_session_memory,
+            used_anchor_products=used_anchor_products,
         ),
         preferred_categories=preferred_categories,
         preferred_concerns=extract_preferred_concerns(request),
@@ -56,4 +57,5 @@ def build_retrieval_plan(
         excluded_product_ids=build_excluded_product_ids(request),
         search_query=search_query,
         used_session_memory=used_session_memory,
+        used_anchor_products=used_anchor_products,
     )
