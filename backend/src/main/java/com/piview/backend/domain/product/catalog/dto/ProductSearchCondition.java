@@ -13,7 +13,8 @@ public class ProductSearchCondition {
     private String q;   // 제품명, 브랜드 통합 검색
 
     private Integer bigCategoryId;
-    private Long categoryId;
+//    private Long categoryId;
+    private List<Long> categoryId;
 //    private String skinType;
     private SkinTypeEnum skinType;
     private List<Long> concernIds;
