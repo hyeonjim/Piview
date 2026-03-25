@@ -8,6 +8,7 @@ import { ROUTINE_STEPS } from "@/constants/routineSteps";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
 import ProductCard from "@/components/common/ProductCard";
 import DataSourcesSection from "@/components/features/home/DataSourcesSection";
+import ChatbotWidget from "@/components/common/ChatbotWidget";
 
 // 시간대별 인사말과 아이콘 반환
 function getGreeting(): { text: string; icon: React.ReactNode } {
@@ -158,6 +159,7 @@ export default function HomePage() {
 
       {/* 참고 데이터소스 — 성분 분석 기반 사이트 */}
       <DataSourcesSection />
+
     </div>
   );
 }

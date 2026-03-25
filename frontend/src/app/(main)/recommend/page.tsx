@@ -1,43 +1,29 @@
 "use client";
 
-import { useState } from "react";
 import { PAGE_SIZE } from "@/constants/pagination";
-import { FilterModal } from "@/components/common/FilterModal";
 import { CategoryFilter } from "@/components/common/CategoryFilter";
 import ProductCard from "@/components/common/ProductCard";
 import { Pagination } from "@/components/common/Pagination";
 import EmptyState from "@/components/common/EmptyState";
-import SearchBar from "@/components/common/SearchBar";
 import CompareModal from "@/components/common/CompareModal";
 import type { ProductViewModel } from "@/types/product/myCos";
-import { useCompare, useProductSearch } from "@/hooks";
+import { useCompare, useDynamicRecommendations } from "@/hooks";
 import { useAddMyCos, useRemoveMyCos, useMyCosQuery } from "@/hooks";
 import { useRecommendStore } from "@/stores/useRecommendStore";
-import { SlidersHorizontal, Search } from "lucide-react";
-
-import { toSkinTypeParam } from "@/utils/enumConvert";
-import { PRICE_MAX } from "@/types/common";
-import type { SkinType } from "@/types/user";
+import { Sparkles } from "lucide-react";
 
 export default function RecommendPage() {
   const {
-    searchQuery,
     selectedBigCategoryId,
     selectedCategoryId,
-    filter,
     page,
     maxKnownPage,
-    setSearchQuery,
     setSelectedBigCategoryId,
     setSelectedCategoryId,
-    setFilter,
-    resetFilter,
     setPage,
   } = useRecommendStore();
 
-  const [showFilter, setShowFilter] = useState(false);
-
-  // ── API 연동 ───────────────────────────────────────────────────
+  // ── 동적 추천 API ─────────────────────────────────────────────
   const {
     products,
     hasNext,
@@ -46,35 +32,11 @@ export default function RecommendPage() {
     isFetching,
     isPlaceholderData,
     isError,
-  } = useProductSearch({
-    q: searchQuery.trim() || undefined,
+  } = useDynamicRecommendations({
     bigCategoryId: selectedBigCategoryId ?? undefined,
     categoryId: selectedCategoryId ?? undefined,
-    skinType: filter.filterSkin
-      ? toSkinTypeParam(filter.filterSkin as SkinType)
-      : undefined,
-    tagIds:
-      Object.keys(filter.tagIds).filter((k) => filter.tagIds[Number(k)])
-        .length > 0
-        ? Object.keys(filter.tagIds)
-            .filter((k) => filter.tagIds[Number(k)])
-            .map(Number)
-        : undefined,
-    brandIds:
-      Object.keys(filter.brandIds).filter((k) => filter.brandIds[Number(k)])
-        .length > 0
-        ? Object.keys(filter.brandIds)
-            .filter((k) => filter.brandIds[Number(k)])
-            .map(Number)
-        : undefined,
-    minPrice: filter.priceRange[0] > 0 ? filter.priceRange[0] : undefined,
-    maxPrice:
-      filter.priceRange[1] < PRICE_MAX ? filter.priceRange[1] : undefined,
-    page: page - 1,
-    size: PAGE_SIZE,
   });
 
-  // Slice 기반 페이지네이션
   const totalPages =
     totalCount !== null
       ? Math.ceil(totalCount / PAGE_SIZE)
@@ -87,7 +49,7 @@ export default function RecommendPage() {
     window.scrollTo(0, 0);
   };
 
-  // 보유 상태 — API 연동
+  // 보유 상태
   const { data: myCosData = [] } = useMyCosQuery();
   const { mutate: addMyCos } = useAddMyCos();
   const { mutate: removeMyCos } = useRemoveMyCos();
@@ -111,15 +73,6 @@ export default function RecommendPage() {
     canCompare,
   } = useCompare<ProductViewModel>();
 
-  const filterCount =
-    (filter.filterSkin ? 1 : 0) +
-    (Object.values(filter.tagIds).some(Boolean) ? 1 : 0) +
-    (Object.values(filter.brandIds).some(Boolean) ? 1 : 0) +
-    (filter.priceRange[0] > 0 || filter.priceRange[1] < PRICE_MAX ? 1 : 0);
-
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-  };
   const handleBigCategorySelect = (bigCategoryId: number | null) => {
     setSelectedBigCategoryId(bigCategoryId);
   };
@@ -144,38 +97,18 @@ export default function RecommendPage() {
         />
       )}
 
-      {/* 상단 헤더 — 미세한 웜 베이지 */}
+      {/* 상단 헤더 */}
       <div className="bg-[#faf8f5] pt-[5px]">
         <div className="px-5 pt-4 pb-3">
-          <h1 className="mt-[3px] mb-3.5 text-[20px] font-semibold text-[#635446] leading-[1.2]">
-            Recommend
-          </h1>
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <SearchBar
-                value={searchQuery}
-                onChange={handleSearchChange}
-                placeholder="제품명, 브랜드 검색..."
-              />
-            </div>
-            {/* 필터 버튼 — 미니멀 스타일 */}
-            <button
-              onClick={() => setShowFilter(true)}
-              className={`flex items-center gap-1.5 h-[38px] px-3.5 rounded-full text-[13px] font-medium border cursor-pointer transition-all active:scale-[0.96] shrink-0 ${
-                filterCount > 0
-                  ? "bg-[#5a504a] border-[#5a504a] text-white"
-                  : "bg-[#faf8f5] border-[#e8e4e0] text-[#8c8277]"
-              }`}
-            >
-              <SlidersHorizontal size={14} />
-              필터
-              {filterCount > 0 && (
-                <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-white/20 text-[10px] font-semibold">
-                  {filterCount}
-                </span>
-              )}
-            </button>
+          <div className="flex items-center gap-2">
+            <Sparkles size={16} className="text-[#a69d92]" />
+            <h1 className="mt-[3px] text-[20px] font-semibold text-[#635446] leading-[1.2]">
+              Recommend
+            </h1>
           </div>
+          <p className="text-[13px] text-[#a69d92] mt-1">
+            나의 탐색 기록을 반영한 맞춤 추천
+          </p>
         </div>
       </div>
 
@@ -237,9 +170,9 @@ export default function RecommendPage() {
         ) : products.length === 0 ? (
           <div className="mt-2 rounded-2xl border border-[#eee] bg-white">
             <EmptyState
-              icon={Search}
-              title="해당하는 제품이 없어요"
-              description="검색어나 필터를 바꿔보세요"
+              icon={Sparkles}
+              title="아직 추천 데이터가 없어요"
+              description="제품을 둘러보면 맞춤 추천이 생겨요"
             />
           </div>
         ) : (
@@ -283,16 +216,6 @@ export default function RecommendPage() {
         page={page}
         totalPages={totalPages}
         onChange={handlePageChange}
-      />
-
-      <FilterModal
-        open={showFilter}
-        onClose={() => setShowFilter(false)}
-        state={filter}
-        onChange={(next) => {
-          setFilter(next);
-        }}
-        onReset={resetFilter}
       />
     </div>
   );

@@ -10,8 +10,8 @@
 import axios, { type InternalAxiosRequestConfig } from "axios";
 import { useUserStore } from "@/stores";
 import { useSearchStore } from "@/stores/useSearchStore";
-import { useRecommendStore } from "@/stores/useRecommendStore";
 import { useLikeStore } from "@/stores";
+import { useRecommendStore } from "@/stores/useRecommendStore";
 
 // _retry 플래그 타입 확장 (TypeScript 에러 방지)
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
@@ -49,8 +49,7 @@ function clearAllStores() {
   useUserStore.getState().clearUser();
   useSearchStore.getState().setSearchQuery("");
   useSearchStore.getState().resetFilter();
-  useRecommendStore.getState().setSearchQuery("");
-  useRecommendStore.getState().resetFilter();
+  useRecommendStore.getState().resetPage();
   useLikeStore.getState().initFromServer([]);
   useLikeStore.getState().setPage(1);
 }
