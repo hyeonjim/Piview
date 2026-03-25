@@ -38,7 +38,7 @@ export interface ProductFilterMetaResponse {
 export interface ProductSearchParams {
   q?: string;
   bigCategoryId?: number;
-  categoryId?: number;
+  categoryId?: number | number[]; // 단일 또는 배열 — 루틴 추가 모달 남성 복합 탭 대응
   skinType?: string; // "dry" | "oily" | ... — enumConvert.ts로 변환 후 전송
   tagIds?: number[];
   brandIds?: number[];

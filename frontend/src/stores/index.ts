@@ -17,3 +17,5 @@ export { useSurveyStore } from "./useSurveyStore";
 export { useLikeStore } from "./useLikeStore";
 export { useSearchStore } from "./useSearchStore";
 export { useRecommendStore } from "./useRecommendStore";
+export { useChatbotStore } from "./useChatbotStore";
+export type { ChatMessage } from "./useChatbotStore";

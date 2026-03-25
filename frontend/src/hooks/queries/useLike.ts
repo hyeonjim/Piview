@@ -9,6 +9,7 @@
  */
 
 import { useEffect } from "react";
+import { trackEvent } from "@/utils/trackEvent";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { productService } from "@/services/product";
 import { useLikeStore } from "@/stores";
@@ -48,8 +49,10 @@ export function useToggleLike() {
       storeToggle(productId);
     },
 
-    onSuccess: () => {
+    onSuccess: (_data, productId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.likedProducts });
+      // LIKE 이벤트 전송 — 낙관적 업데이트 후 실제 성공 시점에 기록
+      trackEvent("LIKE", productId);
     },
 
     onError: (_err, productId) => {

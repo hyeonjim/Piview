@@ -10,10 +10,10 @@
  */
 
 import Image from "next/image";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { formatPrice } from "@/utils/format";
 import { SkinTypeTag } from "@/components/common/ProductCard";
-import { useProductCompare } from "@/hooks";
+import { useProductCompare, useAiComparisonSummary } from "@/hooks";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
 import type { ProductViewModel } from "@/types/product/myCos";
 
@@ -70,6 +70,13 @@ export default function CompareModal({
       : null;
 
   const { data: compareData, isLoading } = useProductCompare(productIds);
+
+  // AI 비교 분석 — 모달 열릴 때 자동 호출
+  const {
+    data: aiComparison,
+    isLoading: isAiLoading,
+    isError: isAiError,
+  } = useAiComparisonSummary(productIds);
 
   const apiLeft = compareData?.products?.[0];
   const apiRight = compareData?.products?.[1];
@@ -369,25 +376,32 @@ export default function CompareModal({
             </div>
           )}
 
-          {/* AI 비교 분석 — bg-brand-pale, border-border-warm 전역 변수 */}
+          {/* AI 비교 분석 */}
           <div className="rounded-xl bg-brand-pale border border-border-warm p-4 mt-4">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-[16px] font-semibold text-[#686666]">
                 AI 비교 분석
               </span>
             </div>
-            <p className="m-0 text-sm leading-relaxed text-text-hint">
-              <strong className="font-semibold text-text-primary">
-                {leftProduct.name}
-              </strong>
-              은 수분 공급과 진정에 강점이 있어 건조하거나 민감한 피부에
-              적합합니다. 반면{" "}
-              <strong className="font-semibold text-text-primary">
-                {rightProduct.name}
-              </strong>
-              은 피지 조절과 안티에이징 효과가 뛰어나 복합성·지성 피부에 더
-              효과적입니다.
-            </p>
+
+            {isAiLoading && (
+              <div className="flex items-center gap-2 py-2 text-text-muted">
+                <Loader2 size={15} className="animate-spin opacity-50 shrink-0" />
+                <p className="text-xs">AI가 두 제품을 비교 분석하고 있어요...</p>
+              </div>
+            )}
+
+            {isAiError && !isAiLoading && (
+              <p className="text-xs text-text-muted">
+                AI 비교 분석을 불러오지 못했어요.
+              </p>
+            )}
+
+            {aiComparison && !isAiLoading && (
+              <p className="text-sm leading-relaxed text-text-hint">
+                {aiComparison.comparisonText}
+              </p>
+            )}
           </div>
         </div>
       </div>

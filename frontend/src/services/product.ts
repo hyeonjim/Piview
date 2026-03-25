@@ -19,6 +19,7 @@ import type {
   RecommendRequestDto,
   RecommendResponseDto,
   ProductAiSummaryResponse,
+  AiComparisonResponse,
 } from "@/types/product";
 
 export const productService = {
@@ -99,9 +100,26 @@ export const productService = {
       )
       .then((res) => res.data.data),
 
+  // GET /api/v1/dynamic/recommendations — 행동 데이터 기반 맞춤 추천
+  getDynamicRecommendations: (params: {
+    bigCategoryId?: number;
+    categoryId?: number;
+  }): Promise<ProductPageResponse> =>
+    client
+      .get<ApiResponse<ProductPageResponse>>("/dynamic/recommendations", { params })
+      .then((res) => res.data.data),
+
   // GET /products/{productId}/summary — AI 3줄 요약 + 맞춤 추천 메시지
   getAiSummary: (productId: number): Promise<ProductAiSummaryResponse> =>
     client
       .get<ApiResponse<ProductAiSummaryResponse>>(`/products/${productId}/summary`)
+      .then((res) => res.data.data),
+
+  // GET /products/compare/ai-summary?productIds=[id1,id2] — 비교 AI 줄글 분석
+  getAiComparisonSummary: (productIds: [number, number]): Promise<AiComparisonResponse> =>
+    client
+      .get<ApiResponse<AiComparisonResponse>>("/products/compare/ai-summary", {
+        params: { productIds },
+      })
       .then((res) => res.data.data),
 };
