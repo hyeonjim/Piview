@@ -53,14 +53,14 @@ export default function HomePage() {
       <div className="bg-[#faf8f5] pt-3.75 pb-7 px-5">
         <div className="flex items-center gap-1.5">
           {greeting.icon}
-          <span className="text-base font-normal text-[#95846e] tracking-[0.12em] uppercase italic [font-family:var(--font-english),serif]">
+          <span className="text-base font-normal text-[#99774b] tracking-[0.12em] uppercase italic [font-family:var(--font-english),serif]">
             {greeting.text}
           </span>
         </div>
         <h1 className="my-2 text-[18px] font-semibold text-[#6c6b66] tracking-[-0.5px] leading-[1.2]">
           {nickname}님,
         </h1>
-        <p className="mt-1 text-sm text-[#7e7972]">
+        <p className="mt-1 text-sm text-[#4e4b47]">
           오늘의 스킨케어 루틴을 확인하세요
         </p>
       </div>

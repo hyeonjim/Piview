@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Settings, Wrench, Mars, Venus } from "lucide-react";
+import { Settings, Mars, Venus } from "lucide-react";
 import { toast } from "sonner";
 import {
   useDraftQuery,
@@ -28,9 +28,7 @@ export default function MyPage() {
   const userName = useUserStore((store) => store.user?.name ?? "User");
   const profileImageUrl = useUserStore((store) => store.user?.imageUrl ?? null);
 
-  // 개발 도구 - 성별별 루틴 확인용 (나중에 삭제 예정)
   const currentGender = useUserStore(selectGender);
-  const toggleGender = useUserStore((store) => store.toggleGenderForTest);
 
   const savedSkinType = useUserStore(selectSkinType);
   const savedConcerns = useUserStore((store) => store.concerns);
@@ -146,15 +144,6 @@ export default function MyPage() {
                 ) : currentGender === "WOMEN" ? (
                   <Venus size={18} className="text-[#c97b9e] shrink-0" />
                 ) : null}
-                {/* 개발 도구 - 성별 스위칭 버튼 (나중에 삭제 예정) */}
-                <button
-                  onClick={toggleGender}
-                  className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-50 border border-amber-200 text-[12px] font-semibold text-amber-700 hover:bg-amber-100 transition-colors"
-                  aria-label="성별 토글 (개발용)"
-                >
-                  <Wrench size={12} />
-                  {currentGender === "MEN" ? "Men" : "Women"}
-                </button>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Link href="/mypage/settings">
