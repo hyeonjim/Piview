@@ -5,6 +5,7 @@ import com.piview.backend.domain.product.entity.CategoryIdealScore;
 import com.piview.backend.domain.product.entity.Product;
 import com.piview.backend.domain.product.recommend.dto.RoutineContextDto;
 import com.piview.backend.domain.product.recommend.repository.CategoryIdealScoreRepository;
+import com.piview.backend.domain.skin.common.SkinTypeEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,7 @@ public class RoutineSessionService {
     /**
      * Redis에서 가져온 장바구니 제품 ID 목록을 바탕으로 현재 유수분 오차 및 상극 성분을 계산합니다.
      */
-    public RoutineContextDto buildRoutineContext(List<Long> currentRoutineProductIds, String skinType) {
+    public RoutineContextDto buildRoutineContext(List<Long> currentRoutineProductIds, SkinTypeEnum skinType) {
         RoutineContextDto context = new RoutineContextDto();
         context.setCurrentRoutineIds(currentRoutineProductIds); // 현재 담긴 ID 목록 세팅
 

@@ -24,8 +24,8 @@ export const GENDER_QUESTION: SurveyQuestion = {
   id: -1,
   question: "성별을\n알려주세요",
   options: [
-    { icon: "👩", text: "여성", value: "women" },
-    { icon: "👨", text: "남성", value: "men" },
+    { icon: "👩", text: "여성", value: "WOMEN" },
+    { icon: "👨", text: "남성", value: "MEN" },
   ],
 };
 

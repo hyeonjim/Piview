@@ -44,8 +44,8 @@ public class OcrRecognitionService {
         this.fastApiBaseUrl = fastApiBaseUrl;
 
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(3000); // 파이썬 서버와 연결하는 데 3초 이상 걸리면 포기
-        requestFactory.setReadTimeout(10000);   // 파이썬 서버가 분석 결과를 10초 안에 안 주면 포기
+        requestFactory.setConnectTimeout(20000); // 파이썬 서버와 연결하는 데 3초 이상 걸리면 포기
+        requestFactory.setReadTimeout(20000);   // 파이썬 서버가 분석 결과를 10초 안에 안 주면 포기
 
         this.restClient = RestClient.builder()
                 .requestFactory(requestFactory)
@@ -137,6 +137,7 @@ public class OcrRecognitionService {
         return OcrRecognitionResponseDto.builder()
                 .isSuccess(true)
                 .productId(bestProduct.getProductId())
+                .categoryId(bestProduct.getCategory() != null ? bestProduct.getCategory().getCategoryId() : null)
                 .brandName(bestProduct.getBrand().getBrandName())
                 .productName(bestProduct.getName())
                 .matchAccuracy(bestScore)

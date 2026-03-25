@@ -18,7 +18,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useUserStore } from "@/stores/useUserStore";
+import { useUserStore } from "@/stores";
 import { authService } from "@/services/auth";
 import { getCookieAndClear } from "@/services/client";
 
