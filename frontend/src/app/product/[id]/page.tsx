@@ -39,13 +39,14 @@ function getEwgColor(grade: number | null | undefined): {
   if (grade == null)
     return { bg: "#F5F5F5", text: "#9E9E9E", barColor: "#E0E0E0" };
   if (grade <= 2)
-    return { bg: "#E8F5E9", text: "#2E7D32", barColor: "#4CAF50" };
+    return { bg: "#E8F5E9", text: "#2E7D32", barColor: "var(--color-ewg-safe)" };
   if (grade <= 6)
-    return { bg: "#FFF8E1", text: "#F57F17", barColor: "#FFB300" };
-  return { bg: "#FFEBEE", text: "#C62828", barColor: "#F44336" };
+    return { bg: "#FFF8E1", text: "#F57F17", barColor: "var(--color-ewg-caution)" };
+  return { bg: "#FFEBEE", text: "#C62828", barColor: "var(--color-ewg-danger)" };
 }
 import { getRoutineSteps } from "@/constants/routineSteps";
 import CompareModal from "@/components/common/CompareModal";
+import CompareIcon from "@/components/common/CompareIcon";
 import { SkinTypeTag } from "@/components/common/ProductCard";
 import type { ProductViewModel } from "@/types/product/myCos";
 import { useMainRoutineQuery } from "@/hooks";
@@ -63,15 +64,18 @@ function AllergenIcon() {
   );
 }
 
-function EwgDropIcon({ color }: { color: string }) {
+function EwgDropIcon({ color, score }: { color: string; score: number | null }) {
   return (
-    <svg width="22" height="26" viewBox="0 0 22 26" fill="none">
-      <path
-        d="M11 0C11 0 0 12 0 17.5C0 22.2 4.9 25.5 11 25.5C17.1 25.5 22 22.2 22 17.5C22 12 11 0 11 0Z"
-        fill={color}
-        fillOpacity={0.85}
-      />
-    </svg>
+    <div
+      className="flex items-center justify-center w-7 h-7 text-white font-bold shrink-0"
+      style={{
+        backgroundColor: color,
+        borderRadius: "20% 50% 50% 50%",
+        fontSize: score !== null && score >= 10 ? "10px" : "13px",
+      }}
+    >
+      {score ?? "?"}
+    </div>
   );
 }
 
@@ -268,7 +272,16 @@ function ProductDetailInner() {
       ],
   );
   const skinTypes = (productData.skinTypes ?? []).map(fromSkinTypeEnum);
-  const tags = productData.tags ?? [];
+  const ANTI_AGING_EXCLUDED_CATEGORIES = new Set([
+    "스킨/토너", "로션/에멀젼", "미스트", "토너패드", "선케어", "쉐이빙",
+  ]);
+  const shouldExcludeAntiAging =
+    !!effectiveCategoryName &&
+    (ANTI_AGING_EXCLUDED_CATEGORIES.has(effectiveCategoryName) ||
+      effectiveCategoryName.startsWith("클렌징"));
+  const tags = (productData.tags ?? []).filter(
+    (tag) => !(shouldExcludeAntiAging && tag === "안티에이징"),
+  );
   const ingredients = productData.ingredients ?? [];
   const ingredientsKr = ingredients
     .map((i) => i.nameKo)
@@ -429,7 +442,7 @@ function ProductDetailInner() {
           className="size-9 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer transition-all active:scale-[0.93]"
         >
           <Heart
-            size={20}
+            size={24}
             className="transition-all duration-150"
             style={{
               color: resolvedIsLiked ? "#E8715A" : "#d9d5d0",
@@ -441,7 +454,7 @@ function ProductDetailInner() {
 
       <div className="pb-8">
         {/* 이미지 카드 — 깔끔한 화이트 배경 */}
-        <div className="mx-4 mb-3 rounded-2xl bg-white overflow-hidden border border-[#f0ede8]" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+        <div className="mx-4 mb-3 rounded-2xl bg-white overflow-hidden" style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 3px 7px rgba(180,155,120,0.09), 0 7px 18px rgba(0,0,0,0.06), 0 14px 32px rgba(180,155,120,0.04)" }}>
           <div className="relative w-full aspect-[2/1]">
             {productData.imageUrl ? (
               <Image
@@ -481,10 +494,10 @@ function ProductDetailInner() {
                   setShowRoutineCompare(true);
                 }
               }}
-              className="flex items-center gap-1 px-2 h-6.5 rounded-lg border cursor-pointer transition-all active:scale-[0.96] text-[12px] font-semibold shrink-0 border-[#dedbd9] bg-[#f3f0eb] text-[#5c5852]"
+              className="flex items-center gap-1 px-2 h-6.5 rounded-lg border cursor-pointer transition-all active:scale-[0.96] text-[12px] font-medium shrink-0 border-[#dedbd9] bg-[#f7f5f2] text-[#807d7a]"
             >
-              <Scale size={11} />
-              내루틴 비교하기
+              <CompareIcon size={13} color="#5c5852" />
+              내루틴과 비교하기
             </button>
           </div>
 
@@ -502,7 +515,7 @@ function ProductDetailInner() {
                   {tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-block text-[11px] mb-1 mr-1 font-medium px-1.5 py-[1px] rounded border bg-[#f8f8f6] text-[#7a664e]"
+                      className="inline-block text-[12px] mb-1 mr-1.5 font-medium px-1.5 py-px border rounded-3xl bg-[#fcfcfc] text-[#7a664e]"
                     >
                       {tag}
                     </span>
@@ -531,10 +544,9 @@ function ProductDetailInner() {
               )}
             </div>
             <div className="flex gap-2 shrink-0">
-              {gender !== "WOMEN" && (
-                <button
+              <button
                   onClick={handleAddRoutine}
-                  className={`flex items-center justify-center gap-1 w-20 h-8 rounded-lg border-none cursor-pointer transition-all active:scale-[0.98] text-[12px] font-semibold ${routineAdded ? "bg-[#f5f3f0] text-[#a69d92]" : "bg-[#5a504a] text-white"}`}
+                  className={`flex items-center justify-center gap-1 w-22 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[13px] font-semibold ${routineAdded ? "bg-(--color-bg-beige) text-(--color-brand)" : "bg-[#f1eae6] text-[#807d7d]"}`}
                 >
                   {routineAdded ? (
                     <>
@@ -546,12 +558,19 @@ function ProductDetailInner() {
                     </>
                   )}
                 </button>
-              )}
               <button
                 onClick={handleToggleOwned}
-                className={`flex items-center justify-center gap-1 w-17 h-7 rounded-lg cursor-pointer transition-all active:scale-[0.98] text-[12px] font-semibold border ${owned ? "border-[#bcb5ac] bg-[#eae8e6] text-[#4d453c]" : "border-[#dbd6cf] bg-[#f4f4f1] text-[#7c7874]"}`}
+                className={`flex items-center justify-center gap-1 w-22 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[13px] font-semibold ${owned ? "bg-(--color-bg-beige) text-(--color-brand)" : "bg-[#f1eae6] text-[#807d7d]"}`}
               >
-                {owned ? "보유중" : "보유추가"}
+                {owned ? (
+                  <>
+                    <Check size={11} /> 보유중
+                  </>
+                ) : (
+                  <>
+                    <Plus size={11} /> 보유추가
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -572,7 +591,7 @@ function ProductDetailInner() {
         )}
 
         {/* AI 요약 카드 */}
-        <div className="mx-5 rounded-2xl bg-white p-4 mb-3">
+        <div className="mx-5 rounded-2xl bg-white p-4 my-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[16px] font-semibold text-[#636262]">
               AI 분석
@@ -635,14 +654,14 @@ function ProductDetailInner() {
               <p className="text-[12px] text-[#a69d92] mt-0.5">총 {total}개 성분</p>
             </div>
             <div className="flex h-3 gap-0.5 rounded-full overflow-hidden mb-3">
-              <div className="rounded bg-ewg-safe" style={{ flex: safe }} />
+              <div className="rounded bg-[#b1dda1]" style={{ flex: safe }} />
               <div
-                className="rounded bg-ewg-caution"
+                className="rounded bg-[#ddd9a1]"
                 style={{ flex: caution }}
               />
               {danger > 0 && (
                 <div
-                  className="rounded bg-ewg-danger"
+                  className="rounded bg-[#df8282]"
                   style={{ flex: danger }}
                 />
               )}
@@ -676,16 +695,16 @@ function ProductDetailInner() {
                 },
               ].map((grade) => (
                 <div key={grade.sub}>
-                  <p className="text-[11px] text-[#a69d92] mb-0.5">
+                  <p className="text-[13px] text-[#7d766e] mb-0.5">
                     • {grade.label}
                   </p>
                   <p
-                    className="text-[18px] font-bold"
+                    className="text-[16px] font-bold"
                     style={{ color: grade.color }}
                   >
                     {grade.count}
                   </p>
-                  <p className="text-[12px] text-[#bfb6aa] mt-0.5">
+                  <p className="text-[13px] text-[#736b62] mt-0.5">
                     {grade.sub}
                   </p>
                 </div>
@@ -791,8 +810,13 @@ function ProductDetailInner() {
                       <p className="font-semibold text-[#6e6358] text-[14px] mb-2">
                         제품 설명
                       </p>
-                      <p className="text-[13px] text-[#2a2118] leading-[1.7]">
-                        {productData.description}
+                      <p className="text-[13px] text-[#2a2118] font-medium leading-[1.7]">
+                        {productData.description.split("-").map((line, index) => (
+                          <span key={index}>
+                            {index > 0 && <><br />-</>}
+                            {line}
+                          </span>
+                        ))}
                       </p>
                     </div>
                   )}
@@ -869,27 +893,21 @@ function ProductDetailInner() {
                           className="flex items-start gap-3 px-5 py-3.5 not-last:border-b not-last:border-[#f5f3f0]"
                         >
                           <div className="flex flex-col items-center shrink-0 w-7">
-                            <EwgDropIcon color={ewgColorInfo.barColor} />
-                            <span
-                              className="text-[10px] font-semibold mt-0.5"
-                              style={{ color: ewgColorInfo.text }}
-                            >
-                              {resolvedScore ?? "?"}
-                            </span>
+                            <EwgDropIcon color={ewgColorInfo.barColor} score={resolvedScore} />
                           </div>
                           <div className="flex-1 min-w-0">
                             {/* 성분명 한글 */}
-                            <p className="text-[13px] font-semibold text-[#2a2118] leading-[1.3]">
+                            <p className="text-[14px] font-semibold text-[#45403a] leading-[1.6]">
                               {ingredient.nameKo}
                             </p>
                             {ingredient.nameEn && (
-                              <p className="text-[11px] text-[#bfb6aa] my-0.5">
+                              <p className="text-[12px] text-[#aea08e] mb-0.5">
                                 {ingredient.nameEn}
                               </p>
                             )}
                             {/* 기능 칩 */}
                             {functionChips.length > 0 && (
-                              <p className="text-[11px] text-[#a69d92] leading-[1.6] mt-0.5">
+                              <p className="text-[13px] text-[#656360] font-medium leading-[1.6] mt-0.5">
                                 {functionChips.join(", ")}
                               </p>
                             )}

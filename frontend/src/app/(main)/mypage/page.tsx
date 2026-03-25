@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Settings, Wrench } from "lucide-react";
+import { Settings, Mars, Venus } from "lucide-react";
 import { toast } from "sonner";
 import {
   useDraftQuery,
@@ -17,7 +17,6 @@ import { useUserStore, selectSkinType, selectGender } from "@/stores";
 import { useSearchStore } from "@/stores/useSearchStore";
 import { useRecommendStore } from "@/stores/useRecommendStore";
 import { useLikeStore } from "@/stores";
-import { authService } from "@/services/auth";
 
 export default function MyPage() {
   const router = useRouter();
@@ -28,31 +27,14 @@ export default function MyPage() {
   const userName = useUserStore((store) => store.user?.name ?? "User");
   const profileImageUrl = useUserStore((store) => store.user?.imageUrl ?? null);
 
-  // 개발 도구 - 성별별 루틴 확인용 (나중에 삭제 예정)
   const currentGender = useUserStore(selectGender);
-  const toggleGender = useUserStore((store) => store.toggleGenderForTest);
 
   const savedSkinType = useUserStore(selectSkinType);
   const savedConcerns = useUserStore((store) => store.concerns);
   const savedAvoidContents = useUserStore((store) => store.avoidContents);
   const hasSkinProfile = !!savedSkinType;
 
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-    } finally {
-      // 유저
-      useUserStore.getState().clearUser();
-      // 검색/추천/찜 — 다른 계정 로그인 시 이전 상태 잔존 방지
-      useSearchStore.getState().setSearchQuery("");
-      useSearchStore.getState().resetFilter();
-      useRecommendStore.getState().setSearchQuery("");
-      useRecommendStore.getState().resetFilter();
-      useLikeStore.getState().initFromServer([]);
-      useLikeStore.getState().setPage(1);
-      router.push("/splash");
-    }
-  };
+
 
   // ── 루틴 Draft API 연동 ────────────────────────────────────────────
   // 현재 draft에 담긴 productId 목록 — RoutineAddModal 중복 방지용
@@ -106,7 +88,7 @@ export default function MyPage() {
   };
 
   return (
-    <div className="flex-1 bg-[#F5F2EC]">
+    <div className="flex-1 bg-[#f8f5ef]">
       <div className="pt-3.75 px-5 pb-5 relative border-b border-border">
         <div className="flex items-center gap-4">
           <div
@@ -137,18 +119,15 @@ export default function MyPage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
-                <p className="text-[20px] font-bold text-[#555454] tracking-[-0.3px]">
+                <p className="text-[18px] font-semibold text-[#545452] tracking-[-0.3px]">
                   {userName}님
                 </p>
-                {/* 개발 도구 - 성별 스위칭 버튼 (나중에 삭제 예정) */}
-                <button
-                  onClick={toggleGender}
-                  className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-50 border border-amber-200 text-[12px] font-semibold text-amber-700 hover:bg-amber-100 transition-colors"
-                  aria-label="성별 토글 (개발용)"
-                >
-                  <Wrench size={12} />
-                  {currentGender === "MEN" ? "Men" : "Women"}
-                </button>
+                {/* 성별 아이콘 */}
+                {currentGender === "MEN" ? (
+                  <Mars size={18} className="text-[#7ba7c9] shrink-0" />
+                ) : currentGender === "WOMEN" ? (
+                  <Venus size={18} className="text-[#c97b9e] shrink-0" />
+                ) : null}
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Link href="/mypage/settings">
@@ -170,14 +149,14 @@ export default function MyPage() {
             ) : (
               <div className="flex flex-wrap gap-1 mt-2">
                 {/* 피부 타입 배지 — ProductCard SkinTypeTag 배경색 스타일 */}
-                <span className="text-[12px] py-0.5 px-2 rounded-full border bg-[#e9ded3] text-[#514a42] font-semibold">
+                <span className="text-[13px] py-0.5 px-2 rounded-full border bg-[#ebe1d8] text-[#463f37] font-semibold">
                   {savedSkinType}
                 </span>
                 {/* 피부 고민 배지 — ProductCard EffectTag 스타일 */}
                 {savedConcerns.map((concern, index) => (
                   <span
                     key={`${concern}-${index}`}
-                    className="text-[12px] py-0.5 px-2 rounded-full border bg-[#f0eded] text-[#7a664e] font-semibold"
+                    className="text-[13px] py-0.5 px-2 rounded-full border bg-[#f8f9fa] text-[#65543f] font-semibold"
                   >
                     {concern}
                   </span>
@@ -203,18 +182,18 @@ export default function MyPage() {
           <button
             key={tabType}
             onClick={() => setActiveTab(tabType)}
-            className={`relative flex-1 pt-3 pb-2.75 text-base flex items-center justify-center gap-1.5 cursor-pointer bg-transparent border-none transition-colors duration-200 -mb-px ${
+            className={`relative flex-1 pt-3 pb-1.5 text-[16px] flex items-center justify-center gap-1.5 cursor-pointer bg-transparent border-none transition-colors duration-200 -mb-px ${
               activeTab === tabType
-                ? "font-semibold text-[#535353]"
+                ? "font-bold text-[#5a5a58]"
                 : "font-semibold text-text-faint"
             }`}
           >
-            {tabType === "routine" ? <>My routine</> : <>My product</>}
+            {tabType === "routine" ? <>내 루틴</> : <>내 제품</>}
             {/* 선택 인디케이터 — 하단 라인 */}
             <span
-              className={`absolute bottom-0 left-0 right-0 h-[2.5px] rounded-t-full transition-all duration-200 ${
+              className={`absolute bottom-0 left-0 right-0 h-[1px] rounded-t-full transition-all duration-200 ${
                 activeTab === tabType
-                  ? "bg-brand opacity-100"
+                  ? "bg-brand opacity-90"
                   : "bg-transparent opacity-0"
               }`}
             />

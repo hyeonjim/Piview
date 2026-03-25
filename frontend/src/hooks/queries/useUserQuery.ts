@@ -11,7 +11,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authService } from "@/services/auth";
 import { useUserStore } from "@/stores";
 import { queryKeys } from "@/lib/queryKeys";
-import { fromSkinTypeEnum } from "@/utils/enumConvert";
+import { fromSkinTypeEnum, concernDbToLabel } from "@/utils/enumConvert";
 import type { User, UserProfileUpdateRequest } from "@/types/user";
 
 /**
@@ -42,12 +42,12 @@ export function useUserQuery() {
   // TanStack Query v5는 onSuccess 미지원 — useEffect로 Zustand store에 동기화
   useEffect(() => {
     if (query.data) {
-      // mySkinType 영문→한글 변환 후 store 저장
       setUser(normalizeUser(query.data));
-      // skinProblems(string[]) → concerns store 동기화
-      setConcerns(query.data.skinProblems ?? []);
+      // skinProblems(DB값) → label 변환 후 concerns store 동기화
+      // oauth redirect에서 이미 저장되어 있어도, 최신 API 응답으로 덮어씀
+      setConcerns((query.data.skinProblems ?? []).map(concernDbToLabel));
     }
-  }, [query.data, setUser, setConcerns]);
+  }, [query.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return query;
 }
@@ -66,7 +66,7 @@ export function useUpdateProfile() {
     // 성공 시 mySkinType 변환 + store 업데이트 + TanStack Query 캐시 무효화
     onSuccess: (updatedUser) => {
       setUser(normalizeUser(updatedUser));
-      setConcerns(updatedUser.skinProblems ?? []);
+      setConcerns((updatedUser.skinProblems ?? []).map(concernDbToLabel));
       queryClient.invalidateQueries({ queryKey: queryKeys.user });
     },
   });
