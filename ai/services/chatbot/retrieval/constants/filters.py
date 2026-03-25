@@ -80,3 +80,10 @@ STRICT_FILTER_PATTERNS: tuple[str, ...] = (
     "오일도 없",
     "빼고 추천",
 )
+
+
+CANONICAL_AVOID_TERM_LOOKUP: dict[str, str] = {
+    alias.lower(): canonical_term
+    for canonical_term, aliases in AVOID_TERM_ALIASES.items()
+    for alias in (canonical_term, *aliases)
+}

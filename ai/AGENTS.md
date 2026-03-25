@@ -108,6 +108,127 @@ services/chatbot/
       models.py     --- 키워드 검색용 데이터 모델
 ```
 
+## Chatbot Features
+
+현재 챗봇은 "자유 대화형 LLM"보다는 "상품 탐색 보조형 챗봇"에 가깝다.
+핵심 기능은 아래와 같다.
+
+- 사용자 질문을 받아 상품 추천형 응답 또는 일반 가이드 응답을 만든다.
+- `userContext`가 있으면 피부타입, 피부 고민, 비선호 성분, 보유 상품 정보를 검색과 답변에 반영한다.
+- `sessionId`가 있으면 직전 질문/답변/추천 상품을 짧게 이어받아 follow-up 질문 품질을 높인다.
+- 질문이 너무 넓으면 바로 추천하지 않고 되묻는 `clarifying_question` 응답으로 보낸다.
+- 검색 결과가 있으면 상품 카드용 후보 목록과 간단한 추천 멘트를 같이 만든다.
+- 검색 결과가 약하거나 없으면 특정 상품을 지어내지 않고 일반적인 선택 기준만 안내한다.
+- 벡터 검색과 키워드 검색을 함께 쓰고, 도메인 룰로 최종 순위를 다시 조정한다.
+- 향료, 알코올, 에센셜오일 같은 회피 조건은 "완전 검증"이 아니라 랭킹 보정 신호로 사용한다.
+
+## Chatbot End-to-End Flow
+
+챗봇 요청은 대략 아래 순서로 처리된다.
+
+```text
+1. router가 요청을 받는다.
+2. generation/service.py가 sessionId를 만들거나 기존 세션을 읽는다.
+3. retrieval/service.py가 질문을 검색용 query로 바꾼다.
+4. vector 검색과 keyword 검색을 병렬로 실행한다.
+5. scoring/fusion.py가 두 검색 결과를 합치고 도메인 룰로 순위를 조정한다.
+6. retrieval 결과를 product candidates, citations, retrieval_context로 정리한다.
+7. generation/llm.py가 LLM에 최종 답변 생성을 요청한다.
+8. LLM이 실패하면 generation/templates.py의 템플릿 답변으로 fallback 한다.
+9. 최종 answer와 추천 상품 ID를 세션에 저장한다.
+10. API 응답으로 answer, products, filters, citations를 반환한다.
+```
+
+## Chatbot Inputs Used Internally
+
+챗봇은 요청의 모든 값을 동일하게 쓰지 않는다.
+실제로 내부 로직에서 의미 있게 보는 값은 아래 정도다.
+
+- 사용자 질문 본문
+- `sessionId`
+- 화면 문맥 `screen`, `currentProductId`
+- `userId`
+- 피부타입 힌트
+- 피부 고민 목록
+- 보유 상품 ID 목록
+- 비선호 성분 목록
+- 비선호 상품 ID 목록
+
+이 값들은 크게 세 군데에서 쓰인다.
+
+- retrieval query 조립
+- 응답 문맥 보강
+- 세션 메모리 저장/복원
+
+## Chatbot Response Types
+
+- `product_recommendation`
+  - 검색 후보가 있고, 상품 추천형 응답이 가능한 경우
+- `clarifying_question`
+  - 질문이 너무 넓거나 의도가 모호해서 한 번 더 좁혀야 하는 경우
+- `informational`
+  - 검색 후보가 약하거나 없어도 일반 가이드는 줄 수 있는 경우
+- `fallback`
+  - 생성 단계 실패 등으로 템플릿 기반 안전 응답으로 내려간 경우
+
+## Chatbot Session Behavior
+
+현재 세션은 "전체 대화 로그 저장"이 아니라 "짧은 follow-up 보조 메모리"에 가깝다.
+
+- 기본 저장 단위는 `sessionId`
+- 저장 내용은 최근 사용자 질문, 최근 답변, 최근 추천 상품 ID, 화면 문맥, `userId`
+- 최근 2개 질문/답변과 최근 3턴 기준 상품 ID 정도만 프롬프트에 다시 넣는다
+- TTL이 지나면 세션은 만료된다
+- 설정이 `redis`면 Redis에 저장하고, 아니면 프로세스 메모리에 저장한다
+- Redis를 쓰면 서버 재시작이나 멀티 인스턴스 환경에서도 follow-up 문맥을 유지할 수 있다
+
+세션은 아래 흐름으로 동작한다.
+
+```text
+1. 요청이 들어오면 sessionId 기준으로 기존 세션을 조회한다.
+2. 최근 질문/답변/상품 ID와 화면 문맥을 session snapshot으로 만든다.
+3. retrieval과 generation이 이 snapshot을 보조 문맥으로 사용한다.
+4. 응답이 끝나면 현재 질문, 최종 답변, 추천 상품 ID를 다시 저장한다.
+5. TTL이 지나면 세션은 자동 만료된다.
+```
+
+현재 구현상 세션의 목적은 아래 두 가지다.
+
+- "이거 말고 다른 거", "방금 추천한 것 중에" 같은 follow-up 질문 해석
+- 현재 어떤 화면과 어떤 상품 맥락에서 질문했는지 유지
+
+## Backend Design Requirement
+
+현재 챗봇 세션을 제대로 쓰려면 AI 서버 단독 설계만으로는 부족하고,
+백엔드 측 대화방/세션 관리 설계도 함께 필요하다.
+
+- AI 서버는 `sessionId`가 오면 그 값을 기준으로 세션을 이어간다
+- `sessionId`가 없으면 새 세션을 만든다
+- 따라서 백엔드는 자기 쪽의 채팅방, 대화, 상담 단위와 AI의 `sessionId`를 매핑해서 저장해야 한다
+- 같은 채팅방에서 후속 질문을 보낼 때는 이전에 받은 `sessionId`를 다시 보내야 한다
+- `userId`만으로 세션을 이어붙이면 여러 채팅방이 섞일 수 있으므로, 세션 키는 별도 conversation 단위로 보는 편이 맞다
+
+즉 현재 구조는 "첫 질문 POST에서 세션 생성 -> 이후 같은 채팅방에서 같은 `sessionId`로 계속 POST"를 전제로 한다.
+
+## Chatbot Ranking Notes
+
+검색 결과는 단순 cosine similarity 순서로 끝나지 않는다.
+
+- vector 검색은 의미 기반 유사도에 강하다
+- keyword 검색은 상품명, 브랜드명, 카테고리, 설명의 직접 매칭에 강하다
+- `fusion.py`에서 두 결과를 합친 뒤 카테고리 의도, 루틴 공백, 회피 성분, 문맥 불일치 같은 규칙으로 재정렬한다
+- 따라서 "답변 품질이 이상하다"는 문제는 LLM보다 retrieval/scoring에서 먼저 보는 편이 맞다
+
+## Chatbot Limitations
+
+현재 챗봇은 아래를 의도적으로 하지 않는다.
+
+- 성분 완전 검증을 보장하지 않는다
+- 상품 ID만 보고 보이지 않은 상세 정보를 추측하지 않는다
+- 의료 진단처럼 피부 상태를 단정하지 않는다
+- 검색 후보가 없는데 임의로 상품명을 만들어내지 않는다
+- 긴 상담형 멀티턴 메모리를 유지하지 않는다
+
 ## Chatbot Reading Order
 
 챗봇 흐름을 빠르게 보려면 아래 순서가 좋다.

@@ -4,6 +4,8 @@
 이 서비스는 상위 retrieval 계층이 쓰는 공개 메서드만 제공합니다.
 """
 
+import asyncio
+
 from core.settings import get_settings
 from services.chatbot.search.vector.mapper import map_query_results
 from services.chatbot.search.vector.models import IndexedProductDocument, ProductSearchResult
@@ -65,6 +67,14 @@ class ProductVectorService:
             include=["documents", "metadatas", "distances"],
         )
         return map_query_results(raw, limit, exclude_product_ids)
+
+    async def query_async(
+        self,
+        query_text: str,
+        limit: int,
+        exclude_product_ids: set[int] | None = None,
+    ) -> list[ProductSearchResult]:
+        return await asyncio.to_thread(self.query, query_text, limit, exclude_product_ids)
 
 
 product_vector_service = ProductVectorService()

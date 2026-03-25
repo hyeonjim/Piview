@@ -1,7 +1,13 @@
 """피부 고민 / 회피 성분 파싱 로직."""
 
 from schemas.chatbot import ChatbotQueryRequest
-from services.chatbot.retrieval.constants import AVOID_TERM_ALIASES, CONCERN_HINTS
+from services.chatbot.retrieval.constants import (
+    AVOID_TERM_ALIASES,
+    CANONICAL_AVOID_TERM_LOOKUP,
+    CONCERN_HINTS,
+)
+
+NOISY_AVOID_ALIASES = {"오일"}
 
 
 def extract_preferred_concerns(request: ChatbotQueryRequest) -> set[str]:
@@ -40,12 +46,39 @@ def filter_display_concerns(
 def extract_avoid_terms(request: ChatbotQueryRequest) -> set[str]:
     """질문과 userContext에서 회피해야 할 대표 성분 그룹을 추출합니다."""
     avoid_terms: set[str] = set()
-    for term in AVOID_TERM_ALIASES:
-        if term in request.message:
-            avoid_terms.add(term)
+    avoid_terms.update(extract_avoid_terms_from_text(request.message))
 
     if request.userContext:
         for term in request.userContext.dislikedIngredientNames:
-            if term in AVOID_TERM_ALIASES:
-                avoid_terms.add(term)
+            avoid_terms.update(extract_avoid_terms_from_text(term))
     return avoid_terms
+
+
+def extract_avoid_terms_from_text(text: str) -> set[str]:
+    normalized = text.lower()
+    matched: set[str] = set()
+
+    for alias, canonical_term in CANONICAL_AVOID_TERM_LOOKUP.items():
+        if alias in NOISY_AVOID_ALIASES:
+            continue
+        if alias in normalized:
+            matched.add(canonical_term)
+    return matched
+
+
+def canonicalize_avoid_term(text: str) -> str | None:
+    normalized = text.lower().strip()
+    if not normalized:
+        return None
+    if normalized in CANONICAL_AVOID_TERM_LOOKUP and normalized not in NOISY_AVOID_ALIASES:
+        return CANONICAL_AVOID_TERM_LOOKUP[normalized]
+
+    for canonical_term, aliases in AVOID_TERM_ALIASES.items():
+        if canonical_term in normalized:
+            return canonical_term
+        if any(
+            alias.lower() not in NOISY_AVOID_ALIASES and alias.lower() in normalized
+            for alias in aliases
+        ):
+            return canonical_term
+    return None

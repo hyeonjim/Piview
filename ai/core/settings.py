@@ -25,6 +25,8 @@ class Settings(BaseModel):
     chatbot_vector_collection: str
     chatbot_candidate_pool: int
     chatbot_keyword_top_k: int
+    chatbot_keyword_prefilter_limit: int
+    chatbot_keyword_cache_ttl_sec: int
     chatbot_hybrid_rrf_k: int
     chatbot_vector_weight: float
     chatbot_keyword_weight: float
@@ -32,6 +34,14 @@ class Settings(BaseModel):
     chatbot_description_max_chars: int
     chatbot_ingredient_limit: int
     chatbot_concern_limit: int
+    chatbot_session_ttl_sec: int
+    chatbot_session_max_turns: int
+    chatbot_session_backend: str
+    chatbot_redis_url: str | None = None
+    chatbot_redis_host: str | None = None
+    chatbot_redis_port: int
+    chatbot_redis_password: str | None = None
+    chatbot_redis_db: int
     chatbot_db_host: str
     chatbot_db_port: int
     chatbot_db_user: str
@@ -75,6 +85,8 @@ def get_settings() -> Settings:
         chatbot_vector_collection=os.getenv("CHATBOT_VECTOR_COLLECTION", "products"),
         chatbot_candidate_pool=int(os.getenv("CHATBOT_CANDIDATE_POOL", "15")),
         chatbot_keyword_top_k=int(os.getenv("CHATBOT_KEYWORD_TOP_K", "15")),
+        chatbot_keyword_prefilter_limit=int(os.getenv("CHATBOT_KEYWORD_PREFILTER_LIMIT", "250")),
+        chatbot_keyword_cache_ttl_sec=int(os.getenv("CHATBOT_KEYWORD_CACHE_TTL_SEC", "300")),
         chatbot_hybrid_rrf_k=int(os.getenv("CHATBOT_HYBRID_RRF_K", "60")),
         chatbot_vector_weight=float(os.getenv("CHATBOT_VECTOR_WEIGHT", "0.7")),
         chatbot_keyword_weight=float(os.getenv("CHATBOT_KEYWORD_WEIGHT", "0.3")),
@@ -82,6 +94,14 @@ def get_settings() -> Settings:
         chatbot_description_max_chars=int(os.getenv("CHATBOT_DESCRIPTION_MAX_CHARS", "280")),
         chatbot_ingredient_limit=int(os.getenv("CHATBOT_INGREDIENT_LIMIT", "20")),
         chatbot_concern_limit=int(os.getenv("CHATBOT_CONCERN_LIMIT", "5")),
+        chatbot_session_ttl_sec=int(os.getenv("CHATBOT_SESSION_TTL_SEC", "1800")),
+        chatbot_session_max_turns=int(os.getenv("CHATBOT_SESSION_MAX_TURNS", "6")),
+        chatbot_session_backend=os.getenv("CHATBOT_SESSION_BACKEND", "memory").lower(),
+        chatbot_redis_url=os.getenv("CHATBOT_REDIS_URL") or None,
+        chatbot_redis_host=os.getenv("CHATBOT_REDIS_HOST") or None,
+        chatbot_redis_port=int(os.getenv("CHATBOT_REDIS_PORT", "6379")),
+        chatbot_redis_password=os.getenv("CHATBOT_REDIS_PASSWORD") or None,
+        chatbot_redis_db=int(os.getenv("CHATBOT_REDIS_DB", "0")),
         chatbot_db_host=os.getenv("CHATBOT_DB_HOST", os.getenv("MYSQL_HOST", "127.0.0.1")),
         chatbot_db_port=int(os.getenv("CHATBOT_DB_PORT", os.getenv("MYSQL_PORT", "3306"))),
         chatbot_db_user=os.getenv("CHATBOT_DB_USER", os.getenv("MYSQL_USER", "")),
