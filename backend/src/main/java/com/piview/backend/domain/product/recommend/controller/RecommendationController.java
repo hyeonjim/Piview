@@ -54,7 +54,7 @@ public class RecommendationController {
         );
 
         // 4. 추천 알고리즘
-        List<Product> recommendedProducts = recommendationService.getRecommendations(request, routineContext);
+        List<Product> recommendedProducts = recommendationService.getRecommendations(userId, request, routineContext);
 
         // 5. 프론트엔드용 DTO 변환 후 응답
         List<Long> recommendedProductIds = recommendedProducts.stream()
