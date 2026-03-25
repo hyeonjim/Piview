@@ -1,14 +1,14 @@
 """
 routers/ocr.py
 ──────────────
-POST /ocr/extract-text  ← 성분표 사진 → EasyOCR 추출 + Gemini 정제
+POST /ocr/extract-text  ← 성분표 사진 → EasyOCR 추출 + GMS 모델 정제
 
 파이프라인:
   이미지 업로드
     → OpenCV 인메모리 디코딩
     → EasyOCR 텍스트 + BBox 추출
     → 높이 기준 상위 7개 필터링
-    → Gemini로 노이즈 제거 + 한글 공식명 변환
+    → GMS 프록시를 통해 모델 호출 후 노이즈 제거 + 한글 공식명 변환
     → JSON 배열 반환
 """
 
@@ -28,7 +28,7 @@ from fastapi import APIRouter, File, UploadFile, HTTPException
 
 router = APIRouter()
 
-# ── EasyOCR + Gemini 초기화 (서버 시작 시 한 번만) ──
+# ── EasyOCR + GMS 호출 설정 초기화 (서버 시작 시 한 번만) ──
 print("⏳ EasyOCR 로딩 중...")
 reader = easyocr.Reader(['ko', 'en'], gpu=False)
 print("✅ EasyOCR 로딩 완료")
@@ -41,16 +41,19 @@ gms_api_key = os.getenv("GMS_KEY")
 if not gms_api_key:
     raise RuntimeError("GMS_KEY is not set")
 
-gemini_base_url = os.getenv(
-    "GEMINI_API_BASE_URL",
-    "https://gms.ssafy.io/gmsapi/generativelanguage.googleapis.com",
+gms_api_base_url = os.getenv(
+    "GMS_API_BASE_URL",
+    os.getenv(
+        "GEMINI_API_BASE_URL",
+        "https://gms.ssafy.io/gmsapi/generativelanguage.googleapis.com",
+    ),
 ).rstrip("/")
-gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+gms_model = os.getenv("GMS_MODEL", os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
 
-def _generate_gemini_content(prompt: str) -> str:
-    # SSAFY GMS 프록시는 key 쿼리스트링 방식으로 호출하므로 SDK 기본 엔드포인트 대신 HTTP 요청을 직접 구성합니다.
-    endpoint = f"{gemini_base_url}/v1beta/models/{gemini_model}:generateContent"
+def _generate_gms_content(prompt: str) -> str:
+    # GMS 프록시는 key 쿼리스트링 방식이므로 SDK 대신 HTTP 요청을 직접 구성합니다.
+    endpoint = f"{gms_api_base_url}/v1beta/models/{gms_model}:generateContent"
     url = f"{endpoint}?{parse.urlencode({'key': gms_api_key})}"
     payload = {
         "contents": [
@@ -90,7 +93,7 @@ def _generate_gemini_content(prompt: str) -> str:
     try:
         return response_payload["candidates"][0]["content"]["parts"][0]["text"]
     except (KeyError, IndexError, TypeError) as exc:
-        raise RuntimeError(f"Unexpected Gemini response: {response_payload}") from exc
+        raise RuntimeError(f"Unexpected GMS OCR response: {response_payload}") from exc
 
 
 def _parse_cleaned_words(response_text: str) -> list[str]:
@@ -115,13 +118,13 @@ def _parse_cleaned_words(response_text: str) -> list[str]:
         if isinstance(parsed, list):
             return [str(item).strip() for item in parsed if str(item).strip()]
 
-    raise ValueError(f"Could not parse Gemini JSON array from: {normalized[:500]!r}")
+    raise ValueError(f"Could not parse GMS model JSON array from: {normalized[:500]!r}")
 
 
 # ── 엔드포인트 ────────────────────────────────────
 @router.post("/extract-text")
 async def extract_product_name(file: UploadFile = File(...)):
-    """성분표 사진 업로드 → EasyOCR 추출 + Gemini 정제 → 한글 키워드 배열 반환"""
+    """성분표 사진 업로드 → EasyOCR 추출 + GMS 모델 정제 → 한글 키워드 배열 반환"""
     start_time = time.perf_counter()
     try:
         # 1. 인메모리 이미지 디코딩
@@ -149,7 +152,7 @@ async def extract_product_name(file: UploadFile = File(...)):
         top_words = [item["text"] for item in raw_texts[:7]]
         print(f"👀 OCR 원본: {top_words}")
 
-        # 4. Gemini로 노이즈 제거 + 한글 공식명 변환
+        # 4. GMS 프록시를 통한 모델 호출로 노이즈 제거 + 한글 공식명 변환
         prompt = f"""
         너는 한국 화장품 DB 매칭 전문가야.
         다음은 화장품 패키지를 OCR로 읽은 텍스트 배열이야: {top_words}
@@ -164,13 +167,13 @@ async def extract_product_name(file: UploadFile = File(...)):
         올바른 응답 예시: ["닥터지", "레드 블레미쉬", "클리어 수딩 크림"]
         """
 
-        response_text = _generate_gemini_content(prompt)
-        gemini_done = time.perf_counter()
-        print(f"⏱️ OCR Gemini 소요: {gemini_done - easyocr_done:.2f}초")
+        response_text = _generate_gms_content(prompt)
+        model_done = time.perf_counter()
+        print(f"⏱️ OCR GMS 모델 소요: {model_done - easyocr_done:.2f}초")
 
         # 5. 마크다운 찌꺼기 제거 후 파싱
         cleaned_words = _parse_cleaned_words(response_text)
-        print(f"✨ Gemini 정제 완료: {cleaned_words}")
+        print(f"✨ GMS 정제 완료: {cleaned_words}")
 
         # 6. Spring Boot DTO 규격으로 반환
         final_candidates = [

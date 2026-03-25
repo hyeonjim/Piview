@@ -6,7 +6,7 @@ POST /skin/predict  ← 얼굴 사진 → 건성 / 지성 판정
 
 from fastapi import APIRouter, File, UploadFile
 
-from services.skin_pipeline import extract_skin_states
+from services.skin.pipeline import extract_skin_states
 
 router = APIRouter()
 
