@@ -49,7 +49,7 @@ public class ProductSummaryResponse {
                 .categoryName(product.getCategory() != null ? product.getCategory().getCategoryName() : null)
                 .imageUrl(product.getImage() != null ? product.getImage().getUrl() : null)
                 .skinTypes(skinTypes)
-                .concerns(concerns)     // 태그 파이프라인 미구현 -> null 고정(추후 추가 예정)
+                .concerns(concerns)
                 .isLiked(isLiked)
                 .build();
 
