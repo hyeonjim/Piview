@@ -2,6 +2,7 @@ package com.piview.backend.domain.chatbot.service;
 
 import com.piview.backend.domain.chatbot.dto.request.ChatbotQueryRequest;
 import com.piview.backend.domain.chatbot.dto.response.ChatbotQueryResponse;
+import com.piview.backend.domain.product.catalog.dto.ProductSummaryResponse;
 import com.piview.backend.domain.routine.item.dto.MyCosResponseDto;
 import com.piview.backend.domain.routine.item.service.MyCosService;
 import com.piview.backend.domain.user.disliked.dto.response.DislikedIngredientSummaryResponse;
@@ -93,8 +94,9 @@ public class ChatbotService {
             userProfile.getMySkinType() != null ? userProfile.getMySkinType().name() : null,
             userProfile.getSkinProblems() != null ? userProfile.getSkinProblems() : List.of(),
             myCosList.stream()
-                .map(MyCosResponseDto::productId)
+                .map(MyCosResponseDto::productInfo)
                 .filter(Objects::nonNull)
+                .map(ProductSummaryResponse::getProductId)
                 .toList(),
             dislikedIngredients.stream()
                 .map(this::resolveIngredientName)

@@ -323,9 +323,14 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
   private String buildWhereClause(ProductSearchCondition condition, Map<String, Object> params) {
     List<String> clauses = new ArrayList<>();
 
-    if (condition.getCategoryId() != null) {
-      clauses.add("p.category_id = :categoryId");
-      params.put("categoryId", condition.getCategoryId());
+    if (condition.getCategoryId() != null && !condition.getCategoryId().isEmpty()) {
+      // categoryId 이름 유지 + IN 조회
+      clauses.add(buildInClause("p.category_id", "category", condition.getCategoryId(), params));
+    }
+
+    if ((condition.getCategoryId() == null || condition.getCategoryId().isEmpty()) && condition.getBigCategoryId() != null) {
+      clauses.add("c.big_category_id = :bigCategoryId");
+      params.put("bigCategoryId", condition.getBigCategoryId());
     }
 
     if (condition.getCategoryId() == null && condition.getBigCategoryId() != null) {
@@ -399,7 +404,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
   }
 
   private boolean needsCategoryJoinForNative(ProductSearchCondition condition) {
-    return condition.getCategoryId() == null && condition.getBigCategoryId() != null;
+    return (condition.getCategoryId() == null || condition.getCategoryId().isEmpty()) && condition.getBigCategoryId() != null;
   }
 
   private record NativeSql(String sql, Map<String, Object> params) {
@@ -409,7 +414,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
   private BooleanBuilder buildSearchWhere(ProductSearchCondition condition) {
     return new BooleanBuilder()
             .and(qContains(condition.getQ()))
-            .and(categoryEq(condition.getCategoryId()))
+            .and(categoryIn(condition.getCategoryId()))
             .and(bigCategoryEqWhenCategoryNull(condition.getCategoryId(), condition.getBigCategoryId()))
             .and(skinTypeEq(condition.getSkinType()))
             .and(hasAllConcerns(condition.getConcernIds()))
@@ -422,7 +427,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
   private BooleanBuilder buildCountWhere(ProductSearchCondition condition) {
     return new BooleanBuilder()
             .and(qContains(condition.getQ()))
-            .and(categoryEq(condition.getCategoryId()))
+            .and(categoryIn(condition.getCategoryId()))
             .and(bigCategoryEqWhenCategoryNull(condition.getCategoryId(), condition.getBigCategoryId()))
             .and(skinTypeEq(condition.getSkinType()))
             .and(hasAllConcerns(condition.getConcernIds()))
@@ -438,11 +443,11 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
   }
 
   private boolean needsCategoryJoin(ProductSearchCondition condition) {
-    return condition.getCategoryId() != null || condition.getBigCategoryId() != null;
+    return (condition.getCategoryId() != null && !condition.getCategoryId().isEmpty()) || condition.getBigCategoryId() != null;
   }
 
   private boolean needsBigCategoryJoin(ProductSearchCondition condition) {
-    return condition.getCategoryId() == null && condition.getBigCategoryId() != null;
+    return (condition.getCategoryId() == null || condition.getCategoryId().isEmpty()) && condition.getBigCategoryId() != null;
   }
 
   private BooleanExpression qContains(String q) {
@@ -453,14 +458,14 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .or(brand.brandName.containsIgnoreCase(q));
   }
 
-  private BooleanExpression categoryEq(Long categoryId) {
-    if (categoryId == null) {
+  private BooleanExpression categoryIn(List<Long> categoryIds) {
+    if (categoryIds == null || categoryIds.isEmpty()) {
       return null;
     }
-    return category.categoryId.eq(categoryId);
+    return category.categoryId.in(categoryIds);
   }
-  private BooleanExpression bigCategoryEqWhenCategoryNull(Long categoryId, Integer bigCategoryId) {
-    if (categoryId != null || bigCategoryId == null) {
+  private BooleanExpression bigCategoryEqWhenCategoryNull(List<Long> categoryIds, Integer bigCategoryId) {
+    if ((categoryIds != null && !categoryIds.isEmpty()) || bigCategoryId == null) {
       return null;
     }
     return bigCategory.bigCategoryId.eq(bigCategoryId);
