@@ -137,6 +137,7 @@ public class OcrRecognitionService {
         return OcrRecognitionResponseDto.builder()
                 .isSuccess(true)
                 .productId(bestProduct.getProductId())
+                .categoryId(bestProduct.getCategory() != null ? bestProduct.getCategory().getCategoryId() : null)
                 .brandName(bestProduct.getBrand().getBrandName())
                 .productName(bestProduct.getName())
                 .matchAccuracy(bestScore)
