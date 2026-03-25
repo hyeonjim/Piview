@@ -5,6 +5,7 @@ import { X, Search, Package, Loader2, Star } from "lucide-react";
 import ProductCard from "@/components/common/ProductCard";
 import { useMutation } from "@tanstack/react-query";
 import { getRoutineSteps } from "@/constants/routineSteps";
+import { Pagination } from "@/components/common/Pagination";
 import { useProductSearch, useProductFilters, useLike } from "@/hooks";
 import { useCompare } from "@/hooks/useCompare";
 import { useUserStore, selectGender, selectSkinType } from "@/stores";
@@ -40,6 +41,7 @@ export default function RoutineAddModal({
     null,
   );
   const [currentPage, setCurrentPage] = useState(1);
+  const [maxKnownPage, setMaxKnownPage] = useState(1);
   const PAGE_SIZE = 7;
 
   // 피뷰추천 활성화 여부
@@ -73,18 +75,30 @@ export default function RoutineAddModal({
   // 카테고리 필터 메타데이터 가져오기
   const availableCategories = currentStep?.categories ?? [];
 
-  // 탭 표시용 — 같은 name의 카테고리를 하나로 합침 (남성 스킨/토너 중복 방지)
+  // 카테고리 표시명 alias — 남성 카테고리를 일반 카테고리명으로 통합 표시
+  // key: 백엔드/routineSteps 원본 name, value: 탭에 표시할 이름
+  const CATEGORY_DISPLAY_ALIAS: Record<string, string> = {
+    "에센스/세럼": "에센스/앰플/세럼", // 남성 에센스 → 일반 에센스 탭으로 합침
+  };
+
+  // 탭 표시용 — displayName 기준으로 탭 합산
+  // backendNames: 이 탭에 매핑되는 백엔드 응답 키 목록 (라운드로빈 필터링에 사용)
   const uniqueCategoryTabs = availableCategories.reduce<
-    { name: string; categoryId: number; categoryIds: number[] }[]
+    { name: string; categoryId: number; categoryIds: number[]; backendNames: string[] }[]
   >((acc, cat) => {
-    const existing = acc.find((t) => t.name === cat.name);
+    const displayName = CATEGORY_DISPLAY_ALIAS[cat.name] ?? cat.name;
+    const existing = acc.find((t) => t.name === displayName);
     if (existing) {
       existing.categoryIds.push(cat.categoryId);
+      if (!existing.backendNames.includes(cat.name)) {
+        existing.backendNames.push(cat.name);
+      }
     } else {
       acc.push({
-        name: cat.name,
+        name: displayName,
         categoryId: cat.categoryId,
         categoryIds: [cat.categoryId],
+        backendNames: [cat.name],
       });
     }
     return acc;
@@ -116,11 +130,13 @@ export default function RoutineAddModal({
   const searchParams = {
     q: searchQuery || undefined,
     bigCategoryId: selectedCategory?.bigCategoryId ?? undefined,
-    categoryId: effectiveCategoryId ?? undefined,
-    size: 20,
+    // 선택된 탭의 모든 categoryId 배열로 전달 (남성 복합 탭 대응)
+    categoryId: selectedTab ? selectedTab.categoryIds : effectiveCategoryId ? [effectiveCategoryId] : undefined,
+    page: isRecommendMode ? 0 : currentPage - 1, // 서버 페이지네이션 (0-indexed)
+    size: PAGE_SIZE,
   };
 
-  const { products, isLoading } = useProductSearch(searchParams);
+  const { products, isLoading, totalCount, hasNext } = useProductSearch(searchParams);
 
   // 피뷰추천 API 뮤테이션 — POST /recommendations/products
   const recommendationMutation = useMutation({
@@ -169,38 +185,69 @@ export default function RoutineAddModal({
     }
   };
 
-  // 추천 모드 — 선택된 카테고리명으로 recommendedData 필터링
-  // 카테고리 미선택 or 해당 카테고리 데이터 없으면 전체 flat
+  // 추천 모드 — 선택된 탭의 backendNames에 해당하는 키들만 수집 후 라운드로빈
+  // 예) 에센스/앰플/세럼 탭(backendNames: [에센스/앰플/세럼, 에센스/세럼])
+  //     → 두 키의 데이터를 균등하게 뽑아 5개 구성
+  // 예) 클렌징폼 탭(backendNames: [클렌징폼])
+  //     → 해당 키 데이터만 5개 이내 표시
+  const RECOMMEND_LIMIT = 5;
   const recommendedProducts: MappedProduct[] = isRecommendMode
     ? (() => {
-        const tabName = selectedTab?.name;
-        if (!tabName)
-          return Object.values(recommendedData)
-            .flat()
-            .map(mapRecommendResponse);
-        const fromCategory = recommendedData[tabName];
-        // 매핑 안 되는 카테고리 선택 시 빈 배열 반환 — 전체 노출 방지
-        return (fromCategory ?? []).map(mapRecommendResponse);
+        // 선택된 탭의 백엔드 키 목록으로 소스 배열 수집
+        // backendNames가 없으면(tabName 못 찾은 경우) 전체 키 폴백
+        const tabBackendNames = selectedTab?.backendNames ?? [];
+        const sources =
+          tabBackendNames.length > 0
+            ? tabBackendNames
+                .map((name) => recommendedData[name])
+                .filter((arr): arr is NonNullable<typeof arr> => !!arr && arr.length > 0)
+            : Object.values(recommendedData);
+
+        if (sources.length === 0) return [];
+
+        // 라운드로빈 인터리브 — 각 소스에서 1개씩 번갈아 뽑아 RECOMMEND_LIMIT까지
+        const interleaved: typeof sources[0] = [];
+        const maxLen = Math.max(...sources.map((s) => s.length));
+        for (let i = 0; i < maxLen && interleaved.length < RECOMMEND_LIMIT; i++) {
+          for (const source of sources) {
+            if (interleaved.length >= RECOMMEND_LIMIT) break;
+            if (source[i] !== undefined) interleaved.push(source[i]);
+          }
+        }
+        return interleaved.map(mapRecommendResponse);
       })()
     : [];
 
-  // 추천 모드면 추천 제품, 아니면 검색 결과 사용
+  // 추천 모드: 클라이언트 페이지네이션 / 일반 모드: 서버 페이지네이션 (검색 페이지와 동일 패턴)
   const displayProducts = isRecommendMode ? recommendedProducts : products;
-  const totalPages = Math.ceil(displayProducts.length / PAGE_SIZE);
-  const pagedProducts = displayProducts.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
+  const totalPages = isRecommendMode
+    ? Math.ceil(recommendedProducts.length / PAGE_SIZE)
+    : totalCount !== null
+      ? Math.ceil(totalCount / PAGE_SIZE)
+      : hasNext
+        ? Math.max(maxKnownPage, currentPage) + 1
+        : Math.max(maxKnownPage, currentPage);
+  // 추천 모드만 클라이언트 slice — 일반 모드는 서버가 이미 PAGE_SIZE만큼 잘라서 줌
+  const pagedProducts = isRecommendMode
+    ? recommendedProducts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : products;
+
+  const handlePageChange = (p: number) => {
+    setCurrentPage(p);
+    setMaxKnownPage((prev) => Math.max(prev, p));
+  };
 
   // 검색어 또는 카테고리가 바뀌면 1페이지로 리셋
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1);
+    setMaxKnownPage(1);
   };
 
   const handleCategoryChange = (categoryId: number) => {
     setSelectedCategoryId(categoryId);
-    setCurrentPage(1); // 카테고리 변경 시 항상 1페이지로 (일반/추천 모드 공통)
+    setCurrentPage(1);
+    setMaxKnownPage(1);
   };
 
   return (
@@ -359,45 +406,12 @@ export default function RoutineAddModal({
                   })}
                 </div>
 
-                {/* 페이지네이션 */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-1 mt-4 mb-1">
-                    <button
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(prev - 1, 1))
-                      }
-                      disabled={currentPage === 1}
-                      className="w-7 h-7 rounded-full border border-border-warm bg-white text-xs text-text-muted disabled:opacity-30 cursor-pointer disabled:cursor-default"
-                    >
-                      ‹
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                      (page) => (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={[
-                            "w-7 h-7 rounded-full border text-xs font-semibold cursor-pointer transition-colors",
-                            currentPage === page
-                              ? "border-(--color-brand) bg-(--color-brand) text-white"
-                              : "border-border-warm bg-white text-text-muted",
-                          ].join(" ")}
-                        >
-                          {page}
-                        </button>
-                      ),
-                    )}
-                    <button
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                      }
-                      disabled={currentPage === totalPages}
-                      className="w-7 h-7 rounded-full border border-border-warm bg-white text-xs text-text-muted disabled:opacity-30 cursor-pointer disabled:cursor-default"
-                    >
-                      ›
-                    </button>
-                  </div>
-                )}
+                {/* 페이지네이션 — 공통 컴포넌트 (검색 페이지와 동일) */}
+                <Pagination
+                  page={currentPage}
+                  totalPages={totalPages}
+                  onChange={handlePageChange}
+                />
               </>
             )}
           </div>

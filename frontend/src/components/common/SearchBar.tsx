@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
+  /** 엔터/검색 버튼 확정 시 호출 — trackEvent 등 확정 시점 처리용 */
+  onSearch?: (value: string) => void;
   placeholder?: string;
   className?: string;
 }
@@ -13,6 +15,7 @@ interface SearchBarProps {
 export default function SearchBar({
   value,
   onChange,
+  onSearch,
   placeholder = "검색...",
   className,
 }: SearchBarProps) {
@@ -29,6 +32,9 @@ export default function SearchBar({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && onSearch) onSearch(value);
+        }}
         placeholder={placeholder}
         className={cn(
           "w-full h-[38px] pl-9",

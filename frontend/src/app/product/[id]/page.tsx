@@ -14,7 +14,6 @@ import {
   Scale,
   Sparkles,
   Loader2,
-  Play,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -29,6 +28,7 @@ import {
   useDraftQuery,
 } from "@/hooks";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
+import { trackEvent } from "@/utils/trackEvent";
 
 /** EWG 등급 → 배경·텍스트·바 색상 반환 */
 function getEwgColor(grade: number | null | undefined): {
@@ -117,11 +117,11 @@ function ProductDetailInner() {
   const gender = useUserStore(selectGender);
   const routineSteps = getRoutineSteps(gender);
 
-  // AI 요약 — 버튼 클릭 시 refetch()로 수동 호출
+  // AI 요약 — 상세 페이지 진입 시 자동 호출
   const {
     data: aiSummary,
-    isFetching: isAiFetching,
-    refetch: fetchAiSummary,
+    isLoading: isAiLoading,
+    isError: isAiError,
   } = useProductAiSummary(id ? Number(id) : null);
 
   // 내루틴 비교 — 메인 루틴 API에서 같은 스텝 제품 추출
@@ -188,6 +188,13 @@ function ProductDetailInner() {
   const [isIngredientTextOpen, setIsIngredientTextOpen] = useState(false);
   const [isScrollTopVisible, setIsScrollTopVisible] = useState(false);
   const ewgSectionRef = useRef<HTMLDivElement>(null);
+
+  // VIEW_PRODUCT 이벤트 — 상세 데이터 로드 완료 시 1회 전송
+  useEffect(() => {
+    if (productIdNum && !isLoading && !isError) {
+      trackEvent("VIEW_PRODUCT", productIdNum);
+    }
+  }, [productIdNum, isLoading, isError]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -590,31 +597,28 @@ function ProductDetailInner() {
           </div>
         )}
 
-        {/* AI 요약 카드 */}
+        {/* AI 요약 카드 — 상세 진입 시 자동 로드 */}
         <div className="mx-5 rounded-2xl bg-white p-4 my-5">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center mb-3">
             <p className="text-[16px] font-semibold text-[#636262]">
               AI 분석
             </p>
-            {!aiSummary && (
-              <button
-                onClick={() => fetchAiSummary()}
-                disabled={isAiFetching}
-                className="flex items-center gap-1 px-3 h-7 rounded-lg border-2 bg-[#eee7d8] text-[#555454] text-[14px] font-semibold cursor-pointer disabled:opacity-50 transition-all active:scale-[0.96]"
-              >
-                {isAiFetching ? "분석 중..." : <><Play size={12} fill="currentColor" /> Start</>}
-              </button>
-            )}
           </div>
 
-          {isAiFetching && (
+          {isAiLoading && (
             <div className="flex items-center justify-center py-6 gap-2 text-text-muted">
               <Loader2 size={18} className="animate-spin opacity-50" />
               <p className="text-xs">AI가 제품을 분석하고 있어요...</p>
             </div>
           )}
 
-          {aiSummary && !isAiFetching && (
+          {isAiError && !isAiLoading && (
+            <p className="text-xs text-text-muted">
+              AI 분석을 불러오지 못했어요.
+            </p>
+          )}
+
+          {aiSummary && !isAiLoading && (
             <div className="flex flex-col gap-3">
               {aiSummary.line1AiSummary && (
                 <p className="text-xs text-text-primary leading-[1.6]">
@@ -632,12 +636,6 @@ function ProductDetailInner() {
                 </p>
               )}
             </div>
-          )}
-
-          {!aiSummary && !isAiFetching && (
-            <p className="text-xs text-text-muted">
-              버튼을 눌러 이 제품의 AI 분석 요약을 확인해보세요.
-            </p>
           )}
         </div>
 
