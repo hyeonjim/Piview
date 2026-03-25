@@ -17,7 +17,6 @@ import { useUserStore, selectSkinType, selectGender } from "@/stores";
 import { useSearchStore } from "@/stores/useSearchStore";
 import { useRecommendStore } from "@/stores/useRecommendStore";
 import { useLikeStore } from "@/stores";
-import { authService } from "@/services/auth";
 
 export default function MyPage() {
   const router = useRouter();
@@ -35,22 +34,7 @@ export default function MyPage() {
   const savedAvoidContents = useUserStore((store) => store.avoidContents);
   const hasSkinProfile = !!savedSkinType;
 
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-    } finally {
-      // 유저
-      useUserStore.getState().clearUser();
-      // 검색/추천/찜 — 다른 계정 로그인 시 이전 상태 잔존 방지
-      useSearchStore.getState().setSearchQuery("");
-      useSearchStore.getState().resetFilter();
-      useRecommendStore.getState().setSearchQuery("");
-      useRecommendStore.getState().resetFilter();
-      useLikeStore.getState().initFromServer([]);
-      useLikeStore.getState().setPage(1);
-      router.push("/splash");
-    }
-  };
+
 
   // ── 루틴 Draft API 연동 ────────────────────────────────────────────
   // 현재 draft에 담긴 productId 목록 — RoutineAddModal 중복 방지용
