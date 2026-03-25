@@ -107,12 +107,14 @@ public class ProductCatalogService {
         List<Long> normalizedConcernIds = normalizeConcernIds(condition.getConcernIds());
 //        List<Long> normalizedConcernIds = distinctOrNull(condition.getConcernIds());
 
+        List<Long> normalizedCategoryIds = distinctOrNull(condition.getCategoryId());
+
         List<Long> normalizedBrandIds = distinctOrNull(condition.getBrandIds());
 
         ProductSearchCondition normalized = ProductSearchCondition.builder()
                 .q(normalizedQ)
                 .bigCategoryId(condition.getBigCategoryId())
-                .categoryId(condition.getCategoryId())
+                .categoryId(normalizedCategoryIds)
                 .skinType(condition.getSkinType())
                 .concernIds(normalizedConcernIds)
                 .brandIds(normalizedBrandIds)

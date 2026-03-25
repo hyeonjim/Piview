@@ -4,7 +4,6 @@ import com.piview.backend.domain.product.aisummary.dto.ProductLine12SummaryRespo
 import com.piview.backend.domain.product.catalog.repository.ProductConcernCacheRepository;
 import com.piview.backend.domain.product.catalog.repository.ProductIngredientRepository;
 import com.piview.backend.domain.product.catalog.repository.ProductRepository;
-import com.piview.backend.domain.product.catalog.service.ProductConcernQueryService;
 import com.piview.backend.domain.product.entity.Product;
 import com.piview.backend.domain.product.entity.ProductIngredients;
 import com.piview.backend.domain.skin.survey.entity.MySkin;
@@ -63,6 +62,28 @@ public class ProductSummaryFacadeService {
         ? productIngredients.getProductIngredientsKo()
         : "성분 정보 없음";
 
+    String targetSkin = java.util.stream.Stream.of(product.getTopSkinType(), product.getTop2SkinType())
+        .filter(java.util.Objects::nonNull)
+        .map(Enum::name)
+        .collect(Collectors.joining(", "));
+
+    if (targetSkin.isEmpty()) {
+      targetSkin = "모든 피부";
+    }
+
+    String categoryName = (product.getCategory() != null) ? product.getCategory().getCategoryName() : "스킨케어";
+
+    String extraInstruction = "";
+    if (categoryName.contains("클렌징") || categoryName.contains("폼") || categoryName.contains("워터")) {
+      extraInstruction = """
+          
+          [특별 지시사항]
+          🚨 이 제품은 씻어내는 '클렌징' 용도입니다. 절대 스킨케어(영양 흡수, 안티에이징 등)처럼 요약하지 마세요!
+          - line2 작성 시: '세정력', '노폐물 제거', '세안 후 당김 없는 촉촉함' 위주로 어필할 것.
+          - line3 작성 시: 성분 충돌보다는 '올바른 세안 팁'이나 '2차 세안 여부' 등 클렌징 꿀팁을 제공할 것.
+          """;
+    }
+
     String finalPromptContext = String.format(
         """
         [사용자 정보]
@@ -70,10 +91,12 @@ public class ProductSummaryFacadeService {
         피부 고민: %s
 
         [제품 정보]
+        카테고리: %s
+        추천 피부 타입: %s
         제품 태그: %s
         제품 원문 성분: %s
         """,
-        userSkinType, userConcerns, productTags, rawIngredientsText
+        userSkinType, userConcerns, categoryName, targetSkin, productTags, rawIngredientsText, extraInstruction
     );
 
     // 비동기 LLM 호출 및 결과 조합
