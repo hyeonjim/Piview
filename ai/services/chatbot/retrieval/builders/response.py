@@ -110,9 +110,7 @@ def build_context_hints(
     if effective_screen:
         lines.append(f"사용자는 현재 {effective_screen} 화면에서 질문 중이다.")
     if current_product_id is not None:
-        lines.append(
-            f"현재 화면의 기준 상품 ID는 {current_product_id}이지만, 이 ID만으로 성분이나 효능을 추측하면 안 된다."
-        )
+        lines.append("현재 화면에서 보고 있던 상품 맥락이 있지만, 보이지 않은 상세 정보는 추측하면 안 된다.")
     if session_context:
         recent_messages = [
             str(item).strip()
@@ -127,11 +125,7 @@ def build_context_hints(
             if str(item).strip()
         ]
         if recent_product_ids:
-            lines.append(
-                "직전 턴에서 함께 본 상품 ID가 있다: "
-                + ", ".join(recent_product_ids[:5])
-                + ". ID만으로 상세 정보를 지어내지 말고, 현재 검색 근거가 있을 때만 언급해야 한다."
-            )
+            lines.append("직전 턴에서 함께 본 상품 맥락이 이어지고 있다. 현재 검색 근거가 있을 때만 언급해야 한다.")
     return lines
 
 

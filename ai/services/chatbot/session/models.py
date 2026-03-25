@@ -26,6 +26,15 @@ class SessionSnapshot:
             "recentProductIds": self.recent_product_ids,
         }
 
+    def to_llm_payload(self) -> dict[str, object]:
+        """LLM에는 연속성에 필요한 최소 세션 힌트만 전달합니다."""
+        payload: dict[str, object] = {}
+        if self.screen:
+            payload["screen"] = self.screen
+        if self.recent_user_messages:
+            payload["recentUserMessages"] = [self.recent_user_messages[-1]]
+        return payload
+
 
 @dataclass
 class StoredTurn:

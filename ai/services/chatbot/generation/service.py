@@ -41,6 +41,7 @@ class ChatbotService:
             user_id=request.user_context.user_id if request.user_context else None,
         )
         session_context = session_snapshot.to_prompt_payload()
+        prompt_session_context = session_snapshot.to_llm_payload()
         client_context = build_effective_client_context(request, session_context)
         retrieval_bundle = await chatbot_retrieval_service.retrieve(
             request,
@@ -56,7 +57,7 @@ class ChatbotService:
                 retrieval_bundle,
                 response_type,
                 client_context=client_context,
-                session_context=session_context,
+                session_context=prompt_session_context,
             )
 
         final_answer = postprocess_answer(answer)
