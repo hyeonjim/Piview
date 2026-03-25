@@ -12,3 +12,6 @@ python-dotenv
 mediapipe
 httpx
 numpy
+chromadb
+pymysql
+redis
