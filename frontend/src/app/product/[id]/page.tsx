@@ -46,6 +46,7 @@ function getEwgColor(grade: number | null | undefined): {
 }
 import { getRoutineSteps } from "@/constants/routineSteps";
 import CompareModal from "@/components/common/CompareModal";
+import CompareIcon from "@/components/common/CompareIcon";
 import { SkinTypeTag } from "@/components/common/ProductCard";
 import type { ProductViewModel } from "@/types/product/myCos";
 import { useMainRoutineQuery } from "@/hooks";
@@ -268,7 +269,16 @@ function ProductDetailInner() {
       ],
   );
   const skinTypes = (productData.skinTypes ?? []).map(fromSkinTypeEnum);
-  const tags = productData.tags ?? [];
+  const ANTI_AGING_EXCLUDED_CATEGORIES = new Set([
+    "스킨/토너", "로션/에멀젼", "미스트", "토너패드", "선케어", "쉐이빙",
+  ]);
+  const shouldExcludeAntiAging =
+    !!effectiveCategoryName &&
+    (ANTI_AGING_EXCLUDED_CATEGORIES.has(effectiveCategoryName) ||
+      effectiveCategoryName.startsWith("클렌징"));
+  const tags = (productData.tags ?? []).filter(
+    (tag) => !(shouldExcludeAntiAging && tag === "안티에이징"),
+  );
   const ingredients = productData.ingredients ?? [];
   const ingredientsKr = ingredients
     .map((i) => i.nameKo)
@@ -429,7 +439,7 @@ function ProductDetailInner() {
           className="size-9 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer transition-all active:scale-[0.93]"
         >
           <Heart
-            size={20}
+            size={24}
             className="transition-all duration-150"
             style={{
               color: resolvedIsLiked ? "#E8715A" : "#d9d5d0",
@@ -441,7 +451,7 @@ function ProductDetailInner() {
 
       <div className="pb-8">
         {/* 이미지 카드 — 깔끔한 화이트 배경 */}
-        <div className="mx-4 mb-3 rounded-2xl bg-white overflow-hidden border border-[#f0ede8]" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+        <div className="mx-4 mb-3 rounded-2xl bg-white overflow-hidden" style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 3px 7px rgba(180,155,120,0.09), 0 7px 18px rgba(0,0,0,0.06), 0 14px 32px rgba(180,155,120,0.04)" }}>
           <div className="relative w-full aspect-[2/1]">
             {productData.imageUrl ? (
               <Image
@@ -481,10 +491,10 @@ function ProductDetailInner() {
                   setShowRoutineCompare(true);
                 }
               }}
-              className="flex items-center gap-1 px-2 h-6.5 rounded-lg border cursor-pointer transition-all active:scale-[0.96] text-[12px] font-semibold shrink-0 border-[#dedbd9] bg-[#f3f0eb] text-[#5c5852]"
+              className="flex items-center gap-1 px-2 h-6.5 rounded-lg border cursor-pointer transition-all active:scale-[0.96] text-[12px] font-medium shrink-0 border-[#dedbd9] bg-[#f7f5f2] text-[#807d7a]"
             >
-              <Scale size={11} />
-              내루틴 비교하기
+              <CompareIcon size={13} color="#5c5852" />
+              내루틴과 비교하기
             </button>
           </div>
 
@@ -502,7 +512,7 @@ function ProductDetailInner() {
                   {tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-block text-[11px] mb-1 mr-1 font-medium px-1.5 py-[1px] rounded border bg-[#f8f8f6] text-[#7a664e]"
+                      className="inline-block text-[10px] mb-1 mr-1.5 font-medium px-1.5 py-px border rounded-3xl bg-[#fcfcfc] text-[#7a664e]"
                     >
                       {tag}
                     </span>
@@ -531,10 +541,9 @@ function ProductDetailInner() {
               )}
             </div>
             <div className="flex gap-2 shrink-0">
-              {gender !== "WOMEN" && (
-                <button
+              <button
                   onClick={handleAddRoutine}
-                  className={`flex items-center justify-center gap-1 w-20 h-8 rounded-lg border-none cursor-pointer transition-all active:scale-[0.98] text-[12px] font-semibold ${routineAdded ? "bg-[#f5f3f0] text-[#a69d92]" : "bg-[#5a504a] text-white"}`}
+                  className={`flex items-center justify-center gap-1 w-22 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[13px] font-semibold ${routineAdded ? "bg-(--color-bg-beige) text-(--color-brand)" : "bg-[#f1eae6] text-[#807d7d]"}`}
                 >
                   {routineAdded ? (
                     <>
@@ -546,12 +555,19 @@ function ProductDetailInner() {
                     </>
                   )}
                 </button>
-              )}
               <button
                 onClick={handleToggleOwned}
-                className={`flex items-center justify-center gap-1 w-17 h-7 rounded-lg cursor-pointer transition-all active:scale-[0.98] text-[12px] font-semibold border ${owned ? "border-[#bcb5ac] bg-[#eae8e6] text-[#4d453c]" : "border-[#dbd6cf] bg-[#f4f4f1] text-[#7c7874]"}`}
+                className={`flex items-center justify-center gap-1 w-22 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[13px] font-semibold ${owned ? "bg-(--color-bg-beige) text-(--color-brand)" : "bg-[#f1eae6] text-[#807d7d]"}`}
               >
-                {owned ? "보유중" : "보유추가"}
+                {owned ? (
+                  <>
+                    <Check size={11} /> 보유중
+                  </>
+                ) : (
+                  <>
+                    <Plus size={11} /> 보유추가
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -572,7 +588,7 @@ function ProductDetailInner() {
         )}
 
         {/* AI 요약 카드 */}
-        <div className="mx-5 rounded-2xl bg-white p-4 mb-3">
+        <div className="mx-5 rounded-2xl bg-white p-4 my-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[16px] font-semibold text-[#636262]">
               AI 분석

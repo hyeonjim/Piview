@@ -48,7 +48,7 @@ function ProductHeader({ product }: { product: CompareProduct }) {
         )}
       </div>
       {product.brand && (
-        <p className="text-[11px] text-text-muted text-center leading-tight px-1 truncate w-full">
+        <p className="text-[13px] text-text-muted font-medium text-center leading-tight px-1 truncate w-full">
           {product.brand}
         </p>
       )}
@@ -133,7 +133,7 @@ export default function CompareModal({
             (apiLeft?.skinConcerns ?? leftProduct.effects).map((effect) => (
               <span
                 key={effect}
-                className="text-[10px] px-1.5 py-px rounded-[4px] font-bold bg-[#EEE8E4] text-[#8A7A6E]"
+                className="text-[10px] px-1.5 py-px rounded-[10px] border font-semibold bg-[#f5f2f1] text-[#726c67]"
               >
                 {effect}
               </span>
@@ -149,7 +149,7 @@ export default function CompareModal({
             (apiRight?.skinConcerns ?? rightProduct.effects).map((effect) => (
               <span
                 key={effect}
-                className="text-[10px] px-1.5 py-px rounded-[4px] font-bold bg-[#EEE8E4] text-[#8A7A6E]"
+                className="text-[10px] px-1.5 py-px rounded-[10px] border font-semibold bg-[#f5f2f1] text-[#726c67]"
               >
                 {effect}
               </span>
@@ -211,13 +211,13 @@ export default function CompareModal({
       label: "알레르기",
       leftContent: apiLeft ? (
         apiLeft.allergy.count === 0 ? (
-          <span className="text-sm text-text-hint">없음</span>
+          <span className="text-[13px] text-text-hint">없음</span>
         ) : (
           <div className="flex flex-col items-center gap-1">
-            <span className="text-sm font-semibold text-danger">
+            <span className="text-[12px] font-semibold text-danger">
               {apiLeft.allergy.count}개
             </span>
-            <span className="text-[10px] text-text-muted text-center leading-relaxed">
+            <span className="text-[12px] text-text-muted text-center leading-relaxed">
               {apiLeft.allergy.ingredients.join(", ")}
             </span>
           </div>
@@ -269,37 +269,35 @@ export default function CompareModal({
           <div className="w-10 h-1 rounded-full bg-[var(--color-handle-bar)]" />
         </div>
 
-        {/* 헤더 — text-text-primary 전역 변수 */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border-modal)] shrink-0">
-          <h2 className="m-0 text-base font-bold text-text-primary">
+        <div className="flex items-center justify-between px-4 py-1 border-b border-[var(--color-border-modal)] shrink-0">
+          <h2 className="text-[14px] font-semibold text-[#6f6e6e]">
             제품 비교
           </h2>
-          {/* bg-brand-bg 전역 변수 */}
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-brand-bg border-none cursor-pointer"
+            className="w-7 h-7 flex items-center justify-center rounded-full cursor-pointer"
           >
             <X size={16} className="text-text-hint" />
           </button>
         </div>
 
         {/* 콘텐츠 — [scrollbar-width:none] Tailwind arbitrary */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-6 pb-8 [scrollbar-width:none]">
+        <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3 pb-8 [scrollbar-width:none]">
           {/* 제품 이미지 영역 */}
           <div className="grid grid-cols-[90px_1fr_1px_1fr]">
             <div />
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center">
               {isRoutineCompare && (
-                <span className="text-[14px] font-bold px-2 py-0.5 rounded-full text-brand">
+                <span className="text-[14px] font-semibold px-2 py-0.5 rounded-full text-brand">
                   내 제품
                 </span>
               )}
               <ProductHeader product={leftProduct} />
             </div>
             <div className="bg-[var(--color-border-modal)] self-stretch" />
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center">
               {isRoutineCompare && (
-                <span className="text-[14px] font-bold px-2 py-0.5 rounded-fullp text-text-hint">
+                <span className="text-[14px] font-semibold px-2 py-0.5 rounded-fullp text-brand">
                   비교 제품
                 </span>
               )}
@@ -319,13 +317,13 @@ export default function CompareModal({
             >
               {/* 헤더 행 — grid-cols Tailwind arbitrary */}
               <div className="grid grid-cols-[90px_1fr_1fr] bg-[var(--color-table-label-bg)]">
-                <div className="px-3 py-2 text-sm font-semibold text-text-hint text-left">
+                <div className="px-3 py-2 text-[12px] font-semibold text-text-hint text-left">
                   제품명
                 </div>
-                <div className="px-2 py-2 text-sm font-semibold text-center text-text-muted leading-tight line-clamp-2">
+                <div className="px-2 py-2 text-[12px] font-semibold text-center text-text-muted leading-tight line-clamp-2">
                   {leftProduct.name}
                 </div>
-                <div className="px-2 py-2 text-sm font-semibold text-center text-text-muted leading-tight line-clamp-2">
+                <div className="px-2 py-2 text-[12px] font-semibold text-center text-text-muted leading-tight line-clamp-2">
                   {rightProduct.name}
                 </div>
               </div>
@@ -338,11 +336,11 @@ export default function CompareModal({
                     key={row.label}
                     className="grid grid-cols-[90px_1fr_1fr] border-t border-bg-beige"
                   >
-                    <div className="px-3 py-3 text-sm font-semibold text-text-hint bg-[var(--color-table-label-bg)] flex items-center">
+                    <div className="px-3 py-3 text-[12px] font-semibold text-text-hint bg-[var(--color-table-label-bg)] flex items-center">
                       {row.label}
                     </div>
                     <div
-                      className="px-2 py-3 text-sm text-center flex items-center justify-center text-text-primary"
+                      className="px-2 py-3 text-[12px] text-center flex items-center justify-center text-text-primary"
                       style={
                         row.highlightIndex === 0
                           ? { fontWeight: 700, color: HIGHLIGHT_COLOR }
@@ -352,7 +350,7 @@ export default function CompareModal({
                       {row.leftContent}
                     </div>
                     <div
-                      className="px-2 py-3 text-sm text-center flex items-center justify-center text-text-primary"
+                      className="px-2 py-3 text-[12px] text-center flex items-center justify-center text-text-primary"
                       style={
                         row.highlightIndex === 1
                           ? { fontWeight: 700, color: HIGHLIGHT_COLOR }

@@ -607,7 +607,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setShowOcrModal(true)}
-                  className="flex items-center justify-center p-1.5 rounded-full border border-border cursor-pointer bg-transparent text-[#636260]"
+                  className="flex items-center justify-center p-1.5 rounded-full border border-border cursor-pointer bg-[#fff] text-[#636260]"
                   aria-label="OCR로 제품 추가"
                 >
                   <Scan size={12} />
@@ -630,7 +630,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               <button
                 onClick={handleEditRoutine}
                 disabled={selectedRoutineId === null || isLoadingToEdit}
-                className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-transparent disabled:opacity-50 text-[#636260]"
+                className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] disabled:opacity-50 text-[#636260]"
               >
                 {isLoadingToEdit ? "불러오는 중..." : <><SquarePen size={12} />Edit Mode</>}
               </button>
@@ -638,7 +638,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             <button
               onClick={handleOpenSaveModal}
               disabled={isCreating || filledCount === 0}
-              className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-transparent disabled:opacity-50 text-[#636260]"
+              className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] disabled:opacity-50 text-[#636260]"
             >
               {isCreating ? "저장 중..." : <><Save size={12} />Save</>}
             </button>
@@ -693,7 +693,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 className={`w-full rounded-2xl px-4 py-3 flex items-center gap-3 text-left transition-[background-color,border] ${
                   isViewingSavedRoutine ? "cursor-default" : "cursor-pointer"
                 } ${
-                  isDropTarget ? "bg-[rgba(166,157,146,0.12)]" : "bg-(--color-warm-bg)"
+                  isDropTarget ? "bg-[rgba(166,157,146,0.12)]" : "bg-[#efefed]"
                 } ${
                   isDropTarget
                     ? "border-2 border-dashed border-[#A69D92]"

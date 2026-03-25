@@ -134,8 +134,8 @@ export default function OwnedTab() {
           <div className="flex items-start gap-1.5">
             <div>
               <div className="flex items-center gap-1.5">
-                <p className="text-base font-bold text-[#b33232]">Avoid</p>
-                <Ban size={14} className="text-[#b33232]" />
+                <p className="text-base font-bold text-[#db1c1c]">Avoid</p>
+                <Ban size={14} className="text-[#db1c1c]" />
               </div>
               <p className="text-xs text-text-muted mt-0.5">
                 {dislikedItems.length}개 등록됨
