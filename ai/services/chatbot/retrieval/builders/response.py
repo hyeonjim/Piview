@@ -1,6 +1,6 @@
-"""Retrieval 결과를 API 응답 친화적인 형태로 변환하는 함수들."""
+"""Retrieval 결과를 내부 응답 모델로 변환하는 함수들."""
 
-from schemas.chatbot import ChatbotCitation, ChatbotClientContext, ChatbotProductCandidate
+from services.chatbot.domain import Citation, ClientContext, ProductCandidate
 from services.chatbot.retrieval.parsers import (
     filter_display_concerns,
     has_strict_filter_request,
@@ -11,12 +11,12 @@ from services.chatbot.search.vector import ProductSearchResult
 def to_product_candidate(
     result: ProductSearchResult,
     preferred_concerns: set[str],
-) -> ChatbotProductCandidate:
+) -> ProductCandidate:
     """검색 결과 1개를 카드 노출용 후보 객체로 바꿉니다."""
-    return ChatbotProductCandidate(
-        productId=result.product_id,
+    return ProductCandidate(
+        product_id=result.product_id,
         name=result.name,
-        brandName=result.brand_name,
+        brand_name=result.brand_name,
         reason=_build_reason(result, preferred_concerns),
     )
 
@@ -24,14 +24,14 @@ def to_product_candidate(
 def to_citation(
     result: ProductSearchResult,
     preferred_concerns: set[str],
-) -> ChatbotCitation:
+) -> Citation:
     """생성 모델이 참고할 수 있도록, 짧은 citation 텍스트를 만듭니다."""
     display_concerns = filter_display_concerns(result.concern_names, preferred_concerns)
     concern_text = f" / 관련 고민: {', '.join(display_concerns)}" if display_concerns else ""
     snippet = result.evidence_snippets[0] if result.evidence_snippets else result.description
-    return ChatbotCitation(
+    return Citation(
         type="product",
-        productId=result.product_id,
+        product_id=result.product_id,
         text=f"{result.name} ({result.brand_name or '브랜드 미상'}){concern_text}",
         title=result.name,
         snippet=snippet,
@@ -51,7 +51,7 @@ def build_retrieval_context(
     preferred_concerns: set[str],
     message: str,
     avoid_terms: set[str],
-    client_context: ChatbotClientContext | None = None,
+    client_context: ClientContext | None = None,
     session_context: dict[str, object] | None = None,
 ) -> str:
     """LLM에 넣을 검색 요약 텍스트를 만듭니다.
@@ -91,7 +91,7 @@ def build_retrieval_context(
 
 
 def build_context_hints(
-    client_context: ChatbotClientContext | None,
+    client_context: ClientContext | None,
     session_context: dict[str, object] | None,
 ) -> list[str]:
     lines: list[str] = []
@@ -100,8 +100,8 @@ def build_context_hints(
     if not effective_screen and session_context:
         effective_screen = session_context.get("screen")
     current_product_id = (
-        client_context.currentProductId
-        if client_context and client_context.currentProductId is not None
+        client_context.current_product_id
+        if client_context and client_context.current_product_id is not None
         else None
     )
     if current_product_id is None and session_context:
