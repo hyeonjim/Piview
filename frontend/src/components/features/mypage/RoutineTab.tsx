@@ -659,7 +659,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
           dragState?.toStepCode === step.code;
 
         return (
-          <div key={step.code} className="mt-3 mx-7">
+          <div key={step.code} className="mt-3 mx-3">
             {/* 스텝 섹션 헤더 */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1.5 text-[#63635e] text-[14px] ">
@@ -672,7 +672,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               {!isViewingSavedRoutine && (
                 <button
                   onClick={() => onOpenModal(step.code, step.columnId)}
-                  className="flex items-center gap-1 text-xs font-bold text-[#636260] cursor-pointer border-none bg-transparent"
+                  className="flex items-center gap-1 text-xs font-semibold text-[#636260] cursor-pointer border-none bg-transparent"
                 >
                   <Plus size={13} /> 추가
                 </button>
@@ -954,11 +954,11 @@ function RoutineProductCard({
           className="flex-1 px-3 py-2 min-w-0 no-underline"
         >
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[13px] font-semibold text-[#999289] tracking-[0.08em]">
+            <span className="text-[13px] font-semibold text-[#7e6b52] tracking-[0.08em]">
               {product.brandName}
             </span>
             {product.categoryName && (
-              <span className="text-[10px] px-1 py-px rounded-[10px] font-medium bg-[#f1efea] text-[#968d7e]">
+              <span className="text-[11px] px-1 rounded-[11px] font-medium bg-[#f1efea] text-[#6d675c]">
                 {product.categoryName}
               </span>
             )}

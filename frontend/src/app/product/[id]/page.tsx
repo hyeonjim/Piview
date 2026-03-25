@@ -39,10 +39,10 @@ function getEwgColor(grade: number | null | undefined): {
   if (grade == null)
     return { bg: "#F5F5F5", text: "#9E9E9E", barColor: "#E0E0E0" };
   if (grade <= 2)
-    return { bg: "#E8F5E9", text: "#2E7D32", barColor: "#4CAF50" };
+    return { bg: "#E8F5E9", text: "#2E7D32", barColor: "var(--color-ewg-safe)" };
   if (grade <= 6)
-    return { bg: "#FFF8E1", text: "#F57F17", barColor: "#FFB300" };
-  return { bg: "#FFEBEE", text: "#C62828", barColor: "#F44336" };
+    return { bg: "#FFF8E1", text: "#F57F17", barColor: "var(--color-ewg-caution)" };
+  return { bg: "#FFEBEE", text: "#C62828", barColor: "var(--color-ewg-danger)" };
 }
 import { getRoutineSteps } from "@/constants/routineSteps";
 import CompareModal from "@/components/common/CompareModal";
@@ -64,15 +64,18 @@ function AllergenIcon() {
   );
 }
 
-function EwgDropIcon({ color }: { color: string }) {
+function EwgDropIcon({ color, score }: { color: string; score: number | null }) {
   return (
-    <svg width="22" height="26" viewBox="0 0 22 26" fill="none">
-      <path
-        d="M11 0C11 0 0 12 0 17.5C0 22.2 4.9 25.5 11 25.5C17.1 25.5 22 22.2 22 17.5C22 12 11 0 11 0Z"
-        fill={color}
-        fillOpacity={0.85}
-      />
-    </svg>
+    <div
+      className="flex items-center justify-center w-7 h-7 text-white font-bold shrink-0"
+      style={{
+        backgroundColor: color,
+        borderRadius: "20% 50% 50% 50%",
+        fontSize: score !== null && score >= 10 ? "10px" : "13px",
+      }}
+    >
+      {score ?? "?"}
+    </div>
   );
 }
 
@@ -512,7 +515,7 @@ function ProductDetailInner() {
                   {tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-block text-[10px] mb-1 mr-1.5 font-medium px-1.5 py-px border rounded-3xl bg-[#fcfcfc] text-[#7a664e]"
+                      className="inline-block text-[12px] mb-1 mr-1.5 font-medium px-1.5 py-px border rounded-3xl bg-[#fcfcfc] text-[#7a664e]"
                     >
                       {tag}
                     </span>
@@ -651,14 +654,14 @@ function ProductDetailInner() {
               <p className="text-[12px] text-[#a69d92] mt-0.5">총 {total}개 성분</p>
             </div>
             <div className="flex h-3 gap-0.5 rounded-full overflow-hidden mb-3">
-              <div className="rounded bg-ewg-safe" style={{ flex: safe }} />
+              <div className="rounded bg-[#b1dda1]" style={{ flex: safe }} />
               <div
-                className="rounded bg-ewg-caution"
+                className="rounded bg-[#ddd9a1]"
                 style={{ flex: caution }}
               />
               {danger > 0 && (
                 <div
-                  className="rounded bg-ewg-danger"
+                  className="rounded bg-[#df8282]"
                   style={{ flex: danger }}
                 />
               )}
@@ -692,16 +695,16 @@ function ProductDetailInner() {
                 },
               ].map((grade) => (
                 <div key={grade.sub}>
-                  <p className="text-[11px] text-[#a69d92] mb-0.5">
+                  <p className="text-[13px] text-[#7d766e] mb-0.5">
                     • {grade.label}
                   </p>
                   <p
-                    className="text-[18px] font-bold"
+                    className="text-[16px] font-bold"
                     style={{ color: grade.color }}
                   >
                     {grade.count}
                   </p>
-                  <p className="text-[12px] text-[#bfb6aa] mt-0.5">
+                  <p className="text-[13px] text-[#736b62] mt-0.5">
                     {grade.sub}
                   </p>
                 </div>
@@ -807,8 +810,13 @@ function ProductDetailInner() {
                       <p className="font-semibold text-[#6e6358] text-[14px] mb-2">
                         제품 설명
                       </p>
-                      <p className="text-[13px] text-[#2a2118] leading-[1.7]">
-                        {productData.description}
+                      <p className="text-[13px] text-[#2a2118] font-medium leading-[1.7]">
+                        {productData.description.split("-").map((line, index) => (
+                          <span key={index}>
+                            {index > 0 && <><br />-</>}
+                            {line}
+                          </span>
+                        ))}
                       </p>
                     </div>
                   )}
@@ -885,27 +893,21 @@ function ProductDetailInner() {
                           className="flex items-start gap-3 px-5 py-3.5 not-last:border-b not-last:border-[#f5f3f0]"
                         >
                           <div className="flex flex-col items-center shrink-0 w-7">
-                            <EwgDropIcon color={ewgColorInfo.barColor} />
-                            <span
-                              className="text-[10px] font-semibold mt-0.5"
-                              style={{ color: ewgColorInfo.text }}
-                            >
-                              {resolvedScore ?? "?"}
-                            </span>
+                            <EwgDropIcon color={ewgColorInfo.barColor} score={resolvedScore} />
                           </div>
                           <div className="flex-1 min-w-0">
                             {/* 성분명 한글 */}
-                            <p className="text-[13px] font-semibold text-[#2a2118] leading-[1.3]">
+                            <p className="text-[14px] font-semibold text-[#45403a] leading-[1.6]">
                               {ingredient.nameKo}
                             </p>
                             {ingredient.nameEn && (
-                              <p className="text-[11px] text-[#bfb6aa] my-0.5">
+                              <p className="text-[12px] text-[#aea08e] mb-0.5">
                                 {ingredient.nameEn}
                               </p>
                             )}
                             {/* 기능 칩 */}
                             {functionChips.length > 0 && (
-                              <p className="text-[11px] text-[#a69d92] leading-[1.6] mt-0.5">
+                              <p className="text-[13px] text-[#656360] font-medium leading-[1.6] mt-0.5">
                                 {functionChips.join(", ")}
                               </p>
                             )}

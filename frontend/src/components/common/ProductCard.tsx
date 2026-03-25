@@ -81,7 +81,7 @@ export function SkinTypeTag({ label }: { label: string }) {
   // 영문 API 값("dry", "oily" 등)을 한글로 변환
   const koreanLabel = fromSkinTypeEnum(label);
   return (
-    <span className="inline-block mb-1 mr-1.5 text-[10px] font-medium px-1.5 py-[1px] rounded bg-[#f7f2ea] text-[#514a42]">
+    <span className="inline-block mb-1 mr-1.5 text-[12px] font-medium px-1.5 py-[1px] rounded bg-[#f7f2ea] text-[#514a42]">
       {koreanLabel}
     </span>
   );
@@ -108,7 +108,7 @@ function PickBadge() {
 // ── 브랜드 라벨 — 작고 연한 스타일
 function BrandLabel({ brand }: { brand: string }) {
   return (
-    <span className="text-[12px] font-semibold text-[#88745a]">
+    <span className="text-[12px] font-semibold text-[#604e36]">
       {brand}
     </span>
   );
@@ -117,7 +117,7 @@ function BrandLabel({ brand }: { brand: string }) {
 // ── 카테고리 칩 — 나중에 색상 적용 예정, 현재 기본 스타일 유지
 function CategoryChip({ category }: { category: string }) {
   return (
-    <span className="text-[10px] px-1 py-px rounded-[10px] font-medium bg-[#f1efea] text-[#968d7e]">
+    <span className="text-[10px] px-1 py-px rounded-[10px] font-medium bg-[#f1efea] text-[#6d6557]">
       {category}
     </span>
   );
@@ -395,11 +395,11 @@ export default function ProductCard({
                 className="absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center border-none cursor-pointer"
               >
                 <Heart
-                  size={16}
+                  size={20}
                   className="transition-all duration-150"
                   style={{
-                    color: isLiked ? "#f27b66" : "#d9d5d0",
-                    fill: isLiked ? "#f27b66" : "none",
+                    color: isLiked ? "#f69d8d" : "#d9d5d0",
+                    fill: isLiked ? "#f69d8d" : "none",
                   }}
                 />
               </button>
@@ -430,7 +430,7 @@ export default function ProductCard({
               <BrandLabel brand={brand} />
               {category && <CategoryChip category={category} />}
             </div>
-            <p className="text-[14px] font-semibold text-[#463a2e] leading-[1.4] line-clamp-2">
+            <p className="text-[14px] font-semibold text-[#4d4237] leading-[1.4] line-clamp-2">
               {name}
             </p>
             {/* 피부타입 태그 */}
@@ -604,7 +604,7 @@ export default function ProductCard({
             </div>
 
             {/* 제품명 */}
-            <p className="text-[13px] font-semibold text-[#7c6f63] leading-[1.4] line-clamp-2 mb-2">
+            <p className="text-[14px] font-semibold text-[#61574e] leading-[1.4] line-clamp-2 mb-2">
               {name}
             </p>
 

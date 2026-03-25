@@ -58,7 +58,7 @@ export default function LikesPage() {
   };
 
   return (
-    <div className="flex-1 bg-[var(--color-bg-base)]">
+    <div className="flex-1 min-h-screen bg-[#faf8f5]">
       {showCompare && canCompare && (
         <CompareModal
           compareItems={compareItems as [ProductViewModel, ProductViewModel]}
@@ -66,14 +66,11 @@ export default function LikesPage() {
         />
       )}
 
-      {/* 헤더 */}
-      <div className="bg-[#faf8f5] px-5 pt-[15px] pb-10">
-        <h1 className="mt-[10px] text-[20px] font-semibold text-[#635446]">
+      <div className="px-5 pt-[15px] pb-6">
+        {/* 헤더 */}
+        <h1 className="mt-[10px] mb-10 text-[20px] font-semibold text-[#635446]">
           Liked
         </h1>
-      </div>
-
-      <div className="px-10 pb-6 pt-0 bg-[#faf8f5]">
         {isLoading ? (
           <div className="flex items-center justify-center py-12 px-5">
             <p className="text-[14px] text-[var(--color-text-muted)]">

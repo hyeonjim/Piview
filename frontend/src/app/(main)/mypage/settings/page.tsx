@@ -126,7 +126,7 @@ export default function SettingsPage() {
         {/* 피부고민 */}
         <div>
           <h3 className="text-base font-bold text-[#635446] mb-1.5">피부 고민</h3>
-          <p className="text-xs text-text-muted mb-5">
+          <p className="text-[14px] text-text-muted mb-5">
             해당하는 고민을 모두 선택해주세요
           </p>
           <div className="flex flex-wrap gap-2">
@@ -147,7 +147,7 @@ export default function SettingsPage() {
         {/* 재진단 */}
         <div>
           <h3 className="text-base font-bold text-[#635446] mb-1.5">피부 진단 다시하기</h3>
-          <p className="text-xs text-text-muted mb-5">
+          <p className="text-[14px] text-text-muted mb-5">
             AI 사진 분석으로 피부 상태를 다시 진단할 수 있어요
           </p>
           <Link

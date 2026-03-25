@@ -53,14 +53,14 @@ export default function HomePage() {
       <div className="bg-[#faf8f5] pt-3.75 pb-7 px-5">
         <div className="flex items-center gap-1.5">
           {greeting.icon}
-          <span className="text-base font-normal text-[#B0A99F] tracking-[0.12em] uppercase italic [font-family:var(--font-english),serif]">
+          <span className="text-base font-normal text-[#95846e] tracking-[0.12em] uppercase italic [font-family:var(--font-english),serif]">
             {greeting.text}
           </span>
         </div>
-        <h1 className="my-2 text-[20px] font-bold text-[#6c6b66] tracking-[-0.5px] leading-[1.2]">
+        <h1 className="my-2 text-[18px] font-semibold text-[#6c6b66] tracking-[-0.5px] leading-[1.2]">
           {nickname}님,
         </h1>
-        <p className="mt-1 text-sm text-[#B0A99F]">
+        <p className="mt-1 text-sm text-[#7e7972]">
           오늘의 스킨케어 루틴을 확인하세요
         </p>
       </div>
@@ -75,7 +75,7 @@ export default function HomePage() {
                 Main routine
               </span>
               {hasRoutine && (
-                <span className="text-[12px] font-medium py-0.5 px-2 rounded-full bg-[#F2EFE9] text-[#70685d]">
+                <span className="text-[12px] font-medium py-0.5 px-2 rounded-full bg-[#e9ebf0] text-[#70685d]">
                   {mainRoutineItems.length}단계
                 </span>
               )}
@@ -109,8 +109,8 @@ export default function HomePage() {
                   className="flex items-center py-2.5 first:pt-1 last:pb-1"
                 >
                   {/* 스텝 번호 뱃지 */}
-                  <div className="shrink-0 w-6 h-6 rounded-full bg-[#F2EFE9] flex items-center justify-center">
-                    <span className="text-[15px] font-bold text-[#756f67] [font-family:var(--font-english),serif]">
+                  <div className="shrink-0 w-6 h-6 rounded-full bg-[#e9ebf0] flex items-center justify-center">
+                    <span className="text-[16px] font-bold text-[#756f67] [font-family:var(--font-english),serif]">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                   </div>

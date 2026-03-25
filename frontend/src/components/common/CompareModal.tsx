@@ -10,7 +10,7 @@
  */
 
 import Image from "next/image";
-import { X, Sparkles } from "lucide-react";
+import { X } from "lucide-react";
 import { formatPrice } from "@/utils/format";
 import { SkinTypeTag } from "@/components/common/ProductCard";
 import { useProductCompare } from "@/hooks";
@@ -164,7 +164,7 @@ export default function CompareModal({
     {
       label: "성분 위험도",
       leftContent: (
-        <div className="flex items-center gap-1.5 flex-wrap justify-center">
+        <div className="flex items-center gap-1.5 flex-wrap justify-center font-normal">
           <span className="flex items-center gap-0.5 text-xs">
             <span className="w-2 h-2 rounded-full bg-ewg-safe inline-block shrink-0" />
             {apiLeft?.ewgRisk?.low ?? leftProduct.ewgSafe ?? 0}
@@ -180,7 +180,7 @@ export default function CompareModal({
         </div>
       ),
       rightContent: (
-        <div className="flex items-center gap-1.5 flex-wrap justify-center">
+        <div className="flex items-center gap-1.5 flex-wrap justify-center font-normal">
           <span className="flex items-center gap-0.5 text-xs">
             <span className="w-2 h-2 rounded-full bg-ewg-safe inline-block shrink-0" />
             {apiRight?.ewgRisk?.low ?? rightProduct.ewgSafe ?? 0}
@@ -214,10 +214,10 @@ export default function CompareModal({
           <span className="text-[13px] text-text-hint">없음</span>
         ) : (
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[12px] font-semibold text-danger">
+            <span className="text-[13px] font-semibold text-[#dc6262]">
               {apiLeft.allergy.count}개
             </span>
-            <span className="text-[12px] text-text-muted text-center leading-relaxed">
+            <span className="text-[13px] text-text-muted text-center font-semibold">
               {apiLeft.allergy.ingredients.join(", ")}
             </span>
           </div>
@@ -227,19 +227,19 @@ export default function CompareModal({
       ),
       rightContent: apiRight ? (
         apiRight.allergy.count === 0 ? (
-          <span className="text-sm text-text-hint">없음</span>
+          <span className="text-[13px] text-text-hint">없음</span>
         ) : (
           <div className="flex flex-col items-center gap-1">
-            <span className="text-sm font-semibold text-danger">
+            <span className="text-[13px] font-semibold text-[#dc6262]">
               {apiRight.allergy.count}개
             </span>
-            <span className="text-[10px] text-text-muted text-center leading-relaxed">
+            <span className="text-[13px] text-text-muted text-center font-semibold">
               {apiRight.allergy.ingredients.join(", ")}
             </span>
           </div>
         )
       ) : (
-        <span className="text-sm text-text-hint">-</span>
+        <span className="text-[13px] text-text-hint">-</span>
       ),
       highlightIndex: (() => {
         if (!apiLeft || !apiRight) return null;
@@ -312,19 +312,23 @@ export default function CompareModal({
             </div>
           ) : (
             <div
-              className="rounded-xl border border-[var(--color-border-table)]"
+              className="rounded-xl border border-[#e2e0dc]"
               style={{ overflow: "clip" }}
             >
               {/* 헤더 행 — grid-cols Tailwind arbitrary */}
-              <div className="grid grid-cols-[90px_1fr_1fr] bg-[var(--color-table-label-bg)]">
-                <div className="px-3 py-2 text-[12px] font-semibold text-text-hint text-left">
+              <div className="grid grid-cols-[90px_1fr_1fr]">
+                <div className="px-2 py-3 text-[14px] font-semibold text-text-hint bg-[#f2f2f1] flex items-center">
                   제품명
                 </div>
-                <div className="px-2 py-2 text-[12px] font-semibold text-center text-text-muted leading-tight line-clamp-2">
-                  {leftProduct.name}
+                <div className="px-2 py-3 text-[12px] text-center flex items-center justify-center text-text-primary">
+                  <span className="text-[13px] font-medium text-[#535252] leading-tight line-clamp-2">
+                    {leftProduct.name}
+                  </span>
                 </div>
-                <div className="px-2 py-2 text-[12px] font-semibold text-center text-text-muted leading-tight line-clamp-2">
-                  {rightProduct.name}
+                <div className="px-2 py-3 text-[12px] text-center flex items-center justify-center text-text-primary">
+                  <span className="text-[13px] font-medium text-[#535252] leading-tight line-clamp-2">
+                    {rightProduct.name}
+                  </span>
                 </div>
               </div>
 
@@ -334,9 +338,9 @@ export default function CompareModal({
                   // border-t border-bg-beige → 전역 변수 --color-bg-beige (#f2efe9)
                   <div
                     key={row.label}
-                    className="grid grid-cols-[90px_1fr_1fr] border-t border-bg-beige"
+                    className="grid grid-cols-[90px_1fr_1fr] border-t border-[#e2e0dc]"
                   >
-                    <div className="px-3 py-3 text-[12px] font-semibold text-text-hint bg-[var(--color-table-label-bg)] flex items-center">
+                    <div className="px-2 py-3 text-[14px] font-semibold text-text-hint bg-[#f2f2f1] flex items-center">
                       {row.label}
                     </div>
                     <div
@@ -366,10 +370,9 @@ export default function CompareModal({
           )}
 
           {/* AI 비교 분석 — bg-brand-pale, border-border-warm 전역 변수 */}
-          <div className="rounded-xl bg-brand-pale border border-border-warm p-4">
+          <div className="rounded-xl bg-brand-pale border border-border-warm p-4 mt-4">
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles size={14} className="text-text-muted" />
-              <span className="text-sm font-semibold text-text-hint uppercase tracking-wider">
+              <span className="text-[16px] font-semibold text-[#686666]">
                 AI 비교 분석
               </span>
             </div>
