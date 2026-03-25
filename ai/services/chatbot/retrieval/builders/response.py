@@ -28,10 +28,21 @@ def to_citation(
     """생성 모델이 참고할 수 있도록, 짧은 citation 텍스트를 만듭니다."""
     display_concerns = filter_display_concerns(result.concern_names, preferred_concerns)
     concern_text = f" / 관련 고민: {', '.join(display_concerns)}" if display_concerns else ""
+    snippet = result.evidence_snippets[0] if result.evidence_snippets else result.description
     return ChatbotCitation(
         type="product",
         productId=result.product_id,
         text=f"{result.name} ({result.brand_name or '브랜드 미상'}){concern_text}",
+        title=result.name,
+        snippet=snippet,
+        source=", ".join(result.matched_sources) if result.matched_sources else None,
+        score=result.hybrid_score,
+        metadata={
+            "brandName": result.brand_name,
+            "categoryName": result.category_name,
+            "concerns": display_concerns,
+            "ingredientPreview": result.ingredient_preview,
+        },
     )
 
 
@@ -59,7 +70,12 @@ def build_retrieval_context(
         display_concerns = filter_display_concerns(result.concern_names, preferred_concerns)
         if display_concerns:
             line += f" / 관련 고민 {', '.join(display_concerns[:3])}"
+        if result.hybrid_score is not None:
+            line += f" / 검색점수 {result.hybrid_score:.3f}"
         lines.append(line)
+
+        for evidence in result.evidence_snippets[:2]:
+            lines.append(f"  근거: {evidence}")
 
     if avoid_terms and has_strict_filter_request(message):
         # 회피 성분은 랭킹 신호라서, 답변에서는 확정 표현을 금지합니다.
@@ -135,5 +151,7 @@ def _build_reason(
     skin_type_hints = [item for item in (result.top_skin_type, result.top2_skin_type) if item]
     if skin_type_hints:
         reason_parts.append(f"피부타입 힌트 {', '.join(skin_type_hints)}")
+    if result.ingredient_preview:
+        reason_parts.append(f"전성분 메모 {result.ingredient_preview}")
 
     return " / ".join(reason_parts) if reason_parts else "질문과 의미적으로 가까운 상품 후보입니다."

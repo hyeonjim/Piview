@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 
@@ -20,4 +20,11 @@ class ProductSearchResult:
     top_skin_type: str | None
     top2_skin_type: str | None
     document: str
+    description: str | None = None
+    ingredient_preview: str | None = None
+    evidence_snippets: list[str] = field(default_factory=list)
+    matched_sources: list[str] = field(default_factory=list)
+    raw_score: float | None = None
+    hybrid_score: float | None = None
+    score_breakdown: dict[str, float] = field(default_factory=dict)
     distance: float | None = None

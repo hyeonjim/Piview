@@ -39,6 +39,11 @@ class ChatbotCitation(BaseModel):
     type: str
     productId: int | None = None
     text: str | None = None
+    title: str | None = None
+    snippet: str | None = None
+    source: str | None = None
+    score: float | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class ChatbotQueryResponse(BaseModel):

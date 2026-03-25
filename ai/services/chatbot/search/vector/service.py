@@ -7,6 +7,13 @@
 import asyncio
 
 from core.settings import get_settings
+from services.chatbot.search.product_data import (
+    build_evidence_snippets,
+    build_ingredient_preview,
+    build_product_document,
+    product_search_data_repository,
+    truncate_text,
+)
 from services.chatbot.search.vector.mapper import map_query_results
 from services.chatbot.search.vector.models import IndexedProductDocument, ProductSearchResult
 from services.chatbot.search.vector.store import VectorCollectionStore
@@ -45,6 +52,45 @@ class ProductVectorService:
                 metadatas=[doc.metadata for doc in batch],
             )
         return len(documents)
+
+    def build_indexed_documents(
+        self,
+        product_ids: list[int] | None = None,
+    ) -> list[IndexedProductDocument]:
+        rows = product_search_data_repository.fetch_products_for_indexing(product_ids=product_ids)
+        settings = get_settings()
+        return [
+            IndexedProductDocument(
+                product_id=row.product_id,
+                name=row.name,
+                document=build_product_document(row),
+                metadata={
+                    "productId": row.product_id,
+                    "name": row.name,
+                    "brandName": row.brand_name or "",
+                    "categoryName": row.category_name or "",
+                    "concernNames": "||".join(row.concern_names),
+                    "topSkinType": row.top_skin_type or "",
+                    "top2SkinType": row.top2_skin_type or "",
+                    "description": truncate_text(row.description, settings.chatbot_description_max_chars)
+                    or "",
+                    "ingredientPreview": build_ingredient_preview(
+                        row.ingredient_text_ko,
+                        row.ingredient_text_en,
+                        limit=settings.chatbot_ingredient_limit,
+                    )
+                    or "",
+                    "evidenceSnippets": "||".join(build_evidence_snippets(row)),
+                },
+            )
+            for row in rows
+        ]
+
+    def reindex_from_db(self, product_ids: list[int] | None = None, reset: bool = False) -> int:
+        if reset:
+            self.reset_collection()
+        documents = self.build_indexed_documents(product_ids=product_ids)
+        return self.upsert_documents(documents)
 
     def query(
         self,

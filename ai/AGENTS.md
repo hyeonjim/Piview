@@ -90,6 +90,8 @@ services/chatbot/
         query.py    --- 일반 탐색형 질문 관련 보정
 
   search/           --- 검색 하위 계층
+    product_data.py --- MySQL 상품 메타데이터 공통 로더 / keyword·indexing 공용 데이터 소스
+
     embedding/      --- 임베딩 생성
       client.py     --- 외부 임베딩 API 호출
       function.py   --- 벡터 저장소용 embedding function 어댑터
@@ -106,6 +108,13 @@ services/chatbot/
       scorer.py     --- 키워드 점수 계산
       tokenizer.py  --- 질의 토큰 추출
       models.py     --- 키워드 검색용 데이터 모델
+
+  eval/            --- retrieval/citation 수동 평가 유틸
+    metrics.py     --- precision/recall/MRR/citation coverage 계산
+
+scripts/
+  reindex_chatbot.py  --- MySQL 상품 데이터를 다시 읽어 Chroma 인덱스를 재생성
+  evaluate_chatbot.py --- 저장된 수동 케이스 JSON을 deterministic metric으로 평가
 ```
 
 ## Chatbot Features
@@ -119,8 +128,9 @@ services/chatbot/
 - 질문이 너무 넓으면 바로 추천하지 않고 되묻는 `clarifying_question` 응답으로 보낸다.
 - 검색 결과가 있으면 상품 카드용 후보 목록과 간단한 추천 멘트를 같이 만든다.
 - 검색 결과가 약하거나 없으면 특정 상품을 지어내지 않고 일반적인 선택 기준만 안내한다.
-- 벡터 검색과 키워드 검색을 함께 쓰고, 도메인 룰로 최종 순위를 다시 조정한다.
+- 벡터 검색과 키워드 검색을 함께 쓰고, source score를 합친 뒤 도메인 룰을 한 번만 적용해 최종 순위를 다시 조정한다.
 - 향료, 알코올, 에센셜오일 같은 회피 조건은 "완전 검증"이 아니라 랭킹 보정 신호로 사용한다.
+- citation에는 기존 productId/text 외에 snippet, source, score, metadata가 붙을 수 있다.
 
 ## Chatbot End-to-End Flow
 
@@ -131,12 +141,13 @@ services/chatbot/
 2. generation/service.py가 sessionId를 만들거나 기존 세션을 읽는다.
 3. retrieval/service.py가 질문을 검색용 query로 바꾼다.
 4. vector 검색과 keyword 검색을 병렬로 실행한다.
-5. scoring/fusion.py가 두 검색 결과를 합치고 도메인 룰로 순위를 조정한다.
-6. retrieval 결과를 product candidates, citations, retrieval_context로 정리한다.
-7. generation/llm.py가 LLM에 최종 답변 생성을 요청한다.
-8. LLM이 실패하면 generation/templates.py의 템플릿 답변으로 fallback 한다.
-9. 최종 answer와 추천 상품 ID를 세션에 저장한다.
-10. API 응답으로 answer, products, filters, citations를 반환한다.
+5. scoring/fusion.py가 두 검색 결과의 source score를 합친다.
+6. 카테고리 의도, 루틴 공백, 회피 성분 같은 휴리스틱을 product별로 한 번만 적용한다.
+7. retrieval 결과를 product candidates, citations, retrieval_context로 정리한다.
+8. generation/llm.py가 LLM에 최종 답변 생성을 요청한다.
+9. LLM이 실패하면 generation/templates.py의 템플릿 답변으로 fallback 한다.
+10. 최종 answer와 추천 상품 ID를 세션에 저장한다.
+11. API 응답으로 answer, products, filters, citations를 반환한다.
 ```
 
 ## Chatbot Inputs Used Internally
@@ -216,8 +227,15 @@ services/chatbot/
 
 - vector 검색은 의미 기반 유사도에 강하다
 - keyword 검색은 상품명, 브랜드명, 카테고리, 설명의 직접 매칭에 강하다
-- `fusion.py`에서 두 결과를 합친 뒤 카테고리 의도, 루틴 공백, 회피 성분, 문맥 불일치 같은 규칙으로 재정렬한다
+- `fusion.py`는 vector/keyword source score를 먼저 합치고, 카테고리 의도, 루틴 공백, 회피 성분, 문맥 불일치 같은 규칙을 product별로 한 번만 적용한다
 - 따라서 "답변 품질이 이상하다"는 문제는 LLM보다 retrieval/scoring에서 먼저 보는 편이 맞다
+
+## Chatbot Indexing Notes
+
+- vector 검색 품질을 보려면 Chroma 컬렉션 메타데이터가 현재 코드와 맞아야 한다
+- 새 document/evidence 필드를 반영했으면 `scripts/reindex_chatbot.py --reset`으로 재색인하는 편이 맞다
+- 재색인과 keyword 검색은 둘 다 `search/product_data.py`의 공통 상품 메타데이터 로더를 사용한다
+- 이 로더는 MySQL 접속이 가능해야 동작한다
 
 ## Chatbot Limitations
 
@@ -250,4 +268,5 @@ services/chatbot/
 - retrieval 품질 문제는 generation보다 retrieval/scoring 쪽을 먼저 본다.
 - 응답 톤 수정은 prompts, generation/templates.py, generation/postprocess.py를 함께 본다.
 - 값 조정이 필요하면 먼저 retrieval/constants 쪽에서 해결 가능한지 본다.
+- ai 코드 변경으로 구조, 흐름, 실행 방법, 운영 전제가 달라졌다면 AGENTS.md도 함께 업데이트한다.
 ```

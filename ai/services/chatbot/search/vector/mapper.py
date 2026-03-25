@@ -3,6 +3,12 @@
 from services.chatbot.search.vector.models import ProductSearchResult
 
 
+def _split_metadata_list(value: str | None) -> list[str]:
+    if not value:
+        return []
+    return [item.strip() for item in str(value).split("||") if item.strip()]
+
+
 def map_query_results(
     raw: dict,
     limit: int,
@@ -27,7 +33,9 @@ def map_query_results(
         seen_product_ids.add(product_id)
 
         concern_names_raw = metadata.get("concernNames") or ""
-        concern_names = [item.strip() for item in concern_names_raw.split(",") if item.strip()]
+        concern_names = [item.strip() for item in concern_names_raw.split("||") if item.strip()]
+        evidence_snippets = _split_metadata_list(metadata.get("evidenceSnippets"))
+        distance_value = float(distance) if distance is not None else None
         results.append(
             ProductSearchResult(
                 product_id=product_id,
@@ -38,7 +46,12 @@ def map_query_results(
                 top_skin_type=metadata.get("topSkinType"),
                 top2_skin_type=metadata.get("top2SkinType"),
                 document=document,
-                distance=float(distance) if distance is not None else None,
+                description=metadata.get("description"),
+                ingredient_preview=metadata.get("ingredientPreview"),
+                evidence_snippets=evidence_snippets,
+                matched_sources=["vector"],
+                raw_score=(1.0 - distance_value) if distance_value is not None else None,
+                distance=distance_value,
             )
         )
         if len(results) >= limit:

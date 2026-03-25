@@ -1,6 +1,7 @@
 from dataclasses import replace
 
 from services.chatbot.search.keyword.models import KeywordCandidateRow
+from services.chatbot.search.product_data import build_evidence_snippets, build_ingredient_preview
 from services.chatbot.search.vector import ProductSearchResult
 
 
@@ -36,6 +37,14 @@ def to_search_result(row: KeywordCandidateRow) -> ProductSearchResult:
         top_skin_type=row.top_skin_type,
         top2_skin_type=row.top2_skin_type,
         document=build_document_text(row),
+        description=row.description,
+        ingredient_preview=build_ingredient_preview(
+            row.ingredient_text_ko,
+            row.ingredient_text_en,
+        ),
+        evidence_snippets=build_evidence_snippets(row),
+        matched_sources=["keyword"],
+        raw_score=row.keyword_score,
         distance=None,
     )
 
@@ -48,4 +57,9 @@ def build_document_text(row: KeywordCandidateRow) -> str:
         parts.append(f"카테고리: {row.category_name}")
     if row.description:
         parts.append(f"설명: {' '.join(str(row.description).split())}")
+    ingredient_preview = build_ingredient_preview(row.ingredient_text_ko, row.ingredient_text_en)
+    if ingredient_preview:
+        parts.append(f"전성분 메모: {ingredient_preview}")
+    if row.concern_names:
+        parts.append(f"관련 고민: {', '.join(row.concern_names[:5])}")
     return "\n".join(parts)
