@@ -13,10 +13,20 @@ from services.chatbot.search.vector import ProductSearchResult
 
 
 class ProductKeywordService:
-    async def search_async(self, query_text: str, limit: int) -> list[ProductSearchResult]:
-        return await asyncio.to_thread(self.search, query_text, limit)
+    async def search_async(
+        self,
+        query_text: str,
+        limit: int,
+        candidate_limit: int | None = None,
+    ) -> list[ProductSearchResult]:
+        return await asyncio.to_thread(self.search, query_text, limit, candidate_limit)
 
-    def search(self, query_text: str, limit: int) -> list[ProductSearchResult]:
+    def search(
+        self,
+        query_text: str,
+        limit: int,
+        candidate_limit: int | None = None,
+    ) -> list[ProductSearchResult]:
         """질문 문자열을 키워드 후보 리스트로 바꿉니다.
 
         1. 질의에서 의미 있는 토큰을 추출한다.
@@ -29,7 +39,13 @@ class ProductKeywordService:
             return []
 
         # DB prefilter + TTL cache로 요청마다 전체 상품을 다시 읽는 비용을 줄입니다.
-        scored_rows = [score_row(row, terms) for row in product_keyword_repository.get_candidates(terms)]
+        scored_rows = [
+            score_row(row, terms)
+            for row in product_keyword_repository.get_candidates(
+                terms,
+                candidate_limit=candidate_limit,
+            )
+        ]
         filtered_rows = [row for row in scored_rows if row.keyword_score > 0]
         filtered_rows.sort(key=lambda row: (-row.keyword_score, row.product_id))
         return [to_search_result(row) for row in filtered_rows[:limit]]
