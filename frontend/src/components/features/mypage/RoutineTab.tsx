@@ -2,7 +2,7 @@
 
 import { toast } from "sonner";
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Plus, X, ArrowUpDown, Scan, SquarePen, Save } from "lucide-react";
+import { Plus, X, Scan, SquarePen, Save, ChessQueen } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -196,7 +196,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     if (!container) return;
     const firstCard = container.firstElementChild as HTMLElement | null;
     if (!firstCard) return;
-    const cardWidth = firstCard.offsetWidth + 8;
+    const cardWidth = firstCard.offsetWidth + 20;
     const index = Math.round(container.scrollLeft / cardWidth);
     setActiveCardIndex(Math.min(index, routineList.length - 1));
   };
@@ -517,18 +517,18 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       {/* ── 저장된 루틴 슬라이더 ── */}
       {routineList.length > 0 && (
         <div className="mb-5">
-          <div className="flex items-center justify-between mb-5">
-            <p className="text-[16px] font-bold text-[#7c7c7a]">My routine list</p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[15px] font-bold text-text-secondary">My routine list</p>
             <button
               onClick={handleNewRoutine}
-              className="flex items-center gap-1 font-bold px-2 py-1 rounded-full border border-border text-[13px] text-[#bfba1b] cursor-pointer bg-[#fcfcfb]"
+              className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full text-[14px] text-white cursor-pointer bg-[#e6e2c0] shadow-xs active:scale-[0.97] transition-transform"
             >
               <Plus size={12} /> New
             </button>
           </div>
           <div
             ref={savedRoutineScrollRef}
-            className="flex gap-5 overflow-x-auto pb-1 snap-x snap-mandatory overscroll-x-contain cursor-grab select-none [scrollbar-width:none]"
+            className="flex gap-5 overflow-x-auto pt-1 pb-3 snap-x snap-mandatory overscroll-x-contain cursor-grab select-none [scrollbar-width:none]"
             onScroll={handleSavedRoutineScroll}
             onPointerDown={handleSliderPointerDown}
             onPointerMove={handleSliderPointerMove}
@@ -556,14 +556,14 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
 
           {/* 스크롤 도트 인디케이터 */}
           {routineList.length > 1 && (
-            <div className="flex justify-center gap-1 mt-2">
+            <div className="flex justify-center gap-1.5 mt-1">
               {routineList.map((_, index) => (
                 <div
                   key={index}
-                  className={`rounded-full transition-all duration-200 ${
+                  className={`rounded-full transition-all duration-300 ${
                     index === activeCardIndex
-                      ? "w-3 h-1.5 bg-[#A69D92]"
-                      : "w-1.5 h-1.5 bg-[#D9D5D0]"
+                      ? "w-5 h-1.5 bg-[#b9ae9f]"
+                      : "w-2 h-1.5 bg-[#e2ddd8]"
                   }`}
                 />
               ))}
@@ -578,13 +578,6 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         {/* 루틴 이름 & 메인 루틴 설정 버튼 & 액션 버튼 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
-            <h2 className="text-[18px] font-bold text-[#636260] truncate">
-              {isViewingSavedRoutine
-                ? selectedRoutineDetail.title
-                : editingRoutineId !== null
-                  ? editingRoutineTitle
-                  : "메인루틴"}
-            </h2>
             {/* ★ 클릭 시 현재 선택된(펼쳐진) 루틴을 바로 메인으로 설정 */}
             <button
               onClick={() => {
@@ -594,7 +587,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 }
                 handleSetMainRoutine(selectedRoutineId);
               }}
-              className={`text-[14px] cursor-pointer bg-transparent border-none leading-none shrink-0 ${
+              className={`flex items-center gap-1 text-[12px] font-semibold px-1 rounded-full cursor-pointer shrink-0 transition-all duration-200 active:scale-[0.97] ${
                 selectedRoutineId !== null &&
                 routineList.find((r) => r.routineId === selectedRoutineId)?.isMain
                   ? "text-[#C8A96E]"
@@ -602,8 +595,18 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               }`}
               aria-label="메인 루틴으로 설정"
             >
-              ★ Main
+              {selectedRoutineId !== null &&
+              routineList.find((r) => r.routineId === selectedRoutineId)?.isMain
+                ? <ChessQueen size={20} fill="#C8A96E" color="#C8A96E" />
+                : <ChessQueen size={20} fill="none" color="#D9D5D0" />}
             </button>
+            <h2 className="text-[18px] font-bold text-[#636260] truncate">
+              {isViewingSavedRoutine
+                ? selectedRoutineDetail.title
+                : editingRoutineId !== null
+                  ? editingRoutineTitle
+                  : "새루틴"}
+            </h2>
           </div>
 
           {/* 액션 버튼 */}
@@ -652,7 +655,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         </div>
 
         <p className="text-[13px] font-semibold text-text-muted">
-          Edit Mode에서 변경
+          클릭시 메인루틴으로 변경 
+          <br />Edit Mode에서 루틴변경가능
         </p>
       </div>
 
@@ -661,16 +665,17 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         const products = viewByStep[step.code] ?? [];
         const isDropTarget =
           !isViewingSavedRoutine &&
-          editingRoutineId !== null &&
           dragState?.toStepCode === step.code;
 
         return (
           <div key={step.code} className="mt-3 mx-3">
             {/* 스텝 섹션 헤더 */}
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-1.5 text-[#63635e] text-[14px] ">
-                <span className="font-bold">{stepIndex + 1}단계</span>
-                <span className="font-semibold ">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 bg-[#f2efe9] rounded-full px-2.5 py-1">
+                  <span className="text-[12px] font-semibold text-[#746f68]">{stepIndex + 1}단계</span>
+                </div>
+                <span className="text-[15px] font-semibold text-text-secondary">
                   {step.label}
                 </span>
               </div>
@@ -678,9 +683,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               {!isViewingSavedRoutine && (
                 <button
                   onClick={() => onOpenModal(step.code, step.columnId)}
-                  className="flex items-center gap-1 text-xs font-semibold text-[#636260] cursor-pointer border-none bg-transparent"
+                  className="flex items-center gap-1 text-[12px] font-semibold text-[#a69d92] cursor-pointer px-2.5 py-1 rounded-full border border-[#e2ddd8] bg-white active:scale-[0.97] transition-transform"
                 >
-                  <Plus size={13} /> 추가
+                  <Plus size={12} /> 추가
                 </button>
               )}
             </div>
@@ -716,8 +721,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             ) : (
               <div className="flex flex-col gap-2">
                 {products.map((product, index) => {
-                  // edit mode: 저장된 루틴 편집 중(editingRoutineId !== null)일 때만 드래그 허용
-                  const canDrag = !isViewingSavedRoutine && editingRoutineId !== null;
+                  // 보기 모드가 아닐 때 드래그 허용 — 새루틴 생성 및 편집 모드 모두 포함
+                  const canDrag = !isViewingSavedRoutine;
 
                   const isDraggingThis =
                     canDrag &&
@@ -927,12 +932,6 @@ function RoutineProductCard({
               : undefined
           }
         >
-          {/* 드래그 아이콘 — edit mode일 때만 표시 */}
-          {isEditMode && (
-            <div className="absolute top-1 left-1 z-10">
-              <ArrowUpDown size={15} className="text-[#C4BEB7]" />
-            </div>
-          )}
 
           {/* 이미지 — py-5 패딩을 주기 위해 relative 래퍼로 감쌈 (fill은 positioned 조상 기준) */}
           <div className="absolute inset-0 py-2">
@@ -1010,30 +1009,30 @@ function SavedRoutineCard({
   onDelete,
   onClick,
 }: SavedRoutineCardProps) {
-  // 선택된 카드만 금색 스타일 — 메인 여부와 무관하게 isSelected가 우선
-  const borderStyle = isSelected ? "1.5px solid #C8A96E" : "1px solid #E2DDD8";
-  const backgroundStyle = "#fff";
-
   return (
     <div
       onClick={onClick}
-      className="relative shrink-0 flex flex-col gap-1 pt-5 pb-3 rounded-xl transition-all cursor-pointer"
+      className={`relative shrink-0 flex flex-col items-center gap-1.5 px-3 pt-5 pb-3.5 rounded-2xl cursor-pointer transition-all duration-250 ${
+        isSelected
+          ? "border border-[#dfd5c0] bg-[#fffdf8]"
+          : "border border-[#e2ddd8] bg-white"
+      }`}
       style={{
-        minWidth: "calc(38% - 4px)",
-        maxWidth: "calc(38% - 4px)",
+        minWidth: "calc(28% - 6px)",
+        maxWidth: "calc(28% - 6px)",
         scrollSnapAlign: "start",
         scrollSnapStop: "always",
-        border: borderStyle,
-        backgroundColor: backgroundStyle,
+        transform: isSelected ? "scale(1.03)" : "scale(1)",
+        boxShadow: isSelected
+          ? "0 2px 6px rgba(200,169,110,0.55), 0 4px 10px rgba(200,169,110,0.30)"
+          : "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)",
       }}
     >
-      {/* 메인 루틴만 별표 배지 표시 */}
+
+      {/* 메인 루틴 배지 — ChessQueen 아이콘 */}
       {saved.isMain && (
-        <span
-          className="absolute top-1.5 left-1.5 w-6 h-6 flex items-center justify-center text-[16px] leading-none"
-          style={{ color: "#C8A96E" }}
-        >
-          ★
+        <span className="absolute top-2 left-3">
+          <ChessQueen size={17} fill="#C8A96E" color="#C8A96E" />
         </span>
       )}
 
@@ -1043,20 +1042,20 @@ function SavedRoutineCard({
           event.stopPropagation();
           onDelete();
         }}
-        className="absolute top-1.5 right-1.5 w-4 h-4 flex items-center justify-center rounded-full border-none cursor-pointer"
+        className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full border-none cursor-pointer hover:bg-[#f2efe9] transition-colors"
       >
-        <X size={14} className="text-[#8A8278]" />
+        <X size={14} className="text-[#bfb6aa]" />
       </button>
 
       {/* 루틴 이름 */}
-      <p className="text-sm font-semibold text-[#2A2118] truncate leading-tight text-center">
+      <p className="text-[14px] mb-1 font-bold text-[#5d5751] truncate leading-tight text-center w-full">
         {saved.title}
       </p>
 
-      {/* 제품 수 */}
-      <p className="text-[12px] font-semibold text-[#A69D92] text-center">
+      {/* 제품 수 pill 뱃지 */}
+      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#f6f4f1] text-[#a69d92]">
         {saved.productCount}개 제품
-      </p>
+      </span>
     </div>
   );
 }

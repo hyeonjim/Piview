@@ -1,6 +1,6 @@
 "use client";
 
-import { Leaf, Sun, Moon, Star, ChevronRight } from "lucide-react";
+import { Leaf, Sun, Moon, Star, ChevronRight, ChessQueen } from "lucide-react";
 import Link from "next/link";
 import { useUserStore } from "@/stores";
 import { useUserQuery, useMainRoutineQuery } from "@/hooks";
@@ -71,7 +71,8 @@ export default function HomePage() {
           {/* 루틴 헤더 */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <span className="text-[16px] font-bold text-[#52514d] tracking-[-0.2px] uppercase [font-family:var(--font-english),serif]">
+              <span className="flex items-center gap-1.5 text-[16px] font-bold text-[#52514d] uppercase [font-family:var(--font-english),serif]">
+                <ChessQueen size={16} className="text-[#52514d]" />
                 Main routine
               </span>
               {hasRoutine && (
@@ -129,6 +130,7 @@ export default function HomePage() {
                       effects={product.tags ?? []}
                       showLike={false}
                       showEwg={false}
+                      imageContainerClassName="justify-center"
                     />
                   </div>
                 </div>
