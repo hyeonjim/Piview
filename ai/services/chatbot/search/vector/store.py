@@ -4,8 +4,6 @@ vector 서비스에서 Chroma client 초기화와 collection 재사용을 직접
 얇은 저장소 객체로 분리했습니다.
 """
 
-from pathlib import Path
-
 from core.settings import get_settings
 from services.chatbot.search.embedding import ChatbotEmbeddingFunction
 
@@ -46,7 +44,7 @@ class VectorCollectionStore:
         self.get_collection()
 
     def _get_client(self):
-        """Chroma PersistentClient를 한 번만 열어 재사용합니다."""
+        """설정된 Chroma 서버 주소로 HttpClient를 한 번만 열어 재사용합니다."""
         if self._client is not None:
             return self._client
 
@@ -58,8 +56,11 @@ class VectorCollectionStore:
             ) from exc
 
         settings = get_settings()
-        vector_dir = Path(settings.chatbot_vector_dir)
-        # 디렉터리가 없으면 로컬/컨테이너 어디서든 첫 실행 시 바로 영속 저장소를 만들 수 있게 합니다.
-        vector_dir.mkdir(parents=True, exist_ok=True)
-        self._client = chromadb.PersistentClient(path=str(vector_dir))
+        if not settings.chroma_host:
+            raise RuntimeError("CHROMA_HOST is not configured.")
+
+        self._client = chromadb.HttpClient(
+            host=settings.chroma_host,
+            port=settings.chroma_port,
+        )
         return self._client

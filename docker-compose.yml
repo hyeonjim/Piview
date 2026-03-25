@@ -12,6 +12,8 @@ volumes:
   jenkins-data:
   prod-ai-duckdb:
   dev-ai-duckdb:
+  dev-chroma-data:
+  prod-chroma-data:
 
 services:
   # ==========================================
@@ -126,8 +128,22 @@ services:
     container_name: dev-ai
     build:
       context: ./ai
+    env_file:
+      - .env
     volumes:
       - dev-ai-duckdb:/app/data
+    networks:
+      - app-network
+
+  # dev-chroma는 backend와 ai가 함께 접근할 수 있게 별도로 띄우는 Chroma 서버입니다.
+  dev-chroma:
+    image: chromadb/chroma:latest
+    container_name: dev-chroma
+    ports:
+      # 호스트에서는 8001로 보이고, 같은 Docker 네트워크 내부 서비스는 dev-chroma:8000으로 접근합니다.
+      - "8001:8000"
+    volumes:
+      - dev-chroma-data:/data
     networks:
       - app-network
 
@@ -166,7 +182,21 @@ services:
     container_name: prod-ai
     build:
       context: ./ai
+    env_file:
+      - .env
     volumes:
       - prod-ai-duckdb:/app/data
+    networks:
+      - app-network
+
+  # prod-chroma는 backend와 ai가 함께 접근할 수 있게 별도로 띄우는 Chroma 서버입니다.
+  prod-chroma:
+    image: chromadb/chroma:latest
+    container_name: prod-chroma
+    ports:
+      # 호스트에서는 8002로 보이고, 같은 Docker 네트워크 내부 서비스는 prod-chroma:8000으로 접근합니다.
+      - "8002:8000"
+    volumes:
+      - prod-chroma-data:/data
     networks:
       - app-network
