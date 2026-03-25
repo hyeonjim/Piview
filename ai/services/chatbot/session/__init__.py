@@ -1,4 +1,5 @@
-from services.chatbot.session.store import ChatSessionStore, SessionSnapshot, chat_session_store
+from services.chatbot.session.models import SessionSnapshot
+from services.chatbot.session.service import ChatSessionStore, chat_session_store
 
 __all__ = [
     "ChatSessionStore",

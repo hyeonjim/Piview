@@ -53,3 +53,9 @@ CHATBOT_MODEL=gemini-2.5-flash
 
 - 로컬에서 AI 서버 기본 주소는 `http://localhost:8000`입니다.
 - 백엔드는 `fastapi.base-url` 설정을 기준으로 AI 서버를 호출합니다.
+
+## Chatbot Notes
+
+- 챗봇 내부는 API 스키마와 별도로 `services/chatbot/domain/`의 내부 모델을 사용합니다.
+- 외부 LLM/임베딩 호출은 `services/chatbot/providers/` 아래 provider 어댑터로 분리돼 있습니다.
+- retrieval은 planner, executor, assembler 단계로 나뉘고, fusion 가중치는 `ai/.env`의 `CHATBOT_*` 설정을 그대로 반영합니다.
