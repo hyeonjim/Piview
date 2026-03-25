@@ -3,8 +3,10 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { X, Camera, Upload, SwitchCamera, ZoomIn } from "lucide-react";
 import { toast } from "sonner";
-import { useOcr, useProductDetail } from "@/hooks";
+import { useOcr, useProductDetail, useAddDraftItemMutation } from "@/hooks";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
+import { getRoutineSteps } from "@/constants/routineSteps";
+import { useUserStore, selectGender } from "@/stores";
 import ProductCard from "@/components/common/ProductCard";
 
 interface OcrModalProps {
@@ -27,12 +29,17 @@ export default function OcrModal({ onClose }: OcrModalProps) {
   const [recognizedProductId, setRecognizedProductId] = useState<number | null>(
     null,
   );
+  const [recognizedCategoryId, setRecognizedCategoryId] = useState<
+    number | null
+  >(null);
   const [ocrDone, setOcrDone] = useState(false);
   const [ocrFailed, setOcrFailed] = useState(false);
 
   const { mutate: recognize, isPending: isRecognizing } = useOcr();
   const { data: product, isLoading: isLoadingProduct } =
     useProductDetail(recognizedProductId);
+  const { mutate: addDraftItem } = useAddDraftItemMutation();
+  const gender = useUserStore(selectGender);
 
   const isLoading = isRecognizing || isLoadingProduct;
 
@@ -118,12 +125,14 @@ export default function OcrModal({ onClose }: OcrModalProps) {
     setOcrDone(false);
     setOcrFailed(false);
     setRecognizedProductId(null);
+    setRecognizedCategoryId(null);
 
     recognize(file, {
       onSuccess: (result) => {
         setOcrDone(true);
         if (result.success && result.productId) {
           setRecognizedProductId(result.productId);
+          setRecognizedCategoryId(result.categoryId ?? null);
         } else {
           setOcrFailed(true);
         }
@@ -137,8 +146,31 @@ export default function OcrModal({ onClose }: OcrModalProps) {
 
   const handleAddProduct = () => {
     if (!product) return;
-    toast(`✓ ${product.productName} 루틴에 추가됨!`);
-    onClose();
+
+    const routineSteps = getRoutineSteps(gender);
+    // OCR 응답의 categoryId 우선 → product.categoryId → categoryName 순으로 폴백
+    const targetCategoryId = recognizedCategoryId ?? product.categoryId;
+    const matchedStep = targetCategoryId
+      ? routineSteps.find((step) =>
+          step.categories.some((c) => c.categoryId === targetCategoryId),
+        )
+      : routineSteps.find((step) =>
+          step.categories.some((c) => c.name === (product.categoryName ?? "")),
+        );
+    const columnId = matchedStep?.columnId ?? 3;
+
+    addDraftItem(
+      { columnId, productId: product.productId },
+      {
+        onSuccess: () => {
+          toast(`✓ ${product.productName} 루틴에 추가됨!`);
+          onClose();
+        },
+        onError: () => {
+          toast.error("루틴 추가에 실패했어요. 다시 시도해 주세요.");
+        },
+      },
+    );
   };
 
   const handleClose = () => {
@@ -151,6 +183,7 @@ export default function OcrModal({ onClose }: OcrModalProps) {
     setOcrDone(false);
     setOcrFailed(false);
     setRecognizedProductId(null);
+    setRecognizedCategoryId(null);
   };
 
   return (
