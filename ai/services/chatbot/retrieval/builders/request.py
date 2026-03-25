@@ -25,6 +25,12 @@ FOLLOW_UP_HINTS: tuple[str, ...] = (
     "같은 조건",
     "방금",
     "아까",
+    "다른 거",
+    "말고",
+    "대신",
+    "더 순한",
+    "더 가벼운",
+    "더 촉촉한",
 )
 
 ANCHOR_PRODUCT_HINTS: tuple[str, ...] = (
@@ -93,8 +99,8 @@ def build_search_query(
 ) -> tuple[str, bool, bool]:
     """검색용 질의 문자열을 만듭니다.
 
-    카테고리 의도가 이미 질문에 명시돼 있으면 원문을 우선합니다.
-    그렇지 않으면 userContext의 고민/회피성분/피부타입을 덧붙여 검색 recall을 보완합니다.
+    원문을 우선하되, userContext의 고민/회피성분/피부타입을 필요할 때 함께 붙여
+    검색 recall과 개인화 신호를 보완합니다.
     """
     message = request.message.strip()
     parts = [message]
@@ -116,17 +122,13 @@ def build_search_query(
         parts.extend(anchor_context_lines)
         used_anchor_products = True
 
-    if not has_explicit_category and request.user_context:
-        if request.user_context.skin_problems:
-            parts.append(f"피부고민: {', '.join(request.user_context.skin_problems)}")
-        if request.user_context.disliked_ingredient_names and not any(
-            _ingredient_already_mentioned(ingredient, message)
-            for ingredient in request.user_context.disliked_ingredient_names
-        ):
-            # 이미 본문에 적힌 성분을 또 붙이면 같은 신호를 과하게 중복할 수 있습니다.
-            parts.append(f"피하고 싶은 성분: {', '.join(request.user_context.disliked_ingredient_names)}")
-        if request.user_context.my_skin_type:
-            parts.append(f"피부타입: {request.user_context.my_skin_type}")
+    if request.user_context:
+        personalization_lines = _build_user_context_query_parts(
+            message,
+            request,
+            has_explicit_category=has_explicit_category,
+        )
+        parts.extend(personalization_lines)
     return "\n".join(parts), used_session_memory, used_anchor_products
 
 
@@ -144,8 +146,6 @@ def _should_use_session_memory(
     if not session_context or not session_context.get("recentUserMessages"):
         return False
     collapsed_message = message.lower().replace(" ", "")
-    if len(collapsed_message) <= 18:
-        return True
     return any(hint.replace(" ", "") in collapsed_message for hint in FOLLOW_UP_HINTS)
 
 
@@ -233,6 +233,35 @@ def _should_use_anchor_product_context(message: str, anchor_product_ids: list[in
     if not anchor_product_ids:
         return False
     collapsed_message = message.lower().replace(" ", "")
-    if any(hint.replace(" ", "") in collapsed_message for hint in ANCHOR_PRODUCT_HINTS):
-        return True
-    return len(collapsed_message) <= 24
+    return any(hint.replace(" ", "") in collapsed_message for hint in ANCHOR_PRODUCT_HINTS)
+
+
+def _build_user_context_query_parts(
+    message: str,
+    request: QueryRequest,
+    *,
+    has_explicit_category: bool,
+) -> list[str]:
+    user_context = request.user_context
+    if user_context is None:
+        return []
+
+    parts: list[str] = []
+    if user_context.skin_problems:
+        if not has_explicit_category or not any(problem in message for problem in user_context.skin_problems):
+            parts.append(f"피부고민: {', '.join(user_context.skin_problems)}")
+
+    missing_ingredients = [
+        ingredient
+        for ingredient in user_context.disliked_ingredient_names
+        if not _ingredient_already_mentioned(ingredient, message)
+    ]
+    if missing_ingredients:
+        parts.append(f"피하고 싶은 성분: {', '.join(missing_ingredients)}")
+
+    if user_context.my_skin_type:
+        normalized_skin_type = user_context.my_skin_type.lower()
+        if not has_explicit_category or normalized_skin_type not in message.lower():
+            parts.append(f"피부타입: {user_context.my_skin_type}")
+
+    return parts
