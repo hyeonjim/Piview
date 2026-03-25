@@ -5,6 +5,7 @@
 """
 
 from services.chatbot.search.vector import ProductSearchResult
+from services.chatbot.retrieval.scoring.config import HybridScoringConfig
 from services.chatbot.retrieval.scoring.category import (
     category_priority,
     category_score_bonus,
@@ -32,9 +33,6 @@ from services.chatbot.retrieval.scoring.heuristics import (
     should_demote_existing_categories_for_gap,
 )
 
-
-_VECTOR_SIGNAL_WEIGHT = 0.05
-_KEYWORD_SIGNAL_WEIGHT = 0.08
 _HEURISTIC_SCALES = {
     "category_bonus": 0.12,
     "generic_bonus": 0.12,
@@ -65,12 +63,12 @@ def fuse_results(
     avoid_terms: set[str],
     existing_categories: set[str],
     missing_categories: set[str],
+    config: HybridScoringConfig,
 ) -> list[ProductSearchResult]:
     """벡터 결과와 키워드 결과를 최종 추천 순서로 합칩니다."""
     if not vector_results and not keyword_results:
         return []
 
-    reciprocal_rank_base = 10
     result_map: dict[int, ProductSearchResult] = {}
     base_scores: dict[int, float] = {}
     score_breakdowns: dict[int, dict[str, float]] = {}
@@ -78,9 +76,9 @@ def fuse_results(
     _accumulate_source_scores(
         source_name="vector",
         results=vector_results,
-        base_weight=0.7,
-        signal_weight=_VECTOR_SIGNAL_WEIGHT,
-        reciprocal_rank_base=reciprocal_rank_base,
+        base_weight=config.vector_weight,
+        signal_weight=config.vector_signal_weight,
+        reciprocal_rank_base=config.reciprocal_rank_base,
         result_map=result_map,
         base_scores=base_scores,
         score_breakdowns=score_breakdowns,
@@ -88,9 +86,9 @@ def fuse_results(
     _accumulate_source_scores(
         source_name="keyword",
         results=keyword_results,
-        base_weight=0.3,
-        signal_weight=_KEYWORD_SIGNAL_WEIGHT,
-        reciprocal_rank_base=reciprocal_rank_base,
+        base_weight=config.keyword_weight,
+        signal_weight=config.keyword_signal_weight,
+        reciprocal_rank_base=config.reciprocal_rank_base,
         result_map=result_map,
         base_scores=base_scores,
         score_breakdowns=score_breakdowns,

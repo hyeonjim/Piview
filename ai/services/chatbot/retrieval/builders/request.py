@@ -4,7 +4,7 @@
 여기서는 retrieval 단계가 공통으로 쓰는 입력값만 정리합니다.
 """
 
-from schemas.chatbot import ChatbotQueryRequest
+from services.chatbot.domain import QueryRequest
 from services.chatbot.retrieval.parsers import canonicalize_avoid_term, extract_preferred_categories
 
 
@@ -24,18 +24,22 @@ FOLLOW_UP_HINTS: tuple[str, ...] = (
 
 
 def collect_applied_filters(
-    request: ChatbotQueryRequest,
+    request: QueryRequest,
     session_context: dict[str, object] | None = None,
     used_session_memory: bool = False,
 ) -> dict[str, object]:
     """응답에 다시 노출할 filter snapshot만 수집합니다."""
     applied_filters: dict[str, object] = {}
-    effective_screen = request.context.screen if request.context and request.context.screen else None
+    effective_screen = (
+        request.client_context.screen
+        if request.client_context and request.client_context.screen
+        else None
+    )
     if not effective_screen and session_context:
         effective_screen = session_context.get("screen")
     effective_product_id = (
-        request.context.currentProductId
-        if request.context and request.context.currentProductId is not None
+        request.client_context.current_product_id
+        if request.client_context and request.client_context.current_product_id is not None
         else None
     )
     if effective_product_id is None and session_context:
@@ -48,20 +52,20 @@ def collect_applied_filters(
     if used_session_memory:
         applied_filters["usedSessionMemory"] = True
 
-    if not request.userContext:
+    if not request.user_context:
         return applied_filters
 
-    if request.userContext.mySkinType:
-        applied_filters["mySkinType"] = request.userContext.mySkinType
-    if request.userContext.skinProblems:
-        applied_filters["skinProblems"] = request.userContext.skinProblems
-    if request.userContext.dislikedIngredientNames:
-        applied_filters["dislikedIngredientNames"] = request.userContext.dislikedIngredientNames
+    if request.user_context.my_skin_type:
+        applied_filters["mySkinType"] = request.user_context.my_skin_type
+    if request.user_context.skin_problems:
+        applied_filters["skinProblems"] = request.user_context.skin_problems
+    if request.user_context.disliked_ingredient_names:
+        applied_filters["dislikedIngredientNames"] = request.user_context.disliked_ingredient_names
     return applied_filters
 
 
 def build_search_query(
-    request: ChatbotQueryRequest,
+    request: QueryRequest,
     session_context: dict[str, object] | None = None,
 ) -> tuple[str, bool]:
     """검색용 질의 문자열을 만듭니다.
@@ -85,25 +89,25 @@ def build_search_query(
             parts.append(f"직전 대화 주제: {recent_messages[-1]}")
             used_session_memory = True
 
-    if request.userContext:
-        if request.userContext.skinProblems:
-            parts.append(f"피부고민: {', '.join(request.userContext.skinProblems)}")
-        if request.userContext.dislikedIngredientNames and not any(
+    if request.user_context:
+        if request.user_context.skin_problems:
+            parts.append(f"피부고민: {', '.join(request.user_context.skin_problems)}")
+        if request.user_context.disliked_ingredient_names and not any(
             _ingredient_already_mentioned(ingredient, message)
-            for ingredient in request.userContext.dislikedIngredientNames
+            for ingredient in request.user_context.disliked_ingredient_names
         ):
             # 이미 본문에 적힌 성분을 또 붙이면 같은 신호를 과하게 중복할 수 있습니다.
-            parts.append(f"피하고 싶은 성분: {', '.join(request.userContext.dislikedIngredientNames)}")
-        if request.userContext.mySkinType:
-            parts.append(f"피부타입: {request.userContext.mySkinType}")
+            parts.append(f"피하고 싶은 성분: {', '.join(request.user_context.disliked_ingredient_names)}")
+        if request.user_context.my_skin_type:
+            parts.append(f"피부타입: {request.user_context.my_skin_type}")
     return "\n".join(parts), used_session_memory
 
 
-def build_excluded_product_ids(request: ChatbotQueryRequest) -> set[int]:
+def build_excluded_product_ids(request: QueryRequest) -> set[int]:
     """사용자가 이미 갖고 있거나 싫다고 한 상품은 검색 후보에서 제외합니다."""
-    if not request.userContext:
+    if not request.user_context:
         return set()
-    return set(request.userContext.myCosProductIds) | set(request.userContext.dislikedProductIds)
+    return set(request.user_context.my_product_ids) | set(request.user_context.disliked_product_ids)
 
 
 def _should_use_session_memory(
