@@ -5,7 +5,7 @@
 문구를 짧고 보수적으로 유지합니다.
 """
 
-from schemas.chatbot import ChatbotQueryRequest
+from services.chatbot.domain import QueryRequest
 from services.chatbot.retrieval import RetrievalBundle
 
 from services.chatbot.generation.helpers import build_skin_problem_hint, extract_category_hint
@@ -16,7 +16,7 @@ ROUTINE_TERMS = ("있는데", "있고", "없어서", "빠진 단계", "겹치지
 
 
 def build_fallback_answer(
-    request: ChatbotQueryRequest,
+    request: QueryRequest,
     retrieval_bundle: RetrievalBundle,
 ) -> str:
     """LLM이 완전히 실패했을 때 보여줄 최후의 답변을 만듭니다."""
@@ -40,7 +40,7 @@ def build_fallback_answer(
 
 
 def build_grounded_template_answer(
-    request: ChatbotQueryRequest,
+    request: QueryRequest,
     retrieval_bundle: RetrievalBundle,
 ) -> str:
     """카드 후보는 있지만 자연어 생성만 실패한 경우의 안전한 템플릿 답변입니다.
@@ -97,8 +97,8 @@ def _build_fallback_category_hint(products) -> str:
     return f"{category_names[0]} 중심으로" if category_names else "후보 중심으로"
 
 
-def _build_avoid_hint(request: ChatbotQueryRequest) -> str:
+def _build_avoid_hint(request: QueryRequest) -> str:
     """userContext에만 있는 회피 성분은 fallback 문구에도 짧게 반영합니다."""
-    if not request.userContext or not request.userContext.dislikedIngredientNames:
+    if not request.user_context or not request.user_context.disliked_ingredient_names:
         return ""
-    return f" {', '.join(request.userContext.dislikedIngredientNames)}는 우선 피하는 방향으로 봤습니다."
+    return f" {', '.join(request.user_context.disliked_ingredient_names)}는 우선 피하는 방향으로 봤습니다."

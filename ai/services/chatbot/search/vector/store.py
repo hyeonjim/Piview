@@ -7,7 +7,7 @@ vector 서비스에서 Chroma client 초기화와 collection 재사용을 직접
 from pathlib import Path
 
 from core.settings import get_settings
-from services.chatbot.search.embedding import GmsOpenAIEmbeddingFunction
+from services.chatbot.search.embedding import ChatbotEmbeddingFunction
 
 
 class VectorCollectionStore:
@@ -15,7 +15,7 @@ class VectorCollectionStore:
         """client와 collection은 lazy-init으로 열고 이후 재사용합니다."""
         self._client = None
         self._collection = None
-        self._embedding_function = GmsOpenAIEmbeddingFunction()
+        self._embedding_function = ChatbotEmbeddingFunction()
 
     def get_collection(self):
         """검색/적재에 공통으로 쓰는 컬렉션 핸들을 돌려줍니다."""

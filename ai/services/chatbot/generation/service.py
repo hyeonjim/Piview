@@ -8,8 +8,8 @@ LLM 실패 시 복구 전략만 관리합니다.
 import logging
 from uuid import uuid4
 
-from schemas.chatbot import ChatbotQueryRequest, ChatbotQueryResponse
-from services.chatbot.generation.helpers import build_effective_client_context, model_to_dict
+from services.chatbot.domain import ClientContext, QueryRequest, QueryResponse
+from services.chatbot.generation.helpers import build_effective_client_context
 from services.chatbot.generation.postprocess import postprocess_answer
 from services.chatbot.generation.templates import (
     build_clarifying_answer,
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class ChatbotService:
-    async def query(self, request: ChatbotQueryRequest) -> ChatbotQueryResponse:
+    async def query(self, request: QueryRequest) -> QueryResponse:
         """API 요청 하나를 최종 챗봇 응답으로 변환합니다.
 
         흐름은 고정입니다.
@@ -35,10 +35,10 @@ class ChatbotService:
         4. 마지막에 후처리와 응답 스키마 변환을 한다.
         """
         # 검색 결과와 생성 단계를 분리해 두면 추천 규칙이 바뀌어도 API 계약은 안정적으로 유지됩니다.
-        session_id = request.sessionId or str(uuid4())
+        session_id = request.session_id or str(uuid4())
         session_snapshot = chat_session_store.get_snapshot(
             session_id=session_id,
-            user_id=request.userContext.userId if request.userContext else None,
+            user_id=request.user_context.user_id if request.user_context else None,
         )
         session_context = session_snapshot.to_prompt_payload()
         client_context = build_effective_client_context(request, session_context)
@@ -65,27 +65,27 @@ class ChatbotService:
             request=request,
             answer=final_answer,
             product_ids=[
-                product.productId
+                product.product_id
                 for product in retrieval_bundle.products
-                if product.productId is not None
+                if product.product_id is not None
             ],
         )
 
-        return ChatbotQueryResponse(
-            sessionId=session_id,
-            responseType=response_type,
+        return QueryResponse(
+            session_id=session_id,
+            response_type=response_type,
             answer=final_answer,
             products=retrieval_bundle.products,
-            appliedFilters=retrieval_bundle.applied_filters,
+            applied_filters=retrieval_bundle.applied_filters,
             citations=retrieval_bundle.citations,
         )
 
     async def _build_answer(
         self,
-        request: ChatbotQueryRequest,
+        request: QueryRequest,
         retrieval_bundle: RetrievalBundle,
         response_type: str,
-        client_context: dict | None,
+        client_context: ClientContext | None,
         session_context: dict | None,
     ) -> tuple[str, str]:
         """LLM 생성 실패까지 포함해 최종 answer/response_type 조합을 결정합니다."""
@@ -109,19 +109,14 @@ class ChatbotService:
 
     async def _generate_answer(
         self,
-        request: ChatbotQueryRequest,
+        request: QueryRequest,
         retrieval_bundle: RetrievalBundle,
-        client_context: dict | None,
+        client_context: ClientContext | None,
         session_context: dict | None,
     ) -> str:
-        """외부 LLM 호출을 감싸는 얇은 래퍼입니다.
-
-        userContext는 pydantic 모델이라, 하위 LLM 서비스에는 dict 형태로 넘깁니다.
-        """
-        user_context = model_to_dict(request.userContext) if request.userContext else None
         return await chatbot_llm_service.generate_answer(
             message=request.message,
-            user_context=user_context,
+            user_context=request.user_context,
             retrieval_context=retrieval_bundle.retrieval_context,
             client_context=client_context,
             session_context=session_context,
