@@ -26,7 +26,8 @@ public class RecommendationBatchService {
   // 인메모리 DB 사용
   private static final String DUCKDB_URL = "jdbc:duckdb:";
 
-  @Scheduled(cron = "0 * * * * ?") // 테스트를 위해 매분 실행
+//  @Scheduled(cron = "0 * * * * ?") // 테스트를 위해 매분 실행
+  @Scheduled(cron = "0 0 0/6 * * ?")
   @Transactional
   public void syncRecommendationScores() throws SQLException {
     log.info("🚀 DuckDB -> 메인 DB 추천 점수 동기화 배치 시작!");
