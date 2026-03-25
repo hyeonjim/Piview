@@ -53,6 +53,8 @@ ai/
 
 ```text
 services/chatbot/
+  domain/           --- API DTO와 분리된 내부 요청/응답 모델 + mapper
+
   generation/       --- 최종 답변 생성 계층
     service.py      --- 챗봇 응답 전체 오케스트레이션
     llm.py          --- LLM 호출
@@ -60,9 +62,14 @@ services/chatbot/
     postprocess.py  --- 답변 후처리
     helpers.py      --- generation 공통 헬퍼
 
+  providers/        --- 외부 LLM/임베딩 provider 어댑터
+    base.py         --- chat / embedding protocol
+    gms.py          --- GMS provider 구현
+
   retrieval/        --- 검색과 랭킹 중심 계층
     service.py      --- retrieval 전체 오케스트레이션
     models.py       --- retrieval 중간 산출물 모델
+    workflow/       --- planner / executor / assembler 파이프라인
 
     builders/       --- 검색 입력값/응답 출력값 조립
       request.py    --- search query, excluded ids, applied filters 조립
@@ -93,7 +100,7 @@ services/chatbot/
     product_data.py --- MySQL 상품 메타데이터 공통 로더 / keyword·indexing 공용 데이터 소스
 
     embedding/      --- 임베딩 생성
-      client.py     --- 외부 임베딩 API 호출
+      client.py     --- embedding provider 래퍼
       function.py   --- 벡터 저장소용 embedding function 어댑터
 
     vector/         --- 벡터 검색
@@ -109,8 +116,14 @@ services/chatbot/
       tokenizer.py  --- 질의 토큰 추출
       models.py     --- 키워드 검색용 데이터 모델
 
-  eval/            --- retrieval/citation 수동 평가 유틸
-    metrics.py     --- precision/recall/MRR/citation coverage 계산
+  session/          --- 세션 저장 계층
+    service.py      --- session store 오케스트레이션
+    backends.py     --- memory / redis backend
+    serialization.py--- snapshot / payload 직렬화
+    models.py       --- session snapshot / stored session 모델
+
+  eval/             --- retrieval/citation 수동 평가 유틸
+    metrics.py      --- precision/recall/MRR/citation coverage 계산
 
 scripts/
   reindex_chatbot.py  --- MySQL 상품 데이터를 다시 읽어 Chroma 인덱스를 재생성
@@ -138,16 +151,16 @@ scripts/
 
 ```text
 1. router가 요청을 받는다.
-2. generation/service.py가 sessionId를 만들거나 기존 세션을 읽는다.
-3. retrieval/service.py가 질문을 검색용 query로 바꾼다.
-4. vector 검색과 keyword 검색을 병렬로 실행한다.
-5. scoring/fusion.py가 두 검색 결과의 source score를 합친다.
-6. 카테고리 의도, 루틴 공백, 회피 성분 같은 휴리스틱을 product별로 한 번만 적용한다.
-7. retrieval 결과를 product candidates, citations, retrieval_context로 정리한다.
-8. generation/llm.py가 LLM에 최종 답변 생성을 요청한다.
+2. router가 API DTO를 내부 domain request로 변환한다.
+3. generation/service.py가 sessionId를 만들거나 기존 세션을 읽는다.
+4. retrieval/workflow/planner.py가 질문을 검색용 query와 filter plan으로 정리한다.
+5. retrieval/workflow/executor.py가 vector 검색과 keyword 검색을 병렬로 실행한다.
+6. scoring/fusion.py가 설정값 기반 source weight와 휴리스틱을 합쳐 최종 순위를 계산한다.
+7. retrieval/workflow/assembler.py가 product candidates, citations, retrieval_context를 조립한다.
+8. generation/llm.py가 provider를 통해 LLM에 최종 답변 생성을 요청한다.
 9. LLM이 실패하면 generation/templates.py의 템플릿 답변으로 fallback 한다.
-10. 최종 answer와 추천 상품 ID를 세션에 저장한다.
-11. API 응답으로 answer, products, filters, citations를 반환한다.
+10. 최종 answer와 추천 상품 ID를 세션 backend에 저장한다.
+11. router가 내부 domain response를 API 응답 스키마로 다시 변환한다.
 ```
 
 ## Chatbot Inputs Used Internally
@@ -228,6 +241,7 @@ scripts/
 - vector 검색은 의미 기반 유사도에 강하다
 - keyword 검색은 상품명, 브랜드명, 카테고리, 설명의 직접 매칭에 강하다
 - `fusion.py`는 vector/keyword source score를 먼저 합치고, 카테고리 의도, 루틴 공백, 회피 성분, 문맥 불일치 같은 규칙을 product별로 한 번만 적용한다
+- vector/keyword weight와 RRF base는 `core/settings.py`의 `CHATBOT_HYBRID_RRF_K`, `CHATBOT_VECTOR_WEIGHT`, `CHATBOT_KEYWORD_WEIGHT`를 그대로 사용한다
 - 따라서 "답변 품질이 이상하다"는 문제는 LLM보다 retrieval/scoring에서 먼저 보는 편이 맞다
 
 ## Chatbot Indexing Notes
@@ -253,11 +267,13 @@ scripts/
 
 ```text
 1. api/routers/chatbot.py
-2. services/chatbot/generation/service.py
-3. services/chatbot/retrieval/service.py
-4. services/chatbot/retrieval/scoring/fusion.py
-5. services/chatbot/search/vector/service.py
-6. services/chatbot/search/keyword/service.py
+2. services/chatbot/domain/mappers.py
+3. services/chatbot/generation/service.py
+4. services/chatbot/retrieval/workflow/planner.py
+5. services/chatbot/retrieval/workflow/assembler.py
+6. services/chatbot/retrieval/scoring/fusion.py
+7. services/chatbot/search/vector/service.py
+8. services/chatbot/search/keyword/service.py
 ```
 
 ## Working Guidance
