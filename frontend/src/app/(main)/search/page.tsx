@@ -178,10 +178,10 @@ export default function SearchPage() {
             {/* 필터 버튼 — 미니멀 스타일 */}
             <button
               onClick={() => setShowFilter(true)}
-              className={`flex items-center gap-1.5 h-[38px] px-3.5 rounded-full text-[13px] font-medium border cursor-pointer transition-all active:scale-[0.96] shrink-0 ${
+              className={`flex items-center gap-1.5 h-[38px] px-3.5 rounded-full text-[14px] font-semibold border cursor-pointer transition-all active:scale-[0.96] shrink-0 ${
                 filterCount > 0
                   ? "bg-[#5a504a] border-[#5a504a] text-white"
-                  : "bg-[#faf8f5] border-[#e8e4e0] text-[#8c8277]"
+                  : "bg-[#f1f1ef] text-[#74716f]"
               }`}
             >
               <SlidersHorizontal size={14} />

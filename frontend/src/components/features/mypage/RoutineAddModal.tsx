@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Search, Package, Loader2, Star } from "lucide-react";
+import { X, Search, Package, Loader2 } from "lucide-react";
 import ProductCard from "@/components/common/ProductCard";
 import { useMutation } from "@tanstack/react-query";
 import { getRoutineSteps } from "@/constants/routineSteps";
@@ -272,20 +272,16 @@ export default function RoutineAddModal({
                   onClick={handleRecommendationToggle}
                   disabled={recommendationMutation.isPending}
                   className={[
-                    "flex items-center gap-1 h-8 px-3 rounded-full cursor-pointer text-[13px] font-bold transition-all duration-200 disabled:cursor-not-allowed active:scale-[0.96] active:shadow-none",
+                    "flex items-center gap-1 h-8 px-3 rounded-full cursor-pointer text-[14px] font-semibold transition-all duration-200 disabled:cursor-not-allowed active:scale-[0.96] active:shadow-none",
                     isRecommendMode
-                      ? "bg-[#f3b8d3] text-[#fdfdfb] shadow-[0_2px_5px_rgba(166,157,146,0.55),inset_0_1px_0_rgba(255,255,255,0.18)]"
-                      : "bg-[#f0b8d2] text-[#fdfdfb] shadow-[0_2px_4px_rgba(200,160,180,0.4),inset_0_1px_0_rgba(255,255,255,0.8)] hover:shadow-[0_3px_6px_rgba(200,160,180,0.55)] hover:bg-[#f7d6e5]",
+                      ? "bg-[#f5a9cb] text-[#ffffff] shadow-[0_2px_5px_rgba(166,157,146,0.55),inset_0_1px_0_rgba(255,255,255,0.18)]"
+                      : "bg-[#eec4d8] text-[#fdfdfb] shadow-[0_2px_4px_rgba(200,160,180,0.4),inset_0_1px_0_rgba(255,255,255,0.8)] hover:shadow-[0_3px_6px_rgba(200,160,180,0.55)] hover:bg-[#f5a9cb]",
                   ].join(" ")}
                 >
                   {recommendationMutation.isPending ? (
                     <Loader2 size={13} className="animate-spin" />
                   ) : (
-                    <Star
-                      size={15}
-                      fill={isRecommendMode ? "#fee03d" : "none"}
-                      color={isRecommendMode ? "#f7ecaf" : "currentColor"}
-                    />
+                    <span className="text-[15px]">⭐</span>
                   )}
                   피뷰 추천
                 </button>
@@ -301,7 +297,7 @@ export default function RoutineAddModal({
 
             {/* 추천 모드 활성 시 안내 배너 */}
             {isRecommendMode && (
-              <div className="flex items-center gap-1.5 mt-2 px-2 rounded-xl text-[14px] font-semibold bg-[#fff] text-[#555454]">
+              <div className="flex items-center gap-1.5 my-2 px-2 rounded-xl text-[14px] font-bold bg-[#fff] text-[#6b6b6b]">
                 {recommendedProducts.length > 0
                   ? `사용자 맞춤형 ${recommendedProducts.length}개 제품 추천`
                   : "추천 결과가 없습니다"}

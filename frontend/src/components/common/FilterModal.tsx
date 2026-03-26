@@ -120,37 +120,31 @@ export function FilterModal({
 
       <div className="fixed inset-0 z-[70] flex items-end justify-center pointer-events-none p-0">
         <div
-          className="flex flex-col pointer-events-auto w-full max-w-app max-h-[88vh] rounded-t-2xl shadow-[0_-8px_40px_rgba(0,0,0,0.10)] overflow-y-auto"
-          style={{ backgroundColor: "#fafaf9" }}
+          className="flex flex-col pointer-events-auto w-full max-w-app max-h-[88vh] rounded-t-2xl shadow-[0_-8px_40px_rgba(0,0,0,0.10)] overflow-y-auto bg-[#fafaf9]"
           onClick={(e) => e.stopPropagation()}
         >
           {/* 드래그 핸들 */}
           <div className="flex justify-center pt-3">
-            <div className="w-9 h-1 rounded-sm" style={{ backgroundColor: "#BFB6AA" }} />
+            <div className="w-9 h-1 rounded-sm bg-[#BFB6AA]" />
           </div>
 
           {/* 헤더 */}
-          <div
-            className="flex items-center justify-between px-5 pt-3 pb-[14px] border-b"
-            style={{ borderColor: "#D9D5D0" }}
-          >
-            <h3 className="m-0 text-base font-bold tracking-tight" style={{ color: "#5C5550" }}>
+          <div className="flex items-center justify-between px-5 pt-3 pb-[14px] border-b border-[#D9D5D0]">
+            <h3 className="m-0 text-base font-bold tracking-tight text-[#5C5550]">
               필터
             </h3>
             <div className="flex items-center gap-3">
               <button
                 onClick={handleReset}
-                className="flex items-center gap-1 border-none bg-transparent cursor-pointer text-[14px]"
-                style={{ color: "#A69D92" }}
+                className="flex items-center gap-1 border-none bg-transparent cursor-pointer text-[14px] text-[#77736f]"
               >
                 <RotateCcw size={12} /> 초기화
               </button>
               <button
                 onClick={onClose}
-                className="flex items-center justify-center cursor-pointer border-none w-7 h-7 rounded-full"
-                style={{ backgroundColor: "#D9D5D0" }}
+                className="flex items-center justify-center cursor-pointer border-none w-7 h-7 rounded-full bg-[#e7e4e0]"
               >
-                <X size={14} style={{ color: "#A69D92" }} />
+                <X size={16} className="text-[#77736f]" />
               </button>
             </div>
           </div>
@@ -185,11 +179,11 @@ export function FilterModal({
               </div>
             </FilterSection>
 
-            <div className="h-px" style={{ backgroundColor: "#D9D5D0" }} />
+            <div className="h-px bg-[#D9D5D0]" />
 
             {/* 피부고민 태그 */}
             <FilterSection
-              title="피부고민"
+              title="피부기능"
               rightLabel={
                 Object.values(tagIds).filter(Boolean).length > 0
                   ? `${Object.values(tagIds).filter(Boolean).length}/4`
@@ -197,7 +191,7 @@ export function FilterModal({
               }
             >
               <div className="flex flex-wrap gap-2">
-                {tags.map((t) => {
+                {tags.filter((t) => t.tag !== "아토피").map((t) => {
                   const isActive = tagIds[t.tagId] === true;
                   const activeCount =
                     Object.values(tagIds).filter(Boolean).length;
@@ -224,7 +218,7 @@ export function FilterModal({
               </div>
             </FilterSection>
 
-            <div className="h-px" style={{ backgroundColor: "#D9D5D0" }} />
+            <div className="h-px bg-[#D9D5D0]" />
 
             {/* 가격 슬라이더 */}
             <FilterSection
@@ -245,41 +239,33 @@ export function FilterModal({
                 onPointerLeave={handleTrackPointerUp}
               >
                 {/* 배경 트랙 */}
-                <div
-                  className="absolute top-[14px] left-0 right-0 h-0.5 rounded-[1px]"
-                  style={{ backgroundColor: "#D9D1C7" }}
-                />
+                <div className="absolute top-[14px] left-0 right-0 h-0.5 rounded-[1px] bg-[#D9D1C7]" />
                 {/* 선택 구간 */}
                 <div
-                  className="absolute top-[14px] h-0.5 rounded-[1px] pointer-events-none"
+                  className="absolute top-[14px] h-0.5 rounded-[1px] pointer-events-none bg-[#A69D92]"
                   style={{
                     left: `${minPct}%`,
                     right: `${100 - maxPct}%`,
-                    backgroundColor: "#A69D92",
                   }}
                 />
                 {/* min thumb */}
                 <div
-                  className="absolute top-[5px] w-[18px] h-[18px] rounded-full border-2 shadow-[0_1px_6px_rgba(0,0,0,.15)] pointer-events-none"
+                  className="absolute top-[5px] w-[18px] h-[18px] rounded-full border-2 shadow-[0_1px_6px_rgba(0,0,0,.15)] pointer-events-none bg-[#A69D92] border-[#F2EFE9]"
                   style={{
                     left: `calc(${minPct}% - 9px)`,
-                    backgroundColor: "#A69D92",
-                    borderColor: "#F2EFE9",
                   }}
                 />
                 {/* max thumb */}
                 <div
-                  className="absolute top-[5px] w-[18px] h-[18px] rounded-full border-2 shadow-[0_1px_6px_rgba(0,0,0,.15)] pointer-events-none"
+                  className="absolute top-[5px] w-[18px] h-[18px] rounded-full border-2 shadow-[0_1px_6px_rgba(0,0,0,.15)] pointer-events-none bg-[#A69D92] border-[#F2EFE9]"
                   style={{
                     left: `calc(${maxPct}% - 9px)`,
-                    backgroundColor: "#A69D92",
-                    borderColor: "#F2EFE9",
                   }}
                 />
               </div>
               <div className="flex items-center justify-between mt-1">
-                <span className="text-[14px]" style={{ color: "#A69D92" }}>0만원</span>
-                <span className="text-[14px]" style={{ color: "#A69D92" }}>100만원+</span>
+                <span className="text-[14px] text-[#A69D92]">0만원</span>
+                <span className="text-[14px] text-[#A69D92]">100만원+</span>
               </div>
             </FilterSection>
 
@@ -287,11 +273,10 @@ export function FilterModal({
           </div>
 
           {/* 적용 버튼 — 여기서만 onChange 호출 → API 1회 */}
-          <div className="flex justify-center px-5 pt-3 pb-6">
+          <div className="flex justify-center px-5 pt-3 pb-10">
             <button
               onClick={handleApply}
-              className="w-60 cursor-pointer border-none transition-all active:scale-[0.98] h-11 rounded-lg text-sm font-bold tracking-wide"
-              style={{ backgroundColor: "#A69D92", color: "#F2EFE9" }}
+              className="w-50 cursor-pointer border-none transition-all active:scale-[0.98] h-11 rounded-lg text-[16px] font-bold tracking-wide bg-[#c0b7ab] text-[#faf9f8]"
             >
               제품 보기
             </button>
@@ -314,11 +299,11 @@ function FilterSection({
   return (
     <div className="py-[20px]">
       <div className="flex items-center justify-between mb-3">
-        <p className="m-0 text-base font-semibold tracking-tight" style={{ color: "#5C5550" }}>
+        <p className="m-0 text-base font-semibold tracking-tight text-[#5C5550]">
           {title}
         </p>
         {rightLabel && (
-          <p className="m-0 text-sm" style={{ color: "#A69D92" }}>{rightLabel}</p>
+          <p className="m-0 text-sm text-[#A69D92]">{rightLabel}</p>
         )}
       </div>
       {children}
@@ -337,30 +322,20 @@ function FilterChip({
   onClick: () => void;
   disabled?: boolean;
 }) {
-  // 활성: 베이지5(#A69D92) 배경 + 흰 텍스트 / 비활성: #F2EFE9 배경 + 베이지4 테두리 + 베이지5 텍스트
-  const activeStyle = {
-    backgroundColor: "#A69D92",
-    borderColor: "#A69D92",
-    color: "#F2EFE9",
-  };
-  const inactiveStyle = {
-    backgroundColor: "#ffffff",
-    borderColor: "#BFB6AA",
-    color: "#A69D92",
-  };
-  const disabledStyle = {
-    backgroundColor: "#ffffff",
-    borderColor: "#D9D5D0",
-    color: "#BFB6AA",
-    opacity: 0.5,
-  };
-
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`h-7 px-[10px] rounded-md text-[14px] font-semibold transition-all border ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
-      style={active ? activeStyle : disabled ? disabledStyle : inactiveStyle}
+      className={`
+        h-7 px-[10px] rounded-md text-[14px] font-semibold transition-all border
+        ${
+          active
+            ? "bg-[#c0b7ab] text-[#F2EFE9]"
+            : disabled
+              ? "bg-white border-[#D9D5D0] text-[#BFB6AA] opacity-50 cursor-not-allowed"
+              : "bg-white border-[#BFB6AA] text-[#77736f] cursor-pointer"
+        }
+      `}
     >
       {label}
     </button>

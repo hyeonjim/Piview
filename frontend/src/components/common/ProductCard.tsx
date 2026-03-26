@@ -351,13 +351,13 @@ export default function ProductCard({
   if (layout === "grid") {
     return (
       <div
-        className="relative flex flex-col overflow-hidden bg-white rounded-2xl w-full min-w-0 border border-[#ede8e0] transition-shadow duration-200"
+        className="relative flex flex-col overflow-hidden bg-white rounded-2xl w-full min-w-0 border border-[#ede8e0] transition-shadow duration-200 h-full"
         style={{
           boxShadow:
             "0 1px 2px rgba(0,0,0,0.04), 0 3px 7px rgba(180,155,120,0.09), 0 7px 18px rgba(0,0,0,0.06), 0 14px 32px rgba(180,155,120,0.04)",
         }}
       >
-        <Link href={productHref} className="no-underline flex flex-col flex-1">
+        <Link href={productHref} className="no-underline flex flex-col flex-1 min-h-0">
           {/* 이미지 영역 — 밝은 배경 */}
           <div className="relative w-full aspect-[5/3] overflow-hidden">
             <ProductImage
@@ -420,7 +420,7 @@ export default function ProductCard({
                     <CategoryChip category={category} />
                   </div>
                 )}
-                <div className="mb-1">
+                <div>
                   <BrandLabel brand={brand} />
                 </div>
               </>
@@ -576,8 +576,8 @@ export default function ProductCard({
                       size={16}
                       className="transition-all duration-150"
                       style={{
-                        color: isLiked ? "#f27b66" : "#d9d5d0",
-                        fill: isLiked ? "#f27b66" : "none",
+                        color: isLiked ? "#f7a499" : "#d9d5d0",
+                        fill: isLiked ? "#f7a499" : "none",
                       }}
                     />
                   </button>
@@ -588,7 +588,7 @@ export default function ProductCard({
                     className={[
                       "flex items-center justify-center gap-1 h-5 px-1.5 rounded-[18px] text-[11px] font-semibold cursor-pointer transition-all active:scale-[0.97] shrink-0 border",
                       isInCompare
-                        ? "border-[#e6aa84] bg-[#e6aa84] text-white"
+                        ? "border-[#f3c9ae] bg-[#f3c9ae] text-white"
                         : "border-category-pill-default-border bg-white text-[#887a67]",
                     ].join(" ")}
                   >
@@ -631,10 +631,10 @@ export default function ProductCard({
               onClick={(event) => handleAction(event, onAddRoutine)}
               disabled={inRoutine}
               className={[
-                "flex items-center justify-center gap-1 w-25 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[13px] font-semibold",
+                "flex items-center justify-center gap-1 w-28 h-8 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[14px] font-semibold",
                 inRoutine
-                  ? "bg-(--color-bg-beige) text-(--color-brand)"
-                  : "bg-[#f1eae6] text-[#807d7d]",
+                  ? "bg-[#f7f1ea] text-(--color-brand)"
+                  : "bg-[#f5ecdf] text-[#646362]",
               ].join(" ")}
             >
               {inRoutine ? (

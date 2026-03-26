@@ -92,7 +92,7 @@ export default function OwnedTab() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-3 mt-5 [&_p.line-clamp-2]:text-[14px]!">
+            <div className="grid grid-cols-3 gap-3 mt-5 [&_p.line-clamp-2]:text-[12px]!">
               {pagedOwned.map((product) => (
                 <div key={product.id} className="relative">
                   <ProductCard
@@ -163,7 +163,7 @@ export default function OwnedTab() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-3 mt-5 [&_p.line-clamp-2]:text-[14px]!">
+            <div className="grid grid-cols-3 gap-3 mt-5 [&_p.line-clamp-2]:text-[12px]!">
               {pagedAvoid.map((item) => (
                 <div key={item.dislikedProductId} className="relative">
                   <ProductCard
