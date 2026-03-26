@@ -13,7 +13,6 @@ from services.chatbot.retrieval.parsers.concerns import (
 from services.chatbot.retrieval.parsers.intent import (
     has_strict_filter_request,
     is_very_generic_query,
-    needs_clarifying_question,
 )
 
 __all__ = [
@@ -27,5 +26,4 @@ __all__ = [
     "canonicalize_avoid_term",
     "has_strict_filter_request",
     "is_very_generic_query",
-    "needs_clarifying_question",
 ]
