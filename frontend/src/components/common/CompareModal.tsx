@@ -25,8 +25,6 @@ interface CompareModalProps {
   compareItems: [CompareProduct, CompareProduct];
   onClose: () => void;
   isRoutineCompare?: boolean;
-  /** z-index 오버라이드 — 다른 모달 위에 띄울 때 사용 */
-  zIndex?: number;
 }
 
 // globals.css에 정확히 매핑되는 변수 없어서 상수 유지
@@ -53,12 +51,7 @@ const listVariants: Variants = {
 // 각 줄 — fade + 살짝 위로 + scale
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 12, scale: 0.97 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.4, ease: [0.23, 1, 0.32, 1] },
-  },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: [0.23, 1, 0.32, 1] } },
 };
 
 // ── 서브컴포넌트: 제품 헤더 ────────────────────────────────────────
@@ -93,7 +86,6 @@ export default function CompareModal({
   compareItems,
   onClose,
   isRoutineCompare = false,
-  zIndex,
 }: CompareModalProps) {
   const [leftProduct, rightProduct] = compareItems;
 
@@ -296,7 +288,6 @@ export default function CompareModal({
       style={{
         backgroundColor: "rgba(0,0,0,0.45)",
         backdropFilter: "blur(4px)",
-        ...(zIndex !== undefined && { zIndex }),
       }}
       onClick={onClose}
     >
@@ -426,17 +417,13 @@ export default function CompareModal({
               <div className="size-6 rounded-lg flex items-center justify-center bg-[#b8cbdb]">
                 <MessageSquareText size={12} className="text-white" />
               </div>
-              <p className="text-[16px] font-bold text-[#3c5061]">
-                AI 비교 분석
-              </p>
+              <p className="text-[16px] font-bold text-[#3c5061]">AI 비교 분석</p>
             </div>
 
             {isAiLoading && (
               <div className="flex items-center justify-center py-6 gap-2 text-text-muted">
                 <Loader2 size={18} className="animate-spin opacity-50" />
-                <p className="text-xs">
-                  AI가 두 제품을 비교 분석하고 있어요...
-                </p>
+                <p className="text-xs">AI가 두 제품을 비교 분석하고 있어요...</p>
               </div>
             )}
 
