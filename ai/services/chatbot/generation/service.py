@@ -9,12 +9,14 @@ import logging
 from uuid import uuid4
 
 from services.chatbot.domain import ClientContext, QueryRequest, QueryResponse
+from services.chatbot.intent import chatbot_intent_router
 from services.chatbot.generation.helpers import build_effective_client_context
 from services.chatbot.generation.postprocess import postprocess_answer
 from services.chatbot.generation.templates import (
-    build_clarifying_answer,
     build_fallback_answer,
+    build_greeting_answer,
     build_grounded_template_answer,
+    build_informational_template_answer,
 )
 from services.chatbot.generation.llm import chatbot_llm_service
 from services.chatbot.retrieval import RetrievalBundle, chatbot_retrieval_service
@@ -29,8 +31,8 @@ class ChatbotService:
         """API 요청 하나를 최종 챗봇 응답으로 변환합니다.
 
         흐름은 고정입니다.
-        1. retrieval 단계에서 후보와 응답 타입을 만든다.
-        2. clarifying이면 LLM 없이 바로 짧은 질문을 만든다.
+        1. intent 단계에서 no-retrieval 여부를 먼저 판단한다.
+        2. retrieval이 필요한 경우에만 검색 후보와 응답 타입을 만든다.
         3. 그 외에는 LLM 생성 -> 템플릿 fallback 순으로 답변을 만든다.
         4. 마지막에 후처리와 응답 스키마 변환을 한다.
         """
@@ -43,15 +45,22 @@ class ChatbotService:
         session_context = session_snapshot.to_prompt_payload()
         prompt_session_context = session_snapshot.to_llm_payload()
         client_context = build_effective_client_context(request, session_context)
-        retrieval_bundle = await chatbot_retrieval_service.retrieve(
+        intent_decision = chatbot_intent_router.route(
             request,
             session_context=session_context,
         )
-        response_type = retrieval_bundle.response_type
-
-        if response_type == "clarifying_question":
-            answer = build_clarifying_answer(request.message)
+        if intent_decision.intent_type == "greeting_chitchat":
+            retrieval_bundle = self._build_no_retrieval_bundle(intent_decision)
+            answer = build_greeting_answer()
+            response_type = retrieval_bundle.response_type
         else:
+            retrieval_bundle = await self._retrieve_bundle(
+                request,
+                intent_decision=intent_decision,
+                session_context=session_context,
+            )
+        response_type = retrieval_bundle.response_type
+        if intent_decision.intent_type != "greeting_chitchat":
             answer, response_type = await self._build_answer(
                 request,
                 retrieval_bundle,
@@ -81,6 +90,21 @@ class ChatbotService:
             citations=retrieval_bundle.citations,
         )
 
+    async def _retrieve_bundle(
+        self,
+        request: QueryRequest,
+        *,
+        intent_decision,
+        session_context: dict[str, object] | None,
+    ) -> RetrievalBundle:
+        if intent_decision.intent_type == "informational" and not intent_decision.use_product_retrieval:
+            return self._build_no_retrieval_bundle(intent_decision)
+        return await chatbot_retrieval_service.retrieve(
+            request,
+            session_context=session_context,
+            intent_decision=intent_decision,
+        )
+
     async def _build_answer(
         self,
         request: QueryRequest,
@@ -105,6 +129,8 @@ class ChatbotService:
             # 후보 상품이 있으면 최소한 카드와 모순되지 않는 템플릿 답변은 만들 수 있습니다.
             if retrieval_bundle.products:
                 return build_grounded_template_answer(request, retrieval_bundle), response_type
+            if response_type == "informational":
+                return build_informational_template_answer(request), response_type
             # 후보도 없으면 검색 문맥을 활용할 수 없으므로 fallback 타입으로 내려 보냅니다.
             return build_fallback_answer(request, retrieval_bundle), "fallback"
 
@@ -121,6 +147,21 @@ class ChatbotService:
             retrieval_context=retrieval_bundle.retrieval_context,
             client_context=client_context,
             session_context=session_context,
+        )
+
+    def _build_no_retrieval_bundle(self, intent_decision) -> RetrievalBundle:
+        return RetrievalBundle(
+            response_type="informational",
+            applied_filters={
+                "intentType": intent_decision.intent_type,
+                "routeSource": intent_decision.route_source,
+                "lowConfidence": intent_decision.low_confidence,
+                "usedProductRetrieval": False,
+            },
+            retrieval_context=(
+                "이번 응답은 상품 검색을 실행하지 않고 일반 안내로 처리해야 합니다. "
+                "특정 상품이나 성분 사실을 단정하지 말고, 일반적인 화장품 선택 기준이나 사용 팁만 실용적으로 안내하세요."
+            ),
         )
 
 

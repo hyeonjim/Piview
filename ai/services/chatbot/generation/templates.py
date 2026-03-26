@@ -76,15 +76,16 @@ def build_grounded_template_answer(
     ).strip()
 
 
-def build_clarifying_answer(message: str) -> str:
-    """피부 진단처럼 보이지 않도록, 질문을 좁히는 짧은 되물음을 만듭니다."""
-    if "문제인 것 같아" in message:
-        return "지금 가장 불편한 쪽이 건조함인지, 자극인지, 번들거림인지부터 알려주실래요?"
-    if any(term in message for term in ("필요한 게", "먼저 같이 정해")):
-        return "좋아요. 건조함, 자극, 번들거림 중에서 지금 가장 먼저 잡고 싶은 것부터 정해볼까요?"
-    if any(term in message for term in ("타입", "어떤 편")):
-        return "지금은 건조함, 유분감, 자극 중에서 어떤 쪽이 더 두드러지는지부터 보면 더 자연스럽게 좁혀볼 수 있어요."
-    return "지금 가장 불편한 게 건조함인지, 유분감인지, 자극인지 알려주시면 그쪽으로 더 잘 맞는 후보를 좁혀볼게요."
+def build_greeting_answer() -> str:
+    """인사/짧은 잡담에는 검색 없이 가볍게 응답합니다."""
+    return "안녕하세요. 피부 고민이나 찾는 제품 종류를 말씀해 주시면 도와드릴게요."
+
+
+def build_informational_template_answer(request: QueryRequest) -> str:
+    """설명형 질의에서 LLM 호출이 실패했을 때의 보수적 템플릿입니다."""
+    if "성분" in request.message or "효능" in request.message:
+        return "지금은 자세한 설명 생성이 잠시 불안정합니다. 우선 성분이나 제품 선택 기준을 일반적인 수준에서 다시 안내해드릴 수 있어요."
+    return "지금은 자세한 설명 생성이 잠시 불안정합니다. 다시 요청하시면 일반적인 피부/제품 선택 기준 중심으로 이어서 안내드릴게요."
 
 
 def _build_fallback_category_hint(products) -> str:

@@ -1,5 +1,6 @@
 """Retrieval 결과를 내부 응답 모델로 변환하는 함수들."""
 
+from services.chatbot.search.product_data import truncate_text
 from services.chatbot.domain import Citation, ClientContext, ProductCandidate
 from services.chatbot.retrieval.parsers import (
     filter_display_concerns,
@@ -27,14 +28,18 @@ def to_citation(
 ) -> Citation:
     """생성 모델이 참고할 수 있도록, 짧은 citation 텍스트를 만듭니다."""
     display_concerns = filter_display_concerns(result.concern_names, preferred_concerns)
-    concern_text = f" / 관련 고민: {', '.join(display_concerns)}" if display_concerns else ""
-    snippet = result.evidence_snippets[0] if result.evidence_snippets else result.description
+    truncated_snippet = _build_citation_snippet(result, display_concerns)
+    citation_parts = [f"{result.name} ({result.brand_name or '브랜드 미상'})"]
+    if display_concerns:
+        citation_parts.append(f"관련 고민: {', '.join(display_concerns)}")
+    if truncated_snippet:
+        citation_parts.append(f"근거: {truncated_snippet}")
     return Citation(
         type="product",
         product_id=result.product_id,
-        text=f"{result.name} ({result.brand_name or '브랜드 미상'}){concern_text}",
+        text=" / ".join(citation_parts),
         title=result.name,
-        snippet=snippet,
+        snippet=truncated_snippet,
         source=", ".join(result.matched_sources) if result.matched_sources else None,
         score=result.hybrid_score,
         metadata={
@@ -42,8 +47,30 @@ def to_citation(
             "categoryName": result.category_name,
             "concerns": display_concerns,
             "ingredientPreview": result.ingredient_preview,
+            "matchedSources": result.matched_sources,
+            "evidenceSnippets": result.evidence_snippets[:2],
         },
     )
+
+
+def _build_citation_snippet(
+    result: ProductSearchResult,
+    display_concerns: list[str],
+) -> str | None:
+    raw_snippet = result.evidence_snippets[0] if result.evidence_snippets else result.description
+    if raw_snippet:
+        return truncate_text(raw_snippet, 120)
+
+    fallback_parts: list[str] = []
+    if result.category_name:
+        fallback_parts.append(f"카테고리 {result.category_name}")
+    if display_concerns:
+        fallback_parts.append(f"관련 고민 {', '.join(display_concerns[:3])}")
+    if result.ingredient_preview:
+        fallback_parts.append(f"전성분 메모 {result.ingredient_preview}")
+    if not fallback_parts:
+        return None
+    return truncate_text(" / ".join(fallback_parts), 120)
 
 
 def build_retrieval_context(
