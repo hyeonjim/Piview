@@ -2,6 +2,8 @@ package com.piview.backend.domain.product.dynamic.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.piview.backend.domain.product.dynamic.dto.EventLogRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -18,6 +20,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Tag(name = "동적을 위한 추천 이벤트 API", description = "제품 클릭, 검색, 좋아요 시 서버로 이벤트를 보내는 API")
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -27,6 +30,7 @@ public class EventLogController {
   private static final Logger ACTION_LOGGER = LoggerFactory.getLogger("USER_ACTION_LOGGER");
   private final ObjectMapper objectMapper;
 
+  @Operation(summary = "서버로 이벤트 보내는 API", description = "사용자가 제품 클릭, 검색, 좋아요 시 서버로 보냄")
   @PostMapping("/events")
   public ResponseEntity<Void> collectUserAction(@RequestBody EventLogRequest request) {
     try {
@@ -39,6 +43,7 @@ public class EventLogController {
     return ResponseEntity.ok().build();
   }
 
+  @Operation(summary = "서버용이라 연결 x", description = "서버에서 확인용이라 연결하지 않습니다.")
   @GetMapping("/run-duckdb")
   public String testDuckDbBatch() throws SQLException {
     log.info("🧪 [Test] DuckDB 분석 테스트 시작 (파일 복사 방식)");
