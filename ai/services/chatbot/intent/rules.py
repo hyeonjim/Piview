@@ -127,6 +127,9 @@ def route_by_rules(
 
 
 def _is_greeting_only(message: str) -> bool:
+    if _is_bot_name_call(message):
+        return True
+
     if _is_reaction_only(message):
         return True
 
@@ -232,6 +235,13 @@ def _tokenize(message: str) -> list[str]:
 
 def _collapse(message: str) -> str:
     return re.sub(r"\s+", "", message.lower())
+
+
+def _is_bot_name_call(message: str) -> bool:
+    collapsed = re.sub(r"[^0-9a-z가-힣]+", "", message.lower())
+    if not collapsed:
+        return False
+    return bool(re.fullmatch(r"(?:저기)?(?:gamini|가민|가민이|가민아)(?:야|아)?", collapsed))
 
 
 def _has_session_context(session_context: dict[str, object] | None) -> bool:
