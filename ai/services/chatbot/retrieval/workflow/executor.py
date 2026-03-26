@@ -25,6 +25,7 @@ async def execute_retrieval_searches(
         query_text=plan.search_query,
         limit=search_limit,
         candidate_limit=keyword_prefilter_limit,
+        preferred_categories=plan.preferred_categories,
     )
     vector_results, keyword_results = await asyncio.gather(
         vector_task,

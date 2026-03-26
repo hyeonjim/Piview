@@ -102,6 +102,7 @@ class ChatbotService:
         return await chatbot_retrieval_service.retrieve(
             request,
             session_context=session_context,
+            intent_decision=intent_decision,
         )
 
     async def _build_answer(

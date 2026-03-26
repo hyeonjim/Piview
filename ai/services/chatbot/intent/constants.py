@@ -29,6 +29,14 @@ GREETING_FILLER_PATTERNS: Final[tuple[str, ...]] = (
     "감사합니다",
 )
 
+REACTION_ONLY_PATTERNS: Final[tuple[str, ...]] = (
+    "ㅋ",
+    "ㅎ",
+    "ㅠ",
+    "ㅜ",
+    "ㄷ",
+)
+
 FOLLOW_UP_HINTS: Final[tuple[str, ...]] = (
     "이거",
     "그거",
@@ -114,6 +122,8 @@ SEMANTIC_ROUTE_EXAMPLES: Final[dict[str, tuple[str, ...]]] = {
         "고마워",
         "반가워",
         "ㅋㅋ",
+        "ㅋㅋㅋㅋ",
+        "ㅋㄷㅋㄷㅋㅋㅋ",
     ),
     "recommendation_followup": (
         "이거 말고 다른 거 보여줘",

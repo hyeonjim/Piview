@@ -17,6 +17,7 @@ from services.chatbot.retrieval.scoring.filters import (
     matches_avoid_term,
     strict_filter_penalty,
 )
+from services.chatbot.retrieval.parsers import has_strict_filter_request
 from services.chatbot.retrieval.scoring.heuristics import (
     brightening_bonus,
     care_gap_bonus,
@@ -180,6 +181,13 @@ def fuse_results(
         ]
         ranked_product_ids = promoted_product_ids + demoted_product_ids
 
+    if preferred_categories and matched_product_ids:
+        ranked_product_ids = [
+            product_id
+            for product_id in ranked_product_ids
+            if category_priority(result_map[product_id], preferred_categories) > 0
+        ]
+
     if avoid_terms:
         safe_product_ids = [
             product_id
@@ -191,7 +199,10 @@ def fuse_results(
             for product_id in ranked_product_ids
             if matches_avoid_term(result_map[product_id], avoid_terms)
         ]
-        ranked_product_ids = safe_product_ids + unsafe_product_ids
+        if has_strict_filter_request(message) and safe_product_ids:
+            ranked_product_ids = safe_product_ids
+        else:
+            ranked_product_ids = safe_product_ids + unsafe_product_ids
 
     return [result_map[product_id] for product_id in ranked_product_ids[:limit]]
 
