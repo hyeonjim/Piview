@@ -159,7 +159,7 @@ export default function SettingsPage() {
             피부 진단 다시하기
           </h3>
           <p className="text-[14px] text-text-muted mb-5">
-            AI 사진 분석으로 피부 상태를 다시 진단할 수 있어요
+            피부 상태를 다시 진단할 수 있어요
           </p>
           <Link
             href="/skin-test/photo"
