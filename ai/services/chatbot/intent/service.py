@@ -1,7 +1,10 @@
 from services.chatbot.domain import QueryRequest
+from services.chatbot.input import normalize_message_for_chatbot
+from services.chatbot.intent.constants import RECOMMENDATION_HINTS
 from services.chatbot.intent.models import IntentDecision
 from services.chatbot.intent.rules import route_by_rules
 from services.chatbot.intent.semantic import semantic_intent_router
+from services.chatbot.retrieval.parsers import extract_preferred_categories
 
 
 class ChatbotIntentRouter:
@@ -25,7 +28,13 @@ class ChatbotIntentRouter:
 
 def _fallback_decision(request: QueryRequest) -> IntentDecision:
     message = request.message.strip()
-    use_product_retrieval = bool(message) and ("추천" in message or "제품" in message)
+    normalized_message = normalize_message_for_chatbot(message)
+    collapsed = normalized_message.lower().replace(" ", "")
+    use_product_retrieval = bool(normalized_message) and (
+        bool(extract_preferred_categories(normalized_message))
+        or any(hint.replace(" ", "") in collapsed for hint in RECOMMENDATION_HINTS)
+        or "제품" in normalized_message
+    )
     return IntentDecision(
         intent_type="recommendation_fresh" if use_product_retrieval else "informational",
         route_source="fallback",

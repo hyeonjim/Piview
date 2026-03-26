@@ -9,6 +9,7 @@ from services.chatbot.domain import QueryRequest
 from services.chatbot.retrieval import RetrievalBundle
 
 from services.chatbot.generation.helpers import build_skin_problem_hint, extract_category_hint
+from services.chatbot.retrieval.parsers import extract_preferred_categories
 
 
 CONSTRAINT_TERMS = ("향료", "알코올", "에센셜오일", "에센셜 오일", "오일")
@@ -22,7 +23,7 @@ def build_fallback_answer(
     """LLM이 완전히 실패했을 때 보여줄 최후의 답변을 만듭니다."""
     if not retrieval_bundle.products:
         return (
-            "지금 답변 생성이 잠시 불안정합니다. 잠시 후 다시 시도해 주세요. "
+            "지금 검색이나 답변 생성이 잠시 불안정합니다. 잠시 후 다시 시도해 주세요. "
             "다음 요청에서는 피부 고민, 카테고리, 피하고 싶은 성분을 조금 더 구체적으로 적어주시면 후보를 더 정확하게 좁힐 수 있습니다."
         )
 
@@ -78,12 +79,36 @@ def build_grounded_template_answer(
 
 def build_greeting_answer() -> str:
     """인사/짧은 잡담에는 검색 없이 가볍게 응답합니다."""
-    return "안녕하세요. 피부 고민이나 찾는 제품 종류를 말씀해 주시면 도와드릴게요."
+    return "안녕하세요. 저는 Gamini예요. 피부 고민이나 찾는 제품 종류를 말씀해 주시면 바로 이어서 도와드릴게요."
 
 
-def build_nonsense_answer() -> str:
+def build_nonsense_answer(
+    request: QueryRequest,
+    session_context: dict[str, object] | None = None,
+) -> str:
     """무의미하거나 깨진 입력에는 재입력을 유도합니다."""
-    return "입력하신 내용만으로는 의미를 파악하기 어려웠어요. 피부 고민이나 찾는 제품 종류를 조금만 더 구체적으로 적어주시면 바로 도와드릴게요."
+    recent_slots = dict((session_context or {}).get("recentSlots") or {})
+    recent_categories = [str(item) for item in recent_slots.get("categories", []) if str(item).strip()]
+    if recent_categories:
+        category_examples = ", ".join(_display_category_name(category) for category in recent_categories[:2])
+        return (
+            "방금 입력은 의미를 정확히 잡기 어려웠어요. "
+            f"이전 조건은 유지할 수 있으니 바꾸고 싶은 항목만 짧게 적어주세요. 예: {category_examples} 말고 올인원, 더 순한 거, 향료 제외"
+        )
+
+    requested_categories = extract_preferred_categories(request.message)
+    if requested_categories:
+        category_examples = ", ".join(_display_category_name(category) for category in requested_categories)
+        return (
+            "입력하신 내용만으로는 의미를 정확히 파악하기 어려웠어요. "
+            f"찾는 방향을 한 번만 더 적어주세요. 예: {category_examples} 추천, 토너 대신 올인원, 여드름 피부 세럼"
+        )
+
+    return (
+        "입력하신 내용만으로는 의미를 파악하기 어려웠어요. "
+        "피부 고민이나 찾는 제품 종류를 조금만 더 구체적으로 적어주시면 바로 도와드릴게요. "
+        "예: 여드름 피부 토너 추천, 토너 대신 올인원"
+    )
 
 
 def build_followup_clarification_answer(request: QueryRequest) -> str:
@@ -101,6 +126,19 @@ def build_informational_template_answer(request: QueryRequest) -> str:
     if "성분" in request.message or "효능" in request.message:
         return "지금은 자세한 설명 생성이 잠시 불안정합니다. 우선 성분이나 제품 선택 기준을 일반적인 수준에서 다시 안내해드릴 수 있어요."
     return "지금은 자세한 설명 생성이 잠시 불안정합니다. 다시 요청하시면 일반적인 피부/제품 선택 기준 중심으로 이어서 안내드릴게요."
+
+
+def _display_category_name(category_key: str) -> str:
+    category_display_names = {
+        "cleanser": "클렌저",
+        "toner": "토너",
+        "mist": "미스트",
+        "serum": "세럼",
+        "lotion": "로션/에멀전/올인원",
+        "cream": "크림",
+        "sunscreen": "선크림",
+    }
+    return category_display_names.get(category_key, category_key)
 
 
 def _build_fallback_category_hint(products) -> str:
