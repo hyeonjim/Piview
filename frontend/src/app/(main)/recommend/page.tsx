@@ -123,6 +123,9 @@ export default function RecommendPage() {
           <h1 className="mt-0.75 mb-3.5 text-[20px] font-semibold text-[#635446] tracking-[-0.3px] leading-[1.2]">
             Recommend
           </h1>
+          <p className="mb-3.5 text-[13px] text-[var(--color-text-sub)]">
+            최근 관심 제품을 기반으로 추천해드려요
+          </p>
         </div>
       </div>
 

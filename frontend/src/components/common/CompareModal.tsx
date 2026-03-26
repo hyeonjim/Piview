@@ -25,6 +25,7 @@ interface CompareModalProps {
   compareItems: [CompareProduct, CompareProduct];
   onClose: () => void;
   isRoutineCompare?: boolean;
+  zIndex?: number;
 }
 
 // globals.css에 정확히 매핑되는 변수 없어서 상수 유지
@@ -86,6 +87,7 @@ export default function CompareModal({
   compareItems,
   onClose,
   isRoutineCompare = false,
+  zIndex,
 }: CompareModalProps) {
   const [leftProduct, rightProduct] = compareItems;
 
@@ -288,6 +290,7 @@ export default function CompareModal({
       style={{
         backgroundColor: "rgba(0,0,0,0.45)",
         backdropFilter: "blur(4px)",
+        ...(zIndex !== undefined && { zIndex }),
       }}
       onClick={onClose}
     >
