@@ -24,7 +24,6 @@ from services.chatbot.retrieval.constants.heuristics import (
     SPECIALIZED_SEBUM_TERMS,
 )
 from services.chatbot.retrieval.constants.intent import (
-    CLARIFYING_PATTERNS,
     CONCERN_HINTS,
     STEP_HINTS,
 )
@@ -37,7 +36,6 @@ __all__ = [
     "BRIGHTENING_TERMS",
     "CALMING_POSITIVE_TERMS",
     "CATEGORY_HINTS",
-    "CLARIFYING_PATTERNS",
     "CONCERN_HINTS",
     "CONTEXT_MISMATCH_TERMS",
     "EXISTING_CATEGORY_MARKERS",

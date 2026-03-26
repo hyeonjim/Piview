@@ -5,47 +5,12 @@
 """
 
 from services.chatbot.domain import QueryRequest
+from services.chatbot.intent.constants import ANCHOR_PRODUCT_HINTS, FOLLOW_UP_HINTS
 from services.chatbot.retrieval.parsers import canonicalize_avoid_term, extract_preferred_categories
 from services.chatbot.search.product_data import (
     build_ingredient_preview,
     product_search_data_repository,
     truncate_text,
-)
-
-
-FOLLOW_UP_HINTS: tuple[str, ...] = (
-    "이거",
-    "그거",
-    "이 중",
-    "둘 중",
-    "뭐가 더",
-    "어떤 게 더",
-    "그럼",
-    "그러면",
-    "같은 조건",
-    "방금",
-    "아까",
-    "다른 거",
-    "말고",
-    "대신",
-    "더 순한",
-    "더 가벼운",
-    "더 촉촉한",
-)
-
-ANCHOR_PRODUCT_HINTS: tuple[str, ...] = (
-    "이거",
-    "그거",
-    "이 제품",
-    "그 제품",
-    "방금",
-    "아까",
-    "지금 본",
-    "비슷",
-    "유사",
-    "대신",
-    "보다",
-    "같은",
 )
 
 
