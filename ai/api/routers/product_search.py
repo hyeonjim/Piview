@@ -22,12 +22,14 @@ async def search_products(
     categoryId: list[int] | None = Query(None),
 ):
     try:
+        normalized_category_ids = tuple(categoryId or ())
+        normalized_big_category_id = None if normalized_category_ids else bigCategoryId
         results = await product_search_service.search(
             query_text=q,
             limit=candidateLimit,
             exclude_product_ids=set(),
-            category_ids=tuple(categoryId or ()),
-            big_category_id=bigCategoryId,
+            category_ids=normalized_category_ids,
+            big_category_id=normalized_big_category_id,
         )
         return ProductSearchQueryResponse(
             query=q,
