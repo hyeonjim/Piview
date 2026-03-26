@@ -12,10 +12,12 @@ SkinLens FastAPI 서버
   uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 """
 
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.routers import chatbot, ocr, skin_type, product_search
+from services.product_search import product_search_service
 
 app = FastAPI(
     title="SkinLens API",
@@ -34,6 +36,11 @@ app.include_router(skin_type.router, prefix="/skin", tags=["피부타입 분석"
 app.include_router(ocr.router,       prefix="/ocr",  tags=["성분표 OCR"])
 app.include_router(chatbot.router,   prefix="/chat", tags=["챗봇"])
 app.include_router(product_search.router, prefix="/products", tags=["상품 검색"])
+
+
+@app.on_event("startup")
+async def initialize_product_search() -> None:
+    await asyncio.to_thread(product_search_service.initialize)
 
 
 @app.get("/health", tags=["서버 상태"])

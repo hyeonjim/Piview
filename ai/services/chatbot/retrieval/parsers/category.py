@@ -1,6 +1,6 @@
 """카테고리 의도 파싱 로직."""
 
-from services.chatbot.input import normalize_message_for_chatbot
+from services.chatbot.input.preprocess import normalize_message_for_chatbot
 from services.chatbot.retrieval.constants import (
     CATEGORY_HINTS,
     EXISTING_CATEGORY_MARKERS,

@@ -5,7 +5,7 @@ from typing import Iterable
 from core.settings import get_settings
 from services.chatbot.context import extract_turn_slots, merge_turn_slots
 from services.chatbot.domain import QueryRequest
-from services.chatbot.input import normalize_message_for_chatbot
+from services.chatbot.input.preprocess import normalize_message_for_chatbot
 from services.chatbot.session.models import SessionSnapshot, StoredSession, StoredTurn
 
 

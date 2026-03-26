@@ -1,7 +1,7 @@
 """피부 고민 / 회피 성분 파싱 로직."""
 
 from services.chatbot.domain import QueryRequest
-from services.chatbot.input import normalize_message_for_chatbot
+from services.chatbot.input.preprocess import normalize_message_for_chatbot
 from services.chatbot.retrieval.constants import (
     AVOID_TERM_ALIASES,
     CANONICAL_AVOID_TERM_LOOKUP,
