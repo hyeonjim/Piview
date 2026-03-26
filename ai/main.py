@@ -33,7 +33,7 @@ app.add_middleware(
 app.include_router(skin_type.router, prefix="/skin", tags=["피부타입 분석"])
 app.include_router(ocr.router,       prefix="/ocr",  tags=["성분표 OCR"])
 app.include_router(chatbot.router,   prefix="/chat", tags=["챗봇"])
-app.include_router(product_search.router, prefix="/products", tags=["상품 검색"])
+app.include_router(product_search.router, prefix="/api/v1/products", tags=["상품 검색"])
 
 
 @app.get("/health", tags=["서버 상태"])
