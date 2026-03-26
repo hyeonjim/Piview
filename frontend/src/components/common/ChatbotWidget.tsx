@@ -52,7 +52,7 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // 대화 내역은 Zustand store에서 — 페이지 이동 후에도 유지
-  const messages = useChatbotStore((s) => s.messages);
+  const messages = useChatbotStore((state) => state.messages);
   const { isPending, sendMessage, resetSession } = useChatbot();
 
   // 메시지 추가 시 자동 스크롤
@@ -68,10 +68,10 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
   }, [isOpen]);
 
   const handleSend = () => {
-    const trimmed = input.trim();
-    if (!trimmed || isPending) return;
+    const trimmedInput = input.trim();
+    if (!trimmedInput || isPending) return;
     setInput("");
-    sendMessage(trimmed, context);
+    sendMessage(trimmedInput, context);
   };
 
   const handleReset = () => {
@@ -87,34 +87,19 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
     <>
       {/* 챗봇 패널 — 오른쪽에 붙는 플로팅 패널, 배경 흐림 없음 */}
       {isOpen && (
-        <div
-          className="fixed bottom-0 left-0 right-0 z-[80] flex justify-center pointer-events-none"
-          style={{ top: 0 }}
-        >
-          <div
-            className="relative w-full h-full pointer-events-none"
-            style={{ maxWidth: "var(--max-width-app)" }}
-          >
-            <div
-              className="absolute right-0 bottom-0 flex flex-col bg-white pointer-events-auto"
-              style={{
-                width: "72%",
-                top: "10%",
-                borderRadius: "16px 0 0 0",
-                boxShadow: "-4px 0 24px rgba(0,0,0,0.10)",
-                bottom: "56px",
-              }}
-            >
+        <div className="fixed top-0 bottom-0 left-0 right-0 z-80 flex justify-center pointer-events-none">
+          <div className="relative w-full h-full pointer-events-none max-w-app">
+            <div className="absolute right-0 top-[10%] bottom-14 w-[72%] flex flex-col bg-white pointer-events-auto rounded-tl-[16px] shadow-[-4px_0_24px_rgba(0,0,0,0.10)]">
               {/* 핸들 바 */}
               <div className="flex justify-center pt-2 pb-1 shrink-0">
-                <div className="w-8 h-1 rounded-full bg-[#e0ddd8]" />
+                <div className="w-8 h-1 rounded-full bg-[#e7e6e5]" />
               </div>
 
               {/* 헤더 */}
               <div className="flex items-center justify-between px-5 py-3 border-b border-[#f0ede8] shrink-0">
                 <div className="flex items-center gap-2">
-                  <GaminiIcon size={18} color="var(--color-brand)" />
-                  <span className="text-[15px] font-semibold text-[var(--color-text-sub)]">
+                  <GaminiIcon size={24} color="#cacde6" />
+                  <span className="text-[18px] font-bold text-[#676769]">
                     Gamini
                   </span>
                 </div>
@@ -122,7 +107,7 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
                   {messages.length > 0 && (
                     <button
                       onClick={handleReset}
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer text-[var(--color-text-muted)] hover:bg-[#f5f3f0] transition-colors"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer text-[#737475] hover:bg-[#f0f3f5] transition-colors"
                       title="새 대화 시작"
                     >
                       <RotateCcw size={14} />
@@ -130,7 +115,7 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
                   )}
                   <button
                     onClick={handleClose}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer text-[var(--color-text-muted)] hover:bg-[#f5f3f0] transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer text-[#737475] hover:bg-[#f0f3f5] transition-colors"
                   >
                     <X size={16} />
                   </button>
@@ -139,55 +124,37 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
 
               {/* 메시지 영역 */}
               <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4 [scrollbar-width:none]">
-                {/* 초기 안내 */}
-                {messages.length === 0 && (
-                  <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-4">
-                    <GaminiIcon size={36} color="var(--color-brand)" />
-                    <p className="text-[15px] font-semibold text-[var(--color-text-secondary)]">
-                      피부 고민을 물어보세요
-                    </p>
-                    <p className="text-[13px] text-[var(--color-text-sub)] leading-relaxed">
-                      피부 타입, 고민, 원하는 제품을
-                      <br />
-                      질문하면 Gamini가 맞춤 추천해드려요
-                    </p>
-                  </div>
-                )}
-
                 {/* 대화 메시지 */}
-                {messages.map((msg, idx) => (
+                {messages.map((message, index) => (
                   <div
-                    key={idx}
-                    className={`flex flex-col gap-2 ${msg.role === "user" ? "items-end" : "items-start"}`}
+                    key={index}
+                    className={`flex flex-col gap-2 ${message.role === "user" ? "items-end" : "items-start"}`}
                   >
                     <div
-                      className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed ${
-                        msg.role === "user"
-                          ? "bg-[var(--color-brand)] text-white rounded-br-sm"
-                          : "bg-[#f7f5f1] text-[var(--color-text-primary)] rounded-bl-sm"
+                      className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed whitespace-pre-wrap ${
+                        message.role === "user"
+                          ? "bg-[#e0e3f7] text-[var(--color-text-primary)]"
+                          : "bg-[#f1f4f5] text-[var(--color-text-primary)] rounded-bl-sm"
                       }`}
                     >
-                      {msg.content}
+                      {message.content}
                     </div>
 
                     {/* 추천 제품 카드 — ProductCard modal variant */}
-                    {msg.role === "assistant" &&
-                      msg.products &&
-                      msg.products.length > 0 && (
+                    {message.role === "assistant" &&
+                      message.products &&
+                      message.products.length > 0 && (
                         <div className="w-full flex flex-col gap-1 mt-1">
-                          {msg.products.map((product, pIdx) =>
+                          {message.products.map((product, productIndex) =>
                             product.productId ? (
                               <ProductCard
-                                key={pIdx}
+                                key={productIndex}
                                 id={product.productId}
                                 name={product.name}
                                 brand={product.brandName ?? ""}
-                                imageUrl={product.imageUrl ?? undefined}
-                                imageContainerClassName=""
-                                showLike={false}
                                 variant="modal"
                               />
-                            ) : null,
+                            ) : null
                           )}
                         </div>
                       )}
@@ -197,10 +164,10 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
                 {/* 로딩 인디케이터 */}
                 {isPending && (
                   <div className="flex items-start">
-                    <div className="px-3.5 py-2.5 rounded-2xl rounded-bl-sm bg-[#f7f5f1] flex items-center gap-2">
+                    <div className="px-3.5 py-2.5 rounded-2xl rounded-bl-sm bg-[#f1f5f7] flex items-center gap-2">
                       <Loader2
                         size={13}
-                        className="animate-spin text-[var(--color-brand)]"
+                        className="animate-spin text-[#cacde6]"
                       />
                       <span className="text-[13px] text-[var(--color-text-muted)]">
                         분석 중...
@@ -214,7 +181,7 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
 
               {/* 입력 영역 */}
               <div className="px-4 py-3 border-t border-[#f0ede8] shrink-0">
-                <div className="flex items-center gap-2 bg-[#f7f5f1] rounded-full px-4 py-2.5">
+                <div className="flex items-center gap-2 bg-[#f2f3f5] rounded-full px-4 py-2.5">
                   <input
                     ref={inputRef}
                     type="text"
@@ -225,13 +192,13 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
                         handleSend();
                     }}
                     placeholder="궁금한 점을 물어보세요"
-                    className="flex-1 bg-transparent text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] outline-none"
+                    className="flex-1 bg-transparent text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] outline-none"
                     disabled={isPending}
                   />
                   <button
                     onClick={handleSend}
                     disabled={!input.trim() || isPending}
-                    className="w-7 h-7 flex items-center justify-center rounded-full bg-[var(--color-brand)] border-none cursor-pointer disabled:opacity-40 disabled:cursor-default transition-opacity active:scale-[0.93] shrink-0"
+                    className="w-7 h-7 flex items-center justify-center rounded-full bg-[#cacde6] border-none cursor-pointer disabled:opacity-40 disabled:cursor-default transition-opacity active:scale-[0.93] shrink-0"
                   >
                     <Send size={13} className="text-white" />
                   </button>
@@ -244,21 +211,11 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
 
       {/* FAB 버튼 — BottomNav와 동일한 fixed + max-w-app 컨테이너 패턴 */}
       {!isOpen && (
-        <div
-          className="fixed bottom-0 left-0 right-0 z-[70] flex justify-center pointer-events-none"
-          style={{
-            paddingBottom:
-              "calc(56px + env(safe-area-inset-bottom, 0px) + 16px)",
-          }}
-        >
-          <div
-            className="relative w-full pointer-events-none"
-            style={{ maxWidth: "var(--max-width-app)" }}
-          >
+        <div className="fixed bottom-0 left-0 right-0 z-70 flex justify-center pointer-events-none pb-[calc(56px+env(safe-area-inset-bottom,0px)+16px)]">
+          <div className="relative w-full pointer-events-none max-w-app">
             <button
               onClick={() => setIsOpen(true)}
-              className="absolute bottom-0 right-4 w-12 h-12 rounded-full bg-[var(--color-brand)] border-none cursor-pointer flex items-center justify-center transition-all active:scale-[0.93] pointer-events-auto"
-              style={{ boxShadow: "0 4px 14px rgba(166,157,146,0.5)" }}
+              className="absolute bottom-0 right-4 w-12 h-12 rounded-full bg-[#cccee6] border-none cursor-pointer flex items-center justify-center transition-all active:scale-[0.93] pointer-events-auto "
               aria-label="AI 챗봇 열기"
             >
               <GaminiIcon size={22} color="white" />
