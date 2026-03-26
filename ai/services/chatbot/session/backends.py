@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 class SessionBackend(Protocol):
+    def ensure_ready(self) -> None: ...
+
     def get_snapshot(self, session_id: str, user_id: int | None = None) -> SessionSnapshot: ...
 
     def remember_turn(
@@ -42,6 +44,9 @@ class MemorySessionBackend:
         with self._lock:
             self._purge_stale_sessions()
             return session_to_snapshot(session_id, self._sessions.get(session_id), user_id=user_id)
+
+    def ensure_ready(self) -> None:
+        return None
 
     def remember_turn(
         self,
@@ -82,6 +87,9 @@ class RedisSessionBackend:
 
     def __init__(self) -> None:
         self._client = None
+
+    def ensure_ready(self) -> None:
+        self._get_client()
 
     def get_snapshot(
         self,
