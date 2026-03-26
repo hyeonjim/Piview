@@ -8,6 +8,7 @@ from services.chatbot.intent.constants import (
     GREETING_PATTERNS,
     INFORMATIONAL_HINTS,
     PRODUCT_SEARCHABLE_INFORMATIONAL_HINTS,
+    REACTION_ONLY_PATTERNS,
     RECOMMENDATION_HINTS,
 )
 from services.chatbot.intent.models import IntentDecision
@@ -83,6 +84,9 @@ def route_by_rules(
 
 
 def _is_greeting_only(message: str) -> bool:
+    if _is_reaction_only(message):
+        return True
+
     normalized_tokens = _tokenize(message)
     if not normalized_tokens:
         return False
@@ -151,7 +155,7 @@ def _is_general_informational(message: str) -> bool:
 
 
 def _tokenize(message: str) -> list[str]:
-    normalized = re.sub(r"[^0-9a-z가-힣\s]+", " ", message.lower()).strip()
+    normalized = re.sub(r"[^0-9a-z가-힣ㄱ-ㅎㅏ-ㅣ\s]+", " ", message.lower()).strip()
     if not normalized:
         return []
     if _KIWI is None:
@@ -166,6 +170,23 @@ def _tokenize(message: str) -> list[str]:
 
 def _collapse(message: str) -> str:
     return re.sub(r"\s+", "", message.lower())
+
+
+def _is_reaction_only(message: str) -> bool:
+    collapsed = _collapse(message)
+    if not collapsed:
+        return False
+
+    if re.fullmatch(r"[ㅋㅎㅠㅜ!?.,~]+", collapsed):
+        return True
+
+    allowed_chars = set("".join(REACTION_ONLY_PATTERNS) + "!?.,~")
+    meaningful_chars = [char for char in collapsed if char not in allowed_chars]
+    if meaningful_chars:
+        return False
+
+    reaction_chars = sum(1 for char in collapsed if char in allowed_chars)
+    return reaction_chars >= max(2, len(collapsed) - 1)
 
 
 def _is_fuzzy_greeting(token: str) -> bool:

@@ -1,4 +1,5 @@
 from services.chatbot.domain import QueryRequest
+from services.chatbot.intent.models import IntentDecision
 from services.chatbot.retrieval.builders import (
     build_context_hints,
     build_excluded_product_ids,
@@ -18,6 +19,7 @@ from services.chatbot.retrieval.workflow.models import RetrievalPlan
 def build_retrieval_plan(
     request: QueryRequest,
     session_context: dict[str, object] | None = None,
+    intent_decision: IntentDecision | None = None,
 ) -> RetrievalPlan:
     preferred_categories = extract_preferred_categories(request.message)
     context_hints = build_context_hints(request.client_context, session_context)
@@ -34,6 +36,7 @@ def build_retrieval_plan(
             session_context=session_context,
             used_session_memory=used_session_memory,
             used_anchor_products=used_anchor_products,
+            intent_decision=intent_decision,
         ),
         preferred_categories=preferred_categories,
         preferred_concerns=extract_preferred_concerns(request),
@@ -44,4 +47,5 @@ def build_retrieval_plan(
         search_query=search_query,
         used_session_memory=used_session_memory,
         used_anchor_products=used_anchor_products,
+        intent_decision=intent_decision,
     )
