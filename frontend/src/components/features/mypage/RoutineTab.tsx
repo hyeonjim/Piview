@@ -26,7 +26,10 @@ import {
   useLoadRoutineToDraftMutation,
   useUpdateRoutineMutation,
 } from "@/hooks";
-import type { DraftItemDto, RoutineListResponse } from "@/types/routine";
+import type {
+  DraftItemDto,
+  RoutineListResponse,
+} from "@/types/routine";
 import type { ProductSummaryResponse } from "@/types/product/product";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
 
@@ -69,10 +72,7 @@ function groupDraftByStep(
  * columnId 기준으로 routineSteps와 매핑
  */
 function groupRoutineDetailByStep(
-  steps: {
-    columnId: number;
-    products: { stepOrder: number; product: ProductSummaryResponse }[];
-  }[],
+  steps: { columnId: number; products: { stepOrder: number; product: ProductSummaryResponse }[] }[],
   routineSteps: ReturnType<typeof getRoutineSteps>,
 ): Record<string, ProductSummaryResponse[]> {
   const result: Record<string, ProductSummaryResponse[]> = {};
@@ -178,14 +178,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       );
     }
     return localDraftByStep;
-  }, [
-    isViewingSavedRoutine,
-    selectedRoutineDetail,
-    routineSteps,
-    localDraftByStep,
-  ]);
+  }, [isViewingSavedRoutine, selectedRoutineDetail, routineSteps, localDraftByStep]);
 
-  // 저장된 루틴 슬라이더 스크롤 상태 — 도트 인디케이터 연동
+// 저장된 루틴 슬라이더 스크롤 상태 — 도트 인디케이터 연동
   const savedRoutineScrollRef = useRef<HTMLDivElement>(null);
   const [activeCardIndex, setActiveCardIndex] = useState(0);
 
@@ -293,14 +288,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       const current = dragStateRef.current;
       if (!current) return;
 
-      const elementUnder = document.elementFromPoint(
-        event.clientX,
-        event.clientY,
-      );
+      const elementUnder = document.elementFromPoint(event.clientX, event.clientY);
 
-      const itemElement = elementUnder?.closest(
-        "[data-drag-item]",
-      ) as HTMLElement | null;
+      const itemElement = elementUnder?.closest("[data-drag-item]") as HTMLElement | null;
       if (itemElement) {
         const toStepCode = itemElement.getAttribute("data-step-code");
         const indexStr = itemElement.getAttribute("data-item-index");
@@ -314,19 +304,11 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         return;
       }
 
-      const dropZone = elementUnder?.closest(
-        "[data-drop-zone]",
-      ) as HTMLElement | null;
+      const dropZone = elementUnder?.closest("[data-drop-zone]") as HTMLElement | null;
       if (dropZone) {
         const toStepCode = dropZone.getAttribute("data-step-code");
-        const toIndex = parseInt(
-          dropZone.getAttribute("data-drop-index") ?? "0",
-          10,
-        );
-        if (
-          toStepCode &&
-          (toStepCode !== current.toStepCode || toIndex !== current.toIndex)
-        ) {
+        const toIndex = parseInt(dropZone.getAttribute("data-drop-index") ?? "0", 10);
+        if (toStepCode && (toStepCode !== current.toStepCode || toIndex !== current.toIndex)) {
           const next = { ...current, toStepCode, toIndex };
           dragStateRef.current = next;
           setDragState(next);
@@ -380,6 +362,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       window.removeEventListener("pointerup", onPointerUp);
     };
   }, [routineSteps, syncDraft]);
+
 
   // ── 루틴 저장 핸들러 ──────────────────────────────────────────────────
   const handleOpenSaveModal = () => {
@@ -535,9 +518,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       {routineList.length > 0 && (
         <div className="mb-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[15px] font-bold text-text-secondary">
-              My routine list
-            </p>
+            <p className="text-[15px] font-bold text-text-secondary">My routine list</p>
             <button
               onClick={handleNewRoutine}
               className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full text-[14px] text-white cursor-pointer bg-[#d9d6bd] shadow-xs active:scale-[0.97] transition-transform"
@@ -564,11 +545,11 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                   handleDeleteRoutine(saved.routineId, saved.title)
                 }
                 onClick={() => {
-                  // 다른 루틴 카드 선택 시 Edit mode 종료
-                  setEditingRoutineId(null);
-                  setEditingRoutineTitle("");
-                  setSelectedRoutineId(saved.routineId);
-                }}
+                    // 다른 루틴 카드 선택 시 Edit mode 종료
+                    setEditingRoutineId(null);
+                    setEditingRoutineTitle("");
+                    setSelectedRoutineId(saved.routineId);
+                  }}
               />
             ))}
           </div>
@@ -588,6 +569,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               ))}
             </div>
           )}
+
         </div>
       )}
 
@@ -607,20 +589,16 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               }}
               className={`flex items-center gap-1 text-[12px] font-semibold px-1 rounded-full cursor-pointer shrink-0 transition-all duration-200 active:scale-[0.97] ${
                 selectedRoutineId !== null &&
-                routineList.find((r) => r.routineId === selectedRoutineId)
-                  ?.isMain
+                routineList.find((r) => r.routineId === selectedRoutineId)?.isMain
                   ? "text-[#C8A96E]"
                   : "text-[#D9D5D0]"
               }`}
               aria-label="메인 루틴으로 설정"
             >
               {selectedRoutineId !== null &&
-              routineList.find((r) => r.routineId === selectedRoutineId)
-                ?.isMain ? (
-                <ChessQueen size={20} fill="#C8A96E" color="#C8A96E" />
-              ) : (
-                <ChessQueen size={20} fill="none" color="#D9D5D0" />
-              )}
+              routineList.find((r) => r.routineId === selectedRoutineId)?.isMain
+                ? <ChessQueen size={20} fill="#C8A96E" color="#C8A96E" />
+                : <ChessQueen size={20} fill="none" color="#D9D5D0" />}
             </button>
             <h2 className="text-[18px] font-bold text-[#636260] truncate">
               {isViewingSavedRoutine
@@ -663,14 +641,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 disabled={selectedRoutineId === null || isLoadingToEdit}
                 className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] disabled:opacity-50 text-[#787775]"
               >
-                {isLoadingToEdit ? (
-                  "불러오는 중..."
-                ) : (
-                  <>
-                    <SquarePen size={12} />
-                    Edit Mode
-                  </>
-                )}
+                {isLoadingToEdit ? "불러오는 중..." : <><SquarePen size={12} />Edit Mode</>}
               </button>
             )}
             <button
@@ -678,22 +649,14 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               disabled={isCreating || filledCount === 0}
               className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] disabled:opacity-50 text-[#787775]"
             >
-              {isCreating ? (
-                "저장 중..."
-              ) : (
-                <>
-                  <Save size={12} />
-                  Save
-                </>
-              )}
+              {isCreating ? "저장 중..." : <><Save size={12} />Save</>}
             </button>
           </div>
         </div>
 
         <p className="text-[13px] font-semibold text-text-muted">
-          클릭 시 메인루틴으로 변경
-          <br />
-          Edit Mode에서 루틴변경가능
+          클릭시 메인루틴으로 변경 
+          <br />Edit Mode에서 루틴변경가능
         </p>
       </div>
 
@@ -701,7 +664,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       {routineSteps.map((step, stepIndex) => {
         const products = viewByStep[step.code] ?? [];
         const isDropTarget =
-          !isViewingSavedRoutine && dragState?.toStepCode === step.code;
+          !isViewingSavedRoutine &&
+          dragState?.toStepCode === step.code;
 
         return (
           <div key={step.code} className="mt-3 mx-3">
@@ -709,9 +673,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1 bg-[#f2efe9] rounded-full px-2.5 py-1">
-                  <span className="text-[12px] font-semibold text-[#746f68]">
-                    {stepIndex + 1}단계
-                  </span>
+                  <span className="text-[12px] font-semibold text-[#746f68]">{stepIndex + 1}단계</span>
                 </div>
                 <span className="text-[15px] font-semibold text-text-secondary">
                   {step.label}
@@ -791,6 +753,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                       onRemove={
                         isViewingSavedRoutine ? () => {} : handleRemoveProduct
                       }
+
                       priority={index === 0}
                     />
                   );
@@ -896,6 +859,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
           </div>
         </div>
       )}
+
     </div>
   );
 }
@@ -968,6 +932,7 @@ function RoutineProductCard({
               : undefined
           }
         >
+
           {/* 이미지 — py-5 패딩을 주기 위해 relative 래퍼로 감쌈 (fill은 positioned 조상 기준) */}
           <div className="absolute inset-0 py-2">
             <div className="relative w-full h-full">
@@ -1063,6 +1028,7 @@ function SavedRoutineCard({
           : "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)",
       }}
     >
+
       {/* 메인 루틴 배지 — ChessQueen 아이콘 */}
       {saved.isMain && (
         <span className="absolute top-2 left-3">
