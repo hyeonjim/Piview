@@ -351,7 +351,7 @@ export default function ProductCard({
   if (layout === "grid") {
     return (
       <div
-        className="relative flex flex-col overflow-hidden bg-white rounded-2xl w-full min-w-0 border border-[#ede8e0] transition-shadow duration-200"
+        className="relative flex flex-col overflow-hidden bg-white rounded-2xl w-full h-full min-w-0 border border-[#ede8e0] transition-shadow duration-200"
         style={{
           boxShadow:
             "0 1px 2px rgba(0,0,0,0.04), 0 3px 7px rgba(180,155,120,0.09), 0 7px 18px rgba(0,0,0,0.06), 0 14px 32px rgba(180,155,120,0.04)",
@@ -546,7 +546,7 @@ export default function ProductCard({
         <div className="flex items-center gap-2">
           {/* 이미지 */}
           <div className="relative w-20 h-20 shrink-0">
-            <div className={`w-full h-full flex items-center rounded-xl bg-[#faf9f7] overflow-hidden${imageContainerClassName ? ` ${imageContainerClassName}` : " mt-5"}`}>
+            <div className={`w-full h-full flex items-center rounded-xl bg-[#faf9f7] overflow-hidden${imageContainerClassName !== undefined && imageContainerClassName !== null ? (imageContainerClassName ? ` ${imageContainerClassName}` : "") : " mt-5"}`}>
               <ProductImage
                 imageUrl={imageUrl}
                 name={name}
