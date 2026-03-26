@@ -19,11 +19,20 @@ class ExactCandidate:
 
 
 class ProductExactSearchService:
-    def search(self, query: NormalizedQuery, limit: int) -> list[ProductSearchResult]:
+    def search(
+        self,
+        query: NormalizedQuery,
+        limit: int,
+        category_ids: tuple[int, ...] | None = None,
+        big_category_id: int | None = None,
+    ) -> list[ProductSearchResult]:
         if not query.spaced:
             return []
 
-        index_rows = product_search_data_repository.fetch_name_index_rows()
+        index_rows = product_search_data_repository.fetch_name_index_rows(
+            category_ids=category_ids,
+            big_category_id=big_category_id,
+        )
         scored: list[ExactCandidate] = []
 
         for row in index_rows:
@@ -49,15 +58,30 @@ class ProductExactSearchService:
 
         scored.sort(key=lambda x: (-x.score, x.product_id))
         top = scored[: max(limit, 1)]
-        return self._hydrate(top, source="exact")
+        return self._hydrate(
+            top,
+            source="exact",
+            category_ids=category_ids,
+            big_category_id=big_category_id,
+        )
 
-    def _hydrate(self, candidates: Iterable[ExactCandidate], source: str) -> list[ProductSearchResult]:
+    def _hydrate(
+        self,
+        candidates: Iterable[ExactCandidate],
+        source: str,
+        category_ids: tuple[int, ...] | None = None,
+        big_category_id: int | None = None,
+    ) -> list[ProductSearchResult]:
         ranked = list(candidates)
         if not ranked:
             return []
 
         ids = [c.product_id for c in ranked]
-        rows = product_search_data_repository.fetch_products_for_indexing(product_ids=ids)
+        rows = product_search_data_repository.fetch_products_for_indexing(
+            product_ids=ids,
+            category_ids=category_ids,
+            big_category_id=big_category_id,
+        )
         by_id = {row.product_id: row for row in rows}
         score_by_id = {c.product_id: c.score for c in ranked}
 

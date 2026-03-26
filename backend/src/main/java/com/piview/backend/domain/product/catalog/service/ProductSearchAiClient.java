@@ -36,17 +36,31 @@ public class ProductSearchAiClient {
                 .build();
     }
 
-    public List<Long> searchRankedProductIds(String query, int candidateLimit) {
+    public List<Long> searchRankedProductIds(
+            String query,
+            int candidateLimit,
+            Integer bigCategoryId,
+            List<Long> categoryIds
+    ) {
         if (query == null || query.isBlank()) {
             return List.of();
         }
 
         long startedAt = System.nanoTime();
         try {
-            URI uri = UriComponentsBuilder.fromHttpUrl(fastApiBaseUrl)
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(fastApiBaseUrl)
                     .path("/products/search")
                     .queryParam("q", query)
-                    .queryParam("candidateLimit", candidateLimit)
+                    .queryParam("candidateLimit", candidateLimit);
+
+            if (bigCategoryId != null) {
+                uriBuilder.queryParam("bigCategoryId", bigCategoryId);
+            }
+            if (categoryIds != null && !categoryIds.isEmpty()) {
+                uriBuilder.queryParam("categoryId", categoryIds.toArray());
+            }
+
+            URI uri = uriBuilder
                     .encode(StandardCharsets.UTF_8)
                     .build()
                     .toUri();
@@ -58,9 +72,11 @@ public class ProductSearchAiClient {
 
             if (response == null || response.results() == null) {
                 log.info(
-                        "Product search AI returned empty body: query='{}', candidateLimit={}, elapsedMs={}",
+                        "Product search AI returned empty body: query='{}', candidateLimit={}, bigCategoryId={}, categoryIds={}, elapsedMs={}",
                         query,
                         candidateLimit,
+                        bigCategoryId,
+                        categoryIds,
                         elapsedMillis(startedAt)
                 );
                 return List.of();
@@ -72,9 +88,11 @@ public class ProductSearchAiClient {
                     .distinct()
                     .toList();
             log.info(
-                    "Product search AI success: query='{}', candidateLimit={}, elapsedMs={}, resultCount={}",
+                    "Product search AI success: query='{}', candidateLimit={}, bigCategoryId={}, categoryIds={}, elapsedMs={}, resultCount={}",
                     query,
                     candidateLimit,
+                    bigCategoryId,
+                    categoryIds,
                     elapsedMillis(startedAt),
                     productIds.size()
             );
@@ -82,18 +100,22 @@ public class ProductSearchAiClient {
 
         } catch (RestClientResponseException exception) {
             log.warn(
-                    "Product search AI error: query='{}', candidateLimit={}, status={}, elapsedMs={}",
+                    "Product search AI error: query='{}', candidateLimit={}, bigCategoryId={}, categoryIds={}, status={}, elapsedMs={}",
                     query,
                     candidateLimit,
+                    bigCategoryId,
+                    categoryIds,
                     exception.getStatusCode().value(),
                     elapsedMillis(startedAt)
             );
             return List.of();
         } catch (RestClientException exception) {
             log.warn(
-                    "Product search AI network error: query='{}', candidateLimit={}, elapsedMs={}",
+                    "Product search AI network error: query='{}', candidateLimit={}, bigCategoryId={}, categoryIds={}, elapsedMs={}",
                     query,
                     candidateLimit,
+                    bigCategoryId,
+                    categoryIds,
                     elapsedMillis(startedAt),
                     exception
             );
