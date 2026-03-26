@@ -1,6 +1,12 @@
 import re
 
 from services.chatbot.domain import QueryRequest
+from services.chatbot.input import (
+    has_followup_signal,
+    is_contextual_followup_without_context,
+    is_likely_nonsense_input,
+    normalize_message_for_chatbot,
+)
 from services.chatbot.intent.constants import (
     ANCHOR_PRODUCT_HINTS,
     FOLLOW_UP_HINTS,
@@ -26,19 +32,56 @@ except ImportError:
 
 
 _KIWI = Kiwi() if Kiwi is not None else None
+_CONSTRAINT_ONLY_HINTS = (
+    "향료",
+    "무향",
+    "무향료",
+    "알코올",
+    "무알코올",
+    "에센셜오일",
+    "에센셜 오일",
+    "fragrance",
+    "alcohol",
+    "essential oil",
+)
 
 
 def route_by_rules(
     request: QueryRequest,
     session_context: dict[str, object] | None = None,
 ) -> IntentDecision | None:
-    message = request.message.strip()
-    if not message:
+    raw_message = request.message.strip()
+    if not raw_message:
         return IntentDecision(
             intent_type="informational",
             route_source="rule",
             low_confidence=True,
             matched_rule="empty_message",
+        )
+    message = normalize_message_for_chatbot(raw_message)
+
+    if is_likely_nonsense_input(raw_message):
+        return IntentDecision(
+            intent_type="informational",
+            route_source="rule",
+            low_confidence=True,
+            matched_rule="nonsense_input",
+        )
+
+    if is_contextual_followup_without_context(raw_message, session_context):
+        return IntentDecision(
+            intent_type="informational",
+            route_source="rule",
+            low_confidence=True,
+            matched_rule="followup_needs_context",
+        )
+
+    if _is_constraint_only_without_context(message, session_context=session_context):
+        return IntentDecision(
+            intent_type="informational",
+            route_source="rule",
+            low_confidence=True,
+            matched_rule="constraint_needs_context",
         )
 
     if _is_greeting_only(message):
@@ -115,8 +158,7 @@ def _is_followup_request(
         return False
     if not session_context.get("recentUserMessages") and not session_context.get("recentProductIds"):
         return False
-    lowered = _collapse(message)
-    return any(_collapse(hint) in lowered for hint in FOLLOW_UP_HINTS)
+    return has_followup_signal(message)
 
 
 def _has_anchor_context(
@@ -154,6 +196,26 @@ def _is_general_informational(message: str) -> bool:
     return message.endswith("?") or message.endswith("요") or message.endswith("까")
 
 
+def _is_constraint_only_without_context(
+    message: str,
+    session_context: dict[str, object] | None,
+) -> bool:
+    if _has_session_context(session_context):
+        return False
+    if extract_preferred_categories(message):
+        return False
+
+    normalized = message.lower()
+    if not any(hint in normalized for hint in _CONSTRAINT_ONLY_HINTS):
+        return False
+
+    if any(token in normalized for token in ("추천", "제품", "크림", "토너", "세럼", "로션", "선크림")):
+        return False
+
+    tokens = re.findall(r"[0-9a-z가-힣]+", normalized)
+    return 0 < len(tokens) <= 6
+
+
 def _tokenize(message: str) -> list[str]:
     normalized = re.sub(r"[^0-9a-z가-힣ㄱ-ㅎㅏ-ㅣ\s]+", " ", message.lower()).strip()
     if not normalized:
@@ -170,6 +232,16 @@ def _tokenize(message: str) -> list[str]:
 
 def _collapse(message: str) -> str:
     return re.sub(r"\s+", "", message.lower())
+
+
+def _has_session_context(session_context: dict[str, object] | None) -> bool:
+    if not session_context:
+        return False
+    return bool(
+        session_context.get("recentUserMessages")
+        or session_context.get("recentProductIds")
+        or session_context.get("currentProductId") is not None
+    )
 
 
 def _is_reaction_only(message: str) -> bool:

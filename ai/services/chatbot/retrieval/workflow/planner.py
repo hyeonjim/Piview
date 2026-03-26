@@ -43,7 +43,7 @@ def build_retrieval_plan(
         avoid_terms=extract_avoid_terms(request),
         existing_categories=extract_existing_categories(request.message),
         missing_categories=extract_missing_categories(request.message),
-        excluded_product_ids=build_excluded_product_ids(request),
+        excluded_product_ids=build_excluded_product_ids(request, session_context=session_context),
         search_query=search_query,
         used_session_memory=used_session_memory,
         used_anchor_products=used_anchor_products,

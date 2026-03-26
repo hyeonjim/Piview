@@ -81,6 +81,21 @@ def build_greeting_answer() -> str:
     return "안녕하세요. 피부 고민이나 찾는 제품 종류를 말씀해 주시면 도와드릴게요."
 
 
+def build_nonsense_answer() -> str:
+    """무의미하거나 깨진 입력에는 재입력을 유도합니다."""
+    return "입력하신 내용만으로는 의미를 파악하기 어려웠어요. 피부 고민이나 찾는 제품 종류를 조금만 더 구체적으로 적어주시면 바로 도와드릴게요."
+
+
+def build_followup_clarification_answer(request: QueryRequest) -> str:
+    """문맥 없이 들어온 짧은 후속질문은 기준을 다시 물어봅니다."""
+    lowered = request.message.lower()
+    if any(token in lowered for token in ("향료", "무향", "fragrance", "알코올", "alcohol", "에센셜오일", "essential oil")):
+        return "향료나 알코올 같은 제외 조건을 반영해서 찾을 수 있어요. 토너, 세럼, 크림처럼 찾는 제품 종류를 같이 알려주시면 더 정확하게 추천해드릴게요."
+    if any(token in request.message for token in ("토너", "스킨", "toner")):
+        return "토너 기준으로 다른 제품을 찾는 건지, 방금 본 제품 대체를 찾는 건지 한 번만 더 알려주세요."
+    return "어떤 기준으로 다른 제품을 찾을지 한 번만 더 알려주세요. 방금 본 제품 기준인지, 찾는 카테고리 기준인지 같이 적어주시면 바로 이어서 볼게요."
+
+
 def build_informational_template_answer(request: QueryRequest) -> str:
     """설명형 질의에서 LLM 호출이 실패했을 때의 보수적 템플릿입니다."""
     if "성분" in request.message or "효능" in request.message:
