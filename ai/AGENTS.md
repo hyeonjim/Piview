@@ -66,6 +66,12 @@ services/chatbot/
     base.py         --- chat / embedding protocol
     gms.py          --- GMS provider 구현
 
+  input/            --- 무의미 입력 판별, 영어/혼합어 정규화, follow-up 신호 전처리
+    preprocess.py   --- 입력 정규화, nonsense 판별, follow-up 힌트 추출
+
+  context/          --- 대화 문맥 정규화와 slot memory 조립
+    slots.py        --- turn slot 추출, 세션 slot merge, 검색용 slot line 조립
+
   retrieval/        --- 검색과 랭킹 중심 계층
     service.py      --- retrieval 전체 오케스트레이션
     models.py       --- retrieval 중간 산출물 모델
@@ -121,9 +127,6 @@ services/chatbot/
     backends.py     --- memory / redis backend
     serialization.py--- snapshot / payload 직렬화
     models.py       --- session snapshot / stored session 모델
-
-  eval/             --- retrieval/citation 수동 평가 유틸
-    metrics.py      --- precision/recall/MRR/citation coverage 계산
 
 scripts/
   reindex_chatbot.py  --- MySQL 상품 데이터를 다시 읽어 Chroma 인덱스를 재생성

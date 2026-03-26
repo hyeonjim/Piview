@@ -1,5 +1,6 @@
 """카테고리 의도 파싱 로직."""
 
+from services.chatbot.input import normalize_message_for_chatbot
 from services.chatbot.retrieval.constants import (
     CATEGORY_HINTS,
     EXISTING_CATEGORY_MARKERS,
@@ -9,7 +10,7 @@ from services.chatbot.retrieval.constants import (
 
 def extract_preferred_categories(message: str) -> set[str]:
     """질문 원문에서 직접 원하는 카테고리를 추출합니다."""
-    lowered = message.lower()
+    lowered = normalize_message_for_chatbot(message).lower()
     preferred_categories: set[str] = set()
     for category_key, aliases in CATEGORY_HINTS.items():
         if any(alias.lower() in lowered for alias in aliases):
@@ -36,7 +37,7 @@ def _extract_category_mentions(message: str, markers: tuple[str, ...]) -> set[st
 
     예: "토너는 있는데", "세럼이 없어서"
     """
-    collapsed = message.lower().replace(" ", "")
+    collapsed = normalize_message_for_chatbot(message).lower().replace(" ", "")
     particles = ("", "은", "는", "이", "가")
     matched: set[str] = set()
 
