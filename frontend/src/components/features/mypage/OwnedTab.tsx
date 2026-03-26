@@ -145,7 +145,8 @@ export default function OwnedTab() {
           </div>
           <p className="text-[14px] font-semibold text-[#787879] mt-0.5">
             {dislikedItems.length}개 등록됨
-            <br />등록된 제품의 알러지성분을 가진 제품은 추천에서 제외됩니다
+            <br />
+            등록된 제품의 알러지를 포함한 제품은 추천에서 제외됩니다
           </p>
         </div>
 

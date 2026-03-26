@@ -63,7 +63,7 @@ export default function DataSourcesSection() {
         추천해서 최적의 루틴을 생성해드립니다.
       </p>
 
-      <div className="grid grid-cols-3 gap-3 px-3">
+      <div className="grid grid-cols-2 gap-3 px-3">
         {DATA_SOURCES.map((source) => (
           <a
             key={source.name}
@@ -75,19 +75,19 @@ export default function DataSourcesSection() {
             {/* 상단: 사이트명 + 외부링크 아이콘 */}
             <div className="flex items-start justify-between mb-2">
               <span
-                className="text-[12px] mt-1 font-semibold tracking-[-0.2px] leading-tight"
+                className="text-[14px] mt-1 font-bold tracking-[-0.2px] leading-tight"
                 style={{ color: source.accent }}
               >
                 {source.name}
               </span>
               <ExternalLink
-                size={11}
+                size={14}
                 className="text-[#D9D5D0] mt-0.5 mb-2 group-hover:text-[#A69D92] transition-colors"
               />
             </div>
 
             {/* 하단: 역할 설명 */}
-            <span className="text-[10px] font-medium text-[#A69D92]">
+            <span className="text-[12px] font-medium text-[#706a63]">
               {source.description}
             </span>
 
