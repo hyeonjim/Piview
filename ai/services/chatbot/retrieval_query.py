@@ -175,24 +175,10 @@ class ChatbotRetrieveService:
         *,
         requested_limit: int,
     ) -> int:
-        """100개 응답에서도 후보 손실이 덜하도록 query보다 넉넉한 내부 search window를 사용합니다."""
-        base_limit = max(
-            requested_limit,
-            settings.chatbot_candidate_pool,
-            settings.chatbot_keyword_top_k,
-        )
-        multiplier = 1
-        if plan.preferred_categories or plan.missing_categories:
-            multiplier += 1
-        if plan.avoid_terms:
-            multiplier += 1
-        if plan.used_session_memory or plan.used_anchor_products:
-            multiplier += 1
-
-        # 검색 전용 API는 top-5 챗봇보다 더 많은 후보를 봐야 하므로 별도 상한을 둡니다.
-        capped_limit = max(requested_limit + 50, 150)
-        computed_limit = max(base_limit * multiplier, requested_limit + 30)
-        return min(computed_limit, capped_limit)
+        """검색 전용 API는 100개 반환을 안정적으로 채우도록 최소 250개 후보를 본다."""
+        del plan
+        del settings
+        return max(requested_limit, 250)
 
     def _resolve_keyword_prefilter_limit(
         self,
