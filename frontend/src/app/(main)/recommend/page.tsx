@@ -10,12 +10,16 @@ import type { ProductViewModel } from "@/types/product/myCos";
 import { useCompare, useDynamicRecommendations } from "@/hooks";
 import { useAddMyCos, useRemoveMyCos, useMyCosQuery } from "@/hooks";
 import { useRecommendStore } from "@/stores/useRecommendStore";
-import { Sparkles } from "lucide-react";
+import { toSkinTypeParam } from "@/utils/enumConvert";
+import { PRICE_MAX } from "@/types/common";
+import type { SkinType } from "@/types/user";
 
 export default function RecommendPage() {
   const {
+    searchQuery,
     selectedBigCategoryId,
     selectedCategoryId,
+    filter,
     page,
     maxKnownPage,
     setSelectedBigCategoryId,
@@ -33,8 +37,31 @@ export default function RecommendPage() {
     isPlaceholderData,
     isError,
   } = useDynamicRecommendations({
+    q: searchQuery.trim() || undefined,
     bigCategoryId: selectedBigCategoryId ?? undefined,
     categoryId: selectedCategoryId ?? undefined,
+    skinType: filter.filterSkin
+      ? toSkinTypeParam(filter.filterSkin as SkinType)
+      : undefined,
+    tagIds:
+      Object.keys(filter.tagIds).filter((k) => filter.tagIds[Number(k)])
+        .length > 0
+        ? Object.keys(filter.tagIds)
+            .filter((k) => filter.tagIds[Number(k)])
+            .map(Number)
+        : undefined,
+    brandIds:
+      Object.keys(filter.brandIds).filter((k) => filter.brandIds[Number(k)])
+        .length > 0
+        ? Object.keys(filter.brandIds)
+            .filter((k) => filter.brandIds[Number(k)])
+            .map(Number)
+        : undefined,
+    minPrice: filter.priceRange[0] > 0 ? filter.priceRange[0] : undefined,
+    maxPrice:
+      filter.priceRange[1] < PRICE_MAX ? filter.priceRange[1] : undefined,
+    page: page - 1,
+    size: PAGE_SIZE,
   });
 
   const totalPages =
@@ -73,13 +100,6 @@ export default function RecommendPage() {
     canCompare,
   } = useCompare<ProductViewModel>();
 
-  const handleBigCategorySelect = (bigCategoryId: number | null) => {
-    setSelectedBigCategoryId(bigCategoryId);
-  };
-  const handleCategorySelect = (categoryId: number | null) => {
-    setSelectedCategoryId(categoryId);
-  };
-
   const handleToggleCompare = (product: ProductViewModel) => {
     const isAlreadySelected = compareItems.some(
       (item) => item.id === product.id,
@@ -100,23 +120,17 @@ export default function RecommendPage() {
       {/* 상단 헤더 */}
       <div className="bg-[#faf8f5] pt-[5px]">
         <div className="px-5 pt-4 pb-3">
-          <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-[#a69d92]" />
-            <h1 className="mt-[3px] text-[20px] font-semibold text-[#635446] leading-[1.2]">
-              Recommend
-            </h1>
-          </div>
-          <p className="text-[13px] text-[#a69d92] mt-1">
-            나의 탐색 기록을 반영한 맞춤 추천
-          </p>
+          <h1 className="mt-0.75 mb-3.5 text-[20px] font-semibold text-[#635446] tracking-[-0.3px] leading-[1.2]">
+            Recommend
+          </h1>
         </div>
       </div>
 
       <CategoryFilter
         selectedBigCategoryId={selectedBigCategoryId}
         selectedCategoryId={selectedCategoryId}
-        onBigCategorySelect={handleBigCategorySelect}
-        onCategorySelect={handleCategorySelect}
+        onBigCategorySelect={setSelectedBigCategoryId}
+        onCategorySelect={setSelectedCategoryId}
       />
 
       {/* 비교 힌트 바 — 1개 선택 시 */}
@@ -170,7 +184,6 @@ export default function RecommendPage() {
         ) : products.length === 0 ? (
           <div className="mt-2 rounded-2xl border border-[#eee] bg-white">
             <EmptyState
-              icon={Sparkles}
               title="아직 추천 데이터가 없어요"
               description="제품을 둘러보면 맞춤 추천이 생겨요"
             />
@@ -190,6 +203,7 @@ export default function RecommendPage() {
                 effects={product.effects}
                 layout="grid"
                 isRecommended={true}
+                showCategory={false}
                 showActions={true}
                 isOwned={isOwned(product.id)}
                 onToggleOwned={() => handleToggleOwned(product.id)}
@@ -217,6 +231,7 @@ export default function RecommendPage() {
         totalPages={totalPages}
         onChange={handlePageChange}
       />
+
     </div>
   );
 }

@@ -13,11 +13,9 @@ import { queryKeys } from "@/lib/queryKeys";
 import { mapProductSummaryList } from "@/utils/productMapper";
 import { useLikeStore } from "@/stores";
 import { useEffect } from "react";
+import type { ProductSearchParams } from "@/types/product";
 
-export function useDynamicRecommendations(params: {
-  bigCategoryId?: number;
-  categoryId?: number;
-}) {
+export function useDynamicRecommendations(params: ProductSearchParams) {
   const syncFromProducts = useLikeStore((s) => s.syncFromProducts);
 
   const query = useQuery({
