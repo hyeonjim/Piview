@@ -48,11 +48,28 @@ CHATBOT_MODEL=gemini-2.5-flash
 - `POST /chat/query`
   - 챗봇 질의응답
   - `application/json`
+- `POST /chat/retrieve`
+  - 상품 retrieval 전용 검색
+  - `application/json`
+  - intent 분기나 답변 생성 없이, 자연어 질의를 바로 검색용으로 해석해 랭킹된 상품 후보를 반환합니다.
+  - 최대 `100`개까지 상품을 반환할 수 있으며, 실제 개수는 검색 결과와 필터 조건에 따라 달라질 수 있습니다.
 
 ## Integration Notes
 
 - 로컬에서 AI 서버 기본 주소는 `http://localhost:8000`입니다.
 - 백엔드는 `fastapi.base-url` 설정을 기준으로 AI 서버를 호출합니다.
+
+## Swagger 주소
+
+### 로컬(local)
+- Swagger UI: `http://localhost:8000/docs`
+- OpenAPI JSON: `http://localhost:8000/openapi.json`
+- `/chat/retrieve` 요청/응답 예시는 Swagger UI에서 바로 확인할 수 있습니다.
+
+### 개발(dev)
+- Docker 네트워크 내부 주소: `http://dev-ai:8000/docs`
+- Docker 네트워크 내부 OpenAPI JSON: `http://dev-ai:8000/openapi.json`
+- 참고: 현재 `nginx/nginx.conf`에는 AI의 `/docs`와 `/openapi.json`을 외부로 프록시하는 설정이 없어, 브라우저에서 바로 여는 공개 dev URL은 없습니다.
 
 ## Chatbot Notes
 
