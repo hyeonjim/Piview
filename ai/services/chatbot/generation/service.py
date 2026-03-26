@@ -14,9 +14,11 @@ from services.chatbot.generation.helpers import build_effective_client_context
 from services.chatbot.generation.postprocess import postprocess_answer
 from services.chatbot.generation.templates import (
     build_fallback_answer,
+    build_followup_clarification_answer,
     build_greeting_answer,
     build_grounded_template_answer,
     build_informational_template_answer,
+    build_nonsense_answer,
 )
 from services.chatbot.generation.llm import chatbot_llm_service
 from services.chatbot.retrieval import RetrievalBundle, chatbot_retrieval_service
@@ -49,7 +51,15 @@ class ChatbotService:
             request,
             session_context=session_context,
         )
-        if intent_decision.intent_type == "greeting_chitchat":
+        if intent_decision.matched_rule == "nonsense_input":
+            retrieval_bundle = self._build_no_retrieval_bundle(intent_decision)
+            answer = build_nonsense_answer()
+            response_type = retrieval_bundle.response_type
+        elif intent_decision.matched_rule in {"followup_needs_context", "constraint_needs_context"}:
+            retrieval_bundle = self._build_no_retrieval_bundle(intent_decision)
+            answer = build_followup_clarification_answer(request)
+            response_type = retrieval_bundle.response_type
+        elif intent_decision.intent_type == "greeting_chitchat":
             retrieval_bundle = self._build_no_retrieval_bundle(intent_decision)
             answer = build_greeting_answer()
             response_type = retrieval_bundle.response_type
@@ -60,7 +70,11 @@ class ChatbotService:
                 session_context=session_context,
             )
         response_type = retrieval_bundle.response_type
-        if intent_decision.intent_type != "greeting_chitchat":
+        if intent_decision.intent_type != "greeting_chitchat" and intent_decision.matched_rule not in {
+            "nonsense_input",
+            "followup_needs_context",
+            "constraint_needs_context",
+        }:
             answer, response_type = await self._build_answer(
                 request,
                 retrieval_bundle,
