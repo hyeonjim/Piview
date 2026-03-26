@@ -1,12 +1,14 @@
 import logging
+import asyncio
 
 from fastapi import APIRouter, HTTPException, Query
 
 from schemas.product_search import (
+    ProductSearchDictionaryStatusResponse,
     ProductSearchQueryResponse,
     ProductSearchResultItem,
 )
-from services.chatbot.search.product_query_search import search_products_hybrid
+from services.product_search import product_search_service
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -18,7 +20,7 @@ async def search_products(
     candidateLimit: int = Query(200, ge=1, le=500),
 ):
     try:
-        results = await search_products_hybrid(
+        results = await product_search_service.search(
             query_text=q,
             limit=candidateLimit,
             exclude_product_ids=set(),
@@ -40,4 +42,31 @@ async def search_products(
         raise HTTPException(
             status_code=502,
             detail="상품 검색 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+        ) from exc
+
+
+@router.get("/dictionaries", response_model=ProductSearchDictionaryStatusResponse)
+async def get_product_search_dictionaries():
+    try:
+        return ProductSearchDictionaryStatusResponse.model_validate(
+            product_search_service.dictionary_status()
+        )
+    except RuntimeError as exc:
+        logger.warning("Product search dictionaries status failed: %s", exc)
+        raise HTTPException(
+            status_code=502,
+            detail="상품 검색 사전 상태 조회에 실패했습니다.",
+        ) from exc
+
+
+@router.post("/dictionaries/refresh", response_model=ProductSearchDictionaryStatusResponse)
+async def refresh_product_search_dictionaries():
+    try:
+        status = await asyncio.to_thread(product_search_service.refresh_dictionaries)
+        return ProductSearchDictionaryStatusResponse.model_validate(status)
+    except RuntimeError as exc:
+        logger.warning("Product search dictionary refresh failed: %s", exc)
+        raise HTTPException(
+            status_code=502,
+            detail="상품 검색 사전 갱신에 실패했습니다.",
         ) from exc

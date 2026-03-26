@@ -11,7 +11,7 @@ from services.chatbot.context import (
     extract_overwrite_focus_slots,
     has_slot_update_signal,
 )
-from services.chatbot.input import (
+from services.chatbot.input.preprocess import (
     has_followup_signal,
     is_replace_followup,
     normalize_message_for_chatbot,
