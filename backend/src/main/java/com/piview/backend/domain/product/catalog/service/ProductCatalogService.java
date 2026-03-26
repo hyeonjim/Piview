@@ -133,7 +133,16 @@ public class ProductCatalogService {
 
         if (normalized.getQ() != null) {
             int candidateLimit = resolveVectorCandidateLimit(normalized);
-            List<Long> rankedProductIds = productSearchAiClient.searchRankedProductIds(normalized.getQ(), candidateLimit);
+            Integer effectiveBigCategoryId =
+                    (normalized.getCategoryId() != null && !normalized.getCategoryId().isEmpty())
+                            ? null
+                            : normalized.getBigCategoryId();
+            List<Long> rankedProductIds = productSearchAiClient.searchRankedProductIds(
+                    normalized.getQ(),
+                    candidateLimit,
+                    effectiveBigCategoryId,
+                    normalized.getCategoryId()
+            );
 
             if (!rankedProductIds.isEmpty()) {
                 ProductSearchCondition filterOnlyCondition = ProductSearchCondition.builder()

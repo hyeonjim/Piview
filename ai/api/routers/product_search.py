@@ -18,12 +18,18 @@ logger = logging.getLogger(__name__)
 async def search_products(
     q: str = Query(..., min_length=1, max_length=500),
     candidateLimit: int = Query(200, ge=1, le=500),
+    bigCategoryId: int | None = Query(None, ge=1),
+    categoryId: list[int] | None = Query(None),
 ):
     try:
+        normalized_category_ids = tuple(categoryId or ())
+        normalized_big_category_id = None if normalized_category_ids else bigCategoryId
         results = await product_search_service.search(
             query_text=q,
             limit=candidateLimit,
             exclude_product_ids=set(),
+            category_ids=normalized_category_ids,
+            big_category_id=normalized_big_category_id,
         )
         return ProductSearchQueryResponse(
             query=q,

@@ -36,13 +36,18 @@ class ProductFuzzySearchService:
         query: NormalizedQuery,
         limit: int,
         exclude_ids: set[int] | None = None,
+        category_ids: tuple[int, ...] | None = None,
+        big_category_id: int | None = None,
         min_score: float = 0.72,
     ) -> list[ProductSearchResult]:
         if not query.compact:
             return []
 
         exclude_ids = exclude_ids or set()
-        index_rows = product_search_data_repository.fetch_name_index_rows()
+        index_rows = product_search_data_repository.fetch_name_index_rows(
+            category_ids=category_ids,
+            big_category_id=big_category_id,
+        )
         candidates: list[FuzzyCandidate] = []
 
         for row in index_rows:
@@ -67,7 +72,12 @@ class ProductFuzzySearchService:
 
         # exact service hydrate 재사용
         exact_like = [type("Tmp", (), {"product_id": c.product_id, "score": c.score}) for c in top]
-        return product_exact_search_service._hydrate(exact_like, source="fuzzy")
+        return product_exact_search_service._hydrate(
+            exact_like,
+            source="fuzzy",
+            category_ids=category_ids,
+            big_category_id=big_category_id,
+        )
 
 
 product_fuzzy_search_service = ProductFuzzySearchService()
