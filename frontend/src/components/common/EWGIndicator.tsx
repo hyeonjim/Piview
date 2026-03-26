@@ -6,7 +6,9 @@ interface EWGIndicatorProps {
   safe: number;
   caution: number;
   danger: number;
-  /** bar(기본, 카드용) | detail(상세 페이지용) */
+  /** 등급 미정 성분 수 (detail variant 전용) */
+  unknown?: number;
+  /** bar(기본, 카드용) | detail(상세 페이지 EWG 섹션용) */
   variant?: "bar" | "detail";
   className?: string;
 }
@@ -15,40 +17,49 @@ export default function EWGIndicator({
   safe,
   caution,
   danger,
+  unknown = 0,
   variant = "bar",
   className,
 }: EWGIndicatorProps) {
   const total = safe + caution + danger || 1;
 
   if (variant === "detail") {
+    const totalCount = safe + caution + danger + unknown;
+    const grades = [
+      { label: "1~2등급", sub: "안전", count: safe, color: "var(--color-ewg-safe)" },
+      { label: "3~6등급", sub: "보통", count: caution, color: "var(--color-ewg-caution)" },
+      { label: "7~10등급", sub: "주의", count: danger, color: "var(--color-ewg-danger)" },
+      { label: "등급 미정", sub: "정보없음", count: unknown, color: "#BDBDBD" },
+    ];
+
     return (
-      <div className={cn("flex flex-col gap-2", className)}>
-        {/* 바 */}
-        <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
-          {safe > 0 && (
-            <div className="bg-ewg-safe rounded-full" style={{ flex: safe }} />
-          )}
-          {caution > 0 && (
-            <div className="bg-ewg-caution rounded-full" style={{ flex: caution }} />
-          )}
-          {danger > 0 && (
-            <div className="bg-ewg-danger rounded-full" style={{ flex: danger }} />
-          )}
+      <div className={cn("", className)}>
+        {/* 헤더 */}
+        <div className="mb-3">
+          <p className="text-[15px] font-semibold text-[#58514b]">EWG 성분 분석</p>
+          <p className="text-[12px] text-[#a69d92] mt-0.5">총 {totalCount}개 성분</p>
         </div>
-        {/* 범례 */}
-        <div className="flex gap-3 text-xs text-text-muted">
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-ewg-safe inline-block" />
-            안전 {safe}
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-ewg-caution inline-block" />
-            주의 {caution}
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-ewg-danger inline-block" />
-            위험 {danger}
-          </span>
+        {/* 비율 바 — flex값이 동적이라 style 사용 */}
+        <div className="flex h-3 gap-0.5 rounded-full overflow-hidden mb-3">
+          <div className="rounded bg-ewg-safe" style={{ flex: safe }} />
+          <div className="rounded bg-ewg-caution" style={{ flex: caution }} />
+          {danger > 0 && (
+            <div className="rounded bg-ewg-danger" style={{ flex: danger }} />
+          )}
+          <div className="rounded bg-[#E0E0E0]" style={{ flex: unknown }} />
+        </div>
+        {/* 등급별 집계 그리드 */}
+        <div className="grid grid-cols-4 gap-1 text-center">
+          {grades.map((grade) => (
+            <div key={grade.sub}>
+              <p className="text-[13px] text-[#7d766e] mb-0.5">• {grade.label}</p>
+              {/* color가 CSS 변수라 style 사용 */}
+              <p className="text-[16px] font-bold" style={{ color: grade.color }}>
+                {grade.count}
+              </p>
+              <p className="text-[13px] text-[#736b62] mt-0.5">{grade.sub}</p>
+            </div>
+          ))}
         </div>
       </div>
     );
