@@ -1,5 +1,6 @@
 package com.piview.backend.domain.product.recommend.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.piview.backend.domain.product.entity.Product;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,7 +29,10 @@ public class RecommendResponseDto {
 
   private String concernName;
 
-  public static RecommendResponseDto from(Product product, boolean isLiked, Long concernId){
+  @JsonProperty("tags")
+  private List<String> concerns;
+
+  public static RecommendResponseDto from(Product product, boolean isLiked, Long concernId, List<String> concerns){
 
     List<String> combinedSkinTypes = new ArrayList<>();
     if (product.getTopSkinType()!=null){
@@ -50,6 +54,7 @@ public class RecommendResponseDto {
         .skinTypes(combinedSkinTypes)
         .isLiked(isLiked)
         .concernName(concernId == null ? "" : SKIN_CONCERN_MAP.getOrDefault(concernId, ""))
+        .concerns(concerns)
         .build();
   }
 
