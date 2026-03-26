@@ -5,6 +5,9 @@
 """
 
 from services.chatbot.domain import QueryRequest
+from services.chatbot.intent.models import IntentDecision
+from services.chatbot.intent.constants import ANCHOR_PRODUCT_HINTS, FOLLOW_UP_HINTS
+from services.chatbot.retrieval.constants import CATEGORY_HINTS
 from services.chatbot.retrieval.parsers import canonicalize_avoid_term, extract_preferred_categories
 from services.chatbot.search.product_data import (
     build_ingredient_preview,
@@ -13,50 +16,20 @@ from services.chatbot.search.product_data import (
 )
 
 
-FOLLOW_UP_HINTS: tuple[str, ...] = (
-    "이거",
-    "그거",
-    "이 중",
-    "둘 중",
-    "뭐가 더",
-    "어떤 게 더",
-    "그럼",
-    "그러면",
-    "같은 조건",
-    "방금",
-    "아까",
-    "다른 거",
-    "말고",
-    "대신",
-    "더 순한",
-    "더 가벼운",
-    "더 촉촉한",
-)
-
-ANCHOR_PRODUCT_HINTS: tuple[str, ...] = (
-    "이거",
-    "그거",
-    "이 제품",
-    "그 제품",
-    "방금",
-    "아까",
-    "지금 본",
-    "비슷",
-    "유사",
-    "대신",
-    "보다",
-    "같은",
-)
-
-
 def collect_applied_filters(
     request: QueryRequest,
     session_context: dict[str, object] | None = None,
     used_session_memory: bool = False,
     used_anchor_products: bool = False,
+    intent_decision: IntentDecision | None = None,
 ) -> dict[str, object]:
     """응답에 다시 노출할 filter snapshot만 수집합니다."""
     applied_filters: dict[str, object] = {}
+    if intent_decision is not None:
+        applied_filters["intentType"] = intent_decision.intent_type
+        applied_filters["routeSource"] = intent_decision.route_source
+        applied_filters["lowConfidence"] = intent_decision.low_confidence
+        applied_filters["usedProductRetrieval"] = intent_decision.use_product_retrieval
     effective_screen = (
         request.client_context.screen
         if request.client_context and request.client_context.screen
@@ -105,6 +78,10 @@ def build_search_query(
     message = request.message.strip()
     parts = [message]
     has_explicit_category = bool(extract_preferred_categories(message))
+    if has_explicit_category:
+        category_aliases = _resolve_preferred_category_aliases(message)
+        if category_aliases:
+            parts.append(f"카테고리 조건: {', '.join(category_aliases)}")
     used_session_memory = False
     used_anchor_products = False
     if not has_explicit_category and _should_use_session_memory(message, session_context):
@@ -265,3 +242,16 @@ def _build_user_context_query_parts(
             parts.append(f"피부타입: {user_context.my_skin_type}")
 
     return parts
+
+
+def _resolve_preferred_category_aliases(message: str) -> list[str]:
+    aliases: list[str] = []
+    seen: set[str] = set()
+    for category_key in extract_preferred_categories(message):
+        for alias in CATEGORY_HINTS.get(category_key, ()):
+            normalized = alias.strip()
+            if not normalized or normalized.lower() in seen:
+                continue
+            seen.add(normalized.lower())
+            aliases.append(normalized)
+    return aliases
