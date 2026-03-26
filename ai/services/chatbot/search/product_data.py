@@ -27,6 +27,12 @@ class ProductSearchDataRow:
     ingredient_text_ko: str | None
     ingredient_text_en: str | None
 
+@dataclass
+class ProductNameIndexRow:
+    product_id: int
+    name: str
+    brand_name: str | None
+
 
 def normalize_whitespace(text: str | None) -> str:
     if not text:
@@ -316,6 +322,29 @@ class ProductSearchDataRepository:
             charset="utf8mb4",
             cursorclass=pymysql.cursors.DictCursor,
         )
+    
+    def fetch_name_index_rows(self) -> list[ProductNameIndexRow]:
+        sql = """
+            SELECT p.product_id, p.name, b.brand_name
+            FROM products p
+            LEFT JOIN brand b ON b.brand_id = p.brand_id
+            WHERE p.name IS NOT NULL
+            ORDER BY p.product_id
+        """
+        with self._get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(sql)
+                rows = cursor.fetchall()
+
+        return [
+            ProductNameIndexRow(
+                product_id=int(row["product_id"]),
+                name=str(row["name"]),
+                brand_name=row["brand_name"],
+            )
+            for row in rows
+        ]
+
 
 
 def normalize_concern_name(concern_id: int, concern_name: str) -> str:
