@@ -3,7 +3,9 @@ import time
 from typing import Iterable
 
 from core.settings import get_settings
+from services.chatbot.context import extract_turn_slots, merge_turn_slots
 from services.chatbot.domain import QueryRequest
+from services.chatbot.input import normalize_message_for_chatbot
 from services.chatbot.session.models import SessionSnapshot, StoredSession, StoredTurn
 
 
@@ -28,9 +30,13 @@ def session_to_snapshot(
         user_id=stored.user_id if stored.user_id is not None else user_id,
         screen=stored.screen,
         current_product_id=stored.current_product_id,
-        recent_user_messages=[turn.user_message for turn in recent_turns],
+        recent_user_messages=[
+            turn.normalized_user_message or turn.user_message
+            for turn in recent_turns
+        ],
         recent_answers=[turn.answer for turn in recent_turns],
         recent_product_ids=recent_product_ids,
+        recent_slots=merge_turn_slots(stored.turns[-3:]),
     )
 
 
@@ -59,8 +65,10 @@ def update_stored_session(
     stored.turns.append(
         StoredTurn(
             user_message=request.message.strip(),
+            normalized_user_message=normalize_message_for_chatbot(request.message.strip()),
             answer=answer.strip(),
             product_ids=product_ids,
+            slots=extract_turn_slots(request.message, request.user_context),
         )
     )
     max_turns = max(1, settings.chatbot_session_max_turns)
@@ -78,8 +86,10 @@ def serialize_session(stored: StoredSession) -> str:
         "turns": [
             {
                 "user_message": turn.user_message,
+                "normalized_user_message": turn.normalized_user_message,
                 "answer": turn.answer,
                 "product_ids": turn.product_ids,
+                "slots": turn.slots,
             }
             for turn in stored.turns
         ],
@@ -92,8 +102,10 @@ def deserialize_session(raw_payload: str) -> StoredSession:
     turns = [
         StoredTurn(
             user_message=str(turn.get("user_message", "")),
+            normalized_user_message=str(turn.get("normalized_user_message", "")).strip() or None,
             answer=str(turn.get("answer", "")),
             product_ids=[int(product_id) for product_id in turn.get("product_ids", [])],
+            slots=dict(turn.get("slots", {}) or {}),
         )
         for turn in payload.get("turns", [])
     ]

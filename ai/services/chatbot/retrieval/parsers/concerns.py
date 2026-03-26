@@ -1,6 +1,7 @@
 """피부 고민 / 회피 성분 파싱 로직."""
 
 from services.chatbot.domain import QueryRequest
+from services.chatbot.input import normalize_message_for_chatbot
 from services.chatbot.retrieval.constants import (
     AVOID_TERM_ALIASES,
     CANONICAL_AVOID_TERM_LOOKUP,
@@ -12,8 +13,9 @@ from services.chatbot.retrieval.constants import (
 def extract_preferred_concerns(request: QueryRequest) -> set[str]:
     """질문 본문과 userContext를 합쳐 현재 중요 고민을 추출합니다."""
     preferred_concerns: set[str] = set()
+    normalized_message = normalize_message_for_chatbot(request.message)
     for concern in CONCERN_HINTS:
-        if concern in request.message:
+        if concern in normalized_message:
             preferred_concerns.add(concern)
 
     if request.user_context:
@@ -54,7 +56,7 @@ def extract_avoid_terms(request: QueryRequest) -> set[str]:
 
 
 def extract_avoid_terms_from_text(text: str) -> set[str]:
-    normalized = text.lower()
+    normalized = normalize_message_for_chatbot(text).lower()
     matched: set[str] = set()
 
     for alias, canonical_term in CANONICAL_AVOID_TERM_LOOKUP.items():
@@ -66,7 +68,7 @@ def extract_avoid_terms_from_text(text: str) -> set[str]:
 
 
 def canonicalize_avoid_term(text: str) -> str | None:
-    normalized = text.lower().strip()
+    normalized = normalize_message_for_chatbot(text).lower().strip()
     if not normalized:
         return None
     if normalized in CANONICAL_AVOID_TERM_LOOKUP and normalized not in NOISY_AVOID_ALIASES:
