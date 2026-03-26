@@ -6,7 +6,7 @@
 """
 
 from services.chatbot.domain import QueryRequest
-from services.chatbot.retrieval import RetrievalBundle
+from services.chatbot.retrieval.models import RetrievalBundle
 
 from services.chatbot.generation.helpers import build_skin_problem_hint, extract_category_hint
 from services.chatbot.retrieval.parsers import extract_preferred_categories

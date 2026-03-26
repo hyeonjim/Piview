@@ -1,7 +1,11 @@
 from typing import Iterable
 
 from services.chatbot.domain import UserContext
-from services.chatbot.input import has_followup_signal, is_replace_followup, normalize_message_for_chatbot
+from services.chatbot.input.preprocess import (
+    has_followup_signal,
+    is_replace_followup,
+    normalize_message_for_chatbot,
+)
 from services.chatbot.retrieval.constants import CATEGORY_HINTS, CONCERN_HINTS, LIGHTWEIGHT_HINTS
 from services.chatbot.retrieval.parsers.category import extract_preferred_categories
 from services.chatbot.retrieval.parsers.concerns import (

@@ -9,7 +9,7 @@ import logging
 from uuid import uuid4
 
 from services.chatbot.domain import ClientContext, QueryRequest, QueryResponse
-from services.chatbot.intent import chatbot_intent_router
+from services.chatbot.intent.service import chatbot_intent_router
 from services.chatbot.intent.models import IntentDecision
 from services.chatbot.generation.helpers import (
     build_effective_client_context,
@@ -25,7 +25,8 @@ from services.chatbot.generation.templates import (
     build_nonsense_answer,
 )
 from services.chatbot.generation.llm import chatbot_llm_service
-from services.chatbot.retrieval import RetrievalBundle, chatbot_retrieval_service
+from services.chatbot.retrieval.models import RetrievalBundle
+from services.chatbot.retrieval.service import chatbot_retrieval_service
 from services.chatbot.session import chat_session_store
 
 
