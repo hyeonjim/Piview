@@ -9,7 +9,10 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -17,15 +20,12 @@ public class ProductSearchAiClient {
 
     private final RestClient restClient;
     private final String fastApiBaseUrl;
-    private final boolean vectorSearchEnabled;
 
     public ProductSearchAiClient(
             @Value("${fastapi.base-url}") String fastApiBaseUrl,
-            @Value("${product-search.vector.enabled:true}") boolean vectorSearchEnabled,
-            @Value("${product-search.vector.timeout-ms:1200}") int timeoutMs
+            @Value("${product-search.vector.timeout-ms:2000}") int timeoutMs
     ) {
            this.fastApiBaseUrl = fastApiBaseUrl;
-           this.vectorSearchEnabled = vectorSearchEnabled;
 
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(1000);
@@ -37,39 +37,72 @@ public class ProductSearchAiClient {
     }
 
     public List<Long> searchRankedProductIds(String query, int candidateLimit) {
-        if (!vectorSearchEnabled || query == null || query.isBlank()) {
+        if (query == null || query.isBlank()) {
             return List.of();
         }
 
+        long startedAt = System.nanoTime();
         try {
-            String url = UriComponentsBuilder.fromHttpUrl(fastApiBaseUrl)
+            URI uri = UriComponentsBuilder.fromHttpUrl(fastApiBaseUrl)
                     .path("/products/search")
                     .queryParam("q", query)
                     .queryParam("candidateLimit", candidateLimit)
-                    .toUriString();
+                    .encode(StandardCharsets.UTF_8)
+                    .build()
+                    .toUri();
 
             ProductSearchAiQueryResponse response = restClient.get()
-                    .uri(url)
+                    .uri(uri)
                     .retrieve()
                     .body(ProductSearchAiQueryResponse.class);
 
             if (response == null || response.results() == null) {
+                log.info(
+                        "Product search AI returned empty body: query='{}', candidateLimit={}, elapsedMs={}",
+                        query,
+                        candidateLimit,
+                        elapsedMillis(startedAt)
+                );
                 return List.of();
             }
 
-            return response.results().stream()
+            List<Long> productIds = response.results().stream()
                     .map(ProductSearchAiResult::productId)
                     .filter(id -> id != null && id > 0)
                     .distinct()
                     .toList();
+            log.info(
+                    "Product search AI success: query='{}', candidateLimit={}, elapsedMs={}, resultCount={}",
+                    query,
+                    candidateLimit,
+                    elapsedMillis(startedAt),
+                    productIds.size()
+            );
+            return productIds;
 
         } catch (RestClientResponseException exception) {
-            log.warn("Product search API error: status={}", exception.getStatusCode().value());
+            log.warn(
+                    "Product search AI error: query='{}', candidateLimit={}, status={}, elapsedMs={}",
+                    query,
+                    candidateLimit,
+                    exception.getStatusCode().value(),
+                    elapsedMillis(startedAt)
+            );
             return List.of();
         } catch (RestClientException exception) {
-            log.warn("Product search API network error", exception);
+            log.warn(
+                    "Product search AI network error: query='{}', candidateLimit={}, elapsedMs={}",
+                    query,
+                    candidateLimit,
+                    elapsedMillis(startedAt),
+                    exception
+            );
             return List.of();
         }
+    }
+
+    private long elapsedMillis(long startedAt) {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt);
     }
 }
 

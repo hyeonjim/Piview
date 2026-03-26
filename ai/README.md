@@ -53,6 +53,15 @@ CHATBOT_MODEL=gemini-2.5-flash
   - `application/json`
   - intent 분기나 답변 생성 없이, 자연어 질의를 바로 검색용으로 해석해 랭킹된 상품 후보를 반환합니다.
   - 최대 `100`개까지 상품을 반환할 수 있으며, 실제 개수는 검색 결과와 필터 조건에 따라 달라질 수 있습니다.
+- `GET /products/search`
+  - 상품 검색 전용 API
+  - query string으로 받은 검색어를 구조화해서 랭킹된 상품 후보를 반환합니다.
+- `GET /products/dictionaries`
+  - 현재 상품 검색 사전 상태 조회
+  - generated/manual 사전 파일 경로와 항목 수를 확인할 수 있습니다.
+- `POST /products/dictionaries/refresh`
+  - 상품 검색 사전 강제 갱신
+  - DB 기반 generated 사전을 다시 만들고, manual 사전을 다시 로드합니다.
 
 ## Integration Notes
 
