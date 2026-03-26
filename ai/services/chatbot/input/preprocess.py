@@ -15,6 +15,7 @@ _ENGLISH_NORMALIZATION_RULES: tuple[tuple[str, str], ...] = (
     (r"\bcream\b", "크림"),
     (r"\blotion\b", "로션"),
     (r"\bemulsion\b", "로션"),
+    (r"\ball[\s-]*in[\s-]*one\b", "올인원"),
     (r"\bserum\b", "세럼"),
     (r"\bessence\b", "에센스"),
     (r"\bampoule\b", "앰플"),
@@ -174,6 +175,8 @@ def is_likely_nonsense_input(message: str) -> bool:
             return True
         if re.fullmatch(r"\d{4,}", token):
             return True
+        if _is_repeated_char_token(token):
+            return True
         if _looks_like_keyboard_mash(token):
             return True
         if re.fullmatch(r"[a-z]{7,}", token):
@@ -213,6 +216,14 @@ def _looks_like_keyboard_mash(token: str) -> bool:
     if max(row_hits) / len(token) >= 0.7:
         return True
     return len(set(token)) <= max(2, len(token) // 4)
+
+
+def _is_repeated_char_token(token: str) -> bool:
+    if not re.fullmatch(r"[a-z]+", token):
+        return False
+    if _contains_domain_hint(token):
+        return False
+    return len(token) >= 3 and len(set(token)) == 1
 
 
 def _contains_domain_hint(token: str) -> bool:
