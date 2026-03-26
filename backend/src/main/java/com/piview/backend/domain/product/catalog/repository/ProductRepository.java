@@ -40,6 +40,17 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
           
           -- 3. 코메도제닉 필터 (수부지/지성일 때 모공 막는 성분 무조건 Drop!)
           AND (p.has_comedogenic = FALSE OR :#{#skinType.name()} IN ('dry', 'combination'))
+
+          -- 4. 사용자가 등록한 '안 맞는 제품' 제외
+          AND p.product_id NOT IN (:dislikedIds)
+
+          -- 5. 사용자가 피해야 할 성분이 포함된 제품 제외
+          AND p.product_id NOT IN (
+              SELECT DISTINCT pi_sub.product_id
+              FROM product_ingredients pi_sub
+              JOIN ingredients i ON pi_sub.product_ingredients_ko LIKE CONCAT('%', CHAR(39), i.name_ko, CHAR(39), '%')
+              WHERE i.ingredient_id IN (:avoidIngredientIds)
+          )
           
         ORDER BY (
             CASE WHEN :#{#skinType.name()} = 'subuji' THEN p.score_subuji
@@ -54,7 +65,9 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
             @Param("categoryIds") List<Long> categoryIds,
             @Param("skinType") SkinTypeEnum skinType,
             @Param("gender") SurveyGender gender,
-            @Param("concernId") Long concernId
+            @Param("concernId") Long concernId,
+            @Param("dislikedIds") List<Long> dislikedIds,
+            @Param("avoidIngredientIds") List<Long> avoidIngredientIds
     );
 
 
@@ -80,6 +93,17 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
           
           -- 4. 이미 장바구니(Redis)에 담긴 제품은 추천에서 제외!
           AND p.product_id NOT IN (:currentIds)
+
+          -- 5. 사용자가 등록한 '안 맞는 제품' 제외
+          AND p.product_id NOT IN (:dislikedIds)
+
+          -- 6. 사용자가 피해야 할 성분이 포함된 제품 제외
+          AND p.product_id NOT IN (
+              SELECT DISTINCT pi_sub.product_id
+              FROM product_ingredients pi_sub
+              JOIN ingredients i ON pi_sub.product_ingredients_ko LIKE CONCAT('%', CHAR(39), i.name_ko, CHAR(39), '%')
+              WHERE i.ingredient_id IN (:avoidIngredientIds)
+          )
           
         ORDER BY (
             -- [기본 점수] 피부타입 점수 + 피부고민 점수
@@ -102,7 +126,9 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
             @Param("concernId") Long concernId,
             @Param("targetM") double targetM,
             @Param("targetO") double targetO,
-            @Param("currentIds") List<Long> currentIds
+            @Param("currentIds") List<Long> currentIds,
+            @Param("dislikedIds") List<Long> dislikedIds,
+            @Param("avoidIngredientIds") List<Long> avoidIngredientIds
     );
 }
 
