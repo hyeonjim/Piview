@@ -131,14 +131,11 @@ public class ProductCatalogService {
 
         if (normalized.getQ() != null) {
             int candidateLimit = resolveVectorCandidateLimit(normalized);
-            List<Long> rankedProductIds = productSearchAiClient.searchRankedProductIds(
-                    normalized.getQ(),
-                    candidateLimit
-            );
+            List<Long> rankedProductIds = productSearchAiClient.searchRankedProductIds(normalized.getQ(), candidateLimit);
 
             if (!rankedProductIds.isEmpty()) {
                 ProductSearchCondition filterOnlyCondition = ProductSearchCondition.builder()
-                        .q(null)    // q는 AI에서 처리
+                        .q(null) // q는 AI에서 반영
                         .bigCategoryId(normalized.getBigCategoryId())
                         .categoryId(normalized.getCategoryId())
                         .skinType(normalized.getSkinType())
@@ -157,7 +154,9 @@ public class ProductCatalogService {
                         filterOnlyCondition, rankedProductIds
                 );
 
-                return buildPageResponse(vectorSlice, normalized, vectorTotalCount, userId);
+                if (!vectorSlice.isEmpty()) {
+                    return buildPageResponse(vectorSlice, normalized, vectorTotalCount, userId);
+                }
             }
         }
 
