@@ -29,7 +29,6 @@ import {
   useRemoveProductFromDraftMutation,
   useDraftQuery,
   useMainRoutineQuery,
-  useDislikedProductsQuery,
 } from "@/hooks";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
 import { shouldExcludeAntiAging } from "@/utils/productMapper";
@@ -82,13 +81,7 @@ function AllergenIcon() {
 }
 
 /** EWG 점수를 물방울 모양으로 표시하는 아이콘 */
-function EwgDropIcon({
-  color,
-  score,
-}: {
-  color: string;
-  score: number | null;
-}) {
+function EwgDropIcon({ color, score }: { color: string; score: number | null }) {
   return (
     <div
       className="flex items-center justify-center w-7 h-7 text-white font-bold shrink-0"
@@ -125,16 +118,14 @@ const listVariants: Variants = {
 // 각 줄 — fade + 살짝 위로 + scale
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 12, scale: 0.97 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.4, ease: [0.23, 1, 0.32, 1] },
-  },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: [0.23, 1, 0.32, 1] } },
 };
+
 
 /** 피부타입별 점수 표시 순서 */
 const SKIN_TYPE_ORDER = ["dry", "oily", "combination", "subuji"];
+
+
 
 function ProductDetailInner() {
   const { id } = useParams<{ id: string }>();
@@ -157,20 +148,12 @@ function ProductDetailInner() {
   );
   const owned = !!myCosItem;
 
-  // 피할 제품 여부 — 피할 제품으로 등록된 경우 루틴추가 버튼 숨김
-  const { data: dislikedProducts = [] } = useDislikedProductsQuery();
-  const isDisliked = dislikedProducts.some(
-    (item) => item.productId === productIdNum,
-  );
-
   const { toggleLike } = useLike();
   const [isLiked, setIsLiked] = useState<boolean | null>(null);
-  const resolvedIsLiked =
-    isLiked !== null ? isLiked : (productData?.liked ?? false);
+  const resolvedIsLiked = isLiked !== null ? isLiked : (productData?.liked ?? false);
 
   const [showRoutineCompare, setShowRoutineCompare] = useState(false);
-  const [selectedRoutineProductIndex, setSelectedRoutineProductIndex] =
-    useState(0);
+  const [selectedRoutineProductIndex, setSelectedRoutineProductIndex] = useState(0);
   const [showCompareModal, setShowCompareModal] = useState(false);
 
   const { mutate: addDraftItem } = useAddDraftItemMutation();
@@ -202,9 +185,7 @@ function ProductDetailInner() {
         brand: routineProduct.product.brandName ?? "",
         category: routineProduct.product.categoryName ?? "",
         imageUrl: routineProduct.product.imageUrl ?? null,
-        skinTypes: (routineProduct.product.skinTypes ?? []).map(
-          fromSkinTypeEnum,
-        ),
+        skinTypes: (routineProduct.product.skinTypes ?? []).map(fromSkinTypeEnum),
         effects: routineProduct.product.tags ?? [],
         emoji: "🧴",
       })),
@@ -213,16 +194,12 @@ function ProductDetailInner() {
   const sameCategoryRoutineProducts = effectiveCategoryName
     ? (() => {
         const currentStepCode = routineSteps.find((step) =>
-          step.categories.some(
-            (category) => category.name === effectiveCategoryName,
-          ),
+          step.categories.some((category) => category.name === effectiveCategoryName),
         )?.code;
         if (!currentStepCode) return allMainRoutineProducts;
         return allMainRoutineProducts.filter((product) => {
           const productStepCode = routineSteps.find((step) =>
-            step.categories.some(
-              (category) => category.name === (product.category ?? ""),
-            ),
+            step.categories.some((category) => category.name === (product.category ?? "")),
           )?.code;
           return productStepCode === currentStepCode;
         });
@@ -250,9 +227,7 @@ function ProductDetailInner() {
       ? sameCategoryRoutineProducts[selectedRoutineProductIndex]
       : null;
 
-  const [activeTab, setActiveTab] = useState<"ingredients" | "skintype">(
-    "ingredients",
-  );
+  const [activeTab, setActiveTab] = useState<"ingredients" | "skintype">("ingredients");
   const [isIngredientListOpen, setIsIngredientListOpen] = useState(false);
   const [isIngredientTextOpen, setIsIngredientTextOpen] = useState(false);
   const [isScrollTopVisible, setIsScrollTopVisible] = useState(false);
@@ -291,17 +266,14 @@ function ProductDetailInner() {
       return;
     }
     const matchedStep = routineSteps.find((step) =>
-      step.categories.some(
-        (category) => category.name === (effectiveCategoryName ?? ""),
-      ),
+      step.categories.some((category) => category.name === (effectiveCategoryName ?? "")),
     );
     const columnId = matchedStep?.columnId ?? 3;
     addDraftItem(
       { columnId, productId: productIdNum },
       {
         onSuccess: () => toast(`✓ ${productData.productName} 루틴에 추가됨!`),
-        onError: () =>
-          toast.error("루틴 추가에 실패했어요. 다시 시도해 주세요."),
+        onError: () => toast.error("루틴 추가에 실패했어요. 다시 시도해 주세요."),
       },
     );
   };
@@ -334,20 +306,13 @@ function ProductDetailInner() {
     (key) => productData.skinTypeScores?.[key] !== undefined,
   ).map(
     (key) =>
-      [fromSkinTypeEnum(key), productData.skinTypeScores[key]] as [
-        string,
-        number,
-      ],
+      [fromSkinTypeEnum(key), productData.skinTypeScores[key]] as [string, number],
   );
 
   const skinTypes = (productData.skinTypes ?? []).map(fromSkinTypeEnum);
 
   const tags = (productData.tags ?? []).filter(
-    (tag) =>
-      !(
-        shouldExcludeAntiAging(effectiveCategoryName ?? undefined) &&
-        tag === "안티에이징"
-      ),
+    (tag) => !(shouldExcludeAntiAging(effectiveCategoryName ?? undefined) && tag === "안티에이징"),
   );
 
   const ingredients = productData.ingredients ?? [];
@@ -485,9 +450,7 @@ function ProductDetailInner() {
         </button>
         <button
           onClick={() => {
-            setIsLiked(
-              (previous) => !(previous ?? productData?.liked ?? false),
-            );
+            setIsLiked((previous) => !(previous ?? productData?.liked ?? false));
             toggleLike(id);
           }}
           className="size-9 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer transition-all active:scale-[0.93]"
@@ -507,10 +470,7 @@ function ProductDetailInner() {
         {/* 제품 이미지 카드 */}
         <div
           className="mx-4 mb-3 rounded-2xl bg-white overflow-hidden"
-          style={{
-            boxShadow:
-              "0 1px 2px rgba(0,0,0,0.04), 0 3px 7px rgba(180,155,120,0.09), 0 7px 18px rgba(0,0,0,0.06), 0 14px 32px rgba(180,155,120,0.04)",
-          }}
+          style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 3px 7px rgba(180,155,120,0.09), 0 7px 18px rgba(0,0,0,0.06), 0 14px 32px rgba(180,155,120,0.04)" }}
         >
           <div className="relative w-full aspect-[2/1]">
             {productData.imageUrl ? (
@@ -606,22 +566,20 @@ function ProductDetailInner() {
               )}
             </div>
             <div className="flex gap-2 shrink-0">
-              {!isDisliked && (
-                <button
-                  onClick={handleAddRoutine}
-                  className={`flex items-center justify-center gap-1 w-22 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[13px] font-semibold ${routineAdded ? "bg-(--color-bg-beige) text-(--color-brand)" : "bg-[#f1eae6] text-[#807d7d]"}`}
-                >
-                  {routineAdded ? (
-                    <>
-                      <Check size={11} /> 추가됨
-                    </>
-                  ) : (
-                    <>
-                      <Plus size={11} /> 루틴추가
-                    </>
-                  )}
-                </button>
-              )}
+              <button
+                onClick={handleAddRoutine}
+                className={`flex items-center justify-center gap-1 w-22 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[13px] font-semibold ${routineAdded ? "bg-(--color-bg-beige) text-(--color-brand)" : "bg-[#f1eae6] text-[#807d7d]"}`}
+              >
+                {routineAdded ? (
+                  <>
+                    <Check size={11} /> 추가됨
+                  </>
+                ) : (
+                  <>
+                    <Plus size={11} /> 루틴추가
+                  </>
+                )}
+              </button>
               <button
                 onClick={handleToggleOwned}
                 className={`flex items-center justify-center gap-1 w-22 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[13px] font-semibold ${owned ? "bg-(--color-bg-beige) text-(--color-brand)" : "bg-[#f1eae6] text-[#807d7d]"}`}
@@ -640,6 +598,7 @@ function ProductDetailInner() {
           </div>
         </div>
 
+
         {/* AI 요약 카드 — 상세 진입 시 자동 로드 (입체감 효과) */}
         <motion.div
           variants={cardVariants}
@@ -647,8 +606,7 @@ function ProductDetailInner() {
           animate="visible"
           className="mx-4 rounded-2xl p-5 my-3 border border-[#dde6ef] bg-[#f8fafb]"
           style={{
-            boxShadow:
-              "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(115, 142, 174, 0.14), 0 1px 4px rgba(115, 142, 174, 0.08)",
+            boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(115, 142, 174, 0.14), 0 1px 4px rgba(115, 142, 174, 0.08)",
           }}
         >
           <div className="flex items-center gap-2 mb-5">
@@ -680,22 +638,17 @@ function ProductDetailInner() {
                 className="flex flex-col gap-2.5"
               >
                 {aiSummary.line1AiSummary && (
-                  <motion.p
-                    variants={itemVariants}
-                    className="text-[15px] text-[#454c52] leading-[1.7]"
-                  >
+                  <motion.p variants={itemVariants} className="text-[15px] text-[#454c52] leading-[1.7]">
                     {aiSummary.line1AiSummary}
-                    <br />
-                    {aiSummary.line2PersonalizedMsg}
+                    <br />{aiSummary.line2PersonalizedMsg}
                   </motion.p>
                 )}
                 {aiSummary.line3AiSummary && (
-                  <motion.div className="mt-1 rounded-xl bg-[#fcf6f6] border border-[#f5d0d0] px-3 py-2.5">
+                  <motion.div
+                    className="mt-1 rounded-xl bg-[#fcf6f6] border border-[#f5d0d0] px-3 py-2.5"
+                  >
                     <p className="text-[14px] text-[#ca2828] leading-[1.6] flex items-start gap-1.5">
-                      <MessageSquareWarning
-                        size={14}
-                        className="shrink-0 mt-0.5"
-                      />
+                      <MessageSquareWarning size={14} className="shrink-0 mt-0.5" />
                       {aiSummary.line3AiSummary}
                     </p>
                   </motion.div>
@@ -820,18 +773,12 @@ function ProductDetailInner() {
                         제품 설명
                       </p>
                       <p className="text-[13px] text-[#2a2118] font-medium leading-[1.7]">
-                        {productData.description
-                          .split("-")
-                          .map((line, index) => (
-                            <span key={index}>
-                              {index > 0 && (
-                                <>
-                                  <br />-
-                                </>
-                              )}
-                              {line}
-                            </span>
-                          ))}
+                        {productData.description.split("-").map((line, index) => (
+                          <span key={index}>
+                            {index > 0 && <><br />-</>}
+                            {line}
+                          </span>
+                        ))}
                       </p>
                     </div>
                   )}
@@ -839,42 +786,28 @@ function ProductDetailInner() {
                   {ingredientsKorean.length > 0 && (
                     <div className="p-5 border-b border-[#f5f3f0]">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="font-semibold text-[#554f49] text-[14px]">
-                          전성분
-                        </p>
+                        <p className="font-semibold text-[#554f49] text-[14px]">전성분</p>
                         <button
-                          onClick={() =>
-                            setIsIngredientTextOpen((previous) => !previous)
-                          }
+                          onClick={() => setIsIngredientTextOpen((previous) => !previous)}
                           className="flex items-center gap-0.5 text-[12px] text-[#68625b] bg-transparent border-none cursor-pointer"
                         >
                           {isIngredientTextOpen ? (
-                            <>
-                              접기 <ChevronUp size={13} />
-                            </>
+                            <>접기 <ChevronUp size={13} /></>
                           ) : (
-                            <>
-                              펼치기 <ChevronDown size={13} />
-                            </>
+                            <>펼치기 <ChevronDown size={13} /></>
                           )}
                         </button>
                       </div>
                       {/* webkit-line-clamp — Tailwind line-clamp-2로 구현 */}
-                      <p
-                        className={`text-[13px] text-[#313030] leading-[1.8] ${isIngredientTextOpen ? "" : "line-clamp-2"}`}
-                      >
+                      <p className={`text-[13px] text-[#313030] leading-[1.8] ${isIngredientTextOpen ? "" : "line-clamp-2"}`}>
                         {ingredientsKorean.join(", ")}
                       </p>
                     </div>
                   )}
                   {/* 성분 목록 */}
                   <div>
-                    {(isIngredientListOpen
-                      ? ingredients
-                      : ingredients.slice(0, 3)
-                    ).map((ingredient) => {
-                      const resolvedScore =
-                        resolveIngredientEwgScore(ingredient);
+                    {(isIngredientListOpen ? ingredients : ingredients.slice(0, 3)).map((ingredient) => {
+                      const resolvedScore = resolveIngredientEwgScore(ingredient);
                       const ewgBarColor = getEwgBarColor(resolvedScore);
                       const functionChips = ingredient.functions
                         ? ingredient.functions
@@ -889,10 +822,7 @@ function ProductDetailInner() {
                           className="flex items-start gap-3 px-5 py-3.5 not-last:border-b not-last:border-[#f5f3f0]"
                         >
                           <div className="flex flex-col items-center shrink-0 w-7">
-                            <EwgDropIcon
-                              color={ewgBarColor}
-                              score={resolvedScore}
-                            />
+                            <EwgDropIcon color={ewgBarColor} score={resolvedScore} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[14px] font-semibold text-[#45403a] leading-[1.6]">
@@ -915,20 +845,13 @@ function ProductDetailInner() {
                     })}
                     {ingredients.length > 3 && (
                       <button
-                        onClick={() =>
-                          setIsIngredientListOpen((previous) => !previous)
-                        }
+                        onClick={() => setIsIngredientListOpen((previous) => !previous)}
                         className="flex items-center justify-center gap-1 w-full py-3.5 border-t border-[#f5f3f0] bg-transparent border-x-0 border-b-0 cursor-pointer text-[12px] text-[#a69d92]"
                       >
                         {isIngredientListOpen ? (
-                          <>
-                            접기 <ChevronUp size={13} />
-                          </>
+                          <>접기 <ChevronUp size={13} /></>
                         ) : (
-                          <>
-                            전체 {ingredients.length}개 보기{" "}
-                            <ChevronDown size={13} />
-                          </>
+                          <>전체 {ingredients.length}개 보기 <ChevronDown size={13} /></>
                         )}
                       </button>
                     )}
@@ -942,12 +865,8 @@ function ProductDetailInner() {
                   {skinTypeScores.map(([label, score]) => (
                     <div key={label}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[14px] text-[#2a2118] font-medium">
-                          {label}
-                        </span>
-                        <span className="text-[14px] font-semibold text-[#a69d92]">
-                          {score}
-                        </span>
+                        <span className="text-[14px] text-[#2a2118] font-medium">{label}</span>
+                        <span className="text-[14px] font-semibold text-[#a69d92]">{score}</span>
                       </div>
                       <div className="h-[5px] rounded-full bg-[#f0ede8] overflow-hidden">
                         {/* width가 동적이라 style 사용 */}
