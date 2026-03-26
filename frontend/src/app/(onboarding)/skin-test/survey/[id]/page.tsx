@@ -2,6 +2,7 @@
 
 import { use, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import {
   GENDER_QUESTION,
   COMMON_QUESTIONS,
@@ -12,35 +13,6 @@ import { useSurveySubmit } from "@/hooks";
 
 import type { SurveySubmitRequest } from "@/types/user";
 import type { AgeGroup, Gender } from "@/types/user";
-
-// ── 스타일 상수 ──────────────────────────────────────────────────────
-const PROGRESS_TEXT_STYLE = {
-  fontSize: "15px",
-  minWidth: "36px",
-  textAlign: "right" as const,
-};
-const CATEGORY_TEXT_STYLE = { fontSize: "15px" };
-const SKIN_PROBLEM_BADGE_STYLE = {
-  fontSize: "10px",
-  padding: "2px 8px",
-  borderRadius: "8px",
-  backgroundColor: "#E8F5E9",
-  color: "#2E7D32",
-  fontWeight: 600,
-};
-const QUESTION_STYLE = {
-  fontSize: "22px",
-  lineHeight: 1.4,
-  marginTop: "12px",
-  whiteSpace: "pre-line" as const,
-};
-const OPTION_ICON_STYLE = { fontSize: "20px", flexShrink: 0 };
-const CHECK_CIRCLE_STYLE = {
-  width: "20px",
-  height: "20px",
-};
-const PREV_BTN_STYLE = { fontSize: "15px" };
-const NEXT_BTN_BASE = { borderRadius: "20px", fontSize: "15px" };
 
 /** 전체 질문 수: 성별(1) + 연령대(1) + Q3~Q6(4) + 피부고민(1) = 7 */
 const TOTAL_QUESTIONS = 7;
@@ -69,8 +41,8 @@ function valueToOption(
   value: string,
 ): "A" | "B" | "C" | "D" {
   const question = COMMON_QUESTIONS.find((q) => q.id === questionId);
-  const idx = question?.options.findIndex((o) => o.value === value) ?? -1;
-  return (["A", "B", "C", "D"][idx] ?? "A") as "A" | "B" | "C" | "D";
+  const index = question?.options.findIndex((option) => option.value === value) ?? -1;
+  return (["A", "B", "C", "D"][index] ?? "A") as "A" | "B" | "C" | "D";
 }
 
 /** ageGroup value → AgeGroup enum */
@@ -114,7 +86,7 @@ export default function SurveyPage({
   const isSkinProblem = question.id === 5;
   const isGender = question.id === -1;
   const isLast = questionNumber === TOTAL_QUESTIONS;
-  const progress = (questionNumber / TOTAL_QUESTIONS) * 100;
+  const progressPercent = (questionNumber / TOTAL_QUESTIONS) * 100;
 
   const selectedAnswer = answers[question.id];
   // Q7은 1개 이상 선택이면 통과, 나머지는 단일 선택 필수
@@ -143,7 +115,7 @@ export default function SurveyPage({
         return;
       }
 
-      // ── POST /skin/surveys 요청 body 조립 ──
+      // POST /skin/surveys 요청 body 조립
       const request: SurveySubmitRequest = {
         gender: (answers[-1] as Gender) ?? gender,
         ageGroup: valueToAgeGroup(answers[0]),
@@ -183,67 +155,46 @@ export default function SurveyPage({
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-white relative">
-      {/* 진행바 */}
-      <div className="px-6 pt-4">
-        <div className="flex items-center gap-2 mb-1.5">
-          <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-bg-chip">
+    <div className="flex flex-col h-dvh bg-bg-surface relative">
+      {/* 진행 상태 바 */}
+      <div className="px-6 pt-6">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="flex-1 h-1 rounded-full overflow-hidden bg-bg-chip">
             <div
               className="h-full rounded-full bg-brand transition-all duration-300"
-              style={{ width: `${progress}%` }}
+              style={{ width: `${progressPercent}%` }}
             />
           </div>
-          <span className="text-text-muted" style={PROGRESS_TEXT_STYLE}>
+          <span className="text-[13px] text-text-muted min-w-9 text-right tabular-nums">
             {questionNumber}/{TOTAL_QUESTIONS}
           </span>
         </div>
-        <p className="text-text-muted" style={CATEGORY_TEXT_STYLE}>
-          {isGender
-            ? "맞춤 진단 시작"
-            : gender === "MEN"
-              ? "남성 맞춤 진단"
-              : "여성 맞춤 진단"}
-        </p>
       </div>
 
       {/* 질문 영역 */}
-      <div className="flex-1 px-6 flex flex-col overflow-hidden pb-24">
-        <div className="mt-6">
-          <span
-            className="inline-flex items-center justify-center"
-            style={{
-              width: "32px",
-              height: "32px",
-              borderRadius: "50%",
-              backgroundColor: isSkinProblem
-                ? "#E8F5E9"
-                : isGender
-                  ? "#E3F2FD"
-                  : "var(--color-brand-bg)",
-              fontSize: "11px",
-              fontWeight: 700,
-              color: isSkinProblem
-                ? "#2E7D32"
-                : isGender
-                  ? "#1565C0"
-                  : "var(--color-brand)",
-            }}
-          >
-            Q{questionNumber}
-          </span>
-          {isSkinProblem && (
-            <span
-              className="ml-2 inline-flex items-center"
-              style={SKIN_PROBLEM_BADGE_STYLE}
-            >
-              ✅ 복수 선택 가능
+      <div className="flex-1 px-6 flex flex-col overflow-y-auto pb-24">
+        <div className="mt-8">
+          {/* 질문 번호 배지 */}
+          <div className="flex items-center gap-2">
+            <span className="w-8 h-8 rounded-full bg-brand-bg text-brand text-[14px] font-bold flex items-center justify-center shrink-0">
+              Q{questionNumber}
             </span>
-          )}
-        </div>
-        <h2 className="text-text-primary font-semibold" style={QUESTION_STYLE}>
-          {question.question}
-        </h2>
 
+            {/* 다중 선택 안내 배지 */}
+            {isSkinProblem && (
+              <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-brand-bg text-brand">
+                복수 선택 가능
+              </span>
+            )}
+          </div>
+
+          {/* 질문 텍스트 */}
+          <h2 className="text-[18px] font-semibold text-[#515152] leading-[1.45] mt-3">
+            {question.question}
+          </h2>
+        </div>
+
+        {/* 선택지 목록 */}
         <div className="flex flex-col gap-2.5 mt-6">
           {question.options.map((option) => {
             const isSelected = isSkinProblem
@@ -254,39 +205,32 @@ export default function SurveyPage({
               <button
                 key={option.value}
                 onClick={() => selectAnswer(option.value)}
-                className="w-full flex items-center gap-4 text-left transition-all duration-200 cursor-pointer"
-                style={{
-                  minHeight: "56px",
-                  padding: "13px 16px",
-                  borderRadius: "12px",
-                  backgroundColor: isSelected
-                    ? "var(--color-brand-bg)"
-                    : "#FAFAFA",
-                  border: `1.5px solid ${isSelected ? "var(--color-brand)" : "#EFEFEF"}`,
-                  boxShadow: isSelected
-                    ? "0px 2px 8px rgba(162,170,123,0.15)"
-                    : "none",
-                }}
+                className={[
+                  "w-full flex items-center justify-between gap-3 text-left transition-all duration-200 cursor-pointer",
+                  "min-h-[56px] px-4 py-3.5 rounded-2xl border-[1.5px]",
+                  isSelected
+                    ? "bg-brand-bg border-[#aeaeab] shadow-[0px_2px_8px_rgba(166,157,146,0.2)]"
+                    : "bg-white border-border-subtle",
+                ].join(" ")}
               >
-                <span style={OPTION_ICON_STYLE}>{option.icon}</span>
                 <span
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: isSelected ? 600 : 400,
-                    color: "var(--color-product-name)",
-                    lineHeight: 1.4,
-                    flex: 1,
-                  }}
+                  className={[
+                    "text-[16px] leading-[1.45] flex-1",
+                    isSelected
+                      ? "font-semibold text-[#434345]"
+                      : "font-semibold text-[#434345]",
+                  ].join(" ")}
                 >
                   {option.text}
                 </span>
+
+                {/* 선택 체크 인디케이터 */}
                 {isSelected && (
                   <div
-                    className="shrink-0 flex items-center justify-center bg-brand"
-                    style={{
-                      ...CHECK_CIRCLE_STYLE,
-                      borderRadius: isSkinProblem ? "4px" : "50%",
-                    }}
+                    className={[
+                      "shrink-0 w-5 h-5 flex items-center justify-center bg-[#918f8f]",
+                      isSkinProblem ? "rounded-[4px]" : "rounded-full",
+                    ].join(" ")}
                   >
                     <svg width="11" height="8" viewBox="0 0 11 8" fill="none">
                       <path
@@ -306,34 +250,25 @@ export default function SurveyPage({
       </div>
 
       {/* 하단 네비게이션 */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-107.5 px-6 pb-6 pt-3 flex items-center justify-between bg-white border-t border-border">
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-app px-6 pb-8 pt-3 flex items-center justify-between bg-bg-surface border-t border-border">
         <button
           onClick={goPrev}
-          className="bg-transparent border-none cursor-pointer px-4 py-3 hover:opacity-70 transition-opacity text-text-hint font-semibold"
-          style={PREV_BTN_STYLE}
+          className="w-11 h-11 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer hover:opacity-70 transition-opacity text-text-hint"
         >
-          ← 이전
+          <ArrowLeft size={22} />
         </button>
+
         <button
           onClick={goNext}
           disabled={isPending}
-          className="px-6 py-2.5 transition-all duration-200 border-none font-semibold"
-          style={{
-            ...NEXT_BTN_BASE,
-            backgroundColor:
-              hasAnswer && !isPending ? "var(--color-brand)" : "#F0F0F0",
-            color:
-              hasAnswer && !isPending
-                ? "var(--color-bg-card)"
-                : "var(--color-text-disabled)",
-            cursor: hasAnswer && !isPending ? "pointer" : "default",
-            boxShadow:
-              hasAnswer && !isPending
-                ? "0 2px 8px rgba(162,170,123,0.3)"
-                : "none",
-          }}
+          className={[
+            "w-11 h-11 flex items-center justify-center rounded-full border-none transition-all duration-200",
+            hasAnswer && !isPending
+              ? "bg-[#beb7a2] text-white cursor-pointer shadow-[0_2px_8px_rgba(166,157,146,0.35)]"
+              : "bg-bg-chip text-text-disabled cursor-default",
+          ].join(" ")}
         >
-          {isPending ? "제출 중..." : isLast ? "완료 ✓" : "다음 →"}
+          <ArrowRight size={22} />
         </button>
       </div>
     </div>

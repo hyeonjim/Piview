@@ -1012,7 +1012,7 @@ function SavedRoutineCard({
   return (
     <div
       onClick={onClick}
-      className={`relative shrink-0 flex flex-col items-center gap-1.5 px-3 pt-5 pb-3.5 rounded-2xl cursor-pointer transition-all duration-250 ${
+      className={`relative shrink-0 flex flex-col items-center gap-1.5 px-3 pt-8 pb-3.5 rounded-2xl cursor-pointer transition-all duration-250 ${
         isSelected
           ? "border border-[#dfd5c0] bg-[#fffdf8]"
           : "border border-[#e2ddd8] bg-white"

@@ -423,7 +423,8 @@
   .bottom-nav-container {
     width: 100%;
     max-width: var(--max-width-app);
-    height: var(--height-header);
+    /* height 대신 min-height 사용: safe-area 패딩이 추가돼도 아이콘 영역이 줄어들지 않음 */
+    min-height: var(--height-header);
     background-color: var(--color-nav-bg);
     border-top: 1px solid var(--color-border);
     padding-bottom: env(safe-area-inset-bottom, 0px);

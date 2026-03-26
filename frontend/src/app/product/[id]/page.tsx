@@ -609,11 +609,11 @@ function ProductDetailInner() {
             boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(115, 142, 174, 0.14), 0 1px 4px rgba(115, 142, 174, 0.08)",
           }}
         >
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-5">
             <div className="size-6 rounded-lg flex items-center justify-center bg-[#b8cbdb]">
               <MessageSquareText size={12} className="text-white" />
             </div>
-            <p className="text-[16px] font-bold text-[#3c5061]">AI 분석</p>
+            <p className="text-[16px] font-bold text-[#5a5d60]">AI 분석</p>
           </div>
 
           {isAiLoading && (
@@ -638,7 +638,7 @@ function ProductDetailInner() {
                 className="flex flex-col gap-2.5"
               >
                 {aiSummary.line1AiSummary && (
-                  <motion.p variants={itemVariants} className="text-[14px] text-[#353b41] leading-[1.7]">
+                  <motion.p variants={itemVariants} className="text-[15px] text-[#454c52] leading-[1.7]">
                     {aiSummary.line1AiSummary}
                     <br />{aiSummary.line2PersonalizedMsg}
                   </motion.p>
@@ -647,7 +647,7 @@ function ProductDetailInner() {
                   <motion.div
                     className="mt-1 rounded-xl bg-[#fcf6f6] border border-[#f5d0d0] px-3 py-2.5"
                   >
-                    <p className="text-[13px] text-[#ca2828] leading-[1.6] flex items-start gap-1.5">
+                    <p className="text-[14px] text-[#ca2828] leading-[1.6] flex items-start gap-1.5">
                       <MessageSquareWarning size={14} className="shrink-0 mt-0.5" />
                       {aiSummary.line3AiSummary}
                     </p>
@@ -677,7 +677,7 @@ function ProductDetailInner() {
         {/* 주의 성분 / 알레르기 유발 성분 카드 */}
         {ingredients.length > 0 &&
           (dangerIngredients.length > 0 || allergenList.length > 0) && (
-            <div className="mx-4 p-4 rounded-2xl mb-3 bg-[#fcfaf8] border border-[#f5e6d5]">
+            <div className="mx-4 p-4 rounded-2xl mb-3 bg-[#f9f9f8] border border-[#f2ede7]">
               {dangerIngredients.length > 0 && (
                 <>
                   <div className="flex items-center gap-2 mb-2">
@@ -702,7 +702,7 @@ function ProductDetailInner() {
                 <div
                   className={
                     dangerIngredients.length > 0
-                      ? "mt-3 pt-3 border-t border-dashed border-[#FFCC80]"
+                      ? "mt-3 pt-3 border-t border-solid border-[#f0e8db]"
                       : ""
                   }
                 >
@@ -769,7 +769,7 @@ function ProductDetailInner() {
                   {/* 제품 설명 */}
                   {productData.description && (
                     <div className="p-5 border-b border-[#f5f3f0]">
-                      <p className="font-semibold text-[#6e6358] text-[14px] mb-2">
+                      <p className="font-semibold text-[#554f49] text-[14px] mb-2">
                         제품 설명
                       </p>
                       <p className="text-[13px] text-[#2a2118] font-medium leading-[1.7]">
@@ -786,10 +786,10 @@ function ProductDetailInner() {
                   {ingredientsKorean.length > 0 && (
                     <div className="p-5 border-b border-[#f5f3f0]">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="font-semibold text-[#6e6358] text-[14px]">전성분</p>
+                        <p className="font-semibold text-[#554f49] text-[14px]">전성분</p>
                         <button
                           onClick={() => setIsIngredientTextOpen((previous) => !previous)}
-                          className="flex items-center gap-0.5 text-[12px] text-[#a69d92] bg-transparent border-none cursor-pointer"
+                          className="flex items-center gap-0.5 text-[12px] text-[#68625b] bg-transparent border-none cursor-pointer"
                         >
                           {isIngredientTextOpen ? (
                             <>접기 <ChevronUp size={13} /></>
@@ -799,7 +799,7 @@ function ProductDetailInner() {
                         </button>
                       </div>
                       {/* webkit-line-clamp — Tailwind line-clamp-2로 구현 */}
-                      <p className={`text-[12px] text-text-sub leading-[1.8] ${isIngredientTextOpen ? "" : "line-clamp-2"}`}>
+                      <p className={`text-[13px] text-[#313030] leading-[1.8] ${isIngredientTextOpen ? "" : "line-clamp-2"}`}>
                         {ingredientsKorean.join(", ")}
                       </p>
                     </div>
