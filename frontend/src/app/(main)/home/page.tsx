@@ -159,7 +159,7 @@ export default function HomePage() {
 
       {/* 참고 데이터소스 — 성분 분석 기반 사이트 */}
       <DataSourcesSection />
-
+      <ChatbotWidget context={{ screen: "search", currentProductId: null }} />
     </div>
   );
 }

@@ -6,8 +6,14 @@ import ProductCard from "@/components/common/ProductCard";
 import { useMutation } from "@tanstack/react-query";
 import { getRoutineSteps } from "@/constants/routineSteps";
 import { Pagination } from "@/components/common/Pagination";
-import { useProductSearch, useProductFilters, useLike } from "@/hooks";
+import {
+  useProductSearch,
+  useProductFilters,
+  useLike,
+  useDislikedProductsQuery,
+} from "@/hooks";
 import { useCompare } from "@/hooks/useCompare";
+import CompareModal from "@/components/common/CompareModal";
 import { useUserStore, selectGender, selectSkinType } from "@/stores";
 import { getCategoryDisplayName } from "@/utils/format";
 import { toSkinTypeEnum } from "@/utils/enumConvert";
@@ -58,9 +64,22 @@ export default function RoutineAddModal({
   // 좋아요 API 연동 — toggleLike만 사용 (likeList는 ProductCard 내부에서 처리)
   const { toggleLike } = useLike();
   // 비교하기 상태 관리
-  const { compareItems, toggleCompare } = useCompare<MappedProduct>();
+  const {
+    compareItems,
+    toggleCompare,
+    showCompare,
+    canCompare,
+    openCompare,
+    closeCompare,
+  } = useCompare<MappedProduct>();
 
   // 성별에 따른 루틴 스텝 가져오기
+  // 피할 제품 ID Set — 검색 결과에서 제외
+  const { data: dislikedProductsData = [] } = useDislikedProductsQuery();
+  const dislikedProductIdSet = new Set(
+    dislikedProductsData.map((p) => p.productId),
+  );
+
   const currentGender = useUserStore(selectGender);
   // 추천 API 요청에 필요한 유저 피부 타입 및 피부 고민
   const currentSkinType = useUserStore(selectSkinType);
@@ -84,7 +103,12 @@ export default function RoutineAddModal({
   // 탭 표시용 — displayName 기준으로 탭 합산
   // backendNames: 이 탭에 매핑되는 백엔드 응답 키 목록 (라운드로빈 필터링에 사용)
   const uniqueCategoryTabs = availableCategories.reduce<
-    { name: string; categoryId: number; categoryIds: number[]; backendNames: string[] }[]
+    {
+      name: string;
+      categoryId: number;
+      categoryIds: number[];
+      backendNames: string[];
+    }[]
   >((acc, cat) => {
     const displayName = CATEGORY_DISPLAY_ALIAS[cat.name] ?? cat.name;
     const existing = acc.find((t) => t.name === displayName);
@@ -131,12 +155,17 @@ export default function RoutineAddModal({
     q: searchQuery || undefined,
     bigCategoryId: selectedCategory?.bigCategoryId ?? undefined,
     // 선택된 탭의 모든 categoryId 배열로 전달 (남성 복합 탭 대응)
-    categoryId: selectedTab ? selectedTab.categoryIds : effectiveCategoryId ? [effectiveCategoryId] : undefined,
+    categoryId: selectedTab
+      ? selectedTab.categoryIds
+      : effectiveCategoryId
+        ? [effectiveCategoryId]
+        : undefined,
     page: isRecommendMode ? 0 : currentPage - 1, // 서버 페이지네이션 (0-indexed)
     size: PAGE_SIZE,
   };
 
-  const { products, isLoading, totalCount, hasNext } = useProductSearch(searchParams);
+  const { products, isLoading, totalCount, hasNext } =
+    useProductSearch(searchParams);
 
   // 피뷰추천 API 뮤테이션 — POST /recommendations/products
   const recommendationMutation = useMutation({
@@ -200,15 +229,22 @@ export default function RoutineAddModal({
           tabBackendNames.length > 0
             ? tabBackendNames
                 .map((name) => recommendedData[name])
-                .filter((arr): arr is NonNullable<typeof arr> => !!arr && arr.length > 0)
+                .filter(
+                  (arr): arr is NonNullable<typeof arr> =>
+                    !!arr && arr.length > 0,
+                )
             : Object.values(recommendedData);
 
         if (sources.length === 0) return [];
 
         // 라운드로빈 인터리브 — 각 소스에서 1개씩 번갈아 뽑아 RECOMMEND_LIMIT까지
-        const interleaved: typeof sources[0] = [];
+        const interleaved: (typeof sources)[0] = [];
         const maxLen = Math.max(...sources.map((s) => s.length));
-        for (let i = 0; i < maxLen && interleaved.length < RECOMMEND_LIMIT; i++) {
+        for (
+          let i = 0;
+          i < maxLen && interleaved.length < RECOMMEND_LIMIT;
+          i++
+        ) {
           for (const source of sources) {
             if (interleaved.length >= RECOMMEND_LIMIT) break;
             if (source[i] !== undefined) interleaved.push(source[i]);
@@ -219,7 +255,10 @@ export default function RoutineAddModal({
     : [];
 
   // 추천 모드: 클라이언트 페이지네이션 / 일반 모드: 서버 페이지네이션 (검색 페이지와 동일 패턴)
-  const displayProducts = isRecommendMode ? recommendedProducts : products;
+  // 피할 제품 제외
+  const displayProducts = (
+    isRecommendMode ? recommendedProducts : products
+  ).filter((p) => !dislikedProductIdSet.has(p.id));
   const totalPages = isRecommendMode
     ? Math.ceil(recommendedProducts.length / PAGE_SIZE)
     : totalCount !== null
@@ -229,7 +268,10 @@ export default function RoutineAddModal({
         : Math.max(maxKnownPage, currentPage);
   // 추천 모드만 클라이언트 slice — 일반 모드는 서버가 이미 PAGE_SIZE만큼 잘라서 줌
   const pagedProducts = isRecommendMode
-    ? recommendedProducts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    ? recommendedProducts.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE,
+      )
     : products;
 
   const handlePageChange = (p: number) => {
@@ -252,10 +294,24 @@ export default function RoutineAddModal({
 
   return (
     <>
+      {/* 비교 모달 — z-index 모달보다 높게 */}
+      {showCompare && canCompare && (
+        <CompareModal
+          compareItems={compareItems as [MappedProduct, MappedProduct]}
+          onClose={closeCompare}
+          zIndex={100}
+        />
+      )}
       {/* 배경 오버레이 */}
       <div
         className="fixed inset-0 z-[60] bg-[rgba(0,0,0,0.5)] backdrop-blur-[4px]"
-        onClick={onClose}
+        onClick={() => {
+          if (showCompare) {
+            closeCompare();
+          } else {
+            onClose();
+          }
+        }}
       />
       <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none py-10 px-5">
         <div className="bg-white flex flex-col pointer-events-auto rounded-[20px] w-full max-w-[420px] max-h-full shadow-[0_8px_40px_rgba(0,0,0,0.18)] overflow-hidden">
@@ -396,7 +452,14 @@ export default function RoutineAddModal({
                         onAddRoutine={() => onAdd(product.id)}
                         onToggleLike={() => toggleLike(product.id)}
                         isInCompare={isInCompare}
-                        onToggleCompare={() => toggleCompare(product)}
+                        onToggleCompare={() => {
+                          toggleCompare(product);
+                          if (
+                            !compareItems.some((i) => i.id === product.id) &&
+                            compareItems.length === 1
+                          )
+                            openCompare();
+                        }}
                       />
                     );
                   })}

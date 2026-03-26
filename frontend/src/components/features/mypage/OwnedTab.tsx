@@ -27,7 +27,9 @@ export default function OwnedTab() {
   // ── 루틴 draft 기반 배지 표시 ────────────────────────────────
   // draft에 포함된 productId Set — isInRoutine 판별에 사용
   const { data: draftItems = [] } = useDraftQuery();
-  const draftProductIds = new Set(draftItems.map((item) => item.product.productId));
+  const draftProductIds = new Set(
+    draftItems.map((item) => item.product.productId),
+  );
 
   // ── 보유 제품 (myCos) — 상세 API로 tags 보완 ──────────────────
   const { data: myCosItems = [] } = useMyCosWithTags();
@@ -72,12 +74,12 @@ export default function OwnedTab() {
             <p className="text-base font-bold text-[#5e5c59]">Owned</p>
             <button
               onClick={() => setOpenOwnedModal(true)}
-              className="text-[14px] px-3 py-1 rounded-full bg-brand/10 text-[#636264] font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
+              className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-[#636264] font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
             >
               + 추가
             </button>
           </div>
-          <p className="text-[14px] font-semibold text-[#787879] mt-0.5">
+          <p className="text-[13px] font-semibold text-[#787879] mt-0.5">
             {ownedProducts.length}개 보유 중
           </p>
         </div>
@@ -87,19 +89,23 @@ export default function OwnedTab() {
             <EmptyState
               icon={Package}
               title="보유한 제품이 없습니다"
-              description={"제품 상세에서 보유중 버튼을 눌러\n제품을 등록해보세요"}
+              description={
+                "제품 상세에서 보유중 버튼을 눌러\n제품을 등록해보세요"
+              }
             />
           </div>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-3 mt-5 [&_p.line-clamp-2]:text-[12px]!">
               {pagedOwned.map((product) => (
-                <div key={product.id} className="relative">
+                <div key={product.id} className="relative h-full flex flex-col">
                   <ProductCard
                     id={product.id}
-                    href={product.category
-                      ? `/product/${product.productId}?category=${encodeURIComponent(product.category)}`
-                      : `/product/${product.productId}`}
+                    href={
+                      product.category
+                        ? `/product/${product.productId}?category=${encodeURIComponent(product.category)}`
+                        : `/product/${product.productId}`
+                    }
                     brand={product.brand}
                     name={product.name}
                     category={product.category}
@@ -122,7 +128,9 @@ export default function OwnedTab() {
             <Pagination
               page={ownedPage}
               totalPages={ownedTotalPages}
-              onChange={(page) => { setOwnedPage(page); }}
+              onChange={(page) => {
+                setOwnedPage(page);
+              }}
             />
           </>
         )}
@@ -138,12 +146,12 @@ export default function OwnedTab() {
             </div>
             <button
               onClick={() => setOpenAvoidModal(true)}
-              className="text-[14px] px-3 py-1 rounded-full bg-brand/10 text-[#636264] font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
+              className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-[#636264] font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
             >
               + 추가
             </button>
           </div>
-          <p className="text-[14px] font-semibold text-[#787879] mt-0.5">
+          <p className="text-[13px] font-semibold text-[#787879] mt-0.5">
             {dislikedItems.length}개 등록됨
             <br />
             등록된 제품의 알러지를 포함한 제품은 추천에서 제외됩니다
@@ -158,16 +166,21 @@ export default function OwnedTab() {
             <EmptyState
               icon={ShieldAlert}
               title="등록된 제품이 없습니다"
-              description={"트러블을 유발했거나 맞지 않았던\n제품을 등록해보세요"}
+              description={
+                "트러블을 유발했거나 맞지 않았던\n제품을 등록해보세요"
+              }
             />
           </div>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-3 mt-5 [&_p.line-clamp-2]:text-[12px]!">
               {pagedAvoid.map((item) => (
-                <div key={item.dislikedProductId} className="relative">
+                <div
+                  key={item.dislikedProductId}
+                  className="relative h-full flex flex-col"
+                >
                   <ProductCard
-                    id={item.dislikedProductId}
+                    id={item.productId}
                     brand={item.brandName}
                     name={item.productName}
                     category={item.categoryName}
@@ -189,7 +202,9 @@ export default function OwnedTab() {
             <Pagination
               page={avoidPage}
               totalPages={avoidTotalPages}
-              onChange={(page) => { setAvoidPage(page); }}
+              onChange={(page) => {
+                setAvoidPage(page);
+              }}
             />
           </>
         )}

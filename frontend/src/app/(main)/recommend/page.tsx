@@ -232,7 +232,6 @@ export default function RecommendPage() {
         totalPages={totalPages}
         onChange={handlePageChange}
       />
-
     </div>
   );
 }
