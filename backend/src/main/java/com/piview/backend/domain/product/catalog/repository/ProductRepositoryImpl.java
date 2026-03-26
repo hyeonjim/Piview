@@ -8,6 +8,7 @@ import com.piview.backend.domain.product.entity.Product;
 import com.piview.backend.domain.skin.common.SkinTypeEnum;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -107,63 +108,69 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
   }
 
   @Override
-  public Page<Product> findRecommendedProducts(Long userId, String userSkinType, Integer bigCategoryId, Long categoryId, Pageable pageable) {
-    // ✅ 1. 유저 피부 타입에 맞춰 2순위 정렬 기준을 동적으로 결정하는 로직
+  public Page<Product> findRecommendedProducts(Long userId, String userSkinType, List<Long> similarProductIds, Integer bigCategoryId, Long categoryId, Pageable pageable) {
+    // 1. 유저 피부 타입에 맞춰 2순위 정렬 기준을 동적으로 결정하는 로직
     NumberExpression<BigDecimal> skinTypeScore;
-    if (userSkinType != null) {
-      if ("dry".equalsIgnoreCase(userSkinType)) {
-        skinTypeScore = product.scoreDry;
-      } else if ("oily".equalsIgnoreCase(userSkinType)) {
-        skinTypeScore = product.scoreOily;
-      } else if ("subuji".equalsIgnoreCase(userSkinType)) {
-        skinTypeScore = product.scoreSubuji;
-      } else {
-        skinTypeScore = product.scoreCombination;
-      }
-    } else {
-      // 피부 타입 정보가 없는 유저의 경우 기본 조합성 점수 사용
+
+    if (userSkinType == null) {
+      // 피부 타입 정보가 없으면 정렬에 영향을 주지 않도록 기본값(0)을 설정합니다.
+      skinTypeScore = com.querydsl.core.types.dsl.Expressions.asNumber(BigDecimal.ZERO);
+    } else if ("dry".equalsIgnoreCase(userSkinType)) {
+      skinTypeScore = product.scoreDry;
+    } else if ("oily".equalsIgnoreCase(userSkinType)) {
+      skinTypeScore = product.scoreOily;
+    } else if ("subuji".equalsIgnoreCase(userSkinType)) {
+      skinTypeScore = product.scoreSubuji;
+    } else if ("combination".equalsIgnoreCase(userSkinType)) {
       skinTypeScore = product.scoreCombination;
+    } else {
+      // 매칭되는 피부 타입이 없을 경우를 대비한 안전망 (컴파일러 만족용)
+      skinTypeScore = com.querydsl.core.types.dsl.Expressions.asNumber(BigDecimal.ZERO);
     }
 
-    List<Product> content = queryFactory
-        .selectFrom(product)
-        // INNER JOIN -> LEFT JOIN 으로 변경 (점수 없는 상품도 가져오기 위해)
-        .leftJoin(recommendationScore)
-        .on(product.productId.eq(recommendationScore.productId)
-            .and(recommendationScore.userId.eq(userId)))
-        .join(product.brand, brand).fetchJoin()
-        .join(product.image, image).fetchJoin()
-        .join(product.category, category).fetchJoin()
-        .join(category.bigCategory, bigCategory).fetchJoin()
-        .where(
-            // 이제 recommendationScore.userId.eq(userId) 조건은 WHERE 절에서 빼야 합니다!
-            // (ON 절로 들어갔기 때문에)
-            categoryId != null ? category.categoryId.eq(categoryId) : null,
-            (categoryId == null && bigCategoryId != null) ? bigCategory.bigCategoryId.eq(bigCategoryId) : null
-        )
-        .orderBy(
-            // 1순위: 내 클릭/좋아요 점수 (null이면 0점으로 처리)
-            recommendationScore.score.coalesce(BigDecimal.ZERO).desc(),
-            // 2순위: 내 피부 타입에 맞는 화장품 적합도 점수
-            skinTypeScore.coalesce(BigDecimal.ZERO).desc(),
-            // 3순위: 동점자 처리용
-            product.productId.desc()
-        )
-        .offset(pageable.getOffset())
-        .limit(pageable.getPageSize())
-        .fetch();
+    // similarProductIds 리스트에 이 상품 ID가 포함되어 있으면 가중치 1, 아니면 0을 부여
+    NumberExpression<Integer> similarityBoost = new CaseBuilder()
+            .when(similarProductIds != null && !similarProductIds.isEmpty() ? product.productId.in(similarProductIds) : product.productId.isNull())
+            .then(1)
+            .otherwise(0);
 
-    // 카운트 쿼리도 수정 (마찬가지로 LEFT JOIN으로 바꾸거나 조인을 아예 뺍니다)
+    List<Product> content = queryFactory
+            .selectFrom(product)
+            .leftJoin(recommendationScore)
+            .on(product.productId.eq(recommendationScore.productId)
+                    .and(recommendationScore.userId.eq(userId)))
+            .join(product.brand, brand).fetchJoin()
+            .join(product.image, image).fetchJoin()
+            .join(product.category, category).fetchJoin()
+            .join(category.bigCategory, bigCategory).fetchJoin()
+            .where(
+                    categoryId != null ? category.categoryId.eq(categoryId) : null,
+                    (categoryId == null && bigCategoryId != null) ? bigCategory.bigCategoryId.eq(bigCategoryId) : null
+            )
+            .orderBy(
+
+                    // 1순위: 내가 클릭/좋아요 해서 점수가 높은 상품
+                    recommendationScore.score.coalesce(BigDecimal.ZERO).desc(),
+                    // 2순위: 내 관심 상품들과 연관된 상품들 (위의 similarityBoost가 1인 애들이 먼저 나옴)
+                    similarityBoost.desc(),
+                    // 3순위: 그 외에는 내 피부 타입에 가장 평점이 좋은 상품들
+                    skinTypeScore.coalesce(BigDecimal.ZERO).desc(),
+                    // 동점자 처리
+                    product.productId.desc()
+            )
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
     JPAQuery<Long> countQuery = queryFactory
-        .select(product.count())
-        .from(product)
-        // 필터링 조건에 따라 조인 최적화
-        .join(product.category, category)
-        .join(category.bigCategory, bigCategory)
-        .where(
-            categoryId != null ? category.categoryId.eq(categoryId) : null,
-            (categoryId == null && bigCategoryId != null) ? bigCategory.bigCategoryId.eq(bigCategoryId) : null
-        );
+            .select(product.count())
+            .from(product)
+            .join(product.category, category)
+            .join(category.bigCategory, bigCategory)
+            .where(
+                    categoryId != null ? category.categoryId.eq(categoryId) : null,
+                    (categoryId == null && bigCategoryId != null) ? bigCategory.bigCategoryId.eq(bigCategoryId) : null
+            );
 
     return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
   }
