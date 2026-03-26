@@ -1,9 +1,7 @@
-from services.chatbot.intent.models import IntentDecision, IntentType
-from services.chatbot.intent.service import ChatbotIntentRouter, chatbot_intent_router
+"""Chatbot intent package.
 
-__all__ = [
-    "ChatbotIntentRouter",
-    "IntentDecision",
-    "IntentType",
-    "chatbot_intent_router",
-]
+패키지 import 시 service 계층을 자동으로 로드하지 않도록 비워 둡니다.
+필요한 모듈은 각 사용처에서 명시적으로 import 합니다.
+"""
+
+__all__: list[str] = []
