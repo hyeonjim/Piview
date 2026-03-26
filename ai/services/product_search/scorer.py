@@ -1,0 +1,125 @@
+"""Structured reranking for product search results."""
+
+from __future__ import annotations
+
+from services.chatbot.search.query_normalizer import normalize_text
+from services.chatbot.search.vector import ProductSearchResult
+from services.product_search.models import ParsedSearchQuery
+
+
+def rerank_results(
+    results: list[ProductSearchResult],
+    parsed_query: ParsedSearchQuery,
+    attribute_groups: dict[str, tuple[str, ...]] | None = None,
+) -> list[ProductSearchResult]:
+    if not results:
+        return []
+
+    scored: list[tuple[float, int, ProductSearchResult]] = []
+    for index, result in enumerate(results):
+        score = float(result.hybrid_score or result.raw_score or 0.0)
+        score += _structured_bonus(result, parsed_query, attribute_groups or {})
+        scored.append((score, index, result))
+
+    scored.sort(key=lambda item: (item[0], -item[1]), reverse=True)
+    reranked = [item[2] for item in scored]
+
+    if parsed_query.brand_terms:
+        brand_matches = [item for item in reranked if _matches_brand(item, parsed_query.brand_terms)]
+        if brand_matches:
+            others = [item for item in reranked if item not in brand_matches]
+            reranked = brand_matches + others
+
+    if parsed_query.category_terms or parsed_query.product_type_terms:
+        category_terms = parsed_query.category_terms + parsed_query.product_type_terms
+        category_matches = [item for item in reranked if _matches_text(_category_text(item), category_terms)]
+        if category_matches:
+            others = [item for item in reranked if item not in category_matches]
+            reranked = category_matches + others
+
+    if parsed_query.attribute_group_terms:
+        group_matches = [
+            item
+            for item in reranked
+            if _matches_attribute_groups(
+                _searchable_text(item),
+                parsed_query.attribute_group_terms,
+                attribute_groups or {},
+            )
+        ]
+        if group_matches:
+            others = [item for item in reranked if item not in group_matches]
+            reranked = group_matches + others
+
+    return reranked
+
+
+def _structured_bonus(
+    result: ProductSearchResult,
+    parsed_query: ParsedSearchQuery,
+    attribute_groups: dict[str, tuple[str, ...]],
+) -> float:
+    score = 0.0
+    searchable_text = _searchable_text(result)
+    if parsed_query.brand_terms and _matches_brand(result, parsed_query.brand_terms):
+        score += 25.0
+    if parsed_query.category_terms and _matches_text(_category_text(result), parsed_query.category_terms):
+        score += 14.0
+    if parsed_query.product_type_terms and _matches_text(searchable_text, parsed_query.product_type_terms):
+        score += 10.0
+    if parsed_query.line_terms and _matches_text(searchable_text, parsed_query.line_terms):
+        score += 8.0
+    if parsed_query.attribute_group_terms and _matches_attribute_groups(
+        searchable_text,
+        parsed_query.attribute_group_terms,
+        attribute_groups,
+    ):
+        score += 12.0
+    if parsed_query.attribute_terms and _matches_text(searchable_text, parsed_query.attribute_terms):
+        score += 6.0
+    if parsed_query.keyword_terms and _matches_text(searchable_text, parsed_query.keyword_terms):
+        score += 4.0
+    if parsed_query.brand_terms and not _matches_brand(result, parsed_query.brand_terms):
+        score -= 8.0
+    return score
+
+
+def _matches_brand(result: ProductSearchResult, terms: tuple[str, ...]) -> bool:
+    return _matches_text(normalize_text(result.brand_name), terms)
+
+
+def _category_text(result: ProductSearchResult) -> str:
+    return normalize_text(result.category_name)
+
+
+def _searchable_text(result: ProductSearchResult) -> str:
+    parts = [
+        result.name,
+        result.brand_name,
+        result.category_name,
+        result.description,
+        result.ingredient_preview,
+        " ".join(result.concern_names),
+        " ".join(result.evidence_snippets),
+    ]
+    return normalize_text(" ".join(part for part in parts if part))
+
+
+def _matches_text(text: str, terms: tuple[str, ...]) -> bool:
+    if not text:
+        return False
+    return any(term and term in text for term in terms)
+
+
+def _matches_attribute_groups(
+    text: str,
+    group_terms: tuple[str, ...],
+    attribute_groups: dict[str, tuple[str, ...]],
+) -> bool:
+    if not text or not group_terms:
+        return False
+    for group_key in group_terms:
+        aliases = attribute_groups.get(group_key, ())
+        if any(alias and alias in text for alias in aliases):
+            return True
+    return False

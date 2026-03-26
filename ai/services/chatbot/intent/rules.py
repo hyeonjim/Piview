@@ -1,7 +1,7 @@
 import re
 
 from services.chatbot.domain import QueryRequest
-from services.chatbot.input import (
+from services.chatbot.input.preprocess import (
     has_followup_signal,
     is_contextual_followup_without_context,
     is_likely_nonsense_input,

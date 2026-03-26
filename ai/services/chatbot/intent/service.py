@@ -1,5 +1,5 @@
 from services.chatbot.domain import QueryRequest
-from services.chatbot.input import normalize_message_for_chatbot
+from services.chatbot.input.preprocess import normalize_message_for_chatbot
 from services.chatbot.intent.constants import RECOMMENDATION_HINTS
 from services.chatbot.intent.models import IntentDecision
 from services.chatbot.intent.rules import route_by_rules
