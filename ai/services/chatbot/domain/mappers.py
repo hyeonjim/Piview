@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from schemas.chatbot import (
     ChatbotCitation,
     ChatbotClientContext,
@@ -17,7 +19,9 @@ from services.chatbot.domain.models import (
     QueryResponse,
     UserContext,
 )
-from services.chatbot.retrieval_query import RetrievalQueryResponse
+
+if TYPE_CHECKING:
+    from services.chatbot.retrieval_query import RetrievalQueryResponse
 
 
 def to_domain_request(api_request: ChatbotQueryRequest) -> QueryRequest:
@@ -70,7 +74,7 @@ def to_api_response(domain_response: QueryResponse) -> ChatbotQueryResponse:
 
 
 def to_api_retrieve_response(
-    domain_response: RetrievalQueryResponse,
+    domain_response: "RetrievalQueryResponse",
 ) -> ChatbotRetrieveResponse:
     return ChatbotRetrieveResponse(
         sessionId=domain_response.session_id,
@@ -87,7 +91,7 @@ def to_api_retrieve_response(
                 name=product.name,
                 brandName=product.brand_name,
                 categoryName=product.category_name,
-                score=product.hybrid_score,
+                score=product.score,
                 rawScore=product.raw_score,
                 reason=product.reason,
                 matchedSources=product.matched_sources,
