@@ -1,8 +1,10 @@
 from services.chatbot.domain.mappers import (
     client_context_to_prompt_payload,
     client_context_to_payload,
+    to_api_retrieve_response,
     to_api_response,
     to_domain_request,
+    to_domain_retrieve_request,
     user_context_to_prompt_payload,
     user_context_to_payload,
 )
@@ -26,8 +28,10 @@ __all__ = [
     "UserContext",
     "client_context_to_prompt_payload",
     "client_context_to_payload",
+    "to_api_retrieve_response",
     "to_api_response",
     "to_domain_request",
+    "to_domain_retrieve_request",
     "user_context_to_prompt_payload",
     "user_context_to_payload",
 ]

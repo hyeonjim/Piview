@@ -142,11 +142,16 @@ class ProductSearchDataRepository:
         self,
         terms: Sequence[str],
         limit: int,
+        preferred_category_aliases: Sequence[str] | None = None,
     ) -> list[ProductSearchDataRow]:
         normalized_terms = [term.strip().lower() for term in terms if term.strip()]
         if not normalized_terms:
             return []
-        rows = self._fetch_products_base(search_terms=normalized_terms, limit=limit)
+        rows = self._fetch_products_base(
+            search_terms=normalized_terms,
+            limit=limit,
+            preferred_category_aliases=preferred_category_aliases,
+        )
         return self._attach_concerns(rows)
 
     def _attach_concerns(self, rows: list[ProductSearchDataRow]) -> list[ProductSearchDataRow]:
@@ -176,6 +181,7 @@ class ProductSearchDataRepository:
         self,
         product_ids: Sequence[int] | None = None,
         search_terms: Sequence[str] | None = None,
+        preferred_category_aliases: Sequence[str] | None = None,
         limit: int | None = None,
     ) -> list[ProductSearchDataRow]:
         sql = """
@@ -232,6 +238,13 @@ class ProductSearchDataRepository:
                     ]
                 )
             sql += " AND (" + " OR ".join(term_clauses) + ")"
+
+        if preferred_category_aliases:
+            category_clauses: list[str] = []
+            for alias in preferred_category_aliases:
+                category_clauses.append("COALESCE(c.category_name, '') LIKE %s")
+                params.append(f"%{alias}%")
+            sql += " AND (" + " OR ".join(category_clauses) + ")"
 
         sql += " ORDER BY p.product_id"
         if limit is not None:

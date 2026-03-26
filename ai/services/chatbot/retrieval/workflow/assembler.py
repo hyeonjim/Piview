@@ -15,20 +15,6 @@ def build_retrieval_bundle(
     search_result: SearchExecutionResult | None = None,
     session_context: dict[str, object] | None = None,
 ) -> RetrievalBundle:
-    if plan.needs_clarifying_question:
-        return RetrievalBundle(
-            response_type="clarifying_question",
-            applied_filters=plan.applied_filters,
-            retrieval_context=_merge_context_hints(
-                plan.context_hints,
-                (
-                    "이 질문은 지금 바로 상품 카드를 붙이기보다 사용자의 상태를 한 번 더 확인하는 편이 자연스럽습니다. "
-                    "제품 추천을 억지로 하지 말고, 한 문장으로 짧게 되물어라. "
-                    "피부타입을 진단처럼 단정하지 말고, 건조함/유분/민감함 중 무엇이 더 신경 쓰이는지처럼 가볍게 좁혀라."
-                ),
-            ),
-        )
-
     search_result = search_result or SearchExecutionResult()
     if search_result.had_search_error and not search_result.vector_results and not search_result.keyword_results:
         return RetrievalBundle(

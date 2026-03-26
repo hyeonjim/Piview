@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING
+
 from schemas.chatbot import (
     ChatbotCitation,
     ChatbotClientContext,
     ChatbotProductCandidate,
     ChatbotQueryRequest,
     ChatbotQueryResponse,
+    ChatbotRetrieveProduct,
+    ChatbotRetrieveRequest,
+    ChatbotRetrieveResponse,
     ChatbotUserContext,
 )
 from services.chatbot.domain.models import (
@@ -15,8 +20,20 @@ from services.chatbot.domain.models import (
     UserContext,
 )
 
+if TYPE_CHECKING:
+    from services.chatbot.retrieval_query import RetrievalQueryResponse
+
 
 def to_domain_request(api_request: ChatbotQueryRequest) -> QueryRequest:
+    return QueryRequest(
+        message=api_request.message,
+        session_id=api_request.sessionId,
+        client_context=_to_domain_client_context(api_request.context),
+        user_context=_to_domain_user_context(api_request.userContext),
+    )
+
+
+def to_domain_retrieve_request(api_request: ChatbotRetrieveRequest) -> QueryRequest:
     return QueryRequest(
         message=api_request.message,
         session_id=api_request.sessionId,
@@ -40,6 +57,53 @@ def to_api_response(domain_response: QueryResponse) -> ChatbotQueryResponse:
             for product in domain_response.products
         ],
         appliedFilters=domain_response.applied_filters,
+        citations=[
+            ChatbotCitation(
+                type=citation.type,
+                productId=citation.product_id,
+                text=citation.text,
+                title=citation.title,
+                snippet=citation.snippet,
+                source=citation.source,
+                score=citation.score,
+                metadata=citation.metadata,
+            )
+            for citation in domain_response.citations
+        ],
+    )
+
+
+def to_api_retrieve_response(
+    domain_response: "RetrievalQueryResponse",
+) -> ChatbotRetrieveResponse:
+    return ChatbotRetrieveResponse(
+        sessionId=domain_response.session_id,
+        query=domain_response.query,
+        searchQuery=domain_response.search_query,
+        requestedLimit=domain_response.requested_limit,
+        returnedCount=domain_response.returned_count,
+        searchLimit=domain_response.search_limit,
+        hadSearchError=domain_response.had_search_error,
+        appliedFilters=domain_response.applied_filters,
+        products=[
+            ChatbotRetrieveProduct(
+                productId=product.product_id,
+                name=product.name,
+                brandName=product.brand_name,
+                categoryName=product.category_name,
+                score=product.score,
+                rawScore=product.raw_score,
+                reason=product.reason,
+                matchedSources=product.matched_sources,
+                concernNames=product.concern_names,
+                topSkinType=product.top_skin_type,
+                top2SkinType=product.top2_skin_type,
+                ingredientPreview=product.ingredient_preview,
+                evidenceSnippets=product.evidence_snippets,
+                scoreBreakdown=product.score_breakdown,
+            )
+            for product in domain_response.products
+        ],
         citations=[
             ChatbotCitation(
                 type=citation.type,
