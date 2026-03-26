@@ -92,9 +92,9 @@ export default function OwnedTab() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-3 mt-5 [&_p.line-clamp-2]:text-[14px]!">
+            <div className="grid grid-cols-3 gap-3 mt-5 items-stretch [&_p.line-clamp-2]:text-[14px]!">
               {pagedOwned.map((product) => (
-                <div key={product.id} className="relative">
+                <div key={product.id} className="relative h-full flex flex-col">
                   <ProductCard
                     id={product.id}
                     href={product.category
@@ -162,11 +162,11 @@ export default function OwnedTab() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-3 mt-5 [&_p.line-clamp-2]:text-[14px]!">
+            <div className="grid grid-cols-3 gap-3 mt-5 items-stretch [&_p.line-clamp-2]:text-[14px]!">
               {pagedAvoid.map((item) => (
-                <div key={item.dislikedProductId} className="relative">
+                <div key={item.dislikedProductId} className="relative h-full flex flex-col">
                   <ProductCard
-                    id={item.dislikedProductId}
+                    id={item.productId}
                     brand={item.brandName}
                     name={item.productName}
                     category={item.categoryName}

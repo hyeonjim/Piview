@@ -95,4 +95,5 @@ export interface RecommendResponseDto {
   skinTypes: string[];  // ["dry", "oily"] — 영문 소문자
   concernName: string;
   liked: boolean;
+  tags: string[];
 }

@@ -6,8 +6,9 @@ import ProductCard from "@/components/common/ProductCard";
 import { useMutation } from "@tanstack/react-query";
 import { getRoutineSteps } from "@/constants/routineSteps";
 import { Pagination } from "@/components/common/Pagination";
-import { useProductSearch, useProductFilters, useLike } from "@/hooks";
+import { useProductSearch, useProductFilters, useLike, useDislikedProductsQuery } from "@/hooks";
 import { useCompare } from "@/hooks/useCompare";
+import CompareModal from "@/components/common/CompareModal";
 import { useUserStore, selectGender, selectSkinType } from "@/stores";
 import { getCategoryDisplayName } from "@/utils/format";
 import { toSkinTypeEnum } from "@/utils/enumConvert";
@@ -58,9 +59,13 @@ export default function RoutineAddModal({
   // 좋아요 API 연동 — toggleLike만 사용 (likeList는 ProductCard 내부에서 처리)
   const { toggleLike } = useLike();
   // 비교하기 상태 관리
-  const { compareItems, toggleCompare } = useCompare<MappedProduct>();
+  const { compareItems, toggleCompare, showCompare, canCompare, openCompare, closeCompare } = useCompare<MappedProduct>();
 
   // 성별에 따른 루틴 스텝 가져오기
+  // 피할 제품 ID Set — 검색 결과에서 제외
+  const { data: dislikedProductsData = [] } = useDislikedProductsQuery();
+  const dislikedProductIdSet = new Set(dislikedProductsData.map((p) => p.productId));
+
   const currentGender = useUserStore(selectGender);
   // 추천 API 요청에 필요한 유저 피부 타입 및 피부 고민
   const currentSkinType = useUserStore(selectSkinType);
@@ -219,7 +224,8 @@ export default function RoutineAddModal({
     : [];
 
   // 추천 모드: 클라이언트 페이지네이션 / 일반 모드: 서버 페이지네이션 (검색 페이지와 동일 패턴)
-  const displayProducts = isRecommendMode ? recommendedProducts : products;
+  const displayProducts = (isRecommendMode ? recommendedProducts : products)
+    .filter((p) => !dislikedProductIdSet.has(p.id));
   const totalPages = isRecommendMode
     ? Math.ceil(recommendedProducts.length / PAGE_SIZE)
     : totalCount !== null
@@ -252,10 +258,18 @@ export default function RoutineAddModal({
 
   return (
     <>
+      {/* 비교 모달 */}
+      {showCompare && canCompare && (
+        <CompareModal
+          compareItems={compareItems as [MappedProduct, MappedProduct]}
+          onClose={closeCompare}
+          zIndex={100}
+        />
+      )}
       {/* 배경 오버레이 */}
       <div
         className="fixed inset-0 z-[60] bg-[rgba(0,0,0,0.5)] backdrop-blur-[4px]"
-        onClick={onClose}
+        onClick={() => { if (showCompare) { closeCompare(); } else { onClose(); } }}
       />
       <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none py-10 px-5">
         <div className="bg-white flex flex-col pointer-events-auto rounded-[20px] w-full max-w-[420px] max-h-full shadow-[0_8px_40px_rgba(0,0,0,0.18)] overflow-hidden">
@@ -400,7 +414,10 @@ export default function RoutineAddModal({
                         onAddRoutine={() => onAdd(product.id)}
                         onToggleLike={() => toggleLike(product.id)}
                         isInCompare={isInCompare}
-                        onToggleCompare={() => toggleCompare(product)}
+                        onToggleCompare={() => {
+                          toggleCompare(product);
+                          if (!compareItems.some((i) => i.id === product.id) && compareItems.length === 1) openCompare();
+                        }}
                       />
                     );
                   })}
