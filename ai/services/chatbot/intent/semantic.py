@@ -1,5 +1,4 @@
 from functools import lru_cache
-import math
 
 from services.chatbot.domain import QueryRequest
 from services.chatbot.intent.constants import (
@@ -11,9 +10,30 @@ from services.chatbot.intent.models import IntentDecision
 from services.chatbot.retrieval.parsers.category import extract_preferred_categories
 from services.chatbot.search.embedding import chatbot_embedding_service
 
+try:
+    from semantic_router import Route
+    from semantic_router.encoders.base import BaseEncoder
+    from semantic_router.layer import RouteLayer
+except ImportError:
+    Route = None
+    BaseEncoder = object
+    RouteLayer = None
 
-_ACCEPT_THRESHOLD = 0.72
-_MARGIN_THRESHOLD = 0.06
+
+_ROUTE_SCORE_THRESHOLD = 0.72
+_LOW_CONFIDENCE_THRESHOLD = 0.78
+
+
+class ChatbotSemanticRouterEncoder(BaseEncoder):
+    name: str = "chatbot-semantic-router-encoder"
+    score_threshold: float | None = _ROUTE_SCORE_THRESHOLD
+    type: str = "chatbot"
+
+    def __call__(self, docs: list[str]) -> list[list[float]]:
+        return chatbot_embedding_service.embed_texts(docs)
+
+    async def acall(self, docs: list[str]) -> list[list[float]]:
+        return self(docs)
 
 
 class SemanticIntentRouter:
@@ -22,33 +42,39 @@ class SemanticIntentRouter:
         request: QueryRequest,
         session_context: dict[str, object] | None = None,
     ) -> IntentDecision:
-        query_vector = chatbot_embedding_service.embed_texts([request.message.strip()])[0]
-        route_scores = {
-            route_name: _cosine_similarity(query_vector, route_vector)
-            for route_name, route_vector in _get_route_vectors().items()
-        }
-        ordered = sorted(route_scores.items(), key=lambda item: item[1], reverse=True)
-        top_route, top_score = ordered[0]
-        second_score = ordered[1][1] if len(ordered) > 1 else None
-        low_confidence = top_score < _ACCEPT_THRESHOLD or (
-            second_score is not None and (top_score - second_score) < _MARGIN_THRESHOLD
-        )
+        route_layer = _get_route_layer()
+        if route_layer is None:
+            raise RuntimeError("semantic-router is not installed")
 
-        if top_route == "recommendation_followup" and not _has_session_anchor(session_context):
-            top_route = "recommendation_fresh"
+        route_choice = route_layer(request.message.strip())
+        if route_choice is None or route_choice.name is None:
+            use_product_retrieval = _should_use_product_retrieval(
+                intent_type="informational",
+                message=request.message,
+            )
+            return IntentDecision(
+                intent_type="recommendation_fresh" if use_product_retrieval else "informational",
+                route_source="semantic",
+                low_confidence=True,
+                use_product_retrieval=use_product_retrieval,
+            )
+
+        intent_type = route_choice.name
+        low_confidence = (route_choice.similarity_score or 0.0) < _LOW_CONFIDENCE_THRESHOLD
+        if intent_type == "recommendation_followup" and not _has_session_anchor(session_context):
+            intent_type = "recommendation_fresh"
             low_confidence = True
 
         use_product_retrieval = _should_use_product_retrieval(
-            intent_type=top_route,
+            intent_type=intent_type,
             message=request.message,
         )
         return IntentDecision(
-            intent_type=top_route,
+            intent_type=intent_type,
             route_source="semantic",
             low_confidence=low_confidence,
             use_product_retrieval=use_product_retrieval,
-            top_score=top_score,
-            second_score=second_score,
+            top_score=route_choice.similarity_score,
         )
 
 
@@ -56,26 +82,15 @@ semantic_intent_router = SemanticIntentRouter()
 
 
 @lru_cache(maxsize=1)
-def _get_route_vectors() -> dict[str, list[float]]:
-    route_vectors: dict[str, list[float]] = {}
-    for route_name, utterances in SEMANTIC_ROUTE_EXAMPLES.items():
-        embeddings = chatbot_embedding_service.embed_texts(list(utterances))
-        dimension = len(embeddings[0])
-        centroid = [0.0] * dimension
-        for embedding in embeddings:
-            for index, value in enumerate(embedding):
-                centroid[index] += float(value)
-        route_vectors[route_name] = [value / len(embeddings) for value in centroid]
-    return route_vectors
-
-
-def _cosine_similarity(left: list[float], right: list[float]) -> float:
-    numerator = sum(float(lv) * float(rv) for lv, rv in zip(left, right))
-    left_norm = math.sqrt(sum(float(value) ** 2 for value in left))
-    right_norm = math.sqrt(sum(float(value) ** 2 for value in right))
-    if left_norm == 0.0 or right_norm == 0.0:
-        return 0.0
-    return numerator / (left_norm * right_norm)
+def _get_route_layer():
+    if RouteLayer is None or Route is None:
+        return None
+    routes = [
+        Route(name=route_name, utterances=list(utterances))
+        for route_name, utterances in SEMANTIC_ROUTE_EXAMPLES.items()
+    ]
+    encoder = ChatbotSemanticRouterEncoder()
+    return RouteLayer(encoder=encoder, routes=routes)
 
 
 def _has_session_anchor(session_context: dict[str, object] | None) -> bool:

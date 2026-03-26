@@ -17,3 +17,4 @@ pymysql
 redis
 kiwipiepy
 rapidfuzz
+semantic-router
