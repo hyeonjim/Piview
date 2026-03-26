@@ -341,6 +341,99 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     return result != null ? result.longValue() : 0L;
   }
 
+  // Chroma에서 받은 product_id 랭킹 순서를 유지하면서 기존 DB필터를 적용해 Slice를 만든다.
+  // q는 AI에서 이미 반영되므로 적용 x
+  // 정렬 1순위: AI 랭킹 순서
+  // 정렬 2순위: productId DESC
+  @Override
+  public Slice<Product> searchByRankedProductIds(
+          ProductSearchCondition condition,
+          List<Long> rankedProductIds,
+          Pageable pageable
+  ) {
+    if (rankedProductIds == null || rankedProductIds.isEmpty()) {
+      return new SliceImpl<>(List.of(), pageable, false);
+    }
+
+    Map<Long, Integer> rankOrder = new HashMap<>();
+    for (int i = 0; i < rankedProductIds.size(); i++) {
+      rankOrder.put(rankedProductIds.get(i), i);
+    }
+
+    List<Product> filtered = queryFactory
+            .selectFrom(product)
+            .join(product.brand, brand).fetchJoin()
+            .join(product.image, image).fetchJoin()
+            .join(product.category, category).fetchJoin()
+            .join(category.bigCategory, bigCategory).fetchJoin()
+            .where(buildRankedFilterWhere(condition, rankedProductIds))
+            .fetch();
+
+    filtered = filtered.stream()
+            .sorted(
+                    Comparator
+                            .comparingInt((Product p) -> rankOrder.getOrDefault(p.getProductId(), Integer.MAX_VALUE))
+                            .thenComparing(Product::getProductId, Comparator.reverseOrder())
+            )
+            .toList();
+
+    int from = (int) pageable.getOffset();
+    if (from >= filtered.size()) {
+      return new SliceImpl<>(List.of(), pageable, false);
+    }
+
+    int to = Math.min(from + pageable.getPageSize() + 1, filtered.size());
+    List<Product> pageContent = new ArrayList<>(filtered.subList(from, to));
+
+    boolean hasNext = false;
+    if (pageContent.size() > pageable.getPageSize()) {
+      pageContent.remove(pageable.getPageSize());
+      hasNext = true;
+    }
+
+    return new SliceImpl<>(pageContent, pageable, hasNext);
+  }
+
+  // AI 랭킹 후보 집합에 기존 DB 필터를 적용한 totalContent를 계산한다.
+  @Override
+  public long countByRankedProductIds(
+          ProductSearchCondition condition,
+          List<Long> rankedProductIds
+  ) {
+    if (rankedProductIds == null || rankedProductIds.isEmpty()) {
+      return 0L;
+    }
+
+    Long result = queryFactory
+            .select(product.count())
+            .from(product)
+            .join(product.brand, brand)
+            .join(product.category, category)
+            .join(category.bigCategory, bigCategory)
+            .where(buildRankedFilterWhere(condition, rankedProductIds))
+            .fetchOne();
+
+    return result != null ? result : 0L;
+  }
+
+  // AI 랭킹 기반 검색에서 공통으로 재사용할 where.
+  // - 반드시 rankedProductIds IN 조건을 포함
+  // - q는 제외(AI 처리)
+  private BooleanBuilder buildRankedFilterWhere(
+          ProductSearchCondition condition,
+          List<Long> rankedProductIds
+  ) {
+    return new BooleanBuilder()
+            .and(product.productId.in(rankedProductIds))
+            .and(categoryIn(condition.getCategoryId()))
+            .and(bigCategoryEqWhenCategoryNull(condition.getCategoryId(), condition.getBigCategoryId()))
+            .and(skinTypeEq(condition.getSkinType()))
+            .and(hasAllConcerns(condition.getConcernIds()))
+            .and(brandIn(condition.getBrandIds()))
+            .and(minPriceGoe(condition.getMinPrice()))
+            .and(maxPriceLoe(condition.getMaxPrice()));
+  }
+
   private NativeSql buildConcernOptimizedIdSql(ProductSearchCondition condition, Pageable pageable) {
     StringBuilder sql = new StringBuilder();
     Map<String, Object> params = new HashMap<>();
