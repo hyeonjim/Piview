@@ -71,7 +71,7 @@ def get_settings() -> Settings:
     # 설정은 호출 시점의 환경변수를 기준으로 1회 생성합니다.
     # 같은 프로세스 안에서는 lru_cache로 재사용하므로,
     # 실행 중 환경변수를 바꿔도 자동 반영되지는 않습니다.
-    return Settings(
+    settings = Settings(
         # LLM / Embedding 제공자 설정
         # - 텍스트 생성과 임베딩 생성에 필요한 외부 API 주소/모델 이름입니다.
         gms_key=os.getenv("GMS_KEY"),
@@ -122,15 +122,15 @@ def get_settings() -> Settings:
         chatbot_concern_limit=int(os.getenv("CHATBOT_CONCERN_LIMIT", "5")),
 
         # 세션 저장 설정
-        # - backend가 redis이면 Redis를, 아니면 프로세스 메모리를 사용합니다.
+        # - 기본값은 redis로 두고, 명시적으로 memory를 설정한 경우에만 메모리를 사용합니다.
         chatbot_session_ttl_sec=int(os.getenv("CHATBOT_SESSION_TTL_SEC", "1800")),
         chatbot_session_max_turns=int(os.getenv("CHATBOT_SESSION_MAX_TURNS", "6")),
-        chatbot_session_backend=os.getenv("CHATBOT_SESSION_BACKEND", "memory").lower(),
-        chatbot_redis_url=os.getenv("CHATBOT_REDIS_URL") or None,
-        chatbot_redis_host=os.getenv("CHATBOT_REDIS_HOST") or None,
-        chatbot_redis_port=int(os.getenv("CHATBOT_REDIS_PORT", "6379")),
-        chatbot_redis_password=os.getenv("CHATBOT_REDIS_PASSWORD") or None,
-        chatbot_redis_db=int(os.getenv("CHATBOT_REDIS_DB", "0")),
+        chatbot_session_backend=os.getenv("CHATBOT_SESSION_BACKEND", "redis").lower(),
+        chatbot_redis_url=os.getenv("CHATBOT_REDIS_URL") or os.getenv("REDIS_URL") or None,
+        chatbot_redis_host=os.getenv("CHATBOT_REDIS_HOST", os.getenv("REDIS_HOST")) or None,
+        chatbot_redis_port=int(os.getenv("CHATBOT_REDIS_PORT", os.getenv("REDIS_PORT", "6379"))),
+        chatbot_redis_password=os.getenv("CHATBOT_REDIS_PASSWORD", os.getenv("REDIS_PASSWORD")) or None,
+        chatbot_redis_db=int(os.getenv("CHATBOT_REDIS_DB", os.getenv("REDIS_DB", "0"))),
 
         # 상품 메타데이터 조회용 DB 설정
         # - compose 내부에서는 보통 mysql-db 같은 서비스명으로 접근합니다.
@@ -141,3 +141,10 @@ def get_settings() -> Settings:
         chatbot_db_password=os.getenv("CHATBOT_DB_PASSWORD", os.getenv("MYSQL_PASSWORD", "")),
         chatbot_db_name=os.getenv("CHATBOT_DB_NAME", os.getenv("MYSQL_DATABASE", "")),
     )
+
+    if settings.chatbot_session_backend not in {"redis", "memory"}:
+        raise ValueError(
+            "CHATBOT_SESSION_BACKEND must be either 'redis' or 'memory'"
+        )
+
+    return settings
