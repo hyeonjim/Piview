@@ -21,8 +21,15 @@ interface ChatbotStore {
   reset: () => void;
 }
 
+// 챗봇 초기 인사말
+const GREETING_MESSAGE: ChatMessage = {
+  role: "assistant",
+  content:
+    "안녕하세요! 저는 Gamini 입니다.\n화장품 성분이나 피부고민, 추천제품등 궁금하신점을 말씀해주시면 친절하게 답변 해드리겠습니다 뀨뀨 🤗",
+};
+
 export const useChatbotStore = create<ChatbotStore>((set) => ({
-  messages: [],
+  messages: [GREETING_MESSAGE],
   sessionId: null,
 
   addMessage: (message) =>
@@ -30,5 +37,5 @@ export const useChatbotStore = create<ChatbotStore>((set) => ({
 
   setSessionId: (id) => set({ sessionId: id }),
 
-  reset: () => set({ messages: [], sessionId: null }),
+  reset: () => set({ messages: [GREETING_MESSAGE], sessionId: null }),
 }));

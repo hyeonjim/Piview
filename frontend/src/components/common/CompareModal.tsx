@@ -10,7 +10,8 @@
  */
 
 import Image from "next/image";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, MessageSquareText } from "lucide-react";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { formatPrice } from "@/utils/format";
 import { SkinTypeTag } from "@/components/common/ProductCard";
 import { useProductCompare, useAiComparisonSummary } from "@/hooks";
@@ -28,6 +29,30 @@ interface CompareModalProps {
 
 // globals.css에 정확히 매핑되는 변수 없어서 상수 유지
 const HIGHLIGHT_COLOR = "var(--color-highlight-strong)";
+
+// AI 카드 — 3D 입체감 + 아래서 위로 fade in
+const cardVariants: Variants = {
+  hidden: { opacity: 0, y: 30, scale: 0.95, rotateX: 6 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    rotateX: 0,
+    transition: { duration: 0.55, ease: [0.23, 1, 0.32, 1] },
+  },
+};
+
+// 컨텐츠 — stagger 부모
+const listVariants: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.15, delayChildren: 0.15 } },
+};
+
+// 각 줄 — fade + 살짝 위로 + scale
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 12, scale: 0.97 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: [0.23, 1, 0.32, 1] } },
+};
 
 // ── 서브컴포넌트: 제품 헤더 ────────────────────────────────────────
 function ProductHeader({ product }: { product: CompareProduct }) {
@@ -377,16 +402,27 @@ export default function CompareModal({
           )}
 
           {/* AI 비교 분석 */}
-          <div className="rounded-xl bg-brand-pale border border-border-warm p-4 mt-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[16px] font-semibold text-[#686666]">
-                AI 비교 분석
-              </span>
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className="rounded-2xl p-5 mt-1 border border-[#dde6ef] bg-[#f8fafb]"
+            style={{
+              boxShadow:
+                "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(115, 142, 174, 0.14), 0 1px 4px rgba(115, 142, 174, 0.08)",
+            }}
+          >
+            {/* 헤더 */}
+            <div className="flex items-center gap-2 mb-4">
+              <div className="size-6 rounded-lg flex items-center justify-center bg-[#b8cbdb]">
+                <MessageSquareText size={12} className="text-white" />
+              </div>
+              <p className="text-[16px] font-bold text-[#3c5061]">AI 비교 분석</p>
             </div>
 
             {isAiLoading && (
-              <div className="flex items-center gap-2 py-2 text-text-muted">
-                <Loader2 size={15} className="animate-spin opacity-50 shrink-0" />
+              <div className="flex items-center justify-center py-6 gap-2 text-text-muted">
+                <Loader2 size={18} className="animate-spin opacity-50" />
                 <p className="text-xs">AI가 두 제품을 비교 분석하고 있어요...</p>
               </div>
             )}
@@ -397,12 +433,24 @@ export default function CompareModal({
               </p>
             )}
 
-            {aiComparison && !isAiLoading && (
-              <p className="text-sm leading-relaxed text-text-hint">
-                {aiComparison.comparisonText}
-              </p>
-            )}
-          </div>
+            <AnimatePresence>
+              {aiComparison && !isAiLoading && (
+                <motion.div
+                  variants={listVariants}
+                  initial="hidden"
+                  animate="visible"
+                  className="flex flex-col gap-2.5"
+                >
+                  <motion.p
+                    variants={itemVariants}
+                    className="text-[14px] text-[#353b41] leading-[1.7]"
+                  >
+                    {aiComparison.comparisonText}
+                  </motion.p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         </div>
       </div>
     </div>

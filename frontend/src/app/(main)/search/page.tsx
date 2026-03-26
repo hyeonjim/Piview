@@ -273,6 +273,7 @@ export default function SearchPage() {
                 skinTypes={product.skinTypes}
                 effects={product.effects}
                 layout="grid"
+                showCategory={false}
                 showActions={true}
                 isOwned={isOwned(product.id)}
                 onToggleOwned={() => handleToggleOwned(product.id)}

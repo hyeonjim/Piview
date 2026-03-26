@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Settings, Mars, Venus } from "lucide-react";
 import { toast } from "sonner";
@@ -14,12 +13,8 @@ import RoutineTab from "@/components/features/mypage/RoutineTab";
 import RoutineAddModal from "@/components/features/mypage/RoutineAddModal";
 import OwnedTab from "@/components/features/mypage/OwnedTab";
 import { useUserStore, selectSkinType, selectGender } from "@/stores";
-import { useSearchStore } from "@/stores/useSearchStore";
-import { useRecommendStore } from "@/stores/useRecommendStore";
-import { useLikeStore } from "@/stores";
 
 export default function MyPage() {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"routine" | "owned">("routine");
 
   // 페이지 로드 시 user 정보 조회 + Zustand store 동기화
@@ -88,8 +83,8 @@ export default function MyPage() {
   };
 
   return (
-    <div className="flex-1 bg-[#f8f5ef]">
-      <div className="pt-3.75 px-5 pb-5 relative border-b border-border">
+    <div className="flex-1 bg-[#f3f1ed]">
+      <div className="pt-3.75 px-5 pb-3 relative border-b border-border">
         <div className="flex items-center gap-4">
           <div
             className="w-18 h-18 rounded-full flex items-center justify-center shadow-[0_2px_12px_rgba(166,157,146,0.25)] shrink-0 overflow-hidden"
@@ -119,7 +114,7 @@ export default function MyPage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
-                <p className="text-[18px] font-semibold text-[#545452] tracking-[-0.3px]">
+                <p className="text-[18px] font-bold text-[#757573] tracking-[-0.3px]">
                   {userName}님
                 </p>
                 {/* 성별 아이콘 */}
@@ -147,16 +142,16 @@ export default function MyPage() {
                 피부 타입을 진단해보세요
               </p>
             ) : (
-              <div className="flex flex-wrap gap-1 mt-2">
+              <div className="flex flex-wrap gap-1 mt-1">
                 {/* 피부 타입 배지 — ProductCard SkinTypeTag 배경색 스타일 */}
-                <span className="text-[13px] py-0.5 px-2 rounded-full border bg-[#ebe1d8] text-[#463f37] font-semibold">
+                <span className="text-[14px] py-0.5 px-2 rounded-full border bg-[#f5edd9] text-[#73614c] font-semibold">
                   {savedSkinType}
                 </span>
                 {/* 피부 고민 배지 — ProductCard EffectTag 스타일 */}
                 {savedConcerns.map((concern, index) => (
                   <span
                     key={`${concern}-${index}`}
-                    className="text-[13px] py-0.5 px-2 rounded-full border bg-[#f8f9fa] text-[#65543f] font-semibold"
+                    className="text-[14px] py-0.5 px-2 rounded-full border bg-[#f5f4f4] text-[#7f6c55] font-semibold"
                   >
                     {concern}
                   </span>
@@ -184,8 +179,8 @@ export default function MyPage() {
             onClick={() => setActiveTab(tabType)}
             className={`relative flex-1 pt-3 pb-1.5 text-[16px] flex items-center justify-center gap-1.5 cursor-pointer bg-transparent border-none transition-colors duration-200 -mb-px ${
               activeTab === tabType
-                ? "font-bold text-[#5a5a58]"
-                : "font-semibold text-text-faint"
+                ? "font-bold text-[#696967]"
+                : "font-semibold text-[#a3a3a1]"
             }`}
           >
             {tabType === "routine" ? <>내 루틴</> : <>내 제품</>}
