@@ -20,4 +20,3 @@ class IntentDecision:
     use_product_retrieval: bool = False
     matched_rule: str | None = None
     top_score: float | None = None
-    second_score: float | None = None
