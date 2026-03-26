@@ -20,6 +20,8 @@ class ProductSearchDataRow:
     name: str
     brand_name: str | None
     category_name: str | None
+    category_id: int | None
+    big_category_id: int | None
     description: str | None
     top_skin_type: str | None
     top2_skin_type: str | None
@@ -32,6 +34,8 @@ class ProductNameIndexRow:
     product_id: int
     name: str
     brand_name: str | None
+    category_id: int | None
+    big_category_id: int | None
 
 
 def normalize_whitespace(text: str | None) -> str:
@@ -134,8 +138,14 @@ class ProductSearchDataRepository:
     def fetch_products_for_indexing(
         self,
         product_ids: Sequence[int] | None = None,
+        category_ids: Sequence[int] | None = None,
+        big_category_id: int | None = None,
     ) -> list[ProductSearchDataRow]:
-        rows = self._fetch_products_base(product_ids=product_ids)
+        rows = self._fetch_products_base(
+            product_ids=product_ids,
+            category_ids=category_ids,
+            big_category_id=big_category_id,
+        )
         return self._attach_concerns(rows)
 
     def search_products_by_terms(
@@ -143,6 +153,8 @@ class ProductSearchDataRepository:
         terms: Sequence[str],
         limit: int,
         preferred_category_aliases: Sequence[str] | None = None,
+        category_ids: Sequence[int] | None = None,
+        big_category_id: int | None = None,
     ) -> list[ProductSearchDataRow]:
         normalized_terms = [term.strip().lower() for term in terms if term.strip()]
         if not normalized_terms:
@@ -151,6 +163,8 @@ class ProductSearchDataRepository:
             search_terms=normalized_terms,
             limit=limit,
             preferred_category_aliases=preferred_category_aliases,
+            category_ids=category_ids,
+            big_category_id=big_category_id,
         )
         return self._attach_concerns(rows)
 
@@ -167,6 +181,8 @@ class ProductSearchDataRepository:
                 name=row.name,
                 brand_name=row.brand_name,
                 category_name=row.category_name,
+                category_id=row.category_id,
+                big_category_id=row.big_category_id,
                 description=row.description,
                 top_skin_type=row.top_skin_type,
                 top2_skin_type=row.top2_skin_type,
@@ -182,6 +198,8 @@ class ProductSearchDataRepository:
         product_ids: Sequence[int] | None = None,
         search_terms: Sequence[str] | None = None,
         preferred_category_aliases: Sequence[str] | None = None,
+        category_ids: Sequence[int] | None = None,
+        big_category_id: int | None = None,
         limit: int | None = None,
     ) -> list[ProductSearchDataRow]:
         sql = """
@@ -193,6 +211,8 @@ class ProductSearchDataRepository:
                 p.top2_skin_type,
                 b.brand_name,
                 c.category_name,
+                p.category_id,
+                c.big_category_id,
                 pi.product_ingredients_ko,
                 pi.product_ingredients_en
             FROM products p
@@ -210,6 +230,15 @@ class ProductSearchDataRepository:
             placeholders = ", ".join(["%s"] * len(product_ids))
             sql += f" AND p.product_id IN ({placeholders})"
             params.extend(product_ids)
+
+        if category_ids:
+            placeholders = ", ".join(["%s"] * len(category_ids))
+            sql += f" AND p.category_id IN ({placeholders})"
+            params.extend(category_ids)
+
+        if big_category_id is not None:
+            sql += " AND c.big_category_id = %s"
+            params.append(big_category_id)
 
         if search_terms:
             term_clauses: list[str] = []
@@ -262,6 +291,8 @@ class ProductSearchDataRepository:
                 name=str(row["name"]),
                 brand_name=row["brand_name"],
                 category_name=row["category_name"],
+                category_id=int(row["category_id"]) if row["category_id"] is not None else None,
+                big_category_id=int(row["big_category_id"]) if row["big_category_id"] is not None else None,
                 description=row["description"],
                 top_skin_type=row["top_skin_type"],
                 top2_skin_type=row["top2_skin_type"],
@@ -336,17 +367,34 @@ class ProductSearchDataRepository:
             cursorclass=pymysql.cursors.DictCursor,
         )
     
-    def fetch_name_index_rows(self) -> list[ProductNameIndexRow]:
+    def fetch_name_index_rows(
+        self,
+        category_ids: Sequence[int] | None = None,
+        big_category_id: int | None = None,
+    ) -> list[ProductNameIndexRow]:
         sql = """
-            SELECT p.product_id, p.name, b.brand_name
+            SELECT p.product_id, p.name, b.brand_name, p.category_id, c.big_category_id
             FROM products p
             LEFT JOIN brand b ON b.brand_id = p.brand_id
+            LEFT JOIN category c ON c.category_id = p.category_id
             WHERE p.name IS NOT NULL
-            ORDER BY p.product_id
         """
+        params: list[object] = []
+
+        if category_ids:
+            placeholders = ", ".join(["%s"] * len(category_ids))
+            sql += f" AND p.category_id IN ({placeholders})"
+            params.extend(category_ids)
+
+        if big_category_id is not None:
+            sql += " AND c.big_category_id = %s"
+            params.append(big_category_id)
+
+        sql += " ORDER BY p.product_id"
+
         with self._get_db_connection() as connection:
             with connection.cursor() as cursor:
-                cursor.execute(sql)
+                cursor.execute(sql, params)
                 rows = cursor.fetchall()
 
         return [
@@ -354,6 +402,8 @@ class ProductSearchDataRepository:
                 product_id=int(row["product_id"]),
                 name=str(row["name"]),
                 brand_name=row["brand_name"],
+                category_id=int(row["category_id"]) if row["category_id"] is not None else None,
+                big_category_id=int(row["big_category_id"]) if row["big_category_id"] is not None else None,
             )
             for row in rows
         ]

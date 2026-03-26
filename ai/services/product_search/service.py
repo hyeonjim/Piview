@@ -44,6 +44,8 @@ class ProductSearchService:
         query_text: str,
         limit: int,
         exclude_product_ids: set[int] | None = None,
+        category_ids: tuple[int, ...] | None = None,
+        big_category_id: int | None = None,
     ) -> list[ProductSearchResult]:
         snapshot = product_search_dictionary_registry.get_snapshot()
         parsed_query = product_search_query_parser.parse(query_text, snapshot)
@@ -72,6 +74,8 @@ class ProductSearchService:
                 product_exact_search_service.search,
                 search_query,
                 candidate_limit,
+                category_ids,
+                big_category_id,
             )
             if exact_results and not parsed_query.is_structured:
                 return exact_results[:search_limit]
@@ -82,6 +86,8 @@ class ProductSearchService:
                 search_query,
                 candidate_limit,
                 exact_ids | exclude_ids,
+                category_ids,
+                big_category_id,
             )
             if fuzzy_results and not parsed_query.is_structured:
                 return fuzzy_results[:search_limit]
@@ -93,6 +99,8 @@ class ProductSearchService:
                 snapshot,
                 candidate_limit,
                 exclude_ids,
+                category_ids,
+                big_category_id,
             )
 
         keyword_prefilter_limit = min(
@@ -113,6 +121,8 @@ class ProductSearchService:
                 limit=candidate_limit,
                 candidate_limit=keyword_prefilter_limit,
                 preferred_categories=set(parsed_query.category_terms),
+                category_ids=category_ids,
+                big_category_id=big_category_id,
             )
             vector_results, keyword_results = await asyncio.gather(
                 vector_task,
@@ -125,6 +135,8 @@ class ProductSearchService:
                 limit=candidate_limit,
                 candidate_limit=keyword_prefilter_limit,
                 preferred_categories=set(parsed_query.category_terms),
+                category_ids=category_ids,
+                big_category_id=big_category_id,
             )
 
         if isinstance(vector_results, Exception):
@@ -354,6 +366,8 @@ class ProductSearchService:
         snapshot: ProductSearchDictionarySnapshot,
         candidate_limit: int,
         exclude_ids: set[int],
+        category_ids: tuple[int, ...] | None,
+        big_category_id: int | None,
     ) -> list[ProductSearchResult]:
         preferred_category_aliases = tuple(
             dict.fromkeys(parsed_query.category_terms + parsed_query.product_type_terms)
@@ -369,6 +383,8 @@ class ProductSearchService:
                     terms=[brand],
                     limit=per_brand_limit,
                     preferred_category_aliases=preferred_category_aliases or None,
+                    category_ids=category_ids,
+                    big_category_id=big_category_id,
                 )
                 for row in brand_rows:
                     if row.product_id in seen_ids:
@@ -391,6 +407,8 @@ class ProductSearchService:
                 terms=terms,
                 limit=min(max(candidate_limit * 2, 80), 240),
                 preferred_category_aliases=preferred_category_aliases or None,
+                category_ids=category_ids,
+                big_category_id=big_category_id,
             )
 
         scored_rows: list[tuple[float, ProductSearchDataRow]] = []
