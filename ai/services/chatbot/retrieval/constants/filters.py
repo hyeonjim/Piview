@@ -1,0 +1,90 @@
+AVOID_TERM_ALIASES: dict[str, tuple[str, ...]] = {
+    "향료": (
+        "향료",
+        "fragrance",
+        "parfum",
+        "퍼퓸",
+        "리모넨",
+        "리날룰",
+        "시트랄",
+        "시트로넬올",
+        "제라니올",
+        "쿠마린",
+        "헥실신남알",
+        "하이드록시시트로넬알",
+        "파네솔",
+        "벤질알코올",
+        "벤질살리실레이트",
+        "벤질벤조에이트",
+        "알파-아이소메틸아이오논",
+        "아이소유제놀",
+        "유제놀",
+        "참나무이끼추출물",
+        "나무이끼추출물",
+        "아밀신남알",
+        "아밀신나밀알코올",
+        "아니스알코올",
+        "신남알",
+        "신나밀알코올",
+        "메틸2-옥티노에이트",
+        "부틸페닐메틸프로피오날",
+    ),
+    "알코올": (
+        "알코올",
+        "알코홀",
+        "에탄올",
+        "에틸알코올",
+        "변성알코올",
+        "t-부틸알코올",
+        "alcohol",
+        "ethanol",
+    ),
+    "에센셜오일": (
+        "에센셜오일",
+        "에센셜 오일",
+        "essential oil",
+        "티트리 오일",
+        "베르가모트오일",
+        "광곽향오일",
+        "단향오일",
+        "살비아오일",
+        "라벤더오일",
+        "로즈마리잎오일",
+        "티트리잎오일",
+        "레몬껍질오일",
+        "오렌지껍질오일",
+        "페퍼민트오일",
+        "유칼립투스잎오일",
+    ),
+}
+
+NOISY_AVOID_ALIASES: tuple[str, ...] = ("오일",)
+
+SAFE_FREE_PATTERNS: dict[str, tuple[str, ...]] = {
+    "향료": ("무향료", "향료 무첨가", "fragrance-free", "fragrance free", "parfum-free"),
+    "알코올": ("무알코올", "알코올프리", "알코올 프리", "알코올 무첨가", "alcohol-free"),
+    "에센셜오일": (
+        "에센셜오일 무첨가",
+        "에센셜 오일 무첨가",
+        "essential oil free",
+        "essential-oil-free",
+    ),
+}
+
+STRICT_FILTER_PATTERNS: tuple[str, ...] = (
+    "향료 없",
+    "무향",
+    "알코올 없",
+    "무알코올",
+    "에센셜오일 없",
+    "에센셜 오일 없",
+    "오일도 없",
+    "빼고 추천",
+)
+
+
+CANONICAL_AVOID_TERM_LOOKUP: dict[str, str] = {
+    alias.lower(): canonical_term
+    for canonical_term, aliases in AVOID_TERM_ALIASES.items()
+    for alias in (canonical_term, *aliases)
+}

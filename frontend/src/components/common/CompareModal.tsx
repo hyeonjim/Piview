@@ -87,7 +87,6 @@ export default function CompareModal({
   compareItems,
   onClose,
   isRoutineCompare = false,
-  zIndex,
 }: CompareModalProps) {
   const [leftProduct, rightProduct] = compareItems;
 
@@ -290,7 +289,6 @@ export default function CompareModal({
       style={{
         backgroundColor: "rgba(0,0,0,0.45)",
         backdropFilter: "blur(4px)",
-        ...(zIndex !== undefined && { zIndex }),
       }}
       onClick={onClose}
     >

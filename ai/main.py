@@ -5,7 +5,7 @@ SkinLens FastAPI 서버
 
 엔드포인트:
   POST /skin/predict       ← 피부타입 판정 (건성 / 지성)
-  POST /ocr/extract-text   ← 성분표 OCR + Gemini 정제
+  POST /ocr/extract-text   ← 성분표 OCR + GMS 모델 정제
   GET  /health             ← 서버 상태 확인
 
 실행:
@@ -14,7 +14,8 @@ SkinLens FastAPI 서버
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import skin_type, ocr
+
+from api.routers import chatbot, ocr, skin_type, product_search
 
 app = FastAPI(
     title="SkinLens API",
@@ -31,6 +32,8 @@ app.add_middleware(
 
 app.include_router(skin_type.router, prefix="/skin", tags=["피부타입 분석"])
 app.include_router(ocr.router,       prefix="/ocr",  tags=["성분표 OCR"])
+app.include_router(chatbot.router,   prefix="/chat", tags=["챗봇"])
+app.include_router(product_search.router, prefix="/products", tags=["상품 검색"])
 
 
 @app.get("/health", tags=["서버 상태"])
