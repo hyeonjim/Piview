@@ -7,7 +7,6 @@ import Link from "next/link";
 import EWGIndicator from "./EWGIndicator";
 import CompareIcon from "./CompareIcon";
 import { useLike } from "@/hooks";
-import { fromSkinTypeEnum } from "@/utils/enumConvert";
 
 // ── 인터페이스 ──────────────────────────────────────────────────────
 interface ProductCardProps {
@@ -31,6 +30,10 @@ interface ProductCardProps {
   href?: string;
   /** 액션 버튼 영역 표시 여부 — true 일 때 보유추가/비교 버튼 노출 */
   showActions?: boolean;
+  /** 카테고리 칩 표시 여부 — false 시 칩 숨김, URL 파라미터는 유지 */
+  showCategory?: boolean;
+  /** grid 레이아웃에서 카테고리를 브랜드와 같은 줄에 표시 — true 시 인라인, false(기본) 시 다음 줄 */
+  categoryInline?: boolean;
   /** 루틴추가 콜백 — 넘기면 버튼 표시, 안 넘기면 숨김 */
   onAddRoutine?: () => void;
   /** 루틴 추가 상태 */
@@ -55,36 +58,14 @@ interface ProductCardProps {
   imageContainerClassName?: string;
 }
 
-// 안티에이징 태그를 제외할 카테고리 목록
-// - 스킨케어: 스킨/토너, 로션/에멀젼, 미스트, 토너패드
-// - 클렌징 대분류 (소분류명이 "클렌징"으로 시작)
-// - 선케어, 쉐이빙 대분류
-const ANTI_AGING_EXCLUDED_CATEGORIES = new Set([
-  "스킨/토너",
-  "로션/에멀젼",
-  "미스트",
-  "토너패드",
-  "선케어",
-  "쉐이빙",
-]);
-
-/** 해당 카테고리에서 안티에이징 태그를 숨겨야 하는지 여부 */
-function shouldExcludeAntiAging(category?: string): boolean {
-  if (!category) return false;
-  return (
-    ANTI_AGING_EXCLUDED_CATEGORIES.has(category) ||
-    category.startsWith("클렌징")
-  );
-}
 
 // ── 피부타입 태그 — 미니멀 스타일
 // export: CompareModal 등 공통 사용
+// label은 매핑 단계(productMapper)에서 이미 한글 변환 완료 상태로 전달됨
 export function SkinTypeTag({ label }: { label: string }) {
-  // 영문 API 값("dry", "oily" 등)을 한글로 변환
-  const koreanLabel = fromSkinTypeEnum(label);
   return (
-    <span className="inline-block mb-1 mr-1.5 text-[12px] font-medium px-1.5 py-[1px] rounded bg-[#f7f2ea] text-[#514a42]">
-      {koreanLabel}
+    <span className="inline-block mb-1 mr-1.5 text-[11px] font-medium px-1 rounded bg-[#f5ecdf] text-[#514a42]">
+      {label}
     </span>
   );
 }
@@ -92,7 +73,7 @@ export function SkinTypeTag({ label }: { label: string }) {
 // ── 피부기능 태그 — 미니멀 스타일
 function EffectTag({ label }: { label: string }) {
   return (
-    <span className="inline-block text-[10px] mb-1 mr-1.5 font-medium px-1.5 py-px border rounded-3xl bg-[#fcfcfc] text-[#7a664e]">
+    <span className="inline-block text-[10px] mb-1 mr-1 font-medium px-1.5 py-px border rounded-3xl bg-[#fcfcfc] text-[#7a664e]">
       {label}
     </span>
   );
@@ -101,7 +82,7 @@ function EffectTag({ label }: { label: string }) {
 // ── PICK 배지 — RoutineAddModal의 분홍 스타일로 통일
 function PickBadge() {
   return (
-    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-[10px] uppercase tracking-[0.06em] bg-[#faebf2] text-[#535252]">
+    <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded-[10px] tracking-[0.06em] bg-[#faebf2] text-[#707173]">
       PICK
     </span>
   );
@@ -334,17 +315,14 @@ export default function ProductCard({
   onToggleCompare,
   showLike = true,
   showEwg = true,
+  showCategory = true,
+  categoryInline = false,
   priority = false,
   onToggleLike,
   imageContainerClassName,
 }: ProductCardProps) {
   const { likeList, toggleLike } = useLike();
   const isLiked = !!likeList[String(id)];
-
-  // 해당 카테고리에서 안티에이징 태그 제외
-  const displayEffects = shouldExcludeAntiAging(category)
-    ? effects.filter((e) => e !== "안티에이징")
-    : effects;
 
   // 상세페이지 링크 — href prop 우선, 없으면 category searchParam 포함
   const productHref =
@@ -428,11 +406,25 @@ export default function ProductCard({
 
           {/* 텍스트 영역 — 같은 행 카드 높이 통일 (grid items-stretch) + 태그 전체 표시 */}
           <div className="px-3 pt-3 pb-2.5 flex-1">
-            {/* 브랜드명 + 카테고리 한 줄 */}
-            <div className="flex items-center gap-1.5 mb-1">
-              <BrandLabel brand={brand} />
-              {category && <CategoryChip category={category} />}
-            </div>
+            {categoryInline ? (
+              /* 브랜드 + 카테고리 한 줄 (likes 페이지 등) */
+              <div className="flex items-center gap-1.5">
+                <BrandLabel brand={brand} />
+                {showCategory && category && <CategoryChip category={category} />}
+              </div>
+            ) : (
+              /* 카테고리 위, 브랜드 아래 (OwnedTab 등) */
+              <>
+                {showCategory && category && (
+                  <div>
+                    <CategoryChip category={category} />
+                  </div>
+                )}
+                <div className="mb-1">
+                  <BrandLabel brand={brand} />
+                </div>
+              </>
+            )}
             <p className="text-[14px] font-semibold text-[#4d4237] leading-[1.4] line-clamp-2">
               {name}
             </p>
@@ -445,9 +437,9 @@ export default function ProductCard({
               </div>
             )}
             {/* 피부기능 태그 — 피부타입 다음 줄 */}
-            {displayEffects.length > 0 && (
+            {effects.length > 0 && (
               <div className="flex flex-wrap mt-0.5">
-                {displayEffects.map((effect) => (
+                {effects.map((effect) => (
                   <EffectTag key={effect} label={effect} />
                 ))}
               </div>
@@ -476,7 +468,7 @@ export default function ProductCard({
           <div className="flex-1 px-3 py-4">
             <div className="flex items-center gap-1.5 flex-wrap">
               <BrandLabel brand={brand} />
-              {category && <CategoryChip category={category} />}
+              {showCategory && category && <CategoryChip category={category} />}
             </div>
             <p className="mt-0.75 m-0 text-[16px] font-bold text-[var(--color-text-primary)] leading-[1.4]">
               {name}
@@ -497,9 +489,9 @@ export default function ProductCard({
                     <SkinTypeTag key={skinType} label={skinType} />
                   ))}
                 </div>
-                {displayEffects.length > 0 && (
+                {effects.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-0.5">
-                    {displayEffects.map((effect) => (
+                    {effects.map((effect) => (
                       <EffectTag key={effect} label={effect} />
                     ))}
                   </div>
@@ -572,7 +564,7 @@ export default function ProductCard({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <BrandLabel brand={brand} />
-                {category && <CategoryChip category={category} />}
+                {showCategory && category && <CategoryChip category={category} />}
               </div>
               <div className="flex items-center gap-1">
                 {showLike && (
@@ -621,9 +613,9 @@ export default function ProductCard({
             )}
 
             {/* 효과 태그 */}
-            {displayEffects.length > 0 && (
+            {effects.length > 0 && (
               <div className="flex flex-wrap mt-0.5">
-                {displayEffects.map((effect) => (
+                {effects.map((effect) => (
                   <EffectTag key={effect} label={effect} />
                 ))}
               </div>
@@ -682,7 +674,7 @@ export default function ProductCard({
         <div className="px-3.5 pt-3 pb-3.5">
           <div className="flex items-center gap-1.5 flex-wrap mb-1">
             <BrandLabel brand={brand} />
-            {category && <CategoryChip category={category} />}
+            {showCategory && category && <CategoryChip category={category} />}
             {showPickBadge && <PickBadge />}
           </div>
 
@@ -696,9 +688,9 @@ export default function ProductCard({
                 <SkinTypeTag key={skinType} label={skinType} />
               ))}
             </div>
-            {displayEffects.length > 0 && (
+            {effects.length > 0 && (
               <div className="flex flex-wrap gap-0.75 mt-0.5">
-                {displayEffects.map((effect) => (
+                {effects.map((effect) => (
                   <EffectTag key={effect} label={effect} />
                 ))}
               </div>

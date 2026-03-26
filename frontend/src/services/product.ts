@@ -101,10 +101,7 @@ export const productService = {
       .then((res) => res.data.data),
 
   // GET /api/v1/dynamic/recommendations — 행동 데이터 기반 맞춤 추천
-  getDynamicRecommendations: (params: {
-    bigCategoryId?: number;
-    categoryId?: number;
-  }): Promise<ProductPageResponse> =>
+  getDynamicRecommendations: (params: ProductSearchParams): Promise<ProductPageResponse> =>
     client
       .get<ApiResponse<ProductPageResponse>>("/dynamic/recommendations", { params })
       .then((res) => res.data.data),

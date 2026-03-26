@@ -521,7 +521,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             <p className="text-[15px] font-bold text-text-secondary">My routine list</p>
             <button
               onClick={handleNewRoutine}
-              className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full text-[14px] text-white cursor-pointer bg-[#e6e2c0] shadow-xs active:scale-[0.97] transition-transform"
+              className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full text-[14px] text-white cursor-pointer bg-[#d9d6bd] shadow-xs active:scale-[0.97] transition-transform"
             >
               <Plus size={12} /> New
             </button>
