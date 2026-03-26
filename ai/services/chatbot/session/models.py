@@ -10,6 +10,7 @@ class SessionSnapshot:
     recent_user_messages: list[str] = field(default_factory=list)
     recent_answers: list[str] = field(default_factory=list)
     recent_product_ids: list[int] = field(default_factory=list)
+    recent_slots: dict[str, object] = field(default_factory=dict)
 
     @property
     def has_history(self) -> bool:
@@ -24,6 +25,7 @@ class SessionSnapshot:
             "recentUserMessages": self.recent_user_messages,
             "recentAnswers": self.recent_answers,
             "recentProductIds": self.recent_product_ids,
+            "recentSlots": self.recent_slots,
         }
 
     def to_llm_payload(self) -> dict[str, object]:
@@ -33,6 +35,12 @@ class SessionSnapshot:
             payload["screen"] = self.screen
         if self.recent_user_messages:
             payload["recentUserMessages"] = [self.recent_user_messages[-1]]
+        if self.recent_answers:
+            payload["recentAnswers"] = [self.recent_answers[-1]]
+        if self.recent_product_ids:
+            payload["recentProductIds"] = self.recent_product_ids[:3]
+        if self.recent_slots:
+            payload["recentSlots"] = self.recent_slots
         return payload
 
 
@@ -41,6 +49,8 @@ class StoredTurn:
     user_message: str
     answer: str
     product_ids: list[int]
+    normalized_user_message: str | None = None
+    slots: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass
