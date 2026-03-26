@@ -58,7 +58,6 @@ interface ProductCardProps {
   imageContainerClassName?: string;
 }
 
-
 // ── 피부타입 태그 — 미니멀 스타일
 // export: CompareModal 등 공통 사용
 // label은 매핑 단계(productMapper)에서 이미 한글 변환 완료 상태로 전달됨
@@ -91,9 +90,7 @@ function PickBadge() {
 // ── 브랜드 라벨 — 작고 연한 스타일
 function BrandLabel({ brand }: { brand: string }) {
   return (
-    <span className="text-[12px] font-semibold text-[#604e36]">
-      {brand}
-    </span>
+    <span className="text-[12px] font-semibold text-[#604e36]">{brand}</span>
   );
 }
 
@@ -162,7 +159,10 @@ function CompareButton({
       }`}
       title={isInCompare ? "비교 선택됨" : "비교하기"}
     >
-      <CompareIcon size={isSmall ? 16 : 14} color={isInCompare ? "white" : "#887a67"} />
+      <CompareIcon
+        size={isSmall ? 16 : 14}
+        color={isInCompare ? "white" : "#887a67"}
+      />
     </button>
   );
 }
@@ -203,7 +203,6 @@ function OwnedButton({
     </button>
   );
 }
-
 
 // ── 제품 이미지 — onError로 broken 이미지 fallback 처리
 // fill 모드와 fixed size 모드를 모두 지원
@@ -351,7 +350,7 @@ export default function ProductCard({
   if (layout === "grid") {
     return (
       <div
-        className="relative flex flex-col overflow-hidden bg-white rounded-2xl w-full min-w-0 border border-[#ede8e0] transition-shadow duration-200"
+        className="relative flex flex-col overflow-hidden bg-white rounded-2xl w-full h-full min-w-0 border border-[#ede8e0] transition-shadow duration-200"
         style={{
           boxShadow:
             "0 1px 2px rgba(0,0,0,0.04), 0 3px 7px rgba(180,155,120,0.09), 0 7px 18px rgba(0,0,0,0.06), 0 14px 32px rgba(180,155,120,0.04)",
@@ -410,7 +409,9 @@ export default function ProductCard({
               /* 브랜드 + 카테고리 한 줄 (likes 페이지 등) */
               <div className="flex items-center gap-1.5">
                 <BrandLabel brand={brand} />
-                {showCategory && category && <CategoryChip category={category} />}
+                {showCategory && category && (
+                  <CategoryChip category={category} />
+                )}
               </div>
             ) : (
               /* 카테고리 위, 브랜드 아래 (OwnedTab 등) */
@@ -520,7 +521,7 @@ export default function ProductCard({
     );
   }
 
-    // ── 3. MODAL VARIANT ──────────────────────────────────────────────
+  // ── 3. MODAL VARIANT ──────────────────────────────────────────────
   if (variant === "modal") {
     return (
       <div
@@ -543,85 +544,92 @@ export default function ProductCard({
 
         {/* 제품 정보 행 — 클릭 시 상세 페이지 이동 */}
         <Link href={productHref} className="no-underline">
-        <div className="flex items-center gap-2">
-          {/* 이미지 */}
-          <div className="relative w-20 h-20 shrink-0">
-            <div className={`w-full h-full flex items-center rounded-xl bg-[#faf9f7] overflow-hidden${imageContainerClassName ? ` ${imageContainerClassName}` : " mt-5"}`}>
-              <ProductImage
-                imageUrl={imageUrl}
-                name={name}
-                emoji={emoji}
-                width={80}
-                height={80}
-                className="object-cover"
-              />
-            </div>
-          </div>
-
-          {/* 텍스트 영역 */}
-          <div className="flex-1 min-w-0">
-            {/* 브랜드 + 카테고리 + 좋아요/비교 버튼 */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <BrandLabel brand={brand} />
-                {showCategory && category && <CategoryChip category={category} />}
-              </div>
-              <div className="flex items-center gap-1">
-                {showLike && (
-                  <button
-                    onClick={handleLike}
-                    className="flex items-center justify-center w-7 h-7 rounded-full border-none cursor-pointer transition-all active:scale-[0.97] bg-transparent"
-                  >
-                    <Heart
-                      size={16}
-                      className="transition-all duration-150"
-                      style={{
-                        color: isLiked ? "#f27b66" : "#d9d5d0",
-                        fill: isLiked ? "#f27b66" : "none",
-                      }}
-                    />
-                  </button>
-                )}
-                {onToggleCompare && (
-                  <button
-                    onClick={(event) => handleAction(event, onToggleCompare)}
-                    className={[
-                      "flex items-center justify-center gap-1 h-5 px-1.5 rounded-[18px] text-[11px] font-semibold cursor-pointer transition-all active:scale-[0.97] shrink-0 border",
-                      isInCompare
-                        ? "border-[#e6aa84] bg-[#e6aa84] text-white"
-                        : "border-category-pill-default-border bg-white text-[#887a67]",
-                    ].join(" ")}
-                  >
-                    <CompareIcon size={14} color={isInCompare ? "white" : "#887a67"} />
-                  </button>
-                )}
+          <div className="flex items-center gap-2">
+            {/* 이미지 */}
+            <div className="relative w-20 h-20 shrink-0">
+              <div
+                className={`w-full h-full flex items-center rounded-xl bg-[#faf9f7] overflow-hidden${imageContainerClassName !== undefined && imageContainerClassName !== null ? (imageContainerClassName ? ` ${imageContainerClassName}` : "") : " mt-5"}`}
+              >
+                <ProductImage
+                  imageUrl={imageUrl}
+                  name={name}
+                  emoji={emoji}
+                  width={80}
+                  height={80}
+                  className="object-cover"
+                />
               </div>
             </div>
 
-            {/* 제품명 */}
-            <p className="text-[14px] font-semibold text-[#61574e] leading-[1.4] line-clamp-2 mb-2">
-              {name}
-            </p>
-
-            {/* 피부타입 태그 */}
-            {skinTypes.length > 0 && (
-              <div className="flex flex-wrap mt-1.5">
-                {skinTypes.map((skinType) => (
-                  <SkinTypeTag key={skinType} label={skinType} />
-                ))}
+            {/* 텍스트 영역 */}
+            <div className="flex-1 min-w-0">
+              {/* 브랜드 + 카테고리 + 좋아요/비교 버튼 */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <BrandLabel brand={brand} />
+                  {showCategory && category && (
+                    <CategoryChip category={category} />
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  {showLike && (
+                    <button
+                      onClick={handleLike}
+                      className="flex items-center justify-center w-7 h-7 rounded-full border-none cursor-pointer transition-all active:scale-[0.97] bg-transparent"
+                    >
+                      <Heart
+                        size={16}
+                        className="transition-all duration-150"
+                        style={{
+                          color: isLiked ? "#f27b66" : "#d9d5d0",
+                          fill: isLiked ? "#f27b66" : "none",
+                        }}
+                      />
+                    </button>
+                  )}
+                  {onToggleCompare && (
+                    <button
+                      onClick={(event) => handleAction(event, onToggleCompare)}
+                      className={[
+                        "flex items-center justify-center gap-1 h-5 px-1.5 rounded-[18px] text-[11px] font-semibold cursor-pointer transition-all active:scale-[0.97] shrink-0 border",
+                        isInCompare
+                          ? "border-[#e6aa84] bg-[#e6aa84] text-white"
+                          : "border-category-pill-default-border bg-white text-[#887a67]",
+                      ].join(" ")}
+                    >
+                      <CompareIcon
+                        size={14}
+                        color={isInCompare ? "white" : "#887a67"}
+                      />
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
 
-            {/* 효과 태그 */}
-            {effects.length > 0 && (
-              <div className="flex flex-wrap mt-0.5">
-                {effects.map((effect) => (
-                  <EffectTag key={effect} label={effect} />
-                ))}
-              </div>
-            )}
+              {/* 제품명 */}
+              <p className="text-[14px] font-semibold text-[#61574e] leading-[1.4] line-clamp-2 mb-2">
+                {name}
+              </p>
+
+              {/* 피부타입 태그 */}
+              {skinTypes.length > 0 && (
+                <div className="flex flex-wrap mt-1.5">
+                  {skinTypes.map((skinType) => (
+                    <SkinTypeTag key={skinType} label={skinType} />
+                  ))}
+                </div>
+              )}
+
+              {/* 효과 태그 */}
+              {effects.length > 0 && (
+                <div className="flex flex-wrap mt-0.5">
+                  {effects.map((effect) => (
+                    <EffectTag key={effect} label={effect} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
         </Link>
 
         {/* 루틴추가 버튼 — 중앙 배치 */}
@@ -649,7 +657,6 @@ export default function ProductCard({
             </button>
           </div>
         )}
-
       </div>
     );
   }
@@ -658,7 +665,9 @@ export default function ProductCard({
   return (
     <div
       className="relative flex flex-col overflow-hidden w-full bg-white rounded-[10px] border border-[var(--color-border)]"
-      style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.10), 0 8px 28px rgba(0,0,0,0.16)" }}
+      style={{
+        boxShadow: "0 2px 8px rgba(0,0,0,0.10), 0 8px 28px rgba(0,0,0,0.16)",
+      }}
     >
       <Link href={productHref} className="no-underline">
         <div className="relative h-27 overflow-hidden">
