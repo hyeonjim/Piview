@@ -2,7 +2,9 @@ package com.piview.backend.domain.chatbot.service;
 
 import com.piview.backend.domain.chatbot.dto.request.ChatbotQueryRequest;
 import com.piview.backend.domain.chatbot.dto.response.ChatbotQueryResponse;
+import com.piview.backend.domain.product.catalog.repository.ProductRepository;
 import com.piview.backend.domain.product.catalog.dto.ProductSummaryResponse;
+import com.piview.backend.domain.product.entity.Product;
 import com.piview.backend.domain.routine.item.dto.MyCosResponseDto;
 import com.piview.backend.domain.routine.item.service.MyCosService;
 import com.piview.backend.domain.user.disliked.dto.response.DislikedIngredientSummaryResponse;
@@ -10,6 +12,7 @@ import com.piview.backend.domain.user.disliked.dto.response.DislikedProductSumma
 import com.piview.backend.domain.user.disliked.service.UserDislikedProductService;
 import com.piview.backend.domain.user.profile.dto.response.UserProfileResponse;
 import com.piview.backend.domain.user.profile.service.UserProfileService;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ChatbotService {
 
     private final ChatbotAiClient chatbotAiClient;
+    private final ProductRepository productRepository;
     private final UserProfileService userProfileService;
     private final MyCosService myCosService;
     private final UserDislikedProductService userDislikedProductService;
@@ -131,14 +135,48 @@ public class ChatbotService {
             return List.of();
         }
 
+        // 여러 상품이 한 번에 와도 productId들을 모아 한 번에 조회하고,
+        // 조회 결과를 productId -> imageUrl 맵으로 만든 뒤 원래 AI 응답 순서를 유지한 채 다시 붙인다.
+        //
+        // 여기서 예외를 일부러 만들지 않는 기준:
+        // - productId가 null이면 imageUrl도 null
+        // - DB에 해당 productId가 없으면 imageUrl도 null
+        // - 상품은 있지만 이미지가 없으면 imageUrl도 null
+        //
+        // 즉 "이미지 보강 실패"는 추천 전체를 깨지 않고 해당 항목만 null 처리한다.
+        Map<Long, String> imageUrlsByProductId = resolveImageUrls(products);
         return products.stream()
             .map(product -> new ChatbotQueryResponse.ChatbotProductCandidate(
                 product.productId(),
                 product.name(),
                 product.brandName(),
+                product.productId() != null ? imageUrlsByProductId.get(product.productId()) : null,
                 product.reason()
             ))
             .toList();
+    }
+
+    private Map<Long, String> resolveImageUrls(List<ChatbotAiProductCandidate> products) {
+        // 중복 productId가 여러 번 언급되더라도 DB는 한 번만 조회한다.
+        List<Long> productIds = products.stream()
+            .map(ChatbotAiProductCandidate::productId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+        if (productIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, String> imageUrlsByProductId = new HashMap<>();
+        for (Product product : productRepository.findByProductIdIn(productIds)) {
+            // DB에 존재하는 상품만 맵에 들어간다.
+            // image가 없는 상품은 null 값을 넣어 "조회는 됐지만 이미지 없음" 상태를 명시한다.
+            imageUrlsByProductId.put(
+                product.getProductId(),
+                product.getImage() != null ? product.getImage().getUrl() : null
+            );
+        }
+        return imageUrlsByProductId;
     }
 
     private List<ChatbotQueryResponse.ChatbotCitation> toCitations(List<ChatbotAiCitation> citations) {
