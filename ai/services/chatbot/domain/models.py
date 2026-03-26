@@ -4,7 +4,6 @@ from typing import Any, Literal, TypeAlias
 
 ResponseType: TypeAlias = Literal[
     "product_recommendation",
-    "clarifying_question",
     "informational",
     "fallback",
 ]
