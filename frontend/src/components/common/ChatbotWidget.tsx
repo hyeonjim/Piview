@@ -161,10 +161,10 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
                     className={`flex flex-col gap-2 ${msg.role === "user" ? "items-end" : "items-start"}`}
                   >
                     <div
-                      className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed ${
-                        msg.role === "user"
-                          ? "bg-[var(--color-brand)] text-white rounded-br-sm"
-                          : "bg-[#f7f5f1] text-[var(--color-text-primary)] rounded-bl-sm"
+                      className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-[14px] leading-relaxed whitespace-pre-wrap ${
+                        message.role === "user"
+                          ? "bg-[#e0e3f7] text-[var(--color-text-primary)]"
+                          : "bg-[#f1f4f5] text-[var(--color-text-primary)] rounded-bl-sm"
                       }`}
                     >
                       {msg.content}

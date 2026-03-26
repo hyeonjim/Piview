@@ -94,7 +94,7 @@ export default function ProductSearchModal({
 
           {/* ── 헤더 ─────────────────────────────────────────────── */}
           <div className="flex items-center justify-between px-5 pt-5 shrink-0">
-            <h3 className="text-[16px] font-bold text-text-primary">제품 추가</h3>
+            <h3 className="text-[16px] font-bold text-[#575655]">제품 추가</h3>
             <button
               onClick={onClose}
               className="flex items-center justify-center w-7 h-7 cursor-pointer"
@@ -106,9 +106,9 @@ export default function ProductSearchModal({
           {/* ── 제품 그리드 + 페이지네이션 (스크롤 영역) ─────────── */}
           <div className="flex-1 overflow-y-auto">
             {/* 검색바 — 스크롤 영역 내에 포함하여 같이 스크롤됨 */}
-            <div className="relative px-5 py-3">
+            <div className="relative px-5 py-2">
               <Search
-                size={16}
+                size={14}
                 className="absolute left-8 top-1/2 -translate-y-1/2 pointer-events-none text-text-stone"
               />
               <input
@@ -123,7 +123,7 @@ export default function ProductSearchModal({
                   onClick={() => handleSearchChange("")}
                   className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-border-warm border-none cursor-pointer"
                 >
-                  <X size={12} color="#888" />
+                  <X size={14} color="#888" />
                 </button>
               )}
             </div>
@@ -149,7 +149,7 @@ export default function ProductSearchModal({
                   <p className="text-xs mt-1">검색어나 카테고리를 바꿔보세요</p>
                 </div>
               ) : (
-                <div className="product-search-modal-grid grid grid-cols-2 gap-4 items-start">
+                <div className="product-search-modal-grid grid grid-cols-2 gap-4 auto-rows-fr items-stretch">
                   {products.map((product) => {
                     const productId = product.id as number;
 
@@ -157,7 +157,7 @@ export default function ProductSearchModal({
                       const ownedEntry = getOwnedEntry(productId);
                       const alreadyOwned = !!ownedEntry;
                       return (
-                        <div key={productId} className="relative">
+                        <div key={productId} className="relative flex flex-col h-full">
                           <ProductCard
                             id={productId}
                             brand={product.brand}
@@ -180,7 +180,7 @@ export default function ProductSearchModal({
                                 addMyCos(productId);
                               }
                             }}
-                            className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full border-none cursor-pointer z-10 text-[16px] font-bold transition-colors shadow-sm ${
+                            className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full border-none cursor-pointer z-10 text-[15px] font-bold transition-colors shadow-sm ${
                               alreadyOwned
                                 ? "bg-[#F2EFE9] text-[#A69D92]"
                                 : "bg-brand text-white"
@@ -196,7 +196,7 @@ export default function ProductSearchModal({
                     const dislikedEntry = getDislikedEntry(productId);
                     const isDisliked = !!dislikedEntry;
                     return (
-                      <div key={productId} className="relative">
+                      <div key={productId} className="relative flex flex-col h-full">
                         <ProductCard
                           id={productId}
                           brand={product.brand}
@@ -208,6 +208,7 @@ export default function ProductSearchModal({
                           layout="grid"
                           showLike={false}
                           showActions={false}
+                          isOwned={isDisliked}
                         />
                         {/* 추가/제거 토글 버튼 오버레이 */}
                         <button
@@ -218,10 +219,10 @@ export default function ProductSearchModal({
                               addDisliked(productId);
                             }
                           }}
-                          className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full border-none cursor-pointer z-10 text-xs font-bold transition-colors shadow-sm ${
+                          className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full border-none cursor-pointer z-10 text-[18px] font-bold transition-colors shadow-sm ${
                             isDisliked
-                              ? "bg-[#FEF2F2] text-danger"
-                              : "bg-[#F5F3EE] text-text-muted"
+                              ? "bg-[#F2EFE9] text-[#A69D92]"
+                              : "bg-brand text-white"
                           }`}
                         >
                           {isDisliked ? "−" : "+"}

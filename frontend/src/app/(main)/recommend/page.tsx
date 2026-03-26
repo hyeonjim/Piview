@@ -120,12 +120,10 @@ export default function RecommendPage() {
       {/* 상단 헤더 */}
       <div className="bg-[#faf8f5] pt-[5px]">
         <div className="px-5 pt-4 pb-3">
-          <h1 className="mt-0.75 mb-1 text-[20px] font-semibold text-[#635446] tracking-[-0.3px] leading-[1.2]">
+          <h1 className="mt-0.75 mb-2 text-[20px] font-semibold text-[#635446] tracking-[-0.3px] leading-[1.2]">
             Recommend
           </h1>
-          <p className="mb-3.5 text-[13px] text-[var(--color-text-sub)]">
-            최근 관심 제품을 기반으로 추천해드려요
-          </p>
+          <p className="font-semibold text-[#635446] text-[14px]">맞춤형 제품을 추천받을 수 있습니다</p>
         </div>
       </div>
 

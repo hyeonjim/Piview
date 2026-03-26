@@ -96,7 +96,7 @@ export default function OwnedTab() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-3 mt-5 items-stretch [&_p.line-clamp-2]:text-[14px]!">
+            <div className="grid grid-cols-3 gap-3 mt-5 [&_p.line-clamp-2]:text-[12px]!">
               {pagedOwned.map((product) => (
                 <div key={product.id} className="relative h-full flex flex-col">
                   <ProductCard
@@ -154,7 +154,7 @@ export default function OwnedTab() {
           <p className="text-[13px] font-semibold text-[#787879] mt-0.5">
             {dislikedItems.length}개 등록됨
             <br />
-            등록된 제품은 추천에서 제외됩니다
+            등록된 제품의 알러지를 포함한 제품은 추천에서 제외됩니다
           </p>
         </div>
 
@@ -173,7 +173,7 @@ export default function OwnedTab() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-3 mt-5 items-stretch [&_p.line-clamp-2]:text-[14px]!">
+            <div className="grid grid-cols-3 gap-3 mt-5 [&_p.line-clamp-2]:text-[12px]!">
               {pagedAvoid.map((item) => (
                 <div
                   key={item.dislikedProductId}

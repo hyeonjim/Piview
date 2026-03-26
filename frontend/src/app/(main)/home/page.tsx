@@ -58,10 +58,10 @@ export default function HomePage() {
             {greeting.text}
           </span>
         </div>
-        <h1 className="my-2 text-[18px] font-semibold text-[#6c6b66] tracking-[-0.5px] leading-[1.2]">
+        <h1 className="my-1 text-[18px] font-semibold text-[#63615e] tracking-[-0.5px] leading-[1.2]">
           {nickname}님,
         </h1>
-        <p className="mt-1 text-sm text-[#4e4b47]">
+        <p className="mt-1 text-sm text-[#64615e]">
           오늘의 스킨케어 루틴을 확인하세요
         </p>
       </div>
@@ -73,11 +73,11 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1.5 text-[16px] font-bold text-[#52514d] uppercase [font-family:var(--font-english),serif]">
-                <ChessQueen size={16} className="text-[#52514d]" />
+                <ChessQueen size={16} className="text-[#52514d] mb-1" />
                 Main routine
               </span>
               {hasRoutine && (
-                <span className="text-[12px] font-medium py-0.5 px-2 rounded-full bg-[#f1f2f4] text-[#70685d]">
+                <span className="text-[13px] font-semibold py-0.5 px-2 mb-1 rounded-full bg-[#edeef0] text-[#70685d]">
                   {mainRoutineItems.length}단계
                 </span>
               )}
@@ -86,7 +86,7 @@ export default function HomePage() {
               <Link href="/mypage">
                 <span className="flex mr-5 items-center gap-1 text-[14px] text-[#A69D92]">
                   {mainRoutineData?.title && (
-                    <span className="text-[14px] font-semibold text-[#8a7f74] truncate max-w-28 mr-0.5">
+                    <span className="text-[14px] font-semibold text-[#6e6861] truncate max-w-28 mr-0.5">
                       {mainRoutineData.title}
                     </span>
                   )}
@@ -111,7 +111,7 @@ export default function HomePage() {
                   className="flex items-center py-2.5 first:pt-1 last:pb-1"
                 >
                   {/* 스텝 번호 뱃지 */}
-                  <div className="shrink-0 w-6 h-6 rounded-full bg-[#f1f2f4] flex items-center justify-center">
+                  <div className="shrink-0 w-6 h-6 rounded-full bg-[#edeef0] flex items-center justify-center">
                     <span className="text-[16px] font-bold text-[#756f67] [font-family:var(--font-english),serif]">
                       {String(index + 1).padStart(2, "0")}
                     </span>

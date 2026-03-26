@@ -595,7 +595,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       <div className="flex flex-col gap-1 mb-1">
         {/* 루틴 이름 & 메인 루틴 설정 버튼 & 액션 버튼 */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1 min-w-0">
             {/* ★ 클릭 시 현재 선택된(펼쳐진) 루틴을 바로 메인으로 설정 */}
             <button
               onClick={() => {
@@ -652,7 +652,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               <button
                 onClick={handleOpenEditSaveModal}
                 disabled={isUpdating}
-                className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#dde1e2] disabled:opacity-50"
+                className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#dde1e2] text-[#3f3e3d] disabled:opacity-50"
               >
                 {isUpdating ? "저장 중..." : "Edit Save"}
               </button>
@@ -690,10 +690,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
           </div>
         </div>
 
-        <p className="text-[13px] font-semibold text-text-muted">
-          클릭 시 메인루틴으로 변경
-          <br />
-          Edit Mode에서 루틴변경가능
+        <p className="text-[13px] font-semibold text-[#6e6e6d]">
+          클릭시 메인루틴으로 변경 
+          <br />Edit Mode에서 루틴변경가능
         </p>
       </div>
 
@@ -708,12 +707,10 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             {/* 스텝 섹션 헤더 */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-[#f2efe9] rounded-full px-2.5 py-1">
-                  <span className="text-[12px] font-semibold text-[#746f68]">
-                    {stepIndex + 1}단계
-                  </span>
+                <div className="flex items-center gap-1 bg-[#f2efe9] rounded-full px-2 py-1">
+                  <span className="text-[13px] font-semibold text-[#746f68]">{stepIndex + 1}단계</span>
                 </div>
-                <span className="text-[15px] font-semibold text-text-secondary">
+                <span className="text-[15px] font-semibold text-[#4e4e4d]">
                   {step.label}
                 </span>
               </div>
@@ -945,14 +942,16 @@ function RoutineProductCard({
         transition: "opacity 0.15s, border-color 0.1s",
       }}
     >
-      {/* 삭제 버튼 */}
-      <button
-        onClick={() => onRemove(product.productId)}
-        className="absolute top-1 right-1 z-10 w-5 h-5 flex items-center justify-center cursor-pointer bg-transparent border-none"
-        aria-label="제품 삭제"
-      >
-        <X size={16} className="text-[#C4BEB7]" />
-      </button>
+      {/* 삭제 버튼 — Edit Mode일 때만 표시 */}
+      {isEditMode && (
+        <button
+          onClick={() => onRemove(product.productId)}
+          className="absolute top-2 right-1 z-10 w-8 h-5 flex items-center justify-center cursor-pointer bg-transparent border-none"
+          aria-label="제품 삭제"
+        >
+          <X size={17} className="text-[#979490]" />
+        </button>
+      )}
 
       <div className="flex items-center h-full">
         {/* 이미지 영역 — edit mode일 때만 드래그 핸들 활성화 */}
