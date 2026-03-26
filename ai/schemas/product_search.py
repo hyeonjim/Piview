@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 
-class ProductseachResultItem(BaseModel):
+class ProductSearchResultItem(BaseModel):
     productId: int
     rawScore: float | None = None
     distance: float | None = None
