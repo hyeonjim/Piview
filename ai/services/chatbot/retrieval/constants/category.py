@@ -2,7 +2,17 @@ CATEGORY_HINTS: dict[str, tuple[str, ...]] = {
     "toner": ("토너", "스킨", "화장수", "토닝", "스킨/토너", "토너패드", "toner", "skin toner"),
     "mist": ("미스트", "mist"),
     "cream": ("크림", "cream", "moisturizer", "moisturiser"),
-    "lotion": ("로션", "에멀전", "에멀젼", "lotion", "emulsion"),
+    "lotion": (
+        "로션",
+        "에멀전",
+        "에멀젼",
+        "올인원",
+        "all in one",
+        "all-in-one",
+        "allinone",
+        "lotion",
+        "emulsion",
+    ),
     "serum": (
         "세럼",
         "앰플",
