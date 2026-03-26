@@ -35,6 +35,11 @@ public record ChatbotQueryResponse(
         @Schema(description = "브랜드명입니다.", nullable = true, example = "엘보라리오")
         String brandName,
 
+        // imageUrl은 AI가 생성하지 않고, backend가 productId 기준으로 DB에서 조회해 보강합니다.
+        // 따라서 productId가 없거나 DB에 이미지가 없으면 null로 내려갈 수 있습니다.
+        @Schema(description = "상품 대표 이미지 URL입니다.", nullable = true, example = "https://piview-products-images.s3.ap-northeast-2.amazonaws.com/products/glowpick_images/5825.jpg")
+        String imageUrl,
+
         @Schema(description = "왜 이 상품이 같이 제시되었는지 보여주는 짧은 설명입니다. 카테고리, 관련 고민, 피부타입 힌트, 성분 메모 등이 들어갈 수 있습니다.", nullable = true, example = "크림 카테고리 / 관련 고민 수분, 진정 / 피부타입 힌트 dry")
         String reason
     ) {
