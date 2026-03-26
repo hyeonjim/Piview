@@ -5,12 +5,16 @@ GREETING_PATTERNS: Final[tuple[str, ...]] = (
     "hi",
     "hello",
     "hey",
+    "gamini",
     "안녕",
     "안녕하세요",
     "하이",
     "ㅎㅇ",
     "반가워",
     "반가워요",
+    "가민",
+    "가민이",
+    "가민아",
 )
 
 GREETING_FILLER_PATTERNS: Final[tuple[str, ...]] = (
@@ -121,6 +125,9 @@ SEMANTIC_ROUTE_EXAMPLES: Final[dict[str, tuple[str, ...]]] = {
         "하이",
         "고마워",
         "반가워",
+        "가민아",
+        "가민아~",
+        "가민이",
         "ㅋㅋ",
         "ㅋㅋㅋㅋ",
         "ㅋㄷㅋㄷㅋㅋㅋ",

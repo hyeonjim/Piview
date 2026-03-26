@@ -10,7 +10,11 @@ from uuid import uuid4
 
 from services.chatbot.domain import ClientContext, QueryRequest, QueryResponse
 from services.chatbot.intent import chatbot_intent_router
-from services.chatbot.generation.helpers import build_effective_client_context
+from services.chatbot.intent.models import IntentDecision
+from services.chatbot.generation.helpers import (
+    build_effective_client_context,
+    build_effective_llm_session_context,
+)
 from services.chatbot.generation.postprocess import postprocess_answer
 from services.chatbot.generation.templates import (
     build_fallback_answer,
@@ -45,15 +49,18 @@ class ChatbotService:
             user_id=request.user_context.user_id if request.user_context else None,
         )
         session_context = session_snapshot.to_prompt_payload()
-        prompt_session_context = session_snapshot.to_llm_payload()
         client_context = build_effective_client_context(request, session_context)
         intent_decision = chatbot_intent_router.route(
             request,
             session_context=session_context,
         )
+        prompt_session_context = build_effective_llm_session_context(
+            session_snapshot.to_llm_payload(),
+            intent_decision,
+        )
         if intent_decision.matched_rule == "nonsense_input":
             retrieval_bundle = self._build_no_retrieval_bundle(intent_decision)
-            answer = build_nonsense_answer()
+            answer = build_nonsense_answer(request, session_context=session_context)
             response_type = retrieval_bundle.response_type
         elif intent_decision.matched_rule in {"followup_needs_context", "constraint_needs_context"}:
             retrieval_bundle = self._build_no_retrieval_bundle(intent_decision)
@@ -64,11 +71,15 @@ class ChatbotService:
             answer = build_greeting_answer()
             response_type = retrieval_bundle.response_type
         else:
-            retrieval_bundle = await self._retrieve_bundle(
-                request,
-                intent_decision=intent_decision,
-                session_context=session_context,
-            )
+            try:
+                retrieval_bundle = await self._retrieve_bundle(
+                    request,
+                    intent_decision=intent_decision,
+                    session_context=session_context,
+                )
+            except RuntimeError as exc:
+                logger.warning("Chatbot retrieval fell back to no-search response: %s", exc)
+                retrieval_bundle = self._build_retrieval_failure_bundle(intent_decision)
         response_type = retrieval_bundle.response_type
         if intent_decision.intent_type != "greeting_chitchat" and intent_decision.matched_rule not in {
             "nonsense_input",
@@ -175,6 +186,22 @@ class ChatbotService:
             retrieval_context=(
                 "이번 응답은 상품 검색을 실행하지 않고 일반 안내로 처리해야 합니다. "
                 "특정 상품이나 성분 사실을 단정하지 말고, 일반적인 화장품 선택 기준이나 사용 팁만 실용적으로 안내하세요."
+            ),
+        )
+
+    def _build_retrieval_failure_bundle(self, intent_decision: IntentDecision) -> RetrievalBundle:
+        return RetrievalBundle(
+            response_type="fallback",
+            applied_filters={
+                "intentType": intent_decision.intent_type,
+                "routeSource": intent_decision.route_source,
+                "lowConfidence": True,
+                "usedProductRetrieval": True,
+                "searchUnavailable": True,
+            },
+            retrieval_context=(
+                "현재 상품 검색 연결이 일시적으로 불안정합니다. "
+                "답변은 검색 성공처럼 꾸미지 말고, 사용자가 말한 피부 고민과 카테고리를 기준으로 일반적인 선택 가이드를 짧고 실용적으로 안내하세요."
             ),
         )
 

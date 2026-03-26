@@ -1,4 +1,5 @@
 from services.chatbot.domain import QueryRequest
+from services.chatbot.context import extract_overwrite_focus_slots
 from services.chatbot.intent.models import IntentDecision
 from services.chatbot.retrieval.builders import (
     build_context_hints,
@@ -21,7 +22,11 @@ def build_retrieval_plan(
     session_context: dict[str, object] | None = None,
     intent_decision: IntentDecision | None = None,
 ) -> RetrievalPlan:
-    preferred_categories = extract_preferred_categories(request.message)
+    overwrite_focus_slots = extract_overwrite_focus_slots(request.message)
+    preferred_categories = (
+        set(str(item) for item in overwrite_focus_slots.get("categories", []) if str(item).strip())
+        or extract_preferred_categories(request.message)
+    )
     context_hints = build_context_hints(request.client_context, session_context)
 
     search_query, used_session_memory, used_anchor_products = build_search_query(
