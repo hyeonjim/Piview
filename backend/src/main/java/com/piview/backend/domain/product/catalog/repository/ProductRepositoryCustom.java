@@ -13,7 +13,7 @@ public interface ProductRepositoryCustom {
 
   long count(ProductSearchCondition condition); // total page 받기
 
-  Page<Product> findRecommendedProducts(Long userId, String userSkinType, Integer bigCategoryId, Long categoryId, Pageable pageable);
+  Page<Product> findRecommendedProducts(Long userId, String userSkinType, List<Long> similarProductIds , Integer bigCategoryId, Long categoryId, Pageable pageable);
 
   Slice<Product> searchByRankedProductIds(
     ProductSearchCondition condition,
