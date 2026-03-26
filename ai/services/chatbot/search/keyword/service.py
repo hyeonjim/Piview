@@ -19,6 +19,8 @@ class ProductKeywordService:
         limit: int,
         candidate_limit: int | None = None,
         preferred_categories: set[str] | None = None,
+        category_ids: tuple[int, ...] | None = None,
+        big_category_id: int | None = None,
     ) -> list[ProductSearchResult]:
         return await asyncio.to_thread(
             self.search,
@@ -26,6 +28,8 @@ class ProductKeywordService:
             limit,
             candidate_limit,
             preferred_categories,
+            category_ids,
+            big_category_id,
         )
 
     def search(
@@ -34,6 +38,8 @@ class ProductKeywordService:
         limit: int,
         candidate_limit: int | None = None,
         preferred_categories: set[str] | None = None,
+        category_ids: tuple[int, ...] | None = None,
+        big_category_id: int | None = None,
     ) -> list[ProductSearchResult]:
         """질문 문자열을 키워드 후보 리스트로 바꿉니다.
 
@@ -53,6 +59,8 @@ class ProductKeywordService:
                 terms,
                 candidate_limit=candidate_limit,
                 preferred_categories=preferred_categories,
+                category_ids=category_ids,
+                big_category_id=big_category_id,
             )
         ]
         filtered_rows = [row for row in scored_rows if row.keyword_score > 0]
