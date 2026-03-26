@@ -16,6 +16,7 @@ import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
 import com.piview.backend.domain.product.like.repository.ProductLikeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -155,9 +157,30 @@ public class ProductCatalogService {
                 );
 
                 if (!vectorSlice.isEmpty()) {
+                    log.info(
+                            "Product search used AI ranking: query='{}', candidateLimit={}, rankedCount={}, filteredCount={}, totalCount={}",
+                            normalized.getQ(),
+                            candidateLimit,
+                            rankedProductIds.size(),
+                            vectorSlice.getNumberOfElements(),
+                            vectorTotalCount
+                    );
                     return buildPageResponse(vectorSlice, normalized, vectorTotalCount, userId);
                 }
+
+                log.info(
+                        "Product search AI ranking filtered out by backend filters: query='{}', candidateLimit={}, rankedCount={}",
+                        normalized.getQ(),
+                        candidateLimit,
+                        rankedProductIds.size()
+                );
             }
+
+            log.info(
+                    "Product search fallback to DB after empty AI ranking: query='{}', candidateLimit={}",
+                    normalized.getQ(),
+                    candidateLimit
+            );
         }
 
         // 벡터 실패/빈 결과일 때 기존 DB 검색
