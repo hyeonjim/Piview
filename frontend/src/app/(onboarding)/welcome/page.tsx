@@ -203,7 +203,7 @@ export default function WelcomePage() {
           className="text-[24px] font-bold text-[#1E1B24] text-center leading-tight mb-12 whitespace-pre-line"
           style={{ fontFamily: "var(--font-english)" }}
         >
-          Welcome Back{"\n"}to PiView !
+          Welcome to PIVIEW !
         </h2>
 
         <button

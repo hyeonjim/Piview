@@ -107,7 +107,7 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
                   {messages.length > 0 && (
                     <button
                       onClick={handleReset}
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer text-[var(--color-text-muted)] hover:bg-[#f5f3f0] transition-colors"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer text-[#737475] hover:bg-[#f0f3f5] transition-colors"
                       title="새 대화 시작"
                     >
                       <RotateCcw size={14} />
@@ -115,7 +115,7 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
                   )}
                   <button
                     onClick={handleClose}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer text-[var(--color-text-muted)] hover:bg-[#f5f3f0] transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer text-[#737475] hover:bg-[#f0f3f5] transition-colors"
                   >
                     <X size={16} />
                   </button>
@@ -133,7 +133,7 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
                     <div
                       className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed whitespace-pre-wrap ${
                         message.role === "user"
-                          ? "bg-[#cacde6] text-white rounded-br-sm"
+                          ? "bg-[#e0e3f7] text-[var(--color-text-primary)]"
                           : "bg-[#f1f4f5] text-[var(--color-text-primary)] rounded-bl-sm"
                       }`}
                     >
@@ -164,7 +164,7 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
                 {/* 로딩 인디케이터 */}
                 {isPending && (
                   <div className="flex items-start">
-                    <div className="px-3.5 py-2.5 rounded-2xl rounded-bl-sm bg-[#f7f5f1] flex items-center gap-2">
+                    <div className="px-3.5 py-2.5 rounded-2xl rounded-bl-sm bg-[#f1f5f7] flex items-center gap-2">
                       <Loader2
                         size={13}
                         className="animate-spin text-[#cacde6]"
