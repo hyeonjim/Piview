@@ -17,12 +17,6 @@ class ChatbotRetrievalService:
         session_context: dict[str, object] | None = None,
     ) -> RetrievalBundle:
         plan = build_retrieval_plan(request, session_context=session_context)
-        if plan.needs_clarifying_question:
-            return build_retrieval_bundle(
-                plan=plan,
-                session_context=session_context,
-            )
-
         search_result = await execute_retrieval_searches(
             plan,
             settings=get_settings(),

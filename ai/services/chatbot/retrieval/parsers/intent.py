@@ -1,21 +1,6 @@
-"""질문 의도 판별 로직."""
+"""검색 내부 휴리스틱에 필요한 질문 판별 로직."""
 
-from services.chatbot.retrieval.constants import (
-    CLARIFYING_PATTERNS,
-    STEP_HINTS,
-    STRICT_FILTER_PATTERNS,
-)
-
-
-def needs_clarifying_question(
-    message: str,
-    preferred_categories: set[str],
-) -> bool:
-    """상품 추천 전에 한 번 더 질문을 좁혀야 하는지 판단합니다."""
-    if preferred_categories:
-        return False
-    lowered = message.lower()
-    return any(pattern in lowered for pattern in CLARIFYING_PATTERNS)
+from services.chatbot.retrieval.constants import STEP_HINTS, STRICT_FILTER_PATTERNS
 
 
 def has_strict_filter_request(message: str) -> bool:

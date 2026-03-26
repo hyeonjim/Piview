@@ -15,3 +15,5 @@ numpy
 chromadb
 pymysql
 redis
+kiwipiepy
+rapidfuzz
