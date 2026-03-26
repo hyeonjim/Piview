@@ -49,7 +49,7 @@ public class RecommendResponseDto {
         .description(product.getDescription())
         .skinTypes(combinedSkinTypes)
         .isLiked(isLiked)
-        .concernName(SKIN_CONCERN_MAP.getOrDefault(concernId, ""))
+        .concernName(concernId == null ? "" : SKIN_CONCERN_MAP.getOrDefault(concernId, ""))
         .build();
   }
 
