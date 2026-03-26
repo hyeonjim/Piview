@@ -7,6 +7,9 @@ import com.piview.backend.domain.product.entity.Product;
 import com.piview.backend.domain.product.recommend.dto.RecommendRequestDto;
 import com.piview.backend.domain.product.recommend.dto.RoutineContextDto;
 import com.piview.backend.domain.product.recommend.repository.CategoryIdealScoreRepository;
+import com.piview.backend.domain.user.disliked.entity.MyAvoidContri;
+import com.piview.backend.domain.user.disliked.repository.MyAvoidContriRepository;
+import com.piview.backend.domain.user.disliked.repository.MyDislikeProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,6 +29,8 @@ public class RecommendationService {
     private final ProductRepository productRepository;
     private final CategoryIdealScoreRepository idealScoreRepository;
     private final RoutineConflictChecker conflictChecker; // 성분 충돌 필터기
+    private final MyDislikeProductRepository dislikeProductRepository;
+    private final MyAvoidContriRepository avoidContriRepository;
 
     // 핵심 매핑: 프론트가 요청한 스텝(1~7)을 실제 DB 소카테고리 ID 리스트로 변환
     private static final Map<Long, List<Long>> ROUTINE_COL_TO_CATEGORIES = Map.of(
@@ -38,7 +43,7 @@ public class RecommendationService {
             7L, List.of(14L, 15L, 20L)                         // 선크림,선스틱
     );
 
-    public List<Product> getRecommendations(RecommendRequestDto req, RoutineContextDto routineContext) {
+    public List<Product> getRecommendations(Long userId, RecommendRequestDto req, RoutineContextDto routineContext) {
 
         // 프론트에서 넘어온 타겟 스텝 ID (예: 3번 토너 스텝 추천해줘!)
         Long targetRoutineColId = req.getTargetRoutineColId();
@@ -49,6 +54,16 @@ public class RecommendationService {
         if (targetCategoryIds == null || targetCategoryIds.isEmpty()) {
             throw new IllegalArgumentException("해당 스킨케어 단계에 매핑된 카테고리가 없습니다.");
         }
+
+        // 2. 사용자가 등록한 '안 맞는 제품' 및 '피해야 할 성분' 가져오기
+        List<Long> dislikedProductIds = dislikeProductRepository.findProductIdsByUserId(userId);
+        if (dislikedProductIds.isEmpty()) dislikedProductIds = List.of(-1L);
+
+        List<Long> avoidIngredientIds = avoidContriRepository.findAllByUserIdWithIngredient(userId)
+                .stream()
+                .map(mac -> mac.getIngredient().getIngredientId())
+                .collect(Collectors.toList());
+        if (avoidIngredientIds.isEmpty()) avoidIngredientIds = List.of(-1L);
 
         List<Product> finalRecommendations = new ArrayList<>();
 
@@ -66,7 +81,7 @@ public class RecommendationService {
             // [분기 B] 루틴에 제품이 있을 경우 (루틴 밸런스 + 상극 성분 필터링)
             // ====================================================================
 
-            // 2. 해당 스텝 + 피부타입의 이상치(Ideal M/O)를 DB에서 가져옵니다.
+            // 3. 해당 스텝 + 피부타입의 이상치(Ideal M/O)를 DB에서 가져옵니다.
             CategoryIdealScore idealScore = idealScoreRepository.findBySkinTypeAndRoutineColId(
                 req.getSkinType(), targetRoutineColId
             );
@@ -83,12 +98,14 @@ public class RecommendationService {
             if (isInitial){
 
                 candidates = productRepository.findInitialRecommendations(
-                    singleCategoryIdList, req.getSkinType(), req.getGender(), req.getConcernId()
+                    singleCategoryIdList, req.getSkinType(), req.getGender(), req.getConcernId(),
+                        dislikedProductIds, avoidIngredientIds
                     );
             } else {
                 candidates = productRepository.findRoutineCandidates(
                     singleCategoryIdList, req.getSkinType(), req.getGender(), req.getConcernId(),
-                    finalTargetM, finalTargetO, routineContext.getCurrentRoutineIds()
+                    finalTargetM, finalTargetO, routineContext.getCurrentRoutineIds(),
+                        dislikedProductIds, avoidIngredientIds
                 );
             }
 
