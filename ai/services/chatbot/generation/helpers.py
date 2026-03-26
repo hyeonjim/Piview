@@ -1,4 +1,5 @@
 from services.chatbot.domain import ClientContext, QueryRequest
+from services.chatbot.intent.models import IntentDecision
 
 
 def build_skin_problem_hint(request: QueryRequest) -> str:
@@ -44,3 +45,41 @@ def build_effective_client_context(
         screen=screen,
         current_product_id=current_product_id,
     )
+
+
+def build_effective_llm_session_context(
+    session_context: dict | None,
+    intent_decision: IntentDecision,
+) -> dict | None:
+    """LLM에 넘길 세션 메모를 최소화합니다.
+
+    새 질문까지 직전 대화 메모를 항상 주면, 의미 없는 입력이 필터를 통과했을 때
+    이전 주제를 이어서 답하는 현상이 생깁니다. 따라서 후속 질문으로 판단된 경우에만
+    recentUserMessages/recentAnswers/recentProductIds를 전달하고,
+    그 외에는 화면 정보만 유지합니다.
+    """
+    if not session_context:
+        return None
+
+    payload: dict[str, object] = {}
+    if session_context.get("screen"):
+        payload["screen"] = session_context["screen"]
+
+    is_followup_intent = intent_decision.intent_type == "recommendation_followup"
+    is_followup_rule = intent_decision.matched_rule in {
+        "followup_hint",
+        "followup_needs_context",
+        "constraint_needs_context",
+    }
+    if not (is_followup_intent or is_followup_rule):
+        return payload or None
+
+    if session_context.get("recentUserMessages"):
+        payload["recentUserMessages"] = session_context["recentUserMessages"]
+    if session_context.get("recentAnswers"):
+        payload["recentAnswers"] = session_context["recentAnswers"]
+    if session_context.get("recentProductIds"):
+        payload["recentProductIds"] = session_context["recentProductIds"]
+    if session_context.get("recentSlots"):
+        payload["recentSlots"] = session_context["recentSlots"]
+    return payload or None
