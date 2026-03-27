@@ -27,13 +27,12 @@ export function CategoryFilter({
   const { data: filterMeta, isLoading } = useProductFilters();
   const bigCategories: BigCategoryFilterDto[] = filterMeta?.bigCategories ?? [];
 
-  // API 데이터 로드되면 첫 번째 대분류/소분류 자동 선택
+  // API 데이터 로드되면 첫 번째 대분류 자동 선택 — 소분류는 전체(null)
   useLayoutEffect(() => {
     if (bigCategories.length > 0 && selectedBigCategoryId === null) {
       const firstBig = bigCategories[0];
-      const firstCat = firstBig.categories[0] ?? null;
       onBigCategorySelect(firstBig.bigCategoryId);
-      onCategorySelect(firstCat?.categoryId ?? null);
+      onCategorySelect(null); // 소분류 전체 선택
     }
   }, [bigCategories.length]);
 
@@ -67,14 +66,17 @@ export function CategoryFilter({
                   key={big.bigCategoryId}
                   onClick={() => {
                     if (!isActive) {
-                      const firstCat = big.categories[0] ?? null;
                       onBigCategorySelect(big.bigCategoryId);
-                      onCategorySelect(firstCat?.categoryId ?? null);
+                      onCategorySelect(null); // 소분류 전체 선택
                     }
                   }}
                   className="category-tab-button"
                   data-active={isActive}
-                  style={bigCategoryFontSize ? { fontSize: bigCategoryFontSize } : undefined}
+                  style={
+                    bigCategoryFontSize
+                      ? { fontSize: bigCategoryFontSize }
+                      : undefined
+                  }
                 >
                   {getCategoryDisplayName(big.bigCategoryName)}
                 </button>
@@ -93,22 +95,39 @@ export function CategoryFilter({
                 style={{ width: w }}
               />
             ))
-          : selectedBig?.categories.map((cat) => {
-              const isActive = selectedCategoryId === cat.categoryId;
-              return (
+          : selectedBig && (
+              <>
+                {/* 소분류 전체 pill */}
                 <button
-                  key={cat.categoryId}
                   onClick={() => {
-                    if (!isActive) onCategorySelect(cat.categoryId);
+                    if (selectedCategoryId !== null) onCategorySelect(null);
                   }}
                   className="category-pill-button"
-                  data-active={isActive}
+                  data-active={selectedCategoryId === null}
                   style={pillFontSize ? { fontSize: pillFontSize } : undefined}
                 >
-                  {getCategoryDisplayName(cat.categoryName)}
+                  전체
                 </button>
-              );
-            })}
+                {selectedBig.categories.map((cat) => {
+                  const isActive = selectedCategoryId === cat.categoryId;
+                  return (
+                    <button
+                      key={cat.categoryId}
+                      onClick={() => {
+                        if (!isActive) onCategorySelect(cat.categoryId);
+                      }}
+                      className="category-pill-button"
+                      data-active={isActive}
+                      style={
+                        pillFontSize ? { fontSize: pillFontSize } : undefined
+                      }
+                    >
+                      {getCategoryDisplayName(cat.categoryName)}
+                    </button>
+                  );
+                })}
+              </>
+            )}
       </div>
     </div>
   );

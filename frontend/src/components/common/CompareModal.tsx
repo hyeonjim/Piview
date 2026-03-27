@@ -25,7 +25,6 @@ interface CompareModalProps {
   compareItems: [CompareProduct, CompareProduct];
   onClose: () => void;
   isRoutineCompare?: boolean;
-  zIndex?: number;
 }
 
 // globals.css에 정확히 매핑되는 변수 없어서 상수 유지

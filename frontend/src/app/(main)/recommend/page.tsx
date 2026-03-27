@@ -123,9 +123,7 @@ export default function RecommendPage() {
           <h1 className="mt-0.75 mb-2 text-[20px] font-semibold text-[#635446] tracking-[-0.3px] leading-[1.2]">
             Recommend
           </h1>
-          <p className="font-semibold text-[#635446] text-[14px]">
-            맞춤형 제품을 추천받을 수 있습니다
-          </p>
+          <p className="font-semibold text-[#635446] text-[14px]">맞춤형 제품을 추천받을 수 있습니다</p>
         </div>
       </div>
 
@@ -234,6 +232,7 @@ export default function RecommendPage() {
         totalPages={totalPages}
         onChange={handlePageChange}
       />
+
     </div>
   );
 }
