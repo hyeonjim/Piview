@@ -18,6 +18,11 @@ public class RoutineDraftDto {
       ProductSummaryResponse product
   ) {}
 
+  public record DraftUpdateResponse(
+      List<DraftItemDto> updatedDraft,
+      String message
+  ) {}
+
   public record EditRoutineLoadResponse(
       Long routineId,
       String title,
