@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { PAGE_SIZE } from "@/constants/pagination";
 import { FilterModal } from "@/components/common/FilterModal";
 import { CategoryFilter } from "@/components/common/CategoryFilter";
@@ -38,6 +38,7 @@ export default function SearchPage() {
     setPage,
   } = useSearchStore();
 
+  const [inputValue, setInputValue] = useState(searchQuery);
   const [showFilter, setShowFilter] = useState(false);
 
   // ── API 연동 ───────────────────────────────────────────────────
@@ -120,22 +121,18 @@ export default function SearchPage() {
     (Object.values(filter.brandIds).some(Boolean) ? 1 : 0) +
     (filter.priceRange[0] > 0 || filter.priceRange[1] < PRICE_MAX ? 1 : 0);
 
+  // 입력 중 — 로컬만 업데이트 (X 버튼으로 지우면 즉시 초기화)
   const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
+    setInputValue(value);
+    if (!value.trim()) setSearchQuery("");
   };
 
-  // SEARCH 이벤트 — 타이핑 멈춘 후 2초 뒤 전송 (빈 문자열 제외)
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (!searchQuery.trim()) return;
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    searchTimerRef.current = setTimeout(() => {
-      trackEvent("SEARCH", null, searchQuery.trim());
-    }, 2000);
-    return () => {
-      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    };
-  }, [searchQuery]);
+  // Enter 확정 시 — store 반영 + trackEvent
+  const handleSearchConfirm = (value: string) => {
+    const trimmed = value.trim();
+    setSearchQuery(trimmed);
+    if (trimmed) trackEvent("SEARCH", null, trimmed);
+  };
 
   const handleBigCategorySelect = (bigCategoryId: number | null) => {
     setSelectedBigCategoryId(bigCategoryId);
@@ -170,8 +167,9 @@ export default function SearchPage() {
           <div className="flex items-center gap-3">
             <div className="flex-1">
               <SearchBar
-                value={searchQuery}
+                value={inputValue}
                 onChange={handleSearchChange}
+                onSearch={handleSearchConfirm}
                 placeholder="제품명, 브랜드 검색..."
               />
             </div>
