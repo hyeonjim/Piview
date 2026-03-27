@@ -2,6 +2,8 @@ package com.piview.backend.domain.routine.core.service;
 
 
 import com.piview.backend.domain.product.catalog.service.ProductConcernQueryService;
+import com.piview.backend.domain.product.recommend.dto.RoutineContextDto;
+import com.piview.backend.domain.product.recommend.service.RoutineConflictChecker;
 import com.piview.backend.domain.routine.core.dto.RoutineDraftDto.*;
 import com.piview.backend.domain.routine.core.dto.RoutineDraftDto.AddDraftItemRequest;
 import com.piview.backend.domain.routine.core.dto.RoutineDraftDto.DraftItemDto;
@@ -44,19 +46,39 @@ public class RoutineService {
   private final ProductRepository productRepository;
   private final ProductLikeRepository productLikeRepository;
   private final RedisDraftService redisDraftService;
+  private final RoutineConflictChecker routineConflictChecker;
 
   // product의 피부고민을 가져오기 위해서 필요합니다.
   private final ProductConcernQueryService productConcernQueryService;
 
   // 제품을 루틴(redis)에 추가
   @Transactional(readOnly = true) // DB에서 Product만 조회하므로 readOnly
-  public List<DraftItemDto> addProductToDraft(Long userId, AddDraftItemRequest request) {
+  public DraftUpdateResponse addProductToDraft(Long userId, AddDraftItemRequest request) {
     // 기존 장바구니 리스트 불러오기
     List<DraftItemDto> currentDraft = new ArrayList<>(redisDraftService.getDraftItems(userId));
 
     // 추가할 상품 정보 DB에서 조회
     Product product = productRepository.findByProductId(request.productId())
         .orElseThrow(() -> new CustomException(ErrorCode.COSMETICS_NOT_FOUND));
+
+    // 성분 충돌 검사
+    String conflictMessage = "충돌 성분이 없습니다.";
+    if (!currentDraft.isEmpty()) {
+      List<Long> productIds = currentDraft.stream()
+          .map(item -> item.product().getProductId())
+          .collect(Collectors.toList());
+      List<Product> existingProducts = productRepository.findByProductIdIn(productIds);
+
+      List<String> allConflicts = new ArrayList<>();
+      for (Product existingProduct : existingProducts) {
+        List<String> conflicts = routineConflictChecker.checkPairwiseConflict(existingProduct, product);
+        allConflicts.addAll(conflicts);
+      }
+
+      if (!allConflicts.isEmpty()) {
+        conflictMessage = String.join(" ", allConflicts);
+      }
+    }
 
     // 새로운 stepOrder 계산 (현재 장바구니에 있는 stepOrder 중 가장 큰 값 + 1)
     int nextOrder = currentDraft.stream()
@@ -79,7 +101,7 @@ public class RoutineService {
 
     // 업데이트된 리스트를 다시 Redis에 저장
     redisDraftService.saveDraftItems(userId, currentDraft);
-    return currentDraft;
+    return new DraftUpdateResponse(currentDraft, conflictMessage);
   }
 
   // 루틴 생성 및 저장
