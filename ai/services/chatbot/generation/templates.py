@@ -82,6 +82,11 @@ def build_greeting_answer() -> str:
     return "안녕하세요. 저는 Gamini예요. 피부 고민이나 찾는 제품 종류를 말씀해 주시면 바로 이어서 도와드릴게요."
 
 
+def build_abusive_input_answer() -> str:
+    """욕설이나 공격적 표현이 감지되면 고정 응답으로 종료합니다."""
+    return "공격적인 표현이 포함된 요청에는 답변드리기 어렵습니다. 피부 고민이나 찾는 제품 조건을 차분하게 적어주시면 바로 도와드릴게요."
+
+
 def build_nonsense_answer(
     request: QueryRequest,
     session_context: dict[str, object] | None = None,
