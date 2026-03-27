@@ -255,7 +255,6 @@ export default function RoutineAddModal({
     : [];
 
   // 추천 모드: 클라이언트 페이지네이션 / 일반 모드: 서버 페이지네이션 (검색 페이지와 동일 패턴)
-  // 피할 제품 제외
   const displayProducts = (
     isRecommendMode ? recommendedProducts : products
   ).filter((p) => !dislikedProductIdSet.has(p.id));
@@ -294,7 +293,7 @@ export default function RoutineAddModal({
 
   return (
     <>
-      {/* 비교 모달 — z-index 모달보다 높게 */}
+      {/* 비교 모달 */}
       {showCompare && canCompare && (
         <CompareModal
           compareItems={compareItems as [MappedProduct, MappedProduct]}

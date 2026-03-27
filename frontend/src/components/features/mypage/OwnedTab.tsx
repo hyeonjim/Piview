@@ -74,12 +74,12 @@ export default function OwnedTab() {
             <p className="text-base font-bold text-[#5e5c59]">Owned</p>
             <button
               onClick={() => setOpenOwnedModal(true)}
-              className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-[#636264] font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
+              className="text-[14px] px-3 py-1 rounded-full bg-brand/10 text-[#636264] font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
             >
               + 추가
             </button>
           </div>
-          <p className="text-[13px] font-semibold text-[#787879] mt-0.5">
+          <p className="text-[14px] font-semibold text-[#787879] mt-0.5">
             {ownedProducts.length}개 보유 중
           </p>
         </div>
@@ -146,15 +146,15 @@ export default function OwnedTab() {
             </div>
             <button
               onClick={() => setOpenAvoidModal(true)}
-              className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-[#636264] font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
+              className="text-[14px] px-3 py-1 rounded-full bg-brand/10 text-[#636264] font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
             >
               + 추가
             </button>
           </div>
-          <p className="text-[13px] font-semibold text-[#787879] mt-0.5">
+          <p className="text-[14px] font-semibold text-[#787879] mt-0.5">
             {dislikedItems.length}개 등록됨
             <br />
-            등록된 제품의 알러지를 포함한 제품은 추천에서 제외됩니다
+            등록된 제품의 알러지성분을 가진 제품은 추천에서 제외됩니다
           </p>
         </div>
 

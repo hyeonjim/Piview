@@ -691,8 +691,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         </div>
 
         <p className="text-[13px] font-semibold text-[#6e6e6d]">
-          클릭시 메인루틴으로 변경 
-          <br />Edit Mode에서 루틴변경가능
+          클릭시 메인루틴으로 변경
+          <br />
+          Edit Mode에서 루틴변경가능
         </p>
       </div>
 
@@ -708,7 +709,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1 bg-[#f2efe9] rounded-full px-2 py-1">
-                  <span className="text-[13px] font-semibold text-[#746f68]">{stepIndex + 1}단계</span>
+                  <span className="text-[13px] font-semibold text-[#746f68]">
+                    {stepIndex + 1}단계
+                  </span>
                 </div>
                 <span className="text-[15px] font-semibold text-[#4e4e4d]">
                   {step.label}
