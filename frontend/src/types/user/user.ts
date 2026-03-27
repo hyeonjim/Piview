@@ -35,6 +35,7 @@ export interface DislikedIngredient {
 // ── PATCH /api/v1/users/me 요청 body ───────
 // 모든 필드 optional — 변경할 필드만 포함해서 전송
 export interface UserProfileUpdateRequest {
+  name?: string;
   gender?: "MEN" | "WOMEN";
   ageGroup?: "TEENS" | "TWENTIES" | "THIRTIES" | "FORTIES_PLUS";
   /** API 형식: "dry" | "oily" | "combination" | "subuji" */
