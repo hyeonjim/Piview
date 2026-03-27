@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM eclipse-temurin:21-jdk-jammy AS builder
 WORKDIR /app
 
 COPY gradlew .
@@ -10,7 +10,7 @@ COPY checkstyle checkstyle
 COPY src src
 RUN ./gradlew clean build -x test
 
-FROM eclipse-temurin:21-jdk-alpine
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
 COPY --from=builder /app/build/libs/app.jar app.jar
