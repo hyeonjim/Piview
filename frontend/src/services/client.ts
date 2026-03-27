@@ -79,14 +79,14 @@ client.interceptors.response.use(
     // refresh 요청 자체가 401/403이면 무한루프 방지 — 바로 로그아웃
     if (originalRequest.url?.includes("/auth/refresh")) {
       clearAllStores();
-      window.location.href = "/splash";
+      window.location.href = "/welcome";
       return Promise.reject(error);
     }
 
     // _retry 플래그가 이미 있으면 refresh도 실패한 것 → 무한루프 방지
     if (originalRequest._retry) {
       clearAllStores();
-      window.location.href = "/splash";
+      window.location.href = "/welcome";
       return Promise.reject(error);
     }
 
@@ -112,7 +112,7 @@ client.interceptors.response.use(
     } catch {
       // refresh도 실패 → 세션 만료, 로그아웃 처리
       clearAllStores();
-      window.location.href = "/splash";
+      window.location.href = "/welcome";
       return Promise.reject(error);
     }
   },
