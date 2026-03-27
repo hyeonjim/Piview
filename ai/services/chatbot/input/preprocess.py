@@ -1,4 +1,7 @@
+import json
 import re
+from functools import lru_cache
+from pathlib import Path
 
 from services.chatbot.intent.constants import FOLLOW_UP_HINTS
 
@@ -107,6 +110,13 @@ _ASCII_DOMAIN_HINTS = {
 _KEYBOARD_ROWS = ("qwertyuiop", "asdfghjkl", "zxcvbnm")
 _REPLACE_FOLLOWUP_HINTS = ("다른거", "말고", "대신")
 
+_ABUSIVE_DICTIONARY_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "dictionaries"
+    / "manual"
+    / "abusive_terms.json"
+)
+
 
 def normalize_message_for_chatbot(message: str) -> str:
     normalized = " ".join((message or "").strip().split())
@@ -160,6 +170,19 @@ def is_contextual_followup_without_context(
     return len(tokens) <= 6
 
 
+def contains_abusive_language(message: str) -> bool:
+    normalized = " ".join((message or "").strip().split()).lower()
+    if not normalized:
+        return False
+
+    collapsed = _collapse(_strip_non_word_chars(normalized))
+    dictionary = _load_abusive_dictionary()
+    if any(term and term in collapsed for term in dictionary["block_terms"]):
+        return True
+
+    return any(re.search(pattern, normalized) for pattern in dictionary["block_patterns"])
+
+
 def is_likely_nonsense_input(message: str) -> bool:
     normalized = " ".join((message or "").strip().split())
     if not normalized:
@@ -196,6 +219,31 @@ def is_likely_nonsense_input(message: str) -> bool:
 
 def _collapse(message: str) -> str:
     return re.sub(r"\s+", "", message.lower())
+
+
+def _strip_non_word_chars(message: str) -> str:
+    return re.sub(r"[^0-9a-z가-힣ㄱ-ㅎㅏ-ㅣ\s]+", " ", message.lower())
+
+
+@lru_cache(maxsize=1)
+def _load_abusive_dictionary() -> dict[str, tuple[str, ...]]:
+    with _ABUSIVE_DICTIONARY_PATH.open(encoding="utf-8") as file:
+        payload = json.load(file)
+
+    block_terms = tuple(
+        _collapse(_strip_non_word_chars(str(term)))
+        for term in payload.get("block_terms", [])
+        if str(term).strip()
+    )
+    block_patterns = tuple(
+        str(pattern)
+        for pattern in payload.get("block_patterns", [])
+        if str(pattern).strip()
+    )
+    return {
+        "block_terms": block_terms,
+        "block_patterns": block_patterns,
+    }
 
 
 def _has_session_anchor(session_context: dict[str, object] | None) -> bool:
