@@ -174,7 +174,6 @@ export default function ProductSearchModal({
                             id={productId}
                             brand={product.brand}
                             name={product.name}
-                            category={product.category}
                             imageUrl={product.imageUrl ?? undefined}
                             skinTypes={product.skinTypes}
                             effects={product.effects}
@@ -192,7 +191,7 @@ export default function ProductSearchModal({
                                 addMyCos(productId);
                               }
                             }}
-                            className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full border-none cursor-pointer z-10 text-[15px] font-bold transition-colors shadow-sm ${
+                            className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full border-none cursor-pointer z-10 text-[22px] font-bold transition-colors shadow-sm ${
                               alreadyOwned
                                 ? "bg-brand text-white"
                                 : "bg-[#F2EFE9] text-[#A69D92]"
@@ -213,7 +212,6 @@ export default function ProductSearchModal({
                           id={productId}
                           brand={product.brand}
                           name={product.name}
-                          category={product.category}
                           imageUrl={product.imageUrl ?? undefined}
                           skinTypes={product.skinTypes}
                           effects={product.effects}
