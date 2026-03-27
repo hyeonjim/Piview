@@ -23,14 +23,16 @@ public class RoutineDraftController {
 
   @Operation(summary = "임시 장바구니 단일 제품 추가", description = "루킨 카테고리 id(예: 클렌저:1, 쉐이빙:2, 스킨/토너/패드/미스트:3, 세럼/에센스/앰플:4, 로션/에멀전/올인원:5, 크림/오일:6, 선크림:7)와 제품 ID를 받아 DB에서 상세 정보를 조회한 후 Redis 임시 장바구니에 추가합니다.")
   @PostMapping
-  public ApiResponse<List<RoutineDraftDto.DraftItemDto>> addProductToDraft(
+  public ApiResponse<RoutineDraftDto.DraftUpdateResponse> addProductToDraft(
       @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
       @RequestBody RoutineDraftDto.AddDraftItemRequest request) {
 
     Long userId = userPrincipal.getId();
-    List<RoutineDraftDto.DraftItemDto> updatedDraft = routineService.addProductToDraft(userId, request);
+    RoutineDraftDto.DraftUpdateResponse response = routineService.addProductToDraft(userId, request);
 
-    return ApiResponse.success("임시 루틴에 단일 제품이 저장되었습니다.", updatedDraft);
+    String message = response.message() != null ? response.message() : "임시 루틴에 단일 제품이 저장되었습니다.";
+
+    return ApiResponse.success(message, response);
   }
 
   @Operation(summary = "임시 장바구니 전체 덮어쓰기", description = "프론트엔드에서 제품 추가, 삭제, 순서 변경 시 현재 화면의 전체 리스트를 받아 Redis 데이터를 덮어씌웁니다.")
