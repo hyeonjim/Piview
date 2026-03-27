@@ -198,7 +198,12 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
 
 // 저장된 루틴 슬라이더 스크롤 상태 — 도트 인디케이터 연동
   const savedRoutineScrollRef = useRef<HTMLDivElement>(null);
-  const [activeCardIndex, setActiveCardIndex] = useState(0);
+  // 선택된 루틴 카드의 인덱스 — selectedRoutineId 기반으로 계산해 도트 인디케이터와 동기화
+  const activeCardIndex = useMemo(() => {
+    if (!selectedRoutineId) return 0;
+    const idx = routineList.findIndex((r) => r.routineId === selectedRoutineId);
+    return idx >= 0 ? idx : 0;
+  }, [selectedRoutineId, routineList]);
 
   // 슬라이더 마우스 드래그 전용 ref
   const sliderDragStartXRef = useRef<number>(0);
@@ -207,15 +212,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   const sliderDragMovedRef = useRef<boolean>(false);
 
   // 스크롤 위치 기준으로 활성 카드 인덱스 갱신
-  const handleSavedRoutineScroll = () => {
-    const container = savedRoutineScrollRef.current;
-    if (!container) return;
-    const firstCard = container.firstElementChild as HTMLElement | null;
-    if (!firstCard) return;
-    const cardWidth = firstCard.offsetWidth + 20;
-    const index = Math.round(container.scrollLeft / cardWidth);
-    setActiveCardIndex(Math.min(index, routineList.length - 1));
-  };
+  // 스크롤 이벤트 핸들러 — activeCardIndex는 selectedRoutineId 기반으로 계산되므로 여기선 처리 불필요
+  const handleSavedRoutineScroll = () => {};
 
   // ── 슬라이더 마우스 드래그 핸들러 ─────────────────────────────────────
   const handleSliderPointerDown = (
@@ -382,15 +380,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
 
   // ── 루틴 저장 핸들러 ──────────────────────────────────────────────────
   const handleOpenSaveModal = () => {
-    setSaveModalName("");
-    setShowSaveModal(true);
-  };
-
-  /**
-   * 편집 저장 모달 열기 — 현재 루틴 이름을 미리 채워서 열림
-   */
-  const handleOpenEditSaveModal = () => {
-    setSaveModalName(editingRoutineTitle);
+    // 편집 모드면 기존 루틴 이름을 미리 채움, 새 루틴이면 빈 값
+    setSaveModalName(editingRoutineId !== null ? editingRoutineTitle : "");
     setShowSaveModal(true);
   };
 
@@ -537,7 +528,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       {routineList.length > 0 && (
         <div className="mb-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[15px] font-bold text-text-secondary">My routine list</p>
+            <p className="text-[15px] font-bold text-text-secondary">내루틴 리스트</p>
             <button
               onClick={handleNewRoutine}
               className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full text-[14px] text-white cursor-pointer bg-[#d9d6bd] shadow-xs active:scale-[0.97] transition-transform"
@@ -547,7 +538,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
           </div>
           <div
             ref={savedRoutineScrollRef}
-            className="flex gap-5 overflow-x-auto pt-1 pb-3 snap-x snap-mandatory overscroll-x-contain cursor-grab select-none [scrollbar-width:none]"
+            className="flex gap-5 overflow-x-auto px-1 pt-1 pb-3 snap-x snap-mandatory overscroll-x-contain cursor-grab select-none [scrollbar-width:none]"
             onScroll={handleSavedRoutineScroll}
             onPointerDown={handleSliderPointerDown}
             onPointerMove={handleSliderPointerMove}
@@ -644,15 +635,14 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               </TooltipTrigger>
               <TooltipContent>OCR로 제품 추가</TooltipContent>
             </Tooltip>
-            {/* Edit Mode / Edit Save 버튼 — 편집 모드 여부에 따라 역할 전환 */}
+            {/* Edit Mode / Editing... 버튼 — 편집 모드 여부에 따라 표시 전환 */}
             {editingRoutineId !== null ? (
-              // 편집 모드: 클릭 시 수정 저장 모달 열기
+              // 편집 모드: 상태 표시용 비활성 버튼 (저장은 Save 버튼으로)
               <button
-                onClick={handleOpenEditSaveModal}
-                disabled={isUpdating}
-                className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#dde1e2] text-[#3f3e3d] disabled:opacity-50"
+                disabled
+                className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border bg-[#dde1e2] text-[#3f3e3d] opacity-70 cursor-default"
               >
-                {isUpdating ? "저장 중..." : "Edit Save"}
+                <SquarePen size={12} />Editing...
               </button>
             ) : (
               // 일반 모드: 클릭 시 선택된 루틴을 draft로 불러옴
@@ -666,10 +656,10 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             )}
             <button
               onClick={handleOpenSaveModal}
-              disabled={isCreating || filledCount === 0}
+              disabled={isCreating || isUpdating || filledCount === 0}
               className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] disabled:opacity-50 text-[#787775]"
             >
-              {isCreating ? "저장 중..." : <><Save size={12} />Save</>}
+              {isCreating || isUpdating ? "저장 중..." : <><Save size={12} />Save</>}
             </button>
           </div>
         </div>
