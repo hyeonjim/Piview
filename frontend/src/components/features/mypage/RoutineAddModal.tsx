@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { X, Search, Package, Loader2 } from "lucide-react";
 import ProductCard from "@/components/common/ProductCard";
+import CompareModal from "@/components/common/CompareModal";
 import { useMutation } from "@tanstack/react-query";
 import { getRoutineSteps } from "@/constants/routineSteps";
 import { Pagination } from "@/components/common/Pagination";
-import { useProductSearch, useProductFilters, useLike } from "@/hooks";
+import { useProductSearch, useProductFilters, useLike, useDislikedProductsQuery } from "@/hooks";
 import { useCompare } from "@/hooks/useCompare";
 import { useUserStore, selectGender, selectSkinType } from "@/stores";
 import { getCategoryDisplayName } from "@/utils/format";
@@ -37,6 +38,7 @@ export default function RoutineAddModal({
   onAdd,
 }: RoutineAddModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [inputValue, setInputValue] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
     null,
   );
@@ -58,7 +60,7 @@ export default function RoutineAddModal({
   // 좋아요 API 연동 — toggleLike만 사용 (likeList는 ProductCard 내부에서 처리)
   const { toggleLike } = useLike();
   // 비교하기 상태 관리
-  const { compareItems, toggleCompare } = useCompare<MappedProduct>();
+  const { compareItems, toggleCompare, showCompare, openCompare, closeCompare, canCompare } = useCompare<MappedProduct>();
 
   // 성별에 따른 루틴 스텝 가져오기
   const currentGender = useUserStore(selectGender);
@@ -67,6 +69,10 @@ export default function RoutineAddModal({
   // concerns는 store에 label값으로 저장됨 — filterMeta.tags.tag도 label값이므로 직접 매칭 가능
   const userConcerns = useUserStore((state) => state.concerns);
   const routineSteps = getRoutineSteps(currentGender);
+
+  // 기피 제품 ID Set — onAddRoutine 숨김용
+  const { data: dislikedItems = [] } = useDislikedProductsQuery();
+  const dislikedProductIdSet = new Set(dislikedItems.map((d) => d.productId));
 
   // 현재 루틴 단계 정보
   const currentStep = routineSteps.find((step) => step.code === openStep);
@@ -237,9 +243,15 @@ export default function RoutineAddModal({
     setMaxKnownPage((prev) => Math.max(prev, p));
   };
 
-  // 검색어 또는 카테고리가 바뀌면 1페이지로 리셋
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
+  // Enter 확정 시에만 API 쿼리 반영
+  const handleSearchConfirm = () => {
+    setSearchQuery(inputValue);
+    setCurrentPage(1);
+    setMaxKnownPage(1);
+  };
+  const handleSearchClear = () => {
+    setInputValue("");
+    setSearchQuery("");
     setCurrentPage(1);
     setMaxKnownPage(1);
   };
@@ -252,10 +264,21 @@ export default function RoutineAddModal({
 
   return (
     <>
-      {/* 배경 오버레이 */}
+      {/* 비교 모달 — RoutineAddModal 위로 (z-[90]) */}
+      {showCompare && canCompare && (
+        <CompareModal
+          compareItems={compareItems as [MappedProduct, MappedProduct]}
+          onClose={closeCompare}
+        />
+      )}
+
+      {/* 배경 오버레이 — 비교모달 열려있으면 비교모달만 닫고, 아니면 루틴추가모달 닫기 */}
       <div
         className="fixed inset-0 z-[60] bg-[rgba(0,0,0,0.5)] backdrop-blur-[4px]"
-        onClick={onClose}
+        onClick={() => {
+          if (showCompare) closeCompare();
+          else onClose();
+        }}
       />
       <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none py-10 px-5">
         <div className="bg-white flex flex-col pointer-events-auto rounded-[20px] w-full max-w-[420px] max-h-full shadow-[0_8px_40px_rgba(0,0,0,0.18)] overflow-hidden">
@@ -314,17 +337,21 @@ export default function RoutineAddModal({
                 />
                 <input
                   type="text"
-                  value={searchQuery}
-                  onChange={(event) => handleSearchChange(event.target.value)}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.nativeEvent.isComposing)
+                      handleSearchConfirm();
+                  }}
                   placeholder="제품명 또는 브랜드 검색"
                   className={[
                     "w-full h-10 pl-9 rounded-xl border border-border-warm bg-[#FAF8F5] text-xs text-[#2A2A2A] outline-none",
-                    searchQuery ? "pr-9" : "pr-3",
+                    inputValue ? "pr-9" : "pr-3",
                   ].join(" ")}
                 />
-                {searchQuery && (
+                {inputValue && (
                   <button
-                    onClick={() => handleSearchChange("")}
+                    onClick={handleSearchClear}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-border-warm border-none cursor-pointer"
                   >
                     <X size={12} color="#888" />
@@ -393,10 +420,18 @@ export default function RoutineAddModal({
                         variant="modal"
                         isRecommended={recommendedProductIdSet.has(product.id)}
                         inRoutine={draftProductIds.includes(product.id)}
-                        onAddRoutine={() => onAdd(product.id)}
+                        onAddRoutine={
+                          dislikedProductIdSet.has(product.id)
+                            ? undefined
+                            : () => onAdd(product.id)
+                        }
                         onToggleLike={() => toggleLike(product.id)}
                         isInCompare={isInCompare}
-                        onToggleCompare={() => toggleCompare(product)}
+                        onToggleCompare={() => {
+                          const alreadyIn = compareItems.some((x) => x.id === product.id);
+                          toggleCompare(product);
+                          if (!alreadyIn && compareItems.length === 1) openCompare();
+                        }}
                       />
                     );
                   })}
