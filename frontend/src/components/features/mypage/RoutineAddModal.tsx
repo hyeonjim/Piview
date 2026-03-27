@@ -285,7 +285,7 @@ export default function RoutineAddModal({
           <div className="px-6 pb-6 overflow-y-auto flex-1 min-h-0">
             {/* 헤더 — 타이틀, 피뷰추천 버튼, 닫기 버튼 */}
             <div className="flex items-center justify-between mt-[15px]">
-              <h3 className="text-[16px] font-bold text-[#656563]">
+              <h3 className="text-[14px] font-semibold text-[#656563]">
                 {currentLabel}
               </h3>
               {/* 우측 버튼 그룹 */}
@@ -318,7 +318,7 @@ export default function RoutineAddModal({
               </div>
             </div>
               {isRecommendMode && (
-                <div className="flex items-center gap-1.5 my-2 px-2 rounded-xl text-[14px] font-semibold bg-[#fff] text-[#625f5e]">
+                <div className="flex items-center gap-1.5 my-3 px-2 rounded-xl text-[14px] font-semibold text-[#af91b2]">
                   {recommendedProducts.length > 0 ? (
                     <>
                       사용자 맞춤형 {recommendedProducts.length}개 제품 추천
@@ -405,7 +405,7 @@ export default function RoutineAddModal({
               </div>
             ) : (
               <>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-4">
                   {pagedProducts.map((product) => {
                     const isInCompare = compareItems.some(
                       (item) => item.id === product.id,
@@ -422,6 +422,8 @@ export default function RoutineAddModal({
                         skinTypes={product.skinTypes}
                         effects={product.effects}
                         variant="modal"
+                        showCategory={false}
+                        imageContainerClassName="mt-6"
                         isRecommended={recommendedProductIdSet.has(product.id)}
                         inRoutine={draftProductIds.includes(product.id)}
                         onAddRoutine={

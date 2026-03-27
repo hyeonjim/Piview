@@ -531,7 +531,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             <p className="text-[15px] font-bold text-text-secondary">내루틴 리스트</p>
             <button
               onClick={handleNewRoutine}
-              className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full text-[14px] text-white cursor-pointer bg-[#d9d6bd] shadow-xs active:scale-[0.97] transition-transform"
+              className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full text-[14px] text-white cursor-pointer bg-[#ece7bb] shadow-xs active:scale-[0.97] transition-transform"
             >
               <Plus size={12} /> New
             </button>
@@ -975,7 +975,7 @@ function RoutineProductCard({
               {product.brandName}
             </span>
             {product.categoryName && (
-              <span className="text-[11px] px-1 rounded-[11px] font-medium bg-[#f1efea] text-[#6d675c]">
+              <span className="text-[11px] px-1.5 py-px rounded-[11px] font-medium bg-[#f1efea] text-[#6d675c]">
                 {product.categoryName}
               </span>
             )}
