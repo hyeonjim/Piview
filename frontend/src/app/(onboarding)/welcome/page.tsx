@@ -173,7 +173,7 @@ export default function WelcomePage() {
         <div className="mt-8 flex justify-center">
           <button
             onClick={() => setIsLoginOpen(true)}
-            className="px-10 py-3 rounded-full bg-white/10 backdrop-blur-sm border-[1.5px] border-white/30 text-white text-[22px] font-black tracking-[0.3px] cursor-pointer transition-all duration-300 hover:bg-white/40 hover:border-white/40 active:scale-95"
+            className="px-8 py-2.5 rounded-full bg-white/10 backdrop-blur-sm border-[1.5px] border-white/30 text-white text-[20px] font-black tracking-[0.3px] cursor-pointer transition-all duration-300 hover:bg-white/40 hover:border-white/40 active:scale-95"
           >
             Login
           </button>
@@ -206,20 +206,22 @@ export default function WelcomePage() {
           Welcome to PIVIEW !
         </h2>
 
-        <button
-          onClick={handleKakaoLogin}
-          className="w-full h-[54px] bg-[#FEE500] text-black/85 text-[18px] font-bold flex items-center justify-center gap-3 cursor-pointer border-none rounded-2xl"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="rgba(0,0,0,0.85)"
+        <div className="flex justify-center">
+          <button
+            onClick={handleKakaoLogin}
+            className="w-150 h-[54px] bg-[#FEE500] text-black/85 text-[18px] font-bold flex items-center justify-center gap-3 cursor-pointer border-none rounded-2xl"
           >
-            <path d="M12 3C6.477 3 2 6.477 2 11c0 2.897 1.553 5.453 3.926 7.07L4.9 21.5a.5.5 0 0 0 .7.55l4.13-2.32A11.3 11.3 0 0 0 12 20c5.523 0 10-3.477 10-8S17.523 3 12 3z" />
-          </svg>
-          카카오로 시작하기
-        </button>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="rgba(0,0,0,0.85)"
+            >
+              <path d="M12 3C6.477 3 2 6.477 2 11c0 2.897 1.553 5.453 3.926 7.07L4.9 21.5a.5.5 0 0 0 .7.55l4.13-2.32A11.3 11.3 0 0 0 12 20c5.523 0 10-3.477 10-8S17.523 3 12 3z" />
+            </svg>
+            카카오로 시작하기
+          </button>
+        </div>
 
         <p className="text-xs text-[#9E9585] text-center mt-5 leading-[1.6]">
           로그인 시{" "}
