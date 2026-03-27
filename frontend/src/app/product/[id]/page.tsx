@@ -513,21 +513,16 @@ function ProductDetailInner() {
 
         {/* 제품 정보 섹션 */}
         <div className="mx-4 rounded-2xl bg-white p-5 mb-3 border border-[#f0ede8] shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <p className="text-[14px] text-[#80715e] font-semibold">
-                  {productData.brandName}
-                </p>
-                {effectiveCategoryName && (
-                  <span className="text-[12px] text-[#8b8276] bg-[#f5f2ef] px-1.5 py-0.5 rounded-full font-semibold">
-                    {effectiveCategoryName}
-                  </span>
-                )}
-              </div>
-              <h1 className="text-[16px] font-bold text-[#797572] leading-[1.35]">
-                {productData.productName}
-              </h1>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              {effectiveCategoryName && (
+                <span className="text-[12px] text-[#8b8276] bg-[#f5f2ef] px-1.5 py-0.5 rounded-full font-semibold mb-2 inline-block">
+                  {effectiveCategoryName}
+                </span>
+              )}
+              <p className="text-[14px] text-[#80715e] font-semibold">
+                {productData.brandName}
+              </p>
             </div>
             <button
               onClick={() => {
@@ -544,9 +539,12 @@ function ProductDetailInner() {
               내루틴과 비교하기
             </button>
           </div>
+          <h1 className="text-[17px] font-bold text-[#797572] mb-2">
+            {productData.productName}
+          </h1>
 
           {(skinTypes.length > 0 || tags.length > 0) && (
-            <div className="flex flex-col gap-1 mb-7 mt-3">
+            <div className="flex flex-col gap-1 mb-3 mt-3">
               {skinTypes.length > 0 && (
                 <div className="flex flex-wrap">
                   {skinTypes.map((skinType) => (
@@ -570,7 +568,7 @@ function ProductDetailInner() {
           )}
 
           {/* 가격 및 액션 버튼 */}
-          <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#f0ede8]">
+          <div className="flex items-center justify-between gap-2 pt-4 border-t border-[#f0ede8]">
             <div className="flex items-baseline gap-1 flex-wrap">
               {productData.price ? (
                 <p className="text-[14px] font-semibold text-[#736d66]">
