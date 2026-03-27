@@ -9,7 +9,7 @@ import { getRoutineSteps } from "@/constants/routineSteps";
 import { Pagination } from "@/components/common/Pagination";
 import { useProductSearch, useProductFilters, useLike, useDislikedProductsQuery } from "@/hooks";
 import { useCompare } from "@/hooks/useCompare";
-import { useUserStore, selectGender, selectSkinType } from "@/stores";
+import { useUserStore, selectGender, selectSkinType, useRoutineStore } from "@/stores";
 import { getCategoryDisplayName } from "@/utils/format";
 import { toSkinTypeEnum } from "@/utils/enumConvert";
 import { mapRecommendResponse } from "@/utils/productMapper";
@@ -61,6 +61,8 @@ export default function RoutineAddModal({
   const { toggleLike } = useLike();
   // 비교하기 상태 관리
   const { compareItems, toggleCompare, showCompare, openCompare, closeCompare, canCompare } = useCompare<MappedProduct>();
+  // PICK 배지 추적 — 추천 제품 마킹용
+  const markAsRecommended = useRoutineStore((state) => state.markAsRecommended);
 
   // 성별에 따른 루틴 스텝 가져오기
   const currentGender = useUserStore(selectGender);
@@ -318,7 +320,7 @@ export default function RoutineAddModal({
               </div>
             </div>
               {isRecommendMode && (
-                <div className="flex items-center gap-1.5 my-3 px-2 rounded-xl text-[14px] font-semibold text-[#af91b2]">
+                <div className="flex items-center gap-1.5 py-2 mt-3 mb-1 px-2 rounded-xl text-[12px] bg-[#f7f1f8] font-semibold text-[#625c63]">
                   {recommendedProducts.length > 0 ? (
                     <>
                       사용자 맞춤형 {recommendedProducts.length}개 제품 추천
@@ -429,7 +431,13 @@ export default function RoutineAddModal({
                         onAddRoutine={
                           dislikedProductIdSet.has(product.id)
                             ? undefined
-                            : () => onAdd(product.id)
+                            : () => {
+                                onAdd(product.id);
+                                // 추천 제품인 경우 store에 마킹 (localStorage 동기화)
+                                if (recommendedProductIdSet.has(product.id)) {
+                                  markAsRecommended(product.id);
+                                }
+                              }
                         }
                         onToggleLike={() => toggleLike(product.id)}
                         isInCompare={isInCompare}

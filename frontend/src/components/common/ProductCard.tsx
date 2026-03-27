@@ -637,7 +637,7 @@ export default function ProductCard({
 
         {/* 루틴추가 버튼 — 중앙 배치 */}
         {onAddRoutine && (
-          <div className="flex justify-center mt-5 mb-2">
+          <div className="flex justify-center mt-10 mb-2">
             <button
               onClick={(event) => handleAction(event, onAddRoutine)}
               disabled={inRoutine}

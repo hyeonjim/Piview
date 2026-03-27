@@ -134,6 +134,10 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   const { mutate: updateRoutine, isPending: isUpdating } =
     useUpdateRoutineMutation();
 
+  // ── PICK 배지 추적 (localStorage 기반) ────────────────────────────────
+  const isProductRecommended = useRoutineStore((state) => state.isRecommended);
+  const removeRecommended = useRoutineStore((state) => state.removeRecommended);
+
   // ── 로컬 드래그용 상태 (서버 데이터 기반으로 초기화) ──────────────────
   // 드래그 중 UI 반영을 위해 서버 상태를 로컬 React 상태로 미러링
   const [localDraftByStep, setLocalDraftByStep] = useState<
@@ -501,6 +505,10 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
    */
   const handleRemoveProduct = (productId: number) => {
     removeProduct(productId, {
+      onSuccess: () => {
+        // localStorage에서 추천 정보 제거
+        removeRecommended(productId);
+      },
       onError: () => notify("제품 삭제에 실패했습니다."),
     });
   };
@@ -757,13 +765,13 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                       isDragging={isDraggingThis}
                       isDropTarget={isProductDropTarget}
                       isEditMode={canDrag}
+                      isRecommended={isProductRecommended(product.productId)}
                       onDragHandlePointerDown={
                         canDrag ? handleDragHandlePointerDown : () => {}
                       }
                       onRemove={
                         isViewingSavedRoutine ? () => {} : handleRemoveProduct
                       }
-
                       priority={index === 0}
                     />
                   );
@@ -883,6 +891,8 @@ interface RoutineProductCardProps {
   isDropTarget: boolean;
   /** true이면 드래그 핸들 표시 및 순서 변경 허용 */
   isEditMode: boolean;
+  /** 추천 제품 여부 - PICK 배지 표시 */
+  isRecommended?: boolean;
   priority?: boolean;
   onDragHandlePointerDown: (
     event: React.PointerEvent<HTMLDivElement>,
@@ -899,6 +909,7 @@ function RoutineProductCard({
   isDragging,
   isDropTarget,
   isEditMode,
+  isRecommended = false,
   onDragHandlePointerDown,
   onRemove,
   priority = false,
@@ -977,6 +988,12 @@ function RoutineProductCard({
             {product.categoryName && (
               <span className="text-[11px] px-1.5 py-px rounded-[11px] font-medium bg-[#f1efea] text-[#6d675c]">
                 {product.categoryName}
+              </span>
+            )}
+            {/* PICK 배지 - ProductCard 스타일 일치 */}
+            {isRecommended && (
+              <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-[10px] tracking-[0.06em] bg-[#faebf2] text-[#707173]">
+                PICK
               </span>
             )}
           </div>
