@@ -92,7 +92,7 @@ export default function OwnedTab() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-3 mt-5 [&_p.line-clamp-2]:text-[12px]!">
+            <div className="grid grid-cols-2 gap-5 mt-5 [&_p.line-clamp-2]:text-[12px]!">
               {pagedOwned.map((product) => (
                 <div key={product.id} className="relative">
                   <ProductCard
@@ -133,8 +133,8 @@ export default function OwnedTab() {
         <div className="mb-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <p className="text-base font-bold text-[#db1c1c]">제외 제품</p>
-              <Ban size={14} className="text-[#db1c1c]" />
+              <p className="text-base font-bold text-[#b45959]">제외 제품</p>
+              <Ban size={14} className="text-[#b45959]" />
             </div>
             <button
               onClick={() => setOpenAvoidModal(true)}
@@ -163,7 +163,7 @@ export default function OwnedTab() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-3 mt-5 [&_p.line-clamp-2]:text-[12px]!">
+            <div className="grid grid-cols-2 gap-5 mt-5 [&_p.line-clamp-2]:text-[12px]!">
               {pagedAvoid.map((item) => (
                 <div key={item.dislikedProductId} className="relative">
                   <ProductCard

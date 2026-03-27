@@ -81,7 +81,7 @@ function EffectTag({ label }: { label: string }) {
 // ── PICK 배지 — RoutineAddModal의 분홍 스타일로 통일
 function PickBadge() {
   return (
-    <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded-[10px] tracking-[0.06em] bg-[#faebf2] text-[#707173]">
+    <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-[10px] tracking-[0.06em] bg-[#faebf2] text-[#707173]">
       PICK
     </span>
   );
@@ -97,7 +97,7 @@ function BrandLabel({ brand }: { brand: string }) {
 // ── 카테고리 칩 — 나중에 색상 적용 예정, 현재 기본 스타일 유지
 function CategoryChip({ category }: { category: string }) {
   return (
-    <span className="text-[10px] px-1 py-px rounded-[10px] font-medium bg-[#f1efea] text-[#6d6557]">
+    <span className="text-[10px] px-1.5 py-0.5 rounded-[10px] font-medium bg-[#f1efea] text-[#6d6557]">
       {category}
     </span>
   );
@@ -367,7 +367,7 @@ export default function ProductCard({
               name={name}
               emoji={emoji}
               sizes="(max-width: 500px) 50vw, 250px"
-              className="object-contain pt-3"
+              className="object-contain pt-3 mt-2"
               priority={priority}
             />
 
@@ -559,7 +559,7 @@ export default function ProductCard({
                   emoji={emoji}
                   width={80}
                   height={80}
-                  className="object-cover"
+                  className="object-contain"
                 />
               </div>
             </div>
@@ -637,15 +637,15 @@ export default function ProductCard({
 
         {/* 루틴추가 버튼 — 중앙 배치 */}
         {onAddRoutine && (
-          <div className="flex justify-center mt-5">
+          <div className="flex justify-center mt-10 mb-2">
             <button
               onClick={(event) => handleAction(event, onAddRoutine)}
               disabled={inRoutine}
               className={[
-                "flex items-center justify-center gap-1 w-28 h-8 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[14px] font-semibold",
+                "flex items-center justify-center gap-1 w-28 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[14px] font-semibold",
                 inRoutine
-                  ? "bg-[#f7f1ea] text-[#7a7977]"
-                  : "bg-[#f1ddc1] text-[#4e4c4b]",
+                  ? "bg-[#f7f1ea] text-[#858482]"
+                  : "bg-[#f8eddf] text-[#666463]",
               ].join(" ")}
             >
               {inRoutine ? (
