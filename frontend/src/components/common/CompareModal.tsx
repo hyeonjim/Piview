@@ -10,13 +10,14 @@
  */
 
 import Image from "next/image";
-import { X, Loader2, MessageSquareText } from "lucide-react";
+import { X, Loader2, MessageSquareText, Ban } from "lucide-react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { formatPrice } from "@/utils/format";
 import { SkinTypeTag } from "@/components/common/ProductCard";
 import { useProductCompare, useAiComparisonSummary } from "@/hooks";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
 import type { ProductViewModel } from "@/types/product/myCos";
+import { useUserStore } from "@/stores";
 
 type CompareProduct = ProductViewModel;
 export type { CompareProduct };
@@ -95,6 +96,11 @@ export default function CompareModal({
       : null;
 
   const { data: compareData, isLoading } = useProductCompare(productIds);
+
+  // 내 알러지 성분 이름 Set — O(1) 조회용
+  const myAllergyNames = new Set(
+    useUserStore((s) => s.avoidContents).map((a) => a.avoidContent),
+  );
 
   // AI 비교 분석 — 모달 열릴 때 자동 호출
   const {
@@ -246,12 +252,19 @@ export default function CompareModal({
           <span className="text-[13px] text-text-hint">없음</span>
         ) : (
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[13px] font-semibold text-[#dc6262]">
+            <span className="text-[13px] font-semibold text-[#df322c]">
               {apiLeft.allergy.count}개
             </span>
-            <span className="text-[13px] text-text-muted text-center font-semibold">
-              {apiLeft.allergy.ingredients.join(", ")}
-            </span>
+            <div className="flex flex-wrap justify-center gap-x-0 gap-y-0">
+              {apiLeft.allergy.ingredients.map((ingredient, idx) => (
+                <span key={ingredient} className="flex items-center gap-0.5 text-[13px] text-[#df322c] font-semibold">
+                  {myAllergyNames.has(ingredient) && (
+                    <Ban size={11} className="text-[#df322c] shrink-0" />
+                  )}
+                  {ingredient}{idx < apiLeft.allergy.ingredients.length - 1 ? ", " : ""}
+                </span>
+              ))}
+            </div>
           </div>
         )
       ) : (
@@ -262,12 +275,19 @@ export default function CompareModal({
           <span className="text-[13px] text-text-hint">없음</span>
         ) : (
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[13px] font-semibold text-[#dc6262]">
+            <span className="text-[13px] font-semibold text-[#df322c]">
               {apiRight.allergy.count}개
             </span>
-            <span className="text-[13px] text-text-muted text-center font-semibold">
-              {apiRight.allergy.ingredients.join(", ")}
-            </span>
+            <div className="flex flex-wrap justify-center gap-x-0 gap-y-0">
+              {apiRight.allergy.ingredients.map((ingredient, idx) => (
+                <span key={ingredient} className="flex items-center gap-0.5 text-[13px] text-[#df322c] font-semibold">
+                  {myAllergyNames.has(ingredient) && (
+                    <Ban size={11} className="text-[#df322c] shrink-0" />
+                  )}
+                  {ingredient}{idx < apiRight.allergy.ingredients.length - 1 ? ", " : ""}
+                </span>
+              ))}
+            </div>
           </div>
         )
       ) : (
