@@ -152,9 +152,11 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
                                 id={product.productId}
                                 name={product.name}
                                 brand={product.brandName ?? ""}
+                                imageUrl={product.imageUrl ?? undefined}
                                 variant="modal"
+                                showLike={false}
                               />
-                            ) : null
+                            ) : null,
                           )}
                         </div>
                       )}

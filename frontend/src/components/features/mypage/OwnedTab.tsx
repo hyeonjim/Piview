@@ -167,7 +167,7 @@ export default function OwnedTab() {
               {pagedAvoid.map((item) => (
                 <div key={item.dislikedProductId} className="relative">
                   <ProductCard
-                    id={item.dislikedProductId}
+                    id={item.productId}
                     brand={item.brandName}
                     name={item.productName}
                     category={item.categoryName}

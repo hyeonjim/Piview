@@ -29,6 +29,7 @@ import {
   useRemoveProductFromDraftMutation,
   useDraftQuery,
   useMainRoutineQuery,
+  useDislikedProductsQuery,
 } from "@/hooks";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
 import { shouldExcludeAntiAging } from "@/utils/productMapper";
@@ -147,6 +148,10 @@ function ProductDetailInner() {
     (item) => item.productInfo.productId === productIdNum,
   );
   const owned = !!myCosItem;
+
+  // 기피 제품 여부 — true이면 루틴추가 버튼 숨김
+  const { data: dislikedItems = [] } = useDislikedProductsQuery();
+  const isDisliked = dislikedItems.some((d) => d.productId === productIdNum);
 
   const { toggleLike } = useLike();
   const [isLiked, setIsLiked] = useState<boolean | null>(null);
@@ -566,20 +571,22 @@ function ProductDetailInner() {
               )}
             </div>
             <div className="flex gap-2 shrink-0">
-              <button
-                onClick={handleAddRoutine}
-                className={`flex items-center justify-center gap-1 w-22 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[13px] font-semibold ${routineAdded ? "bg-(--color-bg-beige) text-(--color-brand)" : "bg-[#f1eae6] text-[#807d7d]"}`}
-              >
-                {routineAdded ? (
-                  <>
-                    <Check size={11} /> 추가됨
-                  </>
-                ) : (
-                  <>
-                    <Plus size={11} /> 루틴추가
-                  </>
-                )}
-              </button>
+              {!isDisliked && (
+                <button
+                  onClick={handleAddRoutine}
+                  className={`flex items-center justify-center gap-1 w-22 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[13px] font-semibold ${routineAdded ? "bg-(--color-bg-beige) text-(--color-brand)" : "bg-[#f1eae6] text-[#807d7d]"}`}
+                >
+                  {routineAdded ? (
+                    <>
+                      <Check size={11} /> 추가됨
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={11} /> 루틴추가
+                    </>
+                  )}
+                </button>
+              )}
               <button
                 onClick={handleToggleOwned}
                 className={`flex items-center justify-center gap-1 w-22 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[13px] font-semibold ${owned ? "bg-(--color-bg-beige) text-(--color-brand)" : "bg-[#f1eae6] text-[#807d7d]"}`}

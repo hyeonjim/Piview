@@ -53,6 +53,7 @@ export interface ProductSummaryResponse {
   productId: number;
   name: string | null;
   brandName: string | null;
+  categoryId?: number | null;
   categoryName: string | null;
   imageUrl: string | null;
   skinTypes: string[]; // ["dry", "oily"] — 영문 소문자
