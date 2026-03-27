@@ -48,3 +48,8 @@ src.zip
 
 #현지
 swagger.json
+
+public/sw.js
+public/workbox-*.js
+public/sw.js.map
+public/workbox-*.js.map

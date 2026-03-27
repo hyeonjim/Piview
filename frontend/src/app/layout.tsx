@@ -17,7 +17,6 @@ const maruBuri = localFont({
       style: "normal",
     },
     {
-      // weight 범위 "400 500": font-medium(500) 요청 시 Regular가 처리 (시스템 폰트 폴백 방지)
       path: "../../public/fonts/MaruBuri-Regular.ttf",
       weight: "400 500",
       style: "normal",
@@ -58,26 +57,45 @@ const sortsMillGoudy = localFont({
 export const metadata: Metadata = {
   title: "Piview",
   description: "나만의 스킨케어 루틴",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Piview",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    title: "Piview",
+    description: "나만의 스킨케어 루틴",
+  },
 };
 
-// viewport는 metadata와 분리해서 export해야 Next.js가 올바르게 처리함
 export const viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  themeColor: "#F2EFE9",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="ko"
       className={`${maruBuri.variable} ${sortsMillGoudy.variable}`}
     >
+      <head>
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+      </head>
       <body>
         <div className="min-h-screen bg-[#F2EFE9]">
-          <div
-            className="mx-auto min-h-screen bg-white flex flex-col relative w-full max-w-app shadow-app"
-          >
+          <div className="mx-auto min-h-screen bg-white flex flex-col relative w-full max-w-app shadow-app">
             <Providers>{children}</Providers>
           </div>
         </div>
