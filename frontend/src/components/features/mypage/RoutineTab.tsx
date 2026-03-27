@@ -134,6 +134,10 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   const { mutate: updateRoutine, isPending: isUpdating } =
     useUpdateRoutineMutation();
 
+  // ── PICK 배지 추적 (localStorage 기반) ────────────────────────────────
+  const isProductRecommended = useRoutineStore((state) => state.isRecommended);
+  const removeRecommended = useRoutineStore((state) => state.removeRecommended);
+
   // ── 로컬 드래그용 상태 (서버 데이터 기반으로 초기화) ──────────────────
   // 드래그 중 UI 반영을 위해 서버 상태를 로컬 React 상태로 미러링
   const [localDraftByStep, setLocalDraftByStep] = useState<
@@ -501,6 +505,10 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
    */
   const handleRemoveProduct = (productId: number) => {
     removeProduct(productId, {
+      onSuccess: () => {
+        // localStorage에서 추천 정보 제거
+        removeRecommended(productId);
+      },
       onError: () => notify("제품 삭제에 실패했습니다."),
     });
   };
@@ -531,7 +539,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             <p className="text-[15px] font-bold text-text-secondary">내루틴 리스트</p>
             <button
               onClick={handleNewRoutine}
-              className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full text-[14px] text-white cursor-pointer bg-[#d9d6bd] shadow-xs active:scale-[0.97] transition-transform"
+              className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full text-[14px] text-white cursor-pointer bg-[#ece7bb] shadow-xs active:scale-[0.97] transition-transform"
             >
               <Plus size={12} /> New
             </button>
@@ -757,13 +765,13 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                       isDragging={isDraggingThis}
                       isDropTarget={isProductDropTarget}
                       isEditMode={canDrag}
+                      isRecommended={isProductRecommended(product.productId)}
                       onDragHandlePointerDown={
                         canDrag ? handleDragHandlePointerDown : () => {}
                       }
                       onRemove={
                         isViewingSavedRoutine ? () => {} : handleRemoveProduct
                       }
-
                       priority={index === 0}
                     />
                   );
@@ -883,6 +891,8 @@ interface RoutineProductCardProps {
   isDropTarget: boolean;
   /** true이면 드래그 핸들 표시 및 순서 변경 허용 */
   isEditMode: boolean;
+  /** 추천 제품 여부 - PICK 배지 표시 */
+  isRecommended?: boolean;
   priority?: boolean;
   onDragHandlePointerDown: (
     event: React.PointerEvent<HTMLDivElement>,
@@ -899,6 +909,7 @@ function RoutineProductCard({
   isDragging,
   isDropTarget,
   isEditMode,
+  isRecommended = false,
   onDragHandlePointerDown,
   onRemove,
   priority = false,
@@ -944,9 +955,15 @@ function RoutineProductCard({
               : undefined
           }
         >
+          {/* PICK 배지 — 이미지 영역 왼쪽 상단 */}
+          {isRecommended && (
+            <span className="absolute top-2 left-1.5 z-10 text-[10px] font-semibold px-1.5 py-0.5 rounded-[10px] tracking-[0.06em] bg-[#faebf2] text-[#707173]">
+              PICK
+            </span>
+          )}
 
           {/* 이미지 — py-5 패딩을 주기 위해 relative 래퍼로 감쌈 (fill은 positioned 조상 기준) */}
-          <div className="absolute inset-0 py-2">
+          <div className="absolute inset-0 pl-4 ">
             <div className="relative w-full h-full">
               {product.imageUrl && !imgError ? (
                 <Image
@@ -968,14 +985,14 @@ function RoutineProductCard({
         {/* 텍스트 영역 */}
         <Link
           href={`/product/${product.productId}`}
-          className="flex-1 px-3 py-2 min-w-0 no-underline"
+          className="flex-1 px-1 py-1 mt-1 min-w-0 no-underline"
         >
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-[13px] font-semibold text-[#7e6b52] tracking-[0.08em]">
               {product.brandName}
             </span>
             {product.categoryName && (
-              <span className="text-[11px] px-1 rounded-[11px] font-medium bg-[#f1efea] text-[#6d675c]">
+              <span className="text-[11px] px-1.5 py-px rounded-[11px] font-medium bg-[#f1efea] text-[#6d675c]">
                 {product.categoryName}
               </span>
             )}
