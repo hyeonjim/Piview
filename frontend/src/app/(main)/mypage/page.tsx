@@ -83,7 +83,7 @@ export default function MyPage() {
   };
 
   return (
-    <div className="flex-1 bg-[#f3f1ed]">
+    <div className="flex-1 bg-[#f5f2ed]">
       <div className="pt-3.75 px-5 pb-3 relative border-b border-border">
         <div className="flex items-center gap-4">
           <div
@@ -114,7 +114,7 @@ export default function MyPage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
-                <p className="text-[18px] font-bold text-[#757573] tracking-[-0.3px]">
+                <p className="text-[18px] font-bold text-[#646462] tracking-[-0.3px]">
                   {userName}님
                 </p>
                 {/* 성별 아이콘 */}
@@ -127,10 +127,10 @@ export default function MyPage() {
               <div className="flex items-center gap-2 shrink-0">
                 <Link href="/mypage/settings">
                   <button
-                    className="flex items-center justify-center w-[34px] h-[34px] rounded-full bg-brand/12 border border-brand/20 cursor-pointer"
+                    className="flex items-center justify-center w-[34px] h-[34px] rounded-full bg-brand/12 border border-brand/60 cursor-pointer"
                     aria-label="설정"
                   >
-                    <Settings size={15} className="text-brand-dark" />
+                    <Settings size={16} className="text-[#6d6b6b]" />
                   </button>
                 </Link>
               </div>
@@ -144,14 +144,14 @@ export default function MyPage() {
             ) : (
               <div className="flex flex-wrap gap-1 mt-1">
                 {/* 피부 타입 배지 — ProductCard SkinTypeTag 배경색 스타일 */}
-                <span className="text-[14px] py-0.5 px-2 rounded-full border bg-[#f5edd9] text-[#73614c] font-semibold">
+                <span className="text-[13px] py-0.5 px-2 rounded-full border bg-[#f0e4c7] text-[#5f564c] font-semibold">
                   {savedSkinType}
                 </span>
                 {/* 피부 고민 배지 — ProductCard EffectTag 스타일 */}
                 {savedConcerns.map((concern, index) => (
                   <span
                     key={`${concern}-${index}`}
-                    className="text-[14px] py-0.5 px-2 rounded-full border bg-[#f5f4f4] text-[#7f6c55] font-semibold"
+                    className="text-[13px] py-0.5 px-2 rounded-full border bg-[#ece6dc] text-[#5f564c] font-semibold"
                   >
                     {concern}
                   </span>

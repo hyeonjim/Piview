@@ -192,7 +192,7 @@ export default function WelcomePage() {
 
       {/* Login bottom sheet */}
       <div
-        className="absolute bottom-0 left-0 right-0 z-30 rounded-t-[28px] bg-[#F5F0E8] px-25 pt-9 pb-10"
+        className="absolute bottom-0 left-0 right-0 z-30 rounded-t-[28px] bg-[#F5F0E8] px-25 pt-20 pb-30"
         style={{
           transform: isLoginOpen ? "translateY(0)" : "translateY(100%)",
           transition: "transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)",
@@ -200,7 +200,7 @@ export default function WelcomePage() {
         onClick={(event) => event.stopPropagation()}
       >
         <h2
-          className="text-[24px] font-bold text-[#1E1B24] text-center leading-tight mb-12 whitespace-pre-line"
+          className="text-[30px] font-bold text-[#4a474e] text-center leading-tight mb-15 whitespace-pre-line"
           style={{ fontFamily: "var(--font-english)" }}
         >
           Welcome to PIVIEW !
@@ -208,7 +208,7 @@ export default function WelcomePage() {
 
         <button
           onClick={handleKakaoLogin}
-          className="w-full h-[54px] bg-[#FEE500] text-black/85 text-base font-semibold flex items-center justify-center gap-3 cursor-pointer border-none rounded-2xl"
+          className="w-full h-[54px] bg-[#FEE500] text-black/85 text-[18px] font-bold flex items-center justify-center gap-3 cursor-pointer border-none rounded-2xl"
         >
           <svg
             width="20"
