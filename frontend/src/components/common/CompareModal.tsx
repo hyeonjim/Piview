@@ -51,12 +51,7 @@ const listVariants: Variants = {
 // 각 줄 — fade + 살짝 위로 + scale
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 12, scale: 0.97 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.4, ease: [0.23, 1, 0.32, 1] },
-  },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: [0.23, 1, 0.32, 1] } },
 };
 
 // ── 서브컴포넌트: 제품 헤더 ────────────────────────────────────────
@@ -78,7 +73,7 @@ function ProductHeader({ product }: { product: CompareProduct }) {
         )}
       </div>
       {product.brand && (
-        <p className="text-[13px] text-text-muted font-medium text-center leading-tight px-1 truncate w-full">
+        <p className="text-[13px] text-[#5d5c5b] font-medium text-center leading-tight px-1 truncate w-full">
           {product.brand}
         </p>
       )}
@@ -170,7 +165,7 @@ export default function CompareModal({
             (apiLeft?.skinConcerns ?? leftProduct.effects).map((effect) => (
               <span
                 key={effect}
-                className="text-[10px] px-1.5 py-px rounded-[10px] border font-semibold bg-[#f5f2f1] text-[#726c67]"
+                className="text-[10px] px-1.5 py-px rounded-[10px] border font-semibold bg-[#f9f8f6] text-[#726c67]"
               >
                 {effect}
               </span>
@@ -186,7 +181,7 @@ export default function CompareModal({
             (apiRight?.skinConcerns ?? rightProduct.effects).map((effect) => (
               <span
                 key={effect}
-                className="text-[10px] px-1.5 py-px rounded-[10px] border font-semibold bg-[#f5f2f1] text-[#726c67]"
+                className="text-[10px] px-1.5 py-px rounded-[10px] border font-semibold bg-[#f9f8f6] text-[#726c67]"
               >
                 {effect}
               </span>
@@ -289,7 +284,7 @@ export default function CompareModal({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex flex-col justify-end items-center"
+      className="fixed inset-0 z-60 flex flex-col justify-end items-center"
       style={{
         backgroundColor: "rgba(0,0,0,0.45)",
         backdropFilter: "blur(4px)",
@@ -325,7 +320,7 @@ export default function CompareModal({
             <div />
             <div className="flex flex-col items-center">
               {isRoutineCompare && (
-                <span className="text-[14px] font-semibold px-2 py-0.5 rounded-full text-brand">
+                <span className="text-[14px] font-semibold px-2 py-0.5 rounded-full text-[#5d5c5b]">
                   내 제품
                 </span>
               )}
@@ -334,7 +329,7 @@ export default function CompareModal({
             <div className="bg-[var(--color-border-modal)] self-stretch" />
             <div className="flex flex-col items-center">
               {isRoutineCompare && (
-                <span className="text-[14px] font-semibold px-2 py-0.5 rounded-fullp text-brand">
+                <span className="text-[14px] font-semibold px-2 py-0.5 rounded-fullp text-[#5d5c5b]">
                   비교 제품
                 </span>
               )}
@@ -358,12 +353,12 @@ export default function CompareModal({
                   제품명
                 </div>
                 <div className="px-2 py-3 text-[12px] text-center flex items-center justify-center text-text-primary">
-                  <span className="text-[13px] font-medium text-[#535252] leading-tight line-clamp-2">
+                  <span className="text-[14px] font-semibold text-[#535252] leading-tight line-clamp-2">
                     {leftProduct.name}
                   </span>
                 </div>
                 <div className="px-2 py-3 text-[12px] text-center flex items-center justify-center text-text-primary">
-                  <span className="text-[13px] font-medium text-[#535252] leading-tight line-clamp-2">
+                  <span className="text-[14px] font-semibold text-[#535252] leading-tight line-clamp-2">
                     {rightProduct.name}
                   </span>
                 </div>
@@ -422,17 +417,13 @@ export default function CompareModal({
               <div className="size-6 rounded-lg flex items-center justify-center bg-[#b8cbdb]">
                 <MessageSquareText size={12} className="text-white" />
               </div>
-              <p className="text-[16px] font-bold text-[#3c5061]">
-                AI 비교 분석
-              </p>
+              <p className="text-[16px] font-bold text-[#3c5061]">AI 비교 분석</p>
             </div>
 
             {isAiLoading && (
               <div className="flex items-center justify-center py-6 gap-2 text-text-muted">
                 <Loader2 size={18} className="animate-spin opacity-50" />
-                <p className="text-xs">
-                  AI가 두 제품을 비교 분석하고 있어요...
-                </p>
+                <p className="text-xs">AI가 두 제품을 비교 분석하고 있어요...</p>
               </div>
             )}
 

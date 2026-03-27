@@ -26,7 +26,7 @@ const SETTINGS_SKIN_CONCERNS = [
   { id: "redness", label: "홍조" },
   { id: "keratin", label: "각질" },
 ] as const;
-import { useUpdateProfile } from "@/hooks/queries/useUserQuery";
+import { useUpdateProfile, useDislikedIngredientsQuery } from "@/hooks/queries/useUserQuery";
 import { useLogout } from "@/hooks";
 import { toSkinTypeEnum } from "@/utils/enumConvert";
 import type { SkinType } from "@/types/user";
@@ -35,7 +35,7 @@ import type { SkinType } from "@/types/user";
 function chipClassName(isActive: boolean) {
   return `inline-flex items-center gap-1 px-3 py-1.5 rounded-chip text-sm font-semibold cursor-pointer transition-all border select-none ${
     isActive
-      ? "bg-[#d9d2d2] text-white"
+      ? "bg-[#bcbfc4] text-white"
       : "bg-white text-[#696363] border-border"
   }`;
 }
@@ -52,6 +52,10 @@ export default function SettingsPage() {
   const storedConcerns = useUserStore((s) => s.concerns);
   const { mutate: updateProfile, isPending } = useUpdateProfile();
   const { logout } = useLogout();
+
+  // 기피 제품 알러지 성분 조회 → store.avoidContents 동기화
+  useDislikedIngredientsQuery();
+  const avoidContents = useUserStore((s) => s.avoidContents);
 
   // 로컬 상태 — store 값으로 초기화
   const [skinType, setSkinTypeLocal] = useState<string>(storedSkinType ?? "");
@@ -149,6 +153,34 @@ export default function SettingsPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        <Divider />
+
+        {/* 보유 알러지 */}
+        <div>
+          <h3 className="text-base font-bold text-[#635446] mb-1.5">
+            보유 알러지
+          </h3>
+          <p className="text-[14px] text-text-muted mb-5">
+            제외 제품에서 감지된 알러지 성분이에요
+          </p>
+          {avoidContents.length === 0 ? (
+            <p className="text-[13px] text-text-muted">
+              등록된 알러지 성분이 없어요
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {avoidContents.map((item) => (
+                <span
+                  key={item.id}
+                  className="inline-flex items-center px-3 py-1.5 rounded-chip text-sm font-semibold bg-[#F5EDE8] text-[#8C5A4A] border border-[#e8d0c8]"
+                >
+                  {item.avoidContent}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <Divider />

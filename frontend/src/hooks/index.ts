@@ -15,7 +15,7 @@ export {
 } from "./queries/useDislikedProducts";
 
 // TanStack Query / 스토어 래퍼 훅 (queries/ 폴더)
-export { useUserQuery } from "./queries/useUserQuery";
+export { useUserQuery, useDislikedIngredientsQuery } from "./queries/useUserQuery";
 export { useLike, useLikedProducts, useToggleLike } from "./queries/useLike";
 export {
   useMyCosQuery,

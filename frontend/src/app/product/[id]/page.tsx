@@ -15,6 +15,7 @@ import {
   MessageSquareText,
   Loader2,
   MessageSquareWarning,
+  Ban,
 } from "lucide-react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { toast } from "sonner";
@@ -29,7 +30,6 @@ import {
   useRemoveProductFromDraftMutation,
   useDraftQuery,
   useMainRoutineQuery,
-  useDislikedProductsQuery,
 } from "@/hooks";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
 import { shouldExcludeAntiAging } from "@/utils/productMapper";
@@ -69,10 +69,10 @@ function resolveIngredientEwgScore(ingredient: {
 }
 
 /** 알레르기 유발 성분 표시 아이콘 */
-function AllergenIcon() {
+function AllergenIcon({ size = 14 }: { size?: number }) {
   return (
     <div className="flex items-center justify-center shrink-0 self-center rounded-full">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="10" fill="var(--color-danger)" />
         <rect x="11" y="6.5" width="2" height="7" rx="1" fill="white" />
         <circle cx="12" cy="17" r="1.3" fill="white" />
@@ -149,10 +149,6 @@ function ProductDetailInner() {
   );
   const owned = !!myCosItem;
 
-  // 기피 제품 여부 — true이면 루틴추가 버튼 숨김
-  const { data: dislikedItems = [] } = useDislikedProductsQuery();
-  const isDisliked = dislikedItems.some((d) => d.productId === productIdNum);
-
   const { toggleLike } = useLike();
   const [isLiked, setIsLiked] = useState<boolean | null>(null);
   const resolvedIsLiked = isLiked !== null ? isLiked : (productData?.liked ?? false);
@@ -167,6 +163,11 @@ function ProductDetailInner() {
 
   const gender = useUserStore(selectGender);
   const routineSteps = getRoutineSteps(gender);
+
+  // 내 알러지 성분 이름 Set — O(1) 조회용
+  const myAllergyNames = new Set(
+    useUserStore((s) => s.avoidContents).map((a) => a.avoidContent),
+  );
 
   // AI 요약 — 상세 페이지 진입 시 자동 호출
   const {
@@ -329,7 +330,7 @@ function ProductDetailInner() {
     <div className="flex flex-col min-h-screen relative bg-[#f9f8f6] pb-nav">
       {showCompareModal && selectedRoutineCompare && (
         <CompareModal
-          compareItems={[currentProductAsCompare, selectedRoutineCompare]}
+          compareItems={[selectedRoutineCompare, currentProductAsCompare]}
           onClose={() => setShowCompareModal(false)}
           isRoutineCompare
         />
@@ -406,7 +407,7 @@ function ProductDetailInner() {
                 {sameCategoryRoutineProducts.length}개
               </p>
             </div>
-            <div className="px-4 py-2 pb-8 flex flex-col gap-1">
+            <div className="px-15 py-5 pb-8 flex flex-col gap-1">
               {sameCategoryRoutineProducts.map((routineProduct, index) => (
                 <button
                   key={routineProduct.id}
@@ -417,13 +418,24 @@ function ProductDetailInner() {
                       : "border-[#E8E4DF] bg-(--color-bg-card)"
                   }`}
                 >
-                  <span className="text-2xl">{routineProduct.emoji}</span>
+                  {/* 제품 이미지 — 없으면 이모지 폴백 */}
+                  {routineProduct.imageUrl ? (
+                    <Image
+                      src={routineProduct.imageUrl}
+                      alt={routineProduct.name}
+                      width={60}
+                      height={60}
+                      className="rounded-lg object-cover shrink-0"
+                    />
+                  ) : (
+                    <span className="text-2xl">{routineProduct.emoji}</span>
+                  )}
                   <div className="flex-1 min-w-0">
+                    <p className="text-sm text-text-primary">
+                      {routineProduct.brand}
+                    </p>                    
                     <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
                       {routineProduct.name}
-                    </p>
-                    <p className="text-xs text-[var(--color-brand)]">
-                      {routineProduct.brand}
                     </p>
                   </div>
                   {selectedRoutineProductIndex === index && (
@@ -436,7 +448,7 @@ function ProductDetailInner() {
                   setShowRoutineCompare(false);
                   setShowCompareModal(true);
                 }}
-                className="mt-2 w-full h-11 rounded-xl border-none cursor-pointer text-sm font-bold text-white bg-[#a2aa7b]"
+                className="mt-2 w-60 h-11 rounded-xl border-none cursor-pointer text-sm font-bold text-white bg-[#c5cba5] self-center"
               >
                 비교하기
               </button>
@@ -521,7 +533,7 @@ function ProductDetailInner() {
                   setShowRoutineCompare(true);
                 }
               }}
-              className="flex items-center gap-1 px-2 h-6.5 rounded-lg border cursor-pointer transition-all active:scale-[0.96] text-[12px] font-semibold shrink-0 border-[#dedbd9] bg-[#f7f5f2] text-[#807d7a]"
+              className="flex items-center gap-1 px-3 h-7 rounded-lg cursor-pointer transition-all active:scale-[0.96] text-[14px] font-normal shrink-0 bg-[#e9f0f4] text-[#686a6c]"
             >
               <CompareIcon size={13} color="#5c5852" />
               내루틴과 비교하기
@@ -529,7 +541,7 @@ function ProductDetailInner() {
           </div>
 
           {(skinTypes.length > 0 || tags.length > 0) && (
-            <div className="flex flex-col gap-1 mb-2 mt-3">
+            <div className="flex flex-col gap-1 mb-7 mt-3">
               {skinTypes.length > 0 && (
                 <div className="flex flex-wrap">
                   {skinTypes.map((skinType) => (
@@ -571,25 +583,23 @@ function ProductDetailInner() {
               )}
             </div>
             <div className="flex gap-2 shrink-0">
-              {!isDisliked && (
-                <button
-                  onClick={handleAddRoutine}
-                  className={`flex items-center justify-center gap-1 w-22 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[13px] font-semibold ${routineAdded ? "bg-(--color-bg-beige) text-(--color-brand)" : "bg-[#f1eae6] text-[#807d7d]"}`}
-                >
-                  {routineAdded ? (
-                    <>
-                      <Check size={11} /> 추가됨
-                    </>
-                  ) : (
-                    <>
-                      <Plus size={11} /> 루틴추가
-                    </>
-                  )}
-                </button>
-              )}
+              <button
+                onClick={handleAddRoutine}
+                className={`flex items-center justify-center gap-1 w-22 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[13px] font-semibold ${routineAdded ? "bg-(--color-bg-beige) text-[#9b9a99]" : "bg-[#f7eae3] text-[#636260]"}`}
+              >
+                {routineAdded ? (
+                  <>
+                    <Check size={11} /> 추가됨
+                  </>
+                ) : (
+                  <>
+                    <Plus size={11} /> 루틴추가
+                  </>
+                )}
+              </button>
               <button
                 onClick={handleToggleOwned}
-                className={`flex items-center justify-center gap-1 w-22 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[13px] font-semibold ${owned ? "bg-(--color-bg-beige) text-(--color-brand)" : "bg-[#f1eae6] text-[#807d7d]"}`}
+                className={`flex items-center justify-center gap-1 w-22 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[13px] font-semibold ${owned ? "bg-(--color-bg-beige) text-[#9b9a99]" : "bg-[#f7eae3] text-[#636260]"}`}
               >
                 {owned ? (
                   <>
@@ -697,7 +707,7 @@ function ProductDetailInner() {
                     {dangerIngredients.map((ingredientName) => (
                       <span
                         key={ingredientName}
-                        className="text-xs px-2 py-0.5 rounded-[6px] font-normal bg-[#FFF3E0] text-[#BF360C]"
+                        className="text-xs px-2 py-0.5 rounded-[6px] font-normal bg-[#fbf5eb] text-[#BF360C]"
                       >
                         {ingredientName}
                       </span>
@@ -715,16 +725,19 @@ function ProductDetailInner() {
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <AllergenIcon />
-                    <span className="text-sm font-semibold text-[#C62828]">
-                      알레르기 유발 성분
+                    <span className="text-sm font-semibold text-[#C62828] flex items-center gap-1">
+                      알레르기 유발 성분(보유한 알러지는 <Ban size={13} /> 표시)
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {allergenList.map((name) => (
                       <span
                         key={name}
-                        className="text-xs px-2 py-0.5 rounded-[6px] font-normal bg-[#FFEBEE] text-[#B71C1C]"
+                        className="text-xs px-2 py-0.5 rounded-[6px] font-normal bg-[#fcf2f3] text-[#af1717] inline-flex items-center gap-1"
                       >
+                        {myAllergyNames.has(name) && (
+                          <Ban size={10} />
+                        )}
                         {name}
                       </span>
                     ))}
@@ -776,7 +789,7 @@ function ProductDetailInner() {
                   {/* 제품 설명 */}
                   {productData.description && (
                     <div className="p-5 border-b border-[#f5f3f0]">
-                      <p className="font-semibold text-[#554f49] text-[14px] mb-2">
+                      <p className="font-bold text-[#474441] text-[14px] mb-2">
                         제품 설명
                       </p>
                       <p className="text-[13px] text-[#2a2118] font-medium leading-[1.7]">
@@ -793,10 +806,10 @@ function ProductDetailInner() {
                   {ingredientsKorean.length > 0 && (
                     <div className="p-5 border-b border-[#f5f3f0]">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="font-semibold text-[#554f49] text-[14px]">전성분</p>
+                        <p className="font-bold text-[#474441] text-[14px]">전성분</p>
                         <button
                           onClick={() => setIsIngredientTextOpen((previous) => !previous)}
-                          className="flex items-center gap-0.5 text-[12px] text-[#68625b] bg-transparent border-none cursor-pointer"
+                          className="flex items-center gap-0.5 text-[13px] text-[#514d49] bg-transparent border-none cursor-pointer"
                         >
                           {isIngredientTextOpen ? (
                             <>접기 <ChevronUp size={13} /></>
@@ -832,7 +845,10 @@ function ProductDetailInner() {
                             <EwgDropIcon color={ewgBarColor} score={resolvedScore} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[14px] font-semibold text-[#45403a] leading-[1.6]">
+                            <p className="text-[14px] font-semibold text-[#45403a] leading-[1.6] flex items-center gap-1">
+                              {ingredient.nameKo && myAllergyNames.has(ingredient.nameKo) && (
+                                <Ban size={13} className="shrink-0 text-[#af1717]" />
+                              )}
                               {ingredient.nameKo}
                             </p>
                             {ingredient.nameEn && (
@@ -846,7 +862,7 @@ function ProductDetailInner() {
                               </p>
                             )}
                           </div>
-                          {ingredient.isAllergen && <AllergenIcon />}
+                          {ingredient.isAllergen && <AllergenIcon size={20} />}
                         </div>
                       );
                     })}

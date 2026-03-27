@@ -24,10 +24,17 @@ export interface AvoidContent {
   avoidContent: string;
 }
 
+// ── GET /api/v1/users/me/disliked/ingredients 응답 ────────
+export interface DislikedIngredient {
+  ingredientId: number;
+  nameKo: string;
+  nameEn: string;
+  ewgGrade: "low" | "medium" | "high" | "unknown";
+}
+
 // ── PATCH /api/v1/users/me 요청 body ───────
 // 모든 필드 optional — 변경할 필드만 포함해서 전송
 export interface UserProfileUpdateRequest {
-  name?: string;
   gender?: "MEN" | "WOMEN";
   ageGroup?: "TEENS" | "TWENTIES" | "THIRTIES" | "FORTIES_PLUS";
   /** API 형식: "dry" | "oily" | "combination" | "subuji" */
