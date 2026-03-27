@@ -35,7 +35,7 @@ import type { SkinType } from "@/types/user";
 function chipClassName(isActive: boolean) {
   return `inline-flex items-center gap-1 px-3 py-1.5 rounded-chip text-sm font-semibold cursor-pointer transition-all border select-none ${
     isActive
-      ? "bg-[#c9c3c3] text-white"
+      ? "bg-[#d9d2d2] text-white"
       : "bg-white text-[#696363] border-border"
   }`;
 }
@@ -184,7 +184,7 @@ export default function SettingsPage() {
           <button
             onClick={handleSave}
             disabled={isPending}
-            className="w-50 h-12 rounded-button bg-[#9b9494] text-white font-bold text-[16px] border-none cursor-pointer shadow-[0_4px_16px_rgba(162,170,123,0.2)] transition-all active:scale-[0.98] disabled:opacity-60"
+            className="w-50 h-12 rounded-button bg-[#adaaa7] text-white font-bold text-[16px] border-none cursor-pointer shadow-[0_4px_16px_rgba(162,170,123,0.2)] transition-all active:scale-[0.98] disabled:opacity-60"
           >
             {isPending ? "저장 중..." : "저장하기"}
           </button>

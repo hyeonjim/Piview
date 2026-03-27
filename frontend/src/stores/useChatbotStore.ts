@@ -25,7 +25,7 @@ interface ChatbotStore {
 const GREETING_MESSAGE: ChatMessage = {
   role: "assistant",
   content:
-    "안녕하세요! 저는 Gamini 입니다.\n화장품 성분이나 피부고민, 추천제품등 궁금하신점을 말씀해주시면 친절하게 답변 해드리겠습니다 뀨뀨 🤗",
+    "안녕하세요! 저는 Gamini 입니다.\n- 화장품 성분 \n- 피부고민 \n- 맞춤형 제품 \n이렇게 궁금하신 점을 말씀해주시면 친절하게 답변 해드리겠습니다. 뀨뀨 🤗",
 };
 
 export const useChatbotStore = create<ChatbotStore>((set) => ({

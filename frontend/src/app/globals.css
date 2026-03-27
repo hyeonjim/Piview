@@ -404,7 +404,7 @@
 
   /* 소분류 pill 버튼 (활성) */
   .category-pill-button[data-active="true"] {
-    background-color: #e1e1de;
+    background-color: #e9e5d8;
     color: #777775;
   }
 
@@ -492,8 +492,8 @@
   .bottom-nav-indicator {
     position: absolute;
     bottom: 0;
-    width: 20px;
-    height: 2px;
+    width: 30px;
+    height: 3px;
     background-color: var(--color-brand);
   }
 
