@@ -105,123 +105,6 @@ const RETRY_BTN_STYLE = {
   fontWeight: 600,
 };
 
-/* ── 얼굴 가이드 SVG 오버레이 ── */
-function FaceOverlay({ scanning }: { scanning: boolean }) {
-  return (
-    <svg
-      viewBox="0 0 393 600"
-      fill="none"
-      className="absolute inset-0 w-full h-full pointer-events-none z-[5]"
-      preserveAspectRatio="xMidYMid meet"
-    >
-      {/* 얼굴 타원 */}
-      <ellipse
-        cx="196"
-        cy="270"
-        rx="120"
-        ry="168"
-        stroke="white"
-        strokeWidth="2"
-        strokeDasharray="8 6"
-        strokeOpacity="0.75"
-        fill="none"
-      >
-        {scanning && (
-          <animate
-            attributeName="stroke-dashoffset"
-            from="0"
-            to="28"
-            dur="1.5s"
-            repeatCount="indefinite"
-          />
-        )}
-      </ellipse>
-      {/* 왼눈 */}
-      <path
-        d="M135,250 Q160,228 185,250"
-        stroke="white"
-        strokeWidth="1.5"
-        strokeDasharray="5 4"
-        strokeOpacity="0.6"
-        fill="none"
-      />
-      {/* 오른눈 */}
-      <path
-        d="M210,250 Q235,228 260,250"
-        stroke="white"
-        strokeWidth="1.5"
-        strokeDasharray="5 4"
-        strokeOpacity="0.6"
-        fill="none"
-      />
-      {/* 왼쪽 눈 아래 */}
-      <path
-        d="M140,275 Q163,295 185,275"
-        stroke="white"
-        strokeWidth="1.5"
-        strokeDasharray="5 4"
-        strokeOpacity="0.5"
-        fill="none"
-      />
-      {/* 오른쪽 눈 아래 */}
-      <path
-        d="M210,275 Q233,295 255,275"
-        stroke="white"
-        strokeWidth="1.5"
-        strokeDasharray="5 4"
-        strokeOpacity="0.5"
-        fill="none"
-      />
-      {/* 코 */}
-      <path
-        d="M196,260 L196,310"
-        stroke="white"
-        strokeWidth="1"
-        strokeDasharray="4 3"
-        strokeOpacity="0.3"
-        fill="none"
-      />
-      {/* 입 */}
-      <path
-        d="M170,340 Q196,358 222,340"
-        stroke="white"
-        strokeWidth="1.5"
-        strokeDasharray="5 4"
-        strokeOpacity="0.4"
-        fill="none"
-      />
-    </svg>
-  );
-}
-
-/* ── 스캔 펄스 링 ── */
-function ScanPulse() {
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-[4]">
-      {[0, 0.8, 1.6].map((delay, i) => (
-        <div
-          key={i}
-          className="absolute left-1/2 -translate-x-1/2"
-          style={{
-            top: "42%",
-            width: "280px",
-            height: "380px",
-            borderRadius: "50%",
-            border: "1.5px solid rgba(245,128,157,0.3)",
-            animation: `scanPulse 2.4s ${delay}s ease-out infinite`,
-          }}
-        />
-      ))}
-      <style>{`
-        @keyframes scanPulse {
-          0%   { transform: translateX(-50%) scale(0.85); opacity: 0.6; }
-          100% { transform: translateX(-50%) scale(1.2);  opacity: 0; }
-        }
-      `}</style>
-    </div>
-  );
-}
-
 export default function PhotoAnalysisPage() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -235,7 +118,7 @@ export default function PhotoAnalysisPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [capturedFile, setCapturedFile] = useState<File | null>(null);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
-  const [scanning, setScanning] = useState(true);
+
   const [flash, setFlash] = useState(false);
 
   const { mutate: capture, isPending: isCapturing } = useCaptureAnalysis();
@@ -375,7 +258,6 @@ export default function PhotoAnalysisPage() {
       "image/jpeg",
       0.9,
     );
-    setScanning(false);
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     setCameraActive(false);
@@ -389,7 +271,6 @@ export default function PhotoAnalysisPage() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       setPreview(ev.target?.result as string);
-      setScanning(false);
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
       setCameraActive(false);
@@ -401,7 +282,6 @@ export default function PhotoAnalysisPage() {
   const retake = () => {
     setPreview(null);
     setCapturedFile(null);
-    setScanning(true);
     startCamera(facingMode);
   };
 
@@ -487,12 +367,6 @@ export default function PhotoAnalysisPage() {
           style={VIGNETTE_STYLE}
         />
 
-        {/* 얼굴 오버레이 */}
-        <FaceOverlay scanning={scanning && (cameraActive || cameraError)} />
-
-        {/* 스캔 펄스 */}
-        {scanning && !preview && <ScanPulse />}
-
         {/* 플래시 효과 */}
         {flash && (
           <div
@@ -510,7 +384,7 @@ export default function PhotoAnalysisPage() {
         {/* ── 상단 바 ── */}
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-4 pb-2 z-[10]">
           <button
-            onClick={() => router.push("/skin-test")}
+            onClick={() => router.back()}
             className="flex items-center justify-center border-none cursor-pointer"
             style={ICON_BTN_STYLE}
           >
@@ -570,24 +444,7 @@ export default function PhotoAnalysisPage() {
                 className="cursor-pointer border-none transition-all active:scale-90"
                 style={SHUTTER_OUTER_STYLE}
               >
-                <div style={SHUTTER_INNER_STYLE}>
-                  <svg width="28" height="28" viewBox="0 0 26 26" fill="none">
-                    <path
-                      d="M2 8V4C2 2.89543 2.89543 2 4 2H8M18 2H22C23.1046 2 24 2.89543 24 4V8M24 18V22C24 23.1046 23.1046 24 22 24H18M8 24H4C2.89543 24 2 23.1046 2 22V18"
-                      stroke="white"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                    />
-                    <circle cx="9.5" cy="10" r="1.2" fill="white" />
-                    <circle cx="16.5" cy="10" r="1.2" fill="white" />
-                    <path
-                      d="M9 16.5C9 16.5 10.5 18.5 13 18.5C15.5 18.5 17 16.5 17 16.5"
-                      stroke="white"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </div>
+                <div style={SHUTTER_INNER_STYLE} />
               </button>
 
               {/* 카메라 전환 */}
