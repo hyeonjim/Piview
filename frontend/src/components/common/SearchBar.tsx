@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, X } from "lucide-react";
+import { SearchCheck, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
@@ -22,18 +22,19 @@ export default function SearchBar({
   return (
     <div className={cn("relative w-full", className)}>
       {/* 검색 아이콘 */}
-      <Search
+      <SearchCheck
         size={14}
         className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
       />
 
-      {/* 입력 필드 — 깔끔한 화이트 스타일 */}
+      {/* 입력 필드 */}
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && onSearch) onSearch(value);
+          if (e.key === "Enter" && !e.nativeEvent.isComposing && onSearch)
+            onSearch(value);
         }}
         placeholder={placeholder}
         className={cn(
@@ -41,19 +42,36 @@ export default function SearchBar({
           "rounded-full border text-[13px] text-text-primary placeholder:text-[#c4beb7]",
           "outline-none transition-colors duration-150",
           "bg-[#ffffff]",
-          value ? "pr-[34px] border-[#d9d5d0]" : "pr-3 border-[#eae7e3]"
+          value ? "pr-[64px] border-[#d9d5d0]" : "pr-3 border-[#eae7e3]",
         )}
       />
 
-      {/* 지우기 버튼 */}
+      {/* 우측 버튼 영역 — X + 돋보기 */}
       {value && (
-        <button
-          onClick={() => onChange("")}
-          className="absolute right-[10px] top-1/2 -translate-y-1/2 w-[18px] h-[18px] rounded-full bg-border-dash flex items-center justify-center"
-          aria-label="검색어 지우기"
-        >
-          <X size={10} className="text-white" strokeWidth={2.5} />
-        </button>
+        <div className="absolute right-[8px] top-1/2 -translate-y-1/2 flex items-center gap-1">
+          {/* X 지우기 버튼 */}
+          <button
+            onClick={() => onChange("")}
+            className="w-[18px] h-[18px] rounded-full bg-border-dash flex items-center justify-center"
+            aria-label="검색어 지우기"
+          >
+            <X size={10} className="text-white" strokeWidth={2.5} />
+          </button>
+          {/* 돋보기 검색 확정 버튼 */}
+          {onSearch && (
+            <button
+              onClick={() => onSearch(value)}
+              className="w-[26px] h-[26px] flex items-center justify-center"
+              aria-label="검색"
+            >
+              <SearchCheck
+                size={20}
+                className="text-[#8c8784]"
+                strokeWidth={2}
+              />
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
