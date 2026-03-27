@@ -955,9 +955,15 @@ function RoutineProductCard({
               : undefined
           }
         >
+          {/* PICK 배지 — 이미지 영역 왼쪽 상단 */}
+          {isRecommended && (
+            <span className="absolute top-2 left-1.5 z-10 text-[10px] font-semibold px-1.5 py-0.5 rounded-[10px] tracking-[0.06em] bg-[#faebf2] text-[#707173]">
+              PICK
+            </span>
+          )}
 
           {/* 이미지 — py-5 패딩을 주기 위해 relative 래퍼로 감쌈 (fill은 positioned 조상 기준) */}
-          <div className="absolute inset-0 py-2">
+          <div className="absolute inset-0 pl-4 ">
             <div className="relative w-full h-full">
               {product.imageUrl && !imgError ? (
                 <Image
@@ -979,7 +985,7 @@ function RoutineProductCard({
         {/* 텍스트 영역 */}
         <Link
           href={`/product/${product.productId}`}
-          className="flex-1 px-3 py-2 min-w-0 no-underline"
+          className="flex-1 px-1 py-1 mt-1 min-w-0 no-underline"
         >
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-[13px] font-semibold text-[#7e6b52] tracking-[0.08em]">
@@ -988,12 +994,6 @@ function RoutineProductCard({
             {product.categoryName && (
               <span className="text-[11px] px-1.5 py-px rounded-[11px] font-medium bg-[#f1efea] text-[#6d675c]">
                 {product.categoryName}
-              </span>
-            )}
-            {/* PICK 배지 - ProductCard 스타일 일치 */}
-            {isRecommended && (
-              <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-[10px] tracking-[0.06em] bg-[#faebf2] text-[#707173]">
-                PICK
               </span>
             )}
           </div>
