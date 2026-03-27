@@ -26,6 +26,7 @@ export interface ChatbotProductCandidate {
   productId: number | null;
   name: string;
   brandName: string | null;
+  imageUrl: string | null;
   /** 추천 이유 요약 */
   reason: string | null;
 }

@@ -123,7 +123,7 @@ export default function RecommendPage() {
           <h1 className="mt-0.75 mb-2 text-[20px] font-semibold text-[#635446] tracking-[-0.3px] leading-[1.2]">
             Recommend
           </h1>
-          <p className="font-semibold text-[#635446] text-[14px]">맞춤형 제품을 추천받을 수 있습니다</p>
+          <p className="font-semibold text-[#635446] text-[14px]">사용자 맞춤형 제품을 추천 해드립니다</p>
         </div>
       </div>
 

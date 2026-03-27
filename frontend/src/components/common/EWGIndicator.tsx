@@ -52,12 +52,12 @@ export default function EWGIndicator({
         <div className="grid grid-cols-4 gap-1 text-center">
           {grades.map((grade) => (
             <div key={grade.sub}>
-              <p className="text-[13px] text-[#7d766e] mb-0.5">• {grade.label}</p>
+              <p className="text-[13px] text-[#58544e] mb-0.5">• {grade.label}</p>
               {/* color가 CSS 변수라 style 사용 */}
               <p className="text-[16px] font-bold" style={{ color: grade.color }}>
                 {grade.count}
               </p>
-              <p className="text-[13px] text-[#736b62] mt-0.5">{grade.sub}</p>
+              <p className="text-[14px] text-[#524d47] mt-0.5">{grade.sub}</p>
             </div>
           ))}
         </div>

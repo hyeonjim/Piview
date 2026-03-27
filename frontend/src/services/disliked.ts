@@ -13,6 +13,7 @@ import type {
   DislikedProduct,
   DislikedProductCreateResponse,
 } from "@/types/product/detail";
+import type { DislikedIngredient } from "@/types/user";
 
 export const dislikedService = {
   // GET /users/me/disliked/products → DislikedProduct[] (빈 배열 가능)
@@ -36,4 +37,10 @@ export const dislikedService = {
     client
       .delete(`/users/me/disliked/products/${dislikedProductId}`)
       .then(() => undefined),
+
+  // GET /users/me/disliked/ingredients → 기피 제품 성분 중 알러지 성분 목록
+  getIngredients: (): Promise<DislikedIngredient[]> =>
+    client
+      .get<ApiResponse<DislikedIngredient[]>>("/users/me/disliked/ingredients")
+      .then((res) => res.data.data),
 };

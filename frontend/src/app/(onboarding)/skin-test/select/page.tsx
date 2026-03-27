@@ -100,15 +100,13 @@ export default function SelectPage() {
         </button>
 
         {/* 페이지 제목 */}
-        <h1 className="text-text-primary font-bold text-[22px] leading-[1.3] tracking-[-0.3px]">
-          피부 정보를
-          <br />
-          입력해주세요
+        <h1 className="text-text-primary font-bold text-[20px] leading-[1.3] tracking-[-0.3px]">
+          피부 정보를 입력해주세요
         </h1>
 
         {/* 성별 선택 */}
         <section className="mt-8">
-          <h2 className="text-text-primary font-semibold text-[15px]">성별</h2>
+          <h2 className="text-text-primary font-semibold text-[16px]">성별</h2>
           <div className="flex gap-3 mt-3">
             {GENDER_OPTIONS.map((gender) => {
               const isSelected = selectedGender === gender.id;
@@ -135,7 +133,7 @@ export default function SelectPage() {
 
         {/* 연령대 선택 */}
         <section className="mt-8">
-          <h2 className="text-text-primary font-semibold text-[15px]">
+          <h2 className="text-text-primary font-semibold text-[16px]">
             연령대
           </h2>
           <div className="flex gap-2 mt-3">
@@ -164,7 +162,7 @@ export default function SelectPage() {
 
         {/* 피부 타입 선택 */}
         <section className="mt-8">
-          <h2 className="text-text-primary font-semibold text-[15px]">
+          <h2 className="text-text-primary font-semibold text-[16px]">
             피부 타입
           </h2>
           <div className="grid grid-cols-2 gap-3 mt-3">
@@ -194,7 +192,7 @@ export default function SelectPage() {
         {/* 피부 고민 선택 */}
         <section className="mt-8">
           <div className="flex items-baseline gap-2">
-            <h2 className="text-text-primary font-semibold text-[15px]">
+            <h2 className="text-text-primary font-semibold text-[16px]">
               피부 고민
             </h2>
             <span className="text-text-hint text-[14px]">복수 선택 가능</span>
@@ -229,13 +227,16 @@ export default function SelectPage() {
             <div className="flex items-start gap-1.5">
               <Ban size={16} className="text-danger mt-0.5 shrink-0" />
               <div>
-                <h2 className="text-text-primary font-semibold text-[15px]">Avoid Products</h2>
-                <p className="text-xs text-text-muted mt-0.5">{dislikedItems.length}개 등록됨</p>
+                <h2 className="text-text-primary font-semibold text-[16px]">제외 제품</h2>
+                <p className="text-[14px] text-text-primary mt-1">{dislikedItems.length}개 등록됨
+                <br />
+                등록된 제품의 알러지를 포함한 제품은 추천에서 제외됩니다
+                </p>
               </div>
             </div>
             <button
               onClick={() => setOpenAvoidModal(true)}
-              className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-brand font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
+              className="text-[13px] px-3 py-1 rounded-full bg-brand/10 text-text-primary  font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
             >
               + 추가
             </button>
