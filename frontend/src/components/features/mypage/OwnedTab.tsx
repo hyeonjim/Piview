@@ -69,7 +69,7 @@ export default function OwnedTab() {
       <section>
         <div className="mb-1">
           <div className="flex items-center justify-between">
-            <p className="text-base font-bold text-[#5e5c59]">Owned</p>
+            <p className="text-base font-bold text-[#5e5c59]">보유 제품</p>
             <button
               onClick={() => setOpenOwnedModal(true)}
               className="text-[14px] px-3 py-1 rounded-full bg-brand/10 text-[#636264] font-semibold cursor-pointer border-none transition-colors hover:bg-brand/20"
@@ -133,7 +133,7 @@ export default function OwnedTab() {
         <div className="mb-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <p className="text-base font-bold text-[#db1c1c]">Avoid</p>
+              <p className="text-base font-bold text-[#db1c1c]">제외 제품</p>
               <Ban size={14} className="text-[#db1c1c]" />
             </div>
             <button
@@ -167,7 +167,10 @@ export default function OwnedTab() {
               {pagedAvoid.map((item) => (
                 <div key={item.dislikedProductId} className="relative">
                   <ProductCard
-                    id={item.productId}
+                    id={item.dislikedProductId}
+                    href={item.categoryName
+                      ? `/product/${item.productId}?category=${encodeURIComponent(item.categoryName)}`
+                      : `/product/${item.productId}`}
                     brand={item.brandName}
                     name={item.productName}
                     category={item.categoryName}

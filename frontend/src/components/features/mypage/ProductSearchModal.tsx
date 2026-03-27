@@ -30,7 +30,6 @@ export default function ProductSearchModal({
   onClose,
 }: ProductSearchModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [inputValue, setInputValue] = useState("");
   const [selectedBigCategoryId, setSelectedBigCategoryId] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
@@ -44,15 +43,8 @@ export default function ProductSearchModal({
     setSelectedCategoryId(id);
     setPage(1);
   };
-  // Enter 확정 시에만 API 쿼리 반영
-  const handleSearchConfirm = () => {
-    setSearchQuery(inputValue);
-    setPage(1);
-  };
-  // X 버튼으로 지우기
-  const handleSearchClear = () => {
-    setInputValue("");
-    setSearchQuery("");
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
     setPage(1);
   };
 
@@ -121,18 +113,14 @@ export default function ProductSearchModal({
               />
               <input
                 type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.nativeEvent.isComposing)
-                    handleSearchConfirm();
-                }}
+                value={searchQuery}
+                onChange={(event) => handleSearchChange(event.target.value)}
                 placeholder="제품명 또는 브랜드 검색"
                 className="w-full h-10 pl-9 pr-9 rounded-xl border border-border-warm bg-[#FAF8F5] text-sm text-text-primary outline-none"
               />
-              {inputValue && (
+              {searchQuery && (
                 <button
-                  onClick={handleSearchClear}
+                  onClick={() => handleSearchChange("")}
                   className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-border-warm border-none cursor-pointer"
                 >
                   <X size={14} color="#888" />
@@ -194,8 +182,8 @@ export default function ProductSearchModal({
                             }}
                             className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full border-none cursor-pointer z-10 text-[15px] font-bold transition-colors shadow-sm ${
                               alreadyOwned
-                                ? "bg-brand text-white"
-                                : "bg-[#F2EFE9] text-[#A69D92]"
+                                ? "bg-[#F2EFE9] text-[#A69D92]"
+                                : "bg-brand text-white"
                             }`}
                           >
                             {alreadyOwned ? "−" : "+"}
@@ -233,8 +221,8 @@ export default function ProductSearchModal({
                           }}
                           className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full border-none cursor-pointer z-10 text-[18px] font-bold transition-colors shadow-sm ${
                             isDisliked
-                              ? "bg-brand text-white"
-                              : "bg-[#F2EFE9] text-[#A69D92]"
+                              ? "bg-[#F2EFE9] text-[#A69D92]"
+                              : "bg-brand text-white"
                           }`}
                         >
                           {isDisliked ? "−" : "+"}
