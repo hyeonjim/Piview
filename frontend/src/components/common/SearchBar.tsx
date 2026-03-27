@@ -21,12 +21,6 @@ export default function SearchBar({
 }: SearchBarProps) {
   return (
     <div className={cn("relative w-full", className)}>
-      {/* 검색 아이콘 */}
-      <Search
-        size={14}
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
-      />
-
       {/* 입력 필드 */}
       <input
         type="text"
@@ -38,7 +32,7 @@ export default function SearchBar({
         }}
         placeholder={placeholder}
         className={cn(
-          "w-full h-[38px] pl-9",
+          "w-full h-[38px] pl-5",
           "rounded-full border text-[13px] text-text-primary placeholder:text-[#c4beb7]",
           "outline-none transition-colors duration-150",
           "bg-[#ffffff]",
