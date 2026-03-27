@@ -17,6 +17,7 @@ from services.chatbot.generation.helpers import (
 )
 from services.chatbot.generation.postprocess import postprocess_answer
 from services.chatbot.generation.templates import (
+    build_abusive_input_answer,
     build_fallback_answer,
     build_followup_clarification_answer,
     build_greeting_answer,
@@ -59,7 +60,11 @@ class ChatbotService:
             session_snapshot.to_llm_payload(),
             intent_decision,
         )
-        if intent_decision.matched_rule == "nonsense_input":
+        if intent_decision.matched_rule == "abusive_input":
+            retrieval_bundle = self._build_no_retrieval_bundle(intent_decision)
+            answer = build_abusive_input_answer()
+            response_type = retrieval_bundle.response_type
+        elif intent_decision.matched_rule == "nonsense_input":
             retrieval_bundle = self._build_no_retrieval_bundle(intent_decision)
             answer = build_nonsense_answer(request, session_context=session_context)
             response_type = retrieval_bundle.response_type
@@ -83,6 +88,7 @@ class ChatbotService:
                 retrieval_bundle = self._build_retrieval_failure_bundle(intent_decision)
         response_type = retrieval_bundle.response_type
         if intent_decision.intent_type != "greeting_chitchat" and intent_decision.matched_rule not in {
+            "abusive_input",
             "nonsense_input",
             "followup_needs_context",
             "constraint_needs_context",

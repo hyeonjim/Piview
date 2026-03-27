@@ -2,6 +2,7 @@ import re
 
 from services.chatbot.domain import QueryRequest
 from services.chatbot.input.preprocess import (
+    contains_abusive_language,
     has_followup_signal,
     is_contextual_followup_without_context,
     is_likely_nonsense_input,
@@ -59,6 +60,14 @@ def route_by_rules(
             matched_rule="empty_message",
         )
     message = normalize_message_for_chatbot(raw_message)
+
+    if contains_abusive_language(raw_message):
+        return IntentDecision(
+            intent_type="informational",
+            route_source="rule",
+            low_confidence=False,
+            matched_rule="abusive_input",
+        )
 
     if is_likely_nonsense_input(raw_message):
         return IntentDecision(
