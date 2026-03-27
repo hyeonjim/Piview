@@ -392,7 +392,7 @@
     height: 25px;
     padding: 0 12px;
     border-radius: 9999px;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     border: 1px solid;
@@ -405,7 +405,7 @@
   /* 소분류 pill 버튼 (활성) */
   .category-pill-button[data-active="true"] {
     background-color: #e9e5d8;
-    color: #777775;
+    color: #575754;
   }
 
   /* 소분류 pill 버튼 (카테고리별 동적 색상) */

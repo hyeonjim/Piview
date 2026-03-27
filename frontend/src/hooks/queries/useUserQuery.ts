@@ -9,6 +9,7 @@
 import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authService } from "@/services/auth";
+import { dislikedService } from "@/services/disliked";
 import { useUserStore } from "@/stores";
 import { queryKeys } from "@/lib/queryKeys";
 import { fromSkinTypeEnum, concernDbToLabel } from "@/utils/enumConvert";
@@ -46,6 +47,37 @@ export function useUserQuery() {
       // skinProblems(DB값) → label 변환 후 concerns store 동기화
       // oauth redirect에서 이미 저장되어 있어도, 최신 API 응답으로 덮어씀
       setConcerns((query.data.skinProblems ?? []).map(concernDbToLabel));
+    }
+  }, [query.data]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return query;
+}
+
+// ── GET /users/me/disliked/ingredients ────────────────────────────
+
+/**
+ * 기피 제품에 등록된 제품의 알러지 성분 목록 조회
+ * API 응답을 AvoidContent 형태로 변환하여 store에 동기화
+ * → mypage 기피 성분 배지 + settings 보유 알러지 섹션에서 공통 사용
+ */
+export function useDislikedIngredientsQuery() {
+  const setAvoidContents = useUserStore((s) => s.setAvoidContents);
+
+  const query = useQuery({
+    queryKey: queryKeys.dislikedIngredients,
+    queryFn: dislikedService.getIngredients,
+  });
+
+  // nameKo → avoidContent 변환 후 store 동기화
+  useEffect(() => {
+    if (query.data) {
+      setAvoidContents(
+        query.data.map((ingredient) => ({
+          id: ingredient.ingredientId,
+          userId: 0,
+          avoidContent: ingredient.nameKo,
+        })),
+      );
     }
   }, [query.data]); // eslint-disable-line react-hooks/exhaustive-deps
 

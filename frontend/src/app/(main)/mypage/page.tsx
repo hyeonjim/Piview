@@ -8,6 +8,7 @@ import {
   useDraftQuery,
   useAddDraftItemMutation,
   useUserQuery,
+  useDislikedIngredientsQuery,
 } from "@/hooks";
 import RoutineTab from "@/components/features/mypage/RoutineTab";
 import RoutineAddModal from "@/components/features/mypage/RoutineAddModal";
@@ -19,6 +20,8 @@ export default function MyPage() {
 
   // 페이지 로드 시 user 정보 조회 + Zustand store 동기화
   useUserQuery();
+  // 기피 제품 알러지 성분 조회 → store.avoidContents 동기화 (기피 성분 배지 표시용)
+  useDislikedIngredientsQuery();
   const userName = useUserStore((store) => store.user?.name ?? "User");
   const profileImageUrl = useUserStore((store) => store.user?.imageUrl ?? null);
 
@@ -151,7 +154,7 @@ export default function MyPage() {
                 {savedConcerns.map((concern, index) => (
                   <span
                     key={`${concern}-${index}`}
-                    className="text-[13px] py-0.5 px-2 rounded-full border bg-[#ece6dc] text-[#5f564c] font-semibold"
+                    className="text-[13px] py-0.5 px-2 rounded-full border bg-[#e8e6e2] text-[#5f564c] font-semibold"
                   >
                     {concern}
                   </span>
@@ -160,7 +163,7 @@ export default function MyPage() {
                 {savedAvoidContents.map((item, index) => (
                   <span
                     key={`${item.avoidContent}-${index}`}
-                    className="text-[12px] font-medium py-0.5 px-2 rounded-full bg-[#F5EDE8] text-[#8C5A4A]"
+                    className="text-[12px] font-medium py-0.5 px-2 border rounded-full bg-[#F5EDE8] text-[#8C5A4A]"
                   >
                     {item.avoidContent}
                   </span>
