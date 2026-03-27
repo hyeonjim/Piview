@@ -14,6 +14,7 @@ import { SKIN_TYPE_LABELS_FOR_FILTER } from "@/constants/skinTypes";
 import type { FilterState } from "@/types/common";
 import { PRICE_MAX, FILTER_INITIAL_STATE } from "@/types/common";
 import { useProductFilters } from "@/hooks";
+import { concernLabelToDb } from "@/utils/enumConvert";
 
 export type { FilterState };
 export { FILTER_INITIAL_STATE } from "@/types/common";
@@ -191,30 +192,32 @@ export function FilterModal({
               }
             >
               <div className="flex flex-wrap gap-2">
-                {tags.filter((t) => t.tag !== "아토피").map((t) => {
-                  const isActive = tagIds[t.tagId] === true;
-                  const activeCount =
-                    Object.values(tagIds).filter(Boolean).length;
-                  const isDisabled = !isActive && activeCount >= 4;
-                  return (
-                    <FilterChip
-                      key={t.tagId}
-                      label={t.tag}
-                      active={isActive}
-                      disabled={isDisabled}
-                      onClick={() => {
-                        if (isDisabled) return;
-                        setDraft((prev) => ({
-                          ...prev,
-                          tagIds: {
-                            ...prev.tagIds,
-                            [t.tagId]: !prev.tagIds[t.tagId],
-                          },
-                        }));
-                      }}
-                    />
-                  );
-                })}
+                {tags
+                  .filter((t) => t.tag !== "아토피")
+                  .map((t) => {
+                    const isActive = tagIds[t.tagId] === true;
+                    const activeCount =
+                      Object.values(tagIds).filter(Boolean).length;
+                    const isDisabled = !isActive && activeCount >= 4;
+                    return (
+                      <FilterChip
+                        key={t.tagId}
+                        label={concernLabelToDb(t.tag)}
+                        active={isActive}
+                        disabled={isDisabled}
+                        onClick={() => {
+                          if (isDisabled) return;
+                          setDraft((prev) => ({
+                            ...prev,
+                            tagIds: {
+                              ...prev.tagIds,
+                              [t.tagId]: !prev.tagIds[t.tagId],
+                            },
+                          }));
+                        }}
+                      />
+                    );
+                  })}
               </div>
             </FilterSection>
 
