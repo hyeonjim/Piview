@@ -38,7 +38,7 @@ export function useLogout() {
       useLikeStore.getState().setPage(1);
       useRoutineStore.getState().setSelectedRoutineId(null);
 
-      router.push("/splash");
+      router.push("/welcome");
     }
   };
 
