@@ -157,7 +157,7 @@ function ProductDetailInner() {
   );
   const owned = !!myCosItem;
 
-  // 피할 제품 여부 — 피할 제품으로 등록된 경우 루틴추가 버튼 숨김
+  // 피할 제품이면 루틴추가 버튼 숨김
   const { data: dislikedProducts = [] } = useDislikedProductsQuery();
   const isDisliked = dislikedProducts.some(
     (item) => item.productId === productIdNum,

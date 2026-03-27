@@ -26,12 +26,16 @@ backend/build/
 backend/out/
 backend/target/
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 *.war
 *.ear
 # 민감한 설정 파일 (DB 비밀번호, S3 키 등이 들어갈 경우)
 backend/src/main/resources/application.yml
 backend/src/main/resources/application-secret.yml
 backend/src/main/resources/application-prod.yml
+src/main/resources/application.yml
+src/main/resources/application-local.yml
+docs
 
 # =========================
 # 4. AI (FastAPI / Python)
@@ -53,3 +57,4 @@ ai/.env
 # =========================
 .env
 .env.*
+AIHS

@@ -82,7 +82,7 @@ export interface RecommendRequestDto {
   targetRoutineColId?: number; // int64 — 루틴 컬럼 ID
 }
 
-/** 추천 응답 DTO */
+/** 추천 응답 DTO — ProductSummaryResponse와 달리 tags 필드 없음 */
 export interface RecommendResponseDto {
   productId: number;
   name: string;
@@ -95,5 +95,5 @@ export interface RecommendResponseDto {
   skinTypes: string[];  // ["dry", "oily"] — 영문 소문자
   concernName: string;
   liked: boolean;
-  tags: string[];  // 스웨거 신규 추가
+  tags: string[];
 }
