@@ -252,17 +252,52 @@ export default function PhotoAnalysisPage() {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: facing,
-          width: { ideal: 1080 },
-          height: { ideal: 1920 },
-        },
-        audio: false,
-      });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video:
+            facing === "user"
+              ? {
+                  facingMode: { exact: "user" },
+                  width: { ideal: 720 },
+                  height: { ideal: 1280 },
+                }
+              : {
+                  facingMode: { exact: "environment" },
+                  width: { ideal: 1080 },
+                  height: { ideal: 1920 },
+                },
+          audio: false,
+        });
+      } catch {
+        // exact 실패(일부 기기) → facingMode 문자열 폴백
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: facing },
+          audio: false,
+        });
+      }
+
       streamRef.current = stream;
-      // videoRef가 이미 있으면 바로 연결, 없으면 useEffect에서 연결
+
+      // 전면 카메라: zoom 최솟값 강제 — 브라우저 기본 줌인 보정
+      if (facing === "user") {
+        const track = stream.getVideoTracks()[0];
+        try {
+          const caps = track?.getCapabilities?.() as MediaTrackCapabilities & {
+            zoom?: { min: number; max: number };
+          };
+          if (caps?.zoom) {
+            await track.applyConstraints({
+              advanced: [{ zoom: caps.zoom.min } as MediaTrackConstraintSet],
+            });
+          }
+        } catch {
+          /* zoom 미지원 기기 무시 */
+        }
+      }
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         try {
@@ -427,7 +462,7 @@ export default function PhotoAnalysisPage() {
             autoPlay
             playsInline
             muted
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-contain"
             style={{ transform: facingMode === "user" ? "scaleX(-1)" : "none" }}
           />
         )}
