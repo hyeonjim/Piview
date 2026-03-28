@@ -26,6 +26,7 @@ class ProductSearchDictionarySnapshot:
     category_lookup: dict[str, str] = field(default_factory=dict)
     product_type_lookup: dict[str, str] = field(default_factory=dict)
     ingredient_lookup: dict[str, str] = field(default_factory=dict)
+    ingredient_expansion_lookup: dict[str, tuple[str, ...]] = field(default_factory=dict)
     line_lookup: dict[str, str] = field(default_factory=dict)
     attribute_lookup: dict[str, str] = field(default_factory=dict)
     attribute_group_lookup: dict[str, str] = field(default_factory=dict)
@@ -70,6 +71,8 @@ class ParsedSearchQuery:
             self.brand_terms
             or self.category_terms
             or self.product_type_terms
+            or self.ingredient_terms
+            or self.negative_ingredient_terms
             or self.attribute_terms
             or self.attribute_group_terms
         )

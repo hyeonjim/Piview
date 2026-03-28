@@ -40,6 +40,12 @@ def _build_snapshot() -> ProductSearchDictionarySnapshot:
         ingredient_lookup={
             "판테놀": "판테놀",
             "향료": "향료",
+            "세라마이드": "세라마이드엔피",
+        },
+        ingredient_expansion_lookup={
+            "판테놀": ("판테놀",),
+            "향료": ("향료",),
+            "세라마이드": ("세라마이드엔피", "세라마이드에이피"),
         },
         line_lookup={
             "판테놀": "판테놀",
@@ -127,6 +133,34 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
 
         self.assertEqual(missing_score, 0.0)
         self.assertGreater(matched_score, 0.0)
+
+    def test_generic_ingredient_family_matches_specific_ingredient_variants(self) -> None:
+        parsed = product_search_query_parser.parse("세라마이드 크림", self.snapshot)
+        row_with_variant = ProductSearchDataRow(
+            product_id=3,
+            name="배리어 크림",
+            brand_name="테스트",
+            category_name="크림",
+            category_id=1,
+            big_category_id=1,
+            description=None,
+            top_skin_type=None,
+            top2_skin_type=None,
+            concern_names=[],
+            ingredient_text_ko="정제수, 세라마이드엔피, 글리세린",
+            ingredient_text_en=None,
+        )
+
+        score = self.service._score_structured_seed_row(
+            row_with_variant,
+            parsed,
+            self.snapshot,
+            tuple(self.service._expand_attribute_group_terms(parsed, self.snapshot)),
+            self.service._resolve_strong_keyword_terms(parsed, self.snapshot),
+            "ingredient_category",
+        )
+
+        self.assertGreater(score, 0.0)
 
     def test_negative_ingredient_rerank_protects_free_pattern(self) -> None:
         parsed = product_search_query_parser.parse("향료 없는 토너", self.snapshot)

@@ -67,6 +67,7 @@ class ProductSearchQueryParser:
         negative_terms, negative_covered_indices = self._extract_negative_ingredient_terms(
             tokens,
             snapshot.ingredient_lookup,
+            snapshot.ingredient_expansion_lookup,
             covered_indices,
         )
         line_terms = self._match_lookup(tokens, snapshot.line_lookup, set(covered_indices))
@@ -80,6 +81,7 @@ class ProductSearchQueryParser:
         ingredient_terms = self._extract_positive_ingredient_terms(
             tokens,
             snapshot.ingredient_lookup,
+            snapshot.ingredient_expansion_lookup,
             covered_indices | negative_covered_indices,
         )
         line_terms = self._filter_stopword_matches(line_terms, snapshot.stopwords)
@@ -197,6 +199,7 @@ class ProductSearchQueryParser:
         self,
         tokens: list[str],
         ingredient_lookup: dict[str, str],
+        ingredient_expansion_lookup: dict[str, tuple[str, ...]],
         blocked_indices: set[int],
     ) -> tuple[list[str], set[int]]:
         # negative ingredient는 "operator는 수동 규칙, target ingredient는 generated dictionary" 원칙으로 처리한다.
@@ -217,7 +220,13 @@ class ProductSearchQueryParser:
             local_covered = {index}
             if stripped_token in NEGATIVE_OPERATOR_TOKENS and index > 0:
                 # "향료 없는"처럼 연산자가 독립 토큰인 경우, 바로 앞 1~2 token에서 ingredient target을 찾는다.
-                canonical, target_indices = self._lookup_negative_target(tokens, ingredient_lookup, index - 1, blocked_indices)
+                canonical, target_indices = self._lookup_negative_target(
+                    tokens,
+                    ingredient_lookup,
+                    ingredient_expansion_lookup,
+                    index - 1,
+                    blocked_indices,
+                )
                 local_covered.update(target_indices)
             else:
                 # "향료프리", "무향료"처럼 한 token에 operator가 붙은 패턴도 따로 본다.
@@ -226,12 +235,14 @@ class ProductSearchQueryParser:
                         canonical = self._resolve_ingredient_term(
                             stripped_token[: -len(suffix)],
                             ingredient_lookup,
+                            ingredient_expansion_lookup,
                         )
                         break
                 if canonical is None:
                     canonical = self._extract_negative_ingredient_from_compound(
                         stripped_token,
                         ingredient_lookup,
+                        ingredient_expansion_lookup,
                     )
 
             if canonical and canonical not in seen:
@@ -245,6 +256,7 @@ class ProductSearchQueryParser:
         self,
         token: str,
         ingredient_lookup: dict[str, str],
+        ingredient_expansion_lookup: dict[str, tuple[str, ...]],
     ) -> str | None:
         # compound 형태는 suffix/prefix를 모두 지원한다.
         # 예: 향료프리, 에탄올free, 무향료, withoutfragrance
@@ -254,12 +266,20 @@ class ProductSearchQueryParser:
                 continue
             if token.endswith(operator) and len(token) > len(operator):
                 candidate = token[: -len(operator)]
-                canonical = self._resolve_ingredient_term(candidate, ingredient_lookup)
+                canonical = self._resolve_ingredient_term(
+                    candidate,
+                    ingredient_lookup,
+                    ingredient_expansion_lookup,
+                )
                 if canonical:
                     return canonical
         for prefix in NEGATIVE_OPERATOR_PREFIXES:
             if token.startswith(prefix) and len(token) > len(prefix):
-                canonical = self._resolve_ingredient_term(token[len(prefix) :], ingredient_lookup)
+                canonical = self._resolve_ingredient_term(
+                    token[len(prefix) :],
+                    ingredient_lookup,
+                    ingredient_expansion_lookup,
+                )
                 if canonical:
                     return canonical
         return None
@@ -268,6 +288,7 @@ class ProductSearchQueryParser:
         self,
         tokens: list[str],
         ingredient_lookup: dict[str, str],
+        ingredient_expansion_lookup: dict[str, tuple[str, ...]],
         blocked_indices: set[int],
     ) -> list[str]:
         # positive ingredient는 negative로 이미 소비된 토큰과 앞선 structured token을 제외한 뒤 본다.
@@ -284,7 +305,11 @@ class ProductSearchQueryParser:
                 if any(index in blocked_indices for index in range(start, end)):
                     continue
                 phrase = normalize_text(" ".join(tokens[start:end]))
-                canonical = self._lookup_phrase(phrase, ingredient_lookup)
+                canonical = self._resolve_ingredient_term(
+                    phrase,
+                    ingredient_lookup,
+                    ingredient_expansion_lookup,
+                )
                 if not canonical or canonical in seen:
                     continue
                 seen.add(canonical)
@@ -295,6 +320,7 @@ class ProductSearchQueryParser:
         self,
         tokens: list[str],
         ingredient_lookup: dict[str, str],
+        ingredient_expansion_lookup: dict[str, tuple[str, ...]],
         end_index: int,
         blocked_indices: set[int],
     ) -> tuple[str | None, set[int]]:
@@ -306,26 +332,38 @@ class ProductSearchQueryParser:
             if any(index in blocked_indices for index in range(start, end_index + 1)):
                 continue
             phrase = normalize_text(" ".join(tokens[start : end_index + 1]))
-            canonical = self._resolve_ingredient_term(phrase, ingredient_lookup)
+            canonical = self._resolve_ingredient_term(
+                phrase,
+                ingredient_lookup,
+                ingredient_expansion_lookup,
+            )
             if canonical:
                 return canonical, set(range(start, end_index + 1))
-        fallback = self._resolve_ingredient_term(tokens[end_index], ingredient_lookup)
+        fallback = self._resolve_ingredient_term(
+            tokens[end_index],
+            ingredient_lookup,
+            ingredient_expansion_lookup,
+        )
         return fallback, {end_index} if fallback else set()
 
     def _resolve_ingredient_term(
         self,
         phrase: str,
         ingredient_lookup: dict[str, str],
+        ingredient_expansion_lookup: dict[str, tuple[str, ...]],
     ) -> str | None:
         # 우선 canonical lookup을 시도하고, 없으면 최소한의 fallback으로 raw normalized token을 허용한다.
         # 이 fallback은 사용자가 DB 성분명과 거의 같은 단어를 입력했는데 generated top-N에 아직 안 올라오지 않은 경우를 버티기 위한 것이다.
         # 다만 너무 짧은 token은 오탐을 만들기 쉬워 길이 2 이상만 허용한다.
+        normalized = normalize_text(phrase)
+        stripped = self._strip_particle(normalized)
+        expansion_candidates = ingredient_expansion_lookup.get(stripped, ())
+        if stripped and len(expansion_candidates) > 1:
+            return stripped
         canonical = self._lookup_phrase(phrase, ingredient_lookup)
         if canonical:
             return canonical
-        normalized = normalize_text(phrase)
-        stripped = self._strip_particle(normalized)
-        if stripped and len(stripped) >= 2:
+        if stripped in ingredient_expansion_lookup:
             return stripped
         return None
 

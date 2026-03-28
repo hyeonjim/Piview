@@ -40,6 +40,13 @@ def _build_snapshot() -> ProductSearchDictionarySnapshot:
             "판테놀": "판테놀",
             "나이아신아마이드": "나이아신아마이드",
             "향료": "향료",
+            "세라마이드": "세라마이드엔피",
+        },
+        ingredient_expansion_lookup={
+            "판테놀": ("판테놀",),
+            "나이아신아마이드": ("나이아신아마이드",),
+            "향료": ("향료",),
+            "세라마이드": ("세라마이드엔피", "세라마이드에이피"),
         },
         line_lookup={
             "판테놀": "판테놀",
@@ -87,6 +94,13 @@ class ProductSearchQueryParserTests(unittest.TestCase):
         self.assertEqual(parsed.category_terms, ("토너",))
         self.assertEqual(parsed.negative_ingredient_terms, ("향료",))
         self.assertEqual(parsed.keyword_terms, ())
+
+    def test_parses_generic_ingredient_family_from_generated_expansion(self) -> None:
+        parsed = product_search_query_parser.parse("세라마이드 크림", self.snapshot)
+
+        self.assertEqual(parsed.category_terms, ("크림",))
+        self.assertEqual(parsed.ingredient_terms, ("세라마이드",))
+        self.assertTrue(parsed.is_structured)
 
     def test_keeps_ambiguous_and_concern_tokens_as_keywords(self) -> None:
         parsed = product_search_query_parser.parse(
