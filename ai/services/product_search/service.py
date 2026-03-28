@@ -443,7 +443,9 @@ class ProductSearchService:
         primary_terms = parsed_query.category_terms + parsed_query.product_type_terms
         strong_terms = self._resolve_strong_keyword_terms(parsed_query, snapshot)
         weak_terms = self._resolve_weak_keyword_terms(parsed_query, snapshot)
+        detail_terms = self._resolve_detail_terms(parsed_query, snapshot)
         require_strong_match = self._requires_strong_keyword_match(parsed_query, snapshot)
+        require_detail_match = build_product_search_query_signals(parsed_query).is_long_query_like and bool(detail_terms)
         ingredient_match_terms = self._resolve_ingredient_match_terms(parsed_query, snapshot)
 
         scored: list[tuple[tuple[float, ...], int, ProductSearchResult]] = []
@@ -453,6 +455,10 @@ class ProductSearchService:
             primary_match_count = float(self._match_term_count(searchable_text, primary_terms))
             strong_match_count = float(self._match_term_count(searchable_text, strong_terms))
             weak_match_count = float(self._match_term_count(searchable_text, weak_terms))
+            detail_match_count, detail_coverage_ratio, missing_detail_count = self._detail_match_metrics(
+                searchable_text,
+                detail_terms,
+            )
             ingredient_match_count = float(
                 self._match_ingredient_query_count(
                     searchable_text,
@@ -469,6 +475,10 @@ class ProductSearchService:
                 1.0 if brand_match and primary_match_count > 0 else 0.0,
                 brand_match,
                 primary_match_count,
+                1.0 if detail_match_count > 0 else 0.0 if require_detail_match else 1.0,
+                detail_coverage_ratio,
+                detail_match_count,
+                -missing_detail_count,
                 1.0 if strong_match_count > 0 else 0.0 if require_strong_match else 1.0,
                 strong_match_count,
                 weak_match_count,
@@ -485,6 +495,16 @@ class ProductSearchService:
             matching = [
                 item for item in ordered
                 if self._match_term_count(self._searchable_text(item), strong_terms) > 0
+            ]
+            if matching:
+                others = [item for item in ordered if item not in matching]
+                ordered = matching + others
+
+        if require_detail_match:
+            matching = [
+                item
+                for item in ordered
+                if self._detail_match_metrics(self._searchable_text(item), detail_terms)[0] > 0
             ]
             if matching:
                 others = [item for item in ordered if item not in matching]
@@ -618,6 +638,7 @@ class ProductSearchService:
         # non-brand structured query는 ingredient/attribute/strong keyword 중심으로 seed를 만든다.
         attribute_group_terms = tuple(self._expand_attribute_group_terms(parsed_query, snapshot))
         strong_keyword_terms = self._resolve_strong_keyword_terms(parsed_query, snapshot)
+        detail_terms = self._resolve_detail_terms(parsed_query, snapshot)
         rows: list[ProductSearchDataRow] = []
 
         if parsed_query.brand_terms:
@@ -643,7 +664,7 @@ class ProductSearchService:
         else:
             if plan.query_bucket in {"ingredient_only", "ingredient_category", "long_query"}:
                 # ingredient_only / ingredient_category / long_query는 strong keyword recall이 가장 중요하다.
-                focus_terms = strong_keyword_terms
+                focus_terms = detail_terms or strong_keyword_terms
             else:
                 focus_terms = tuple(
                     dict.fromkeys(
@@ -677,6 +698,7 @@ class ProductSearchService:
                 snapshot,
                 attribute_group_terms,
                 strong_keyword_terms,
+                detail_terms,
                 plan.query_bucket,
             )
             if score <= 0:
@@ -696,6 +718,7 @@ class ProductSearchService:
         snapshot: ProductSearchDictionarySnapshot,
         attribute_group_terms: tuple[str, ...],
         strong_keyword_terms: tuple[str, ...],
+        detail_terms: tuple[str, ...],
         query_bucket: str,
     ) -> float:
         # structured seed score는 "후보를 남길지"를 판단하는 1차 게이트 성격이 강하다.
@@ -724,6 +747,10 @@ class ProductSearchService:
         weak_keyword_terms = self._resolve_weak_keyword_terms(parsed_query, snapshot)
         require_strong_match = self._requires_strong_keyword_match(parsed_query, snapshot)
         strong_match_count = self._match_term_count(searchable_text, strong_keyword_terms)
+        detail_match_count, detail_coverage_ratio, missing_detail_count = self._detail_match_metrics(
+            searchable_text,
+            detail_terms,
+        )
         ingredient_match_terms = self._resolve_ingredient_match_terms(parsed_query, snapshot)
         ingredient_field_match_count = self._match_ingredient_query_count(
             ingredient_text,
@@ -753,12 +780,18 @@ class ProductSearchService:
             score += 12.0 * sum(term in searchable_text for term in parsed_query.attribute_terms)
         if strong_keyword_terms:
             score += 14.0 * strong_match_count
+        if detail_terms:
+            score += 12.0 * detail_match_count
+            score += 20.0 * detail_coverage_ratio
+            score -= 4.0 * missing_detail_count
         if weak_keyword_terms:
             score += 6.0 * self._match_term_count(searchable_text, weak_keyword_terms)
         score += self._negative_ingredient_score_adjustment(searchable_text, parsed_query.negative_ingredient_terms)
         if require_strong_match and strong_match_count <= 0:
             return 0.0
         if query_bucket in {"ingredient_only", "ingredient_category"} and ingredient_field_match_count <= 0:
+            return 0.0
+        if query_bucket == "long_query" and detail_terms and detail_match_count <= 0:
             return 0.0
 
         return score
@@ -839,6 +872,41 @@ class ProductSearchService:
             seen.add(normalized_term)
             weak_terms.append(normalized_term)
         return tuple(weak_terms)
+
+    def _resolve_detail_terms(
+        self,
+        parsed_query,
+        snapshot: ProductSearchDictionarySnapshot,
+    ) -> tuple[str, ...]:
+        # long query detail은 strong/weak keyword를 합친 "설명 커버리지" 관점의 집합이다.
+        # strong은 랭킹 상향, weak는 detail completeness 측정에 주로 사용한다.
+        ordered_terms = (
+            *self._resolve_strong_keyword_terms(parsed_query, snapshot),
+            *self._resolve_weak_keyword_terms(parsed_query, snapshot),
+        )
+        deduped: list[str] = []
+        seen: set[str] = set()
+        for term in ordered_terms:
+            normalized_term = normalize_text(term)
+            if not normalized_term or normalized_term in seen:
+                continue
+            seen.add(normalized_term)
+            deduped.append(normalized_term)
+        return tuple(deduped)
+
+    def _detail_match_metrics(
+        self,
+        searchable_text: str,
+        detail_terms: tuple[str, ...],
+    ) -> tuple[float, float, float]:
+        if not detail_terms:
+            return 0.0, 0.0, 0.0
+
+        match_count = float(self._match_term_count(searchable_text, detail_terms))
+        total_count = float(len(detail_terms))
+        coverage_ratio = match_count / total_count if total_count > 0 else 0.0
+        missing_count = max(0.0, total_count - match_count)
+        return match_count, coverage_ratio, missing_count
 
     def _resolve_ingredient_match_terms(
         self,
@@ -974,6 +1042,7 @@ class ProductSearchService:
             "negativeIngredients": parsed_query.negative_ingredient_terms,
             "strongKeywords": self._resolve_strong_keyword_terms(parsed_query, snapshot),
             "weakKeywords": self._resolve_weak_keyword_terms(parsed_query, snapshot),
+            "detailKeywords": self._resolve_detail_terms(parsed_query, snapshot),
             "observedLineTerms": parsed_query.line_terms,
             "querySignals": tuple(
                 value

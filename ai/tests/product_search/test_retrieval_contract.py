@@ -115,6 +115,7 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
 
         attribute_group_terms = tuple(self.service._expand_attribute_group_terms(parsed, self.snapshot))
         strong_terms = self.service._resolve_strong_keyword_terms(parsed, self.snapshot)
+        detail_terms = self.service._resolve_detail_terms(parsed, self.snapshot)
 
         missing_score = self.service._score_structured_seed_row(
             row_without_ingredient,
@@ -122,6 +123,7 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
             self.snapshot,
             attribute_group_terms,
             strong_terms,
+            detail_terms,
             plan.query_bucket,
         )
         matched_score = self.service._score_structured_seed_row(
@@ -130,6 +132,7 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
             self.snapshot,
             attribute_group_terms,
             strong_terms,
+            detail_terms,
             plan.query_bucket,
         )
 
@@ -159,6 +162,7 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
             self.snapshot,
             tuple(self.service._expand_attribute_group_terms(parsed, self.snapshot)),
             self.service._resolve_strong_keyword_terms(parsed, self.snapshot),
+            self.service._resolve_detail_terms(parsed, self.snapshot),
             "ingredient_category",
         )
 
@@ -240,6 +244,50 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
         reranked = rerank_results([weak_only, strong_match], parsed, self.snapshot.attribute_groups)
 
         self.assertEqual(reranked[0].product_id, 1)
+
+    def test_long_query_constraints_prioritize_detail_coverage(self) -> None:
+        parsed = product_search_query_parser.parse(
+            "성분에디터 그린토마토 모공 진정 토너",
+            self.snapshot,
+        )
+        weak_detail = ProductSearchResult(
+            product_id=1,
+            name="그린토마토 토너",
+            brand_name="성분에디터",
+            category_name="토너",
+            concern_names=[],
+            top_skin_type=None,
+            top2_skin_type=None,
+            document="그린토마토 토너",
+            description="그린토마토 라인 토너",
+            ingredient_preview=None,
+            evidence_snippets=[],
+            matched_sources=["structured"],
+            raw_score=20.0,
+        )
+        rich_detail = ProductSearchResult(
+            product_id=2,
+            name="그린토마토 포어 수딩 토너",
+            brand_name="성분에디터",
+            category_name="토너",
+            concern_names=["모공", "진정"],
+            top_skin_type=None,
+            top2_skin_type=None,
+            document="그린토마토 포어 수딩 토너",
+            description="그린토마토 모공 진정 토너",
+            ingredient_preview=None,
+            evidence_snippets=[],
+            matched_sources=["structured"],
+            raw_score=18.0,
+        )
+
+        constrained = self.service._apply_structured_constraints(
+            [weak_detail, rich_detail],
+            parsed,
+            self.snapshot,
+        )
+
+        self.assertEqual(constrained[0].product_id, 2)
 
     def test_broad_scope_suppresses_name_matching_for_long_query_like(self) -> None:
         parsed = product_search_query_parser.parse("성분에디터 그린토마토", self.snapshot)

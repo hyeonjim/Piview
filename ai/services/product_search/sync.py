@@ -30,6 +30,7 @@ _GENERATED_FILES = {
     "attributes": _GENERATED_DIR / "attributes.generated.json",
 }
 _STOPWORDS_FILE = _MANUAL_DIR / "stopwords.json"
+_ATTRIBUTE_GROUPS_FILE = _MANUAL_DIR / "attribute_groups.json"
 _INGREDIENT_FAMILIES_FILE = _MANUAL_DIR / "ingredient_families.json"
 
 _DEFAULT_STOPWORDS = [
@@ -181,7 +182,9 @@ class ProductSearchDictionarySyncer:
         self._ensure_seed_files()
         rows = product_search_data_repository.fetch_products_for_indexing()
         stopwords = self._load_stopwords()
+        attribute_group_terms = self._load_attribute_group_terms()
         ingredient_family_rules = self._load_ingredient_family_rules()
+        ingredient_family_alias_terms = self._build_ingredient_family_alias_terms(ingredient_family_rules)
 
         brands = self._build_brand_entries(rows)
         categories = self._build_category_entries(rows)
@@ -193,6 +196,7 @@ class ProductSearchDictionarySyncer:
             stopwords=stopwords,
             brand_terms=brand_terms,
             category_terms=category_terms,
+            excluded_terms=attribute_group_terms | ingredient_family_alias_terms,
         )
         product_type_terms = self._normalized_terms(product_types)
 
@@ -292,6 +296,7 @@ class ProductSearchDictionarySyncer:
         stopwords: set[str],
         brand_terms: set[str],
         category_terms: set[str],
+        excluded_terms: set[str],
     ) -> list[DictionaryEntry]:
         # product type은 category token과 상품명 terminal token을 함께 본다.
         # category에서 반복되는 token은 타입일 가능성이 높고,
@@ -303,14 +308,18 @@ class ProductSearchDictionarySyncer:
             if row.category_name:
                 for token in tokenize_text(row.category_name):
                     normalized = normalize_text(token)
-                    if self._is_valid_term(normalized, stopwords, brand_terms):
+                    if self._is_valid_term(normalized, stopwords, brand_terms | excluded_terms):
                         category_token_counter[normalized] += 1
 
             tokens = tokenize_text(row.name)
             if not tokens:
                 continue
             terminal = normalize_text(tokens[-1])
-            if self._is_valid_term(terminal, stopwords, brand_terms | category_terms):
+            if self._is_valid_term(
+                terminal,
+                stopwords,
+                brand_terms | category_terms | excluded_terms,
+            ):
                 terminal_counter[terminal] += 1
 
         combined: Counter[str] = Counter()
@@ -641,6 +650,36 @@ class ProductSearchDictionarySyncer:
                 }
             )
         return tuple(rules)
+
+    def _load_attribute_group_terms(self) -> set[str]:
+        try:
+            payload = json.loads(_ATTRIBUTE_GROUPS_FILE.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return set()
+        if not isinstance(payload, dict):
+            return set()
+
+        terms: set[str] = set()
+        for item in payload.values():
+            if not isinstance(item, dict):
+                continue
+            for value in item.get("terms", []):
+                normalized_value = normalize_text(str(value))
+                if normalized_value:
+                    terms.add(normalized_value)
+        return terms
+
+    def _build_ingredient_family_alias_terms(
+        self,
+        ingredient_family_rules: tuple[dict[str, tuple[str, ...]], ...],
+    ) -> set[str]:
+        terms: set[str] = set()
+        for rule in ingredient_family_rules:
+            for alias in rule.get("aliases", ()):
+                normalized_alias = normalize_text(alias)
+                if normalized_alias:
+                    terms.add(normalized_alias)
+        return terms
 
 
 product_search_dictionary_syncer = ProductSearchDictionarySyncer()

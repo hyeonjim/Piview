@@ -113,6 +113,13 @@ class ProductSearchQueryParserTests(unittest.TestCase):
         self.assertEqual(parsed.keyword_terms, ("그린토마토", "모공", "진정"))
         self.assertEqual(parsed.attribute_group_terms, ("pore_care", "soothing"))
 
+    def test_attribute_group_only_query_stays_unstructured(self) -> None:
+        parsed = product_search_query_parser.parse("진정", self.snapshot)
+
+        self.assertEqual(parsed.attribute_group_terms, ("soothing",))
+        self.assertEqual(parsed.keyword_terms, ("진정",))
+        self.assertFalse(parsed.is_structured)
+
 
 class ProductSearchExecutionPlanTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -130,6 +137,7 @@ class ProductSearchExecutionPlanTests(unittest.TestCase):
             "라운드랩 아이소이 토너": "multi_brand_category",
             "판테놀": "ingredient_only",
             "판테놀 크림": "ingredient_category",
+            "판테놀 장벽 크림": "long_query",
             "향료 없는 토너": "negative_ingredient",
             "그린토마토": "ambiguous_keyword",
             "성분에디터 그린토마토 모공 진정 토너": "long_query",
@@ -158,6 +166,11 @@ class ProductSearchExecutionPlanTests(unittest.TestCase):
         self.assertTrue(signals.has_anchor_brand_or_category)
         self.assertTrue(signals.is_long_query_like)
         self.assertEqual(plan.query_bucket, "long_query")
+
+    def test_attribute_group_only_single_token_uses_ambiguous_bucket(self) -> None:
+        plan = self._plan("진정")
+
+        self.assertEqual(plan.query_bucket, "ambiguous_keyword")
 
 
 if __name__ == "__main__":
