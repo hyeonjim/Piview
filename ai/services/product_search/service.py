@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
 import logging
 
 from core.settings import get_settings
@@ -26,12 +27,28 @@ from services.product_search.models import ProductSearchDictionarySnapshot
 from services.product_search.negative_rules import has_negative_safe_pattern
 from services.product_search.observability import ProductSearchTiming
 from services.product_search.parser import product_search_query_parser
-from services.product_search.planning import build_product_search_execution_plan
+from services.product_search.planning import (
+    build_product_search_execution_plan,
+    build_product_search_query_signals,
+)
 from services.product_search.registry import product_search_dictionary_registry
 from services.product_search.scorer import rerank_results
 
 
 logger = logging.getLogger("uvicorn.error")
+_LONG_QUERY_LIKE_CANDIDATE_LIMIT = 120
+_BROAD_SCOPE_NAME_MATCH_CANDIDATE_LIMIT = 150
+_NAME_MATCH_FALLBACK_MIN_RESULTS = 5
+_MULTI_BRAND_DIVERSITY_WINDOW = 6
+
+
+@dataclass(frozen=True)
+class ProductSearchNameMatchingPolicy:
+    run_exact: bool
+    run_fuzzy: bool
+    fallback_exact: bool
+    fallback_fuzzy: bool
+    reason: str | None = None
 
 
 class ProductSearchService:
@@ -67,6 +84,7 @@ class ProductSearchService:
         with timing.phase("parse"):
             snapshot = product_search_dictionary_registry.get_snapshot()
             parsed_query = product_search_query_parser.parse(query_text, snapshot)
+            query_signals = build_product_search_query_signals(parsed_query)
             plan = build_product_search_execution_plan(parsed_query)
             resolved_scope = product_search_category_resolver.resolve(
                 parsed_query,
@@ -121,8 +139,18 @@ class ProductSearchService:
 
         effective_category_ids = resolved_scope.category_ids
         effective_big_category_id = resolved_scope.big_category_id
+        name_matching_policy = self._resolve_name_matching_policy(
+            parsed_query,
+            plan,
+            query_signals,
+            effective_category_ids,
+            effective_big_category_id,
+            candidate_limit,
+        )
+        if name_matching_policy.reason:
+            observability_terms["nameMatchPolicy"] = (name_matching_policy.reason,)
 
-        if plan.run_exact:
+        if name_matching_policy.run_exact:
             with timing.phase("exact"):
                 # exact는 상품명 직접 탐색 경로다.
                 # structured가 아닌 순수 자유어 이름 검색이라면 exact 결과를 즉시 반환해
@@ -134,7 +162,7 @@ class ProductSearchService:
                     effective_category_ids,
                     effective_big_category_id,
                 )
-            if exact_results and not parsed_query.is_structured:
+            if exact_results and not parsed_query.is_structured and plan.query_bucket != "ambiguous_keyword":
                 final_results = exact_results[:search_limit]
                 timing.log_summary(
                     logger,
@@ -148,7 +176,7 @@ class ProductSearchService:
                 )
                 return final_results
 
-        if plan.run_fuzzy:
+        if name_matching_policy.run_fuzzy:
             with timing.phase("fuzzy"):
                 # fuzzy도 exact와 같은 이유로 비구조화 질의에서는 조기 반환 가능하다.
                 # 다만 structured query에서는 보조 후보군으로만 남긴다.
@@ -161,7 +189,7 @@ class ProductSearchService:
                     effective_category_ids,
                     effective_big_category_id,
                 )
-            if fuzzy_results and not parsed_query.is_structured:
+            if fuzzy_results and not parsed_query.is_structured and plan.query_bucket != "ambiguous_keyword":
                 final_results = fuzzy_results[:search_limit]
                 timing.log_summary(
                     logger,
@@ -238,6 +266,42 @@ class ProductSearchService:
             logger.warning("Product search keyword step failed: %s", keyword_results)
             keyword_results = []
 
+        if self._should_run_name_matching_fallback(
+            name_matching_policy,
+            structured_seed_results,
+            keyword_results,
+            search_limit,
+        ):
+            with timing.phase("name_match_fallback"):
+                if name_matching_policy.fallback_exact:
+                    fallback_exact = await asyncio.to_thread(
+                        product_exact_search_service.search,
+                        search_query,
+                        candidate_limit,
+                        effective_category_ids,
+                        effective_big_category_id,
+                    )
+                    exact_results = self._merge_keyword_tier(
+                        seed_results=list(exact_results),
+                        keyword_results=list(fallback_exact),
+                        exclude_ids=exclude_ids,
+                    )
+                if name_matching_policy.fallback_fuzzy:
+                    exact_ids = {result.product_id for result in exact_results}
+                    fallback_fuzzy = await asyncio.to_thread(
+                        product_fuzzy_search_service.search,
+                        search_query,
+                        candidate_limit,
+                        exact_ids | exclude_ids,
+                        effective_category_ids,
+                        effective_big_category_id,
+                    )
+                    fuzzy_results = self._merge_keyword_tier(
+                        seed_results=list(fuzzy_results),
+                        keyword_results=list(fallback_fuzzy),
+                        exclude_ids=exclude_ids,
+                    )
+
         merged_keyword = self._merge_keyword_tier(
             seed_results=[*structured_seed_results, *exact_results, *fuzzy_results],
             keyword_results=list(keyword_results),
@@ -259,8 +323,21 @@ class ProductSearchService:
                 missing_categories=set(),
                 config=config,
             )
-            reranked = rerank_results(fused, parsed_query, snapshot.attribute_groups)
-            constrained = self._apply_structured_constraints(reranked, parsed_query, snapshot)
+            reranked = rerank_results(
+                fused,
+                parsed_query,
+                snapshot.attribute_groups,
+                snapshot.ingredient_expansion_lookup,
+            )
+            if plan.query_bucket == "ambiguous_keyword":
+                constrained = self._apply_ambiguous_constraints(reranked, parsed_query, snapshot)
+            else:
+                constrained = self._apply_structured_constraints(
+                    reranked,
+                    parsed_query,
+                    snapshot,
+                    plan.query_bucket,
+                )
 
         final_results = constrained[:search_limit]
         timing.log_summary(
@@ -338,6 +415,7 @@ class ProductSearchService:
     def _resolve_candidate_limit(self, search_limit: int, parsed_query) -> int:
         # structured query는 조건을 많이 만족해야 하므로 넉넉한 후보군이 필요하다.
         # ingredient나 long query는 prefilter에서 많이 잘릴 수 있어 candidate_limit을 더 크게 잡는다.
+        query_signals = build_product_search_query_signals(parsed_query)
         if not parsed_query.is_structured:
             return min(max(search_limit * 3, 30), 180)
 
@@ -349,10 +427,10 @@ class ProductSearchService:
             or parsed_query.attribute_terms
         ):
             candidate_limit = max(candidate_limit, 90)
-        if parsed_query.ingredient_terms or parsed_query.token_count >= 4:
-            candidate_limit = max(candidate_limit, 120)
+        if parsed_query.ingredient_terms or query_signals.is_long_query_like:
+            candidate_limit = max(candidate_limit, _LONG_QUERY_LIKE_CANDIDATE_LIMIT)
         if len(parsed_query.brand_terms) > 1:
-            candidate_limit = max(candidate_limit, 120)
+            candidate_limit = max(candidate_limit, _LONG_QUERY_LIKE_CANDIDATE_LIMIT)
         return min(candidate_limit, 240)
 
     def _should_run_vector(self, parsed_query) -> bool:
@@ -363,6 +441,7 @@ class ProductSearchService:
         results: list[ProductSearchResult],
         parsed_query,
         snapshot: ProductSearchDictionarySnapshot,
+        query_bucket: str | None = None,
     ) -> list[ProductSearchResult]:
         # fuse 이후 점수가 높더라도, 구조화된 의도를 충분히 못 맞춘 결과는 뒤로 밀어야 한다.
         # 여기서는 brand/category/strong keyword/negative ingredient를 다시 한 번 명시적으로 본다.
@@ -373,7 +452,11 @@ class ProductSearchService:
         primary_terms = parsed_query.category_terms + parsed_query.product_type_terms
         strong_terms = self._resolve_strong_keyword_terms(parsed_query, snapshot)
         weak_terms = self._resolve_weak_keyword_terms(parsed_query, snapshot)
+        detail_terms = self._resolve_detail_terms(parsed_query, snapshot)
+        query_signals = build_product_search_query_signals(parsed_query)
         require_strong_match = self._requires_strong_keyword_match(parsed_query, snapshot)
+        require_detail_match = query_signals.is_long_query_like and bool(detail_terms)
+        ingredient_match_terms = self._resolve_ingredient_match_terms(parsed_query, snapshot)
 
         scored: list[tuple[tuple[float, ...], int, ProductSearchResult]] = []
         for index, result in enumerate(results):
@@ -382,20 +465,99 @@ class ProductSearchService:
             primary_match_count = float(self._match_term_count(searchable_text, primary_terms))
             strong_match_count = float(self._match_term_count(searchable_text, strong_terms))
             weak_match_count = float(self._match_term_count(searchable_text, weak_terms))
+            detail_match_count, detail_coverage_ratio, missing_detail_count = self._detail_match_metrics(
+                searchable_text,
+                detail_terms,
+            )
+            ingredient_field_match_count = float(
+                self._match_ingredient_query_count(
+                    normalize_text(result.ingredient_preview),
+                    parsed_query.ingredient_terms,
+                    ingredient_match_terms,
+                )
+            )
+            ingredient_name_match_count = float(
+                self._match_ingredient_query_count(
+                    normalize_text(result.name),
+                    parsed_query.ingredient_terms,
+                    ingredient_match_terms,
+                )
+            )
+            ingredient_match_count = float(
+                self._match_ingredient_query_count(
+                    searchable_text,
+                    parsed_query.ingredient_terms,
+                    ingredient_match_terms,
+                )
+            )
             lexical_source_count = float(
                 sum(source in {"exact", "fuzzy", "keyword", "structured"} for source in result.matched_sources)
             )
-            match_key = (
-                1.0 if brand_match and primary_match_count > 0 else 0.0,
-                brand_match,
-                primary_match_count,
-                1.0 if strong_match_count > 0 else 0.0 if require_strong_match else 1.0,
-                strong_match_count,
-                weak_match_count,
-                self._negative_ingredient_rank_signal(searchable_text, parsed_query.negative_ingredient_terms),
-                lexical_source_count,
-                float(result.hybrid_score or result.raw_score or 0.0),
-            )
+            if query_signals.is_long_query_like:
+                match_key = (
+                    1.0 if brand_match and primary_match_count > 0 else 0.0,
+                    brand_match,
+                    primary_match_count,
+                    1.0 if detail_match_count > 0 else 0.0 if require_detail_match else 1.0,
+                    detail_coverage_ratio,
+                    detail_match_count,
+                    -missing_detail_count,
+                    1.0 if strong_match_count > 0 else 0.0 if require_strong_match else 1.0,
+                    strong_match_count,
+                    weak_match_count,
+                    1.0 if ingredient_field_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
+                    ingredient_field_match_count,
+                    ingredient_name_match_count,
+                    1.0 if ingredient_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
+                    ingredient_match_count,
+                    self._negative_ingredient_rank_signal(searchable_text, parsed_query.negative_ingredient_terms),
+                    lexical_source_count,
+                    float(result.hybrid_score or result.raw_score or 0.0),
+                )
+            elif query_bucket == "ingredient_category":
+                match_key = (
+                    1.0 if ingredient_field_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
+                    1.0 if ingredient_name_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
+                    ingredient_name_match_count,
+                    ingredient_field_match_count,
+                    1.0 if primary_match_count > 0 else 0.0,
+                    primary_match_count,
+                    1.0 if ingredient_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
+                    ingredient_match_count,
+                    1.0 if brand_match and primary_match_count > 0 else 0.0,
+                    brand_match,
+                    1.0 if detail_match_count > 0 else 0.0 if require_detail_match else 1.0,
+                    detail_coverage_ratio,
+                    detail_match_count,
+                    -missing_detail_count,
+                    1.0 if strong_match_count > 0 else 0.0 if require_strong_match else 1.0,
+                    strong_match_count,
+                    weak_match_count,
+                    self._negative_ingredient_rank_signal(searchable_text, parsed_query.negative_ingredient_terms),
+                    lexical_source_count,
+                    float(result.hybrid_score or result.raw_score or 0.0),
+                )
+            else:
+                match_key = (
+                    1.0 if ingredient_field_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
+                    ingredient_field_match_count,
+                    ingredient_name_match_count,
+                    1.0 if ingredient_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
+                    ingredient_match_count,
+                    1.0 if brand_match and primary_match_count > 0 else 0.0,
+                    brand_match,
+                    primary_match_count,
+                    1.0 if detail_match_count > 0 else 0.0 if require_detail_match else 1.0,
+                    detail_coverage_ratio,
+                    detail_match_count,
+                    -missing_detail_count,
+                    1.0 if strong_match_count > 0 else 0.0 if require_strong_match else 1.0,
+                    strong_match_count,
+                    weak_match_count,
+                    self._negative_ingredient_rank_signal(searchable_text, parsed_query.negative_ingredient_terms),
+                    lexical_source_count,
+                    float(result.hybrid_score or result.raw_score or 0.0),
+                )
             scored.append((match_key, index, result))
 
         scored.sort(key=lambda item: (item[0], -item[1]), reverse=True)
@@ -410,13 +572,98 @@ class ProductSearchService:
                 others = [item for item in ordered if item not in matching]
                 ordered = matching + others
 
+        if require_detail_match:
+            matching = [
+                item
+                for item in ordered
+                if self._detail_match_metrics(self._searchable_text(item), detail_terms)[0] > 0
+            ]
+            if matching:
+                others = [item for item in ordered if item not in matching]
+                ordered = matching + others
+
+        if parsed_query.ingredient_terms:
+            matching = [
+                item
+                for item in ordered
+                if self._match_ingredient_query_count(
+                    self._searchable_text(item),
+                    parsed_query.ingredient_terms,
+                    ingredient_match_terms,
+                ) > 0
+            ]
+            if matching:
+                others = [item for item in ordered if item not in matching]
+                ordered = matching + others
+
+        if len(parsed_query.brand_terms) > 1 and primary_terms:
+            ordered = self._apply_multi_brand_diversity(
+                ordered,
+                parsed_query.brand_terms,
+                window_size=_MULTI_BRAND_DIVERSITY_WINDOW,
+            )
+
         return ordered
+
+    def _apply_ambiguous_constraints(
+        self,
+        results: list[ProductSearchResult],
+        parsed_query,
+        snapshot: ProductSearchDictionarySnapshot,
+    ) -> list[ProductSearchResult]:
+        if not results:
+            return results
+
+        target_terms = self._resolve_ambiguous_target_terms(parsed_query, snapshot)
+        if not target_terms:
+            return results
+
+        scored: list[tuple[tuple[float, ...], int, ProductSearchResult]] = []
+        for index, result in enumerate(results):
+            name_text = normalize_text(result.name)
+            searchable_text = self._searchable_text(result)
+            prefix_match_count = float(sum(1 for term in target_terms if term and name_text.startswith(term)))
+            name_match_count = float(sum(1 for term in target_terms if term and term in name_text))
+            detail_match_count = float(sum(1 for term in target_terms if term and term in searchable_text))
+            exact_source = 1.0 if "exact" in result.matched_sources else 0.0
+            fuzzy_source = 1.0 if "fuzzy" in result.matched_sources else 0.0
+            lexical_source_count = float(
+                sum(source in {"exact", "fuzzy", "keyword"} for source in result.matched_sources)
+            )
+            match_key = (
+                1.0 if name_match_count > 0 else 0.0,
+                prefix_match_count,
+                name_match_count,
+                detail_match_count,
+                exact_source,
+                fuzzy_source,
+                lexical_source_count,
+                float(result.hybrid_score or result.raw_score or 0.0),
+            )
+            scored.append((match_key, index, result))
+
+        scored.sort(key=lambda item: (item[0], -item[1]), reverse=True)
+        return [item[2] for item in scored]
 
     def _matches_brand(self, result: ProductSearchResult, brand_terms: tuple[str, ...]) -> bool:
         if not brand_terms:
             return False
         brand_text = normalize_text(result.brand_name)
         return any(self._matches_brand_text(brand_text, term) for term in brand_terms)
+
+    def _matched_brand_terms(
+        self,
+        result: ProductSearchResult,
+        brand_terms: tuple[str, ...],
+    ) -> tuple[str, ...]:
+        if not brand_terms:
+            return ()
+        brand_text = normalize_text(result.brand_name)
+        return tuple(
+            brand_term
+            for brand_term in brand_terms
+            if self._matches_brand_text(brand_text, brand_term)
+        )
 
     def _matches_brand_text(self, brand_text: str, brand_term: str) -> bool:
         if not brand_text or not brand_term:
@@ -434,6 +681,45 @@ class ProductSearchService:
         if not searchable_text or not terms:
             return 0
         return sum(1 for term in terms if term and term in searchable_text)
+
+    def _apply_multi_brand_diversity(
+        self,
+        results: list[ProductSearchResult],
+        brand_terms: tuple[str, ...],
+        window_size: int,
+    ) -> list[ProductSearchResult]:
+        # multi-brand query는 완전 round-robin보다 relevance-first diversity가 안전하다.
+        # 1위는 그대로 두고, 초반 window 안에서 아직 안 나온 요청 브랜드를 우선 채운다.
+        if len(results) <= 1 or len(brand_terms) <= 1 or window_size <= 1:
+            return results
+
+        reordered = list(results)
+        requested_brands = tuple(dict.fromkeys(brand_terms))
+        observed_brands = set(self._matched_brand_terms(reordered[0], requested_brands))
+
+        limit = min(len(reordered), window_size)
+        for index in range(1, limit):
+            missing_brands = [brand for brand in requested_brands if brand not in observed_brands]
+            if missing_brands:
+                candidate_index = next(
+                    (
+                        candidate_index
+                        for candidate_index in range(index, len(reordered))
+                        if any(
+                            brand in self._matched_brand_terms(reordered[candidate_index], requested_brands)
+                            for brand in missing_brands
+                        )
+                    ),
+                    None,
+                )
+                if candidate_index is not None and candidate_index != index:
+                    reordered[index], reordered[candidate_index] = reordered[candidate_index], reordered[index]
+
+            current_matches = self._matched_brand_terms(reordered[index], requested_brands)
+            if current_matches:
+                observed_brands.update(current_matches)
+
+        return reordered
 
     def _searchable_text(self, result: ProductSearchResult) -> str:
         parts = [
@@ -464,11 +750,13 @@ class ProductSearchService:
         # non-brand structured query는 ingredient/attribute/strong keyword 중심으로 seed를 만든다.
         attribute_group_terms = tuple(self._expand_attribute_group_terms(parsed_query, snapshot))
         strong_keyword_terms = self._resolve_strong_keyword_terms(parsed_query, snapshot)
+        detail_terms = self._resolve_detail_terms(parsed_query, snapshot)
         rows: list[ProductSearchDataRow] = []
 
         if parsed_query.brand_terms:
             seen_ids: set[int] = set()
             per_brand_limit = min(max(candidate_limit * 2, 60), 180)
+            ingredient_filter_terms = self._resolve_ingredient_match_terms(parsed_query, snapshot)
             for brand in parsed_query.brand_terms:
                 brand_rows = product_search_data_repository.search_products_by_terms(
                     terms=[brand],
@@ -477,7 +765,7 @@ class ProductSearchService:
                     category_ids=category_ids,
                     big_category_id=big_category_id,
                     include_ingredient_text_in_prefilter=include_ingredient_text_in_prefilter,
-                    ingredient_must_terms=parsed_query.ingredient_terms if parsed_query.ingredient_terms else None,
+                    ingredient_must_terms=ingredient_filter_terms if ingredient_filter_terms else None,
                     trace_label="structured.brand_seed",
                 )
                 for row in brand_rows:
@@ -488,7 +776,7 @@ class ProductSearchService:
         else:
             if plan.query_bucket in {"ingredient_only", "ingredient_category", "long_query"}:
                 # ingredient_only / ingredient_category / long_query는 strong keyword recall이 가장 중요하다.
-                focus_terms = strong_keyword_terms
+                focus_terms = detail_terms or strong_keyword_terms
             else:
                 focus_terms = tuple(
                     dict.fromkeys(
@@ -500,6 +788,7 @@ class ProductSearchService:
             terms = list(focus_terms or parsed_query.search_terms())
             if not terms:
                 return []
+            ingredient_filter_terms = self._resolve_ingredient_match_terms(parsed_query, snapshot)
             rows = product_search_data_repository.search_products_by_terms(
                 terms=terms,
                 limit=min(max(candidate_limit * 2, 80), 240),
@@ -507,7 +796,7 @@ class ProductSearchService:
                 category_ids=category_ids,
                 big_category_id=big_category_id,
                 include_ingredient_text_in_prefilter=include_ingredient_text_in_prefilter,
-                ingredient_must_terms=parsed_query.ingredient_terms if parsed_query.ingredient_terms else None,
+                ingredient_must_terms=ingredient_filter_terms if ingredient_filter_terms else None,
                 trace_label="structured.generic_seed",
             )
 
@@ -521,6 +810,7 @@ class ProductSearchService:
                 snapshot,
                 attribute_group_terms,
                 strong_keyword_terms,
+                detail_terms,
                 plan.query_bucket,
             )
             if score <= 0:
@@ -540,6 +830,7 @@ class ProductSearchService:
         snapshot: ProductSearchDictionarySnapshot,
         attribute_group_terms: tuple[str, ...],
         strong_keyword_terms: tuple[str, ...],
+        detail_terms: tuple[str, ...],
         query_bucket: str,
     ) -> float:
         # structured seed score는 "후보를 남길지"를 판단하는 1차 게이트 성격이 강하다.
@@ -568,7 +859,26 @@ class ProductSearchService:
         weak_keyword_terms = self._resolve_weak_keyword_terms(parsed_query, snapshot)
         require_strong_match = self._requires_strong_keyword_match(parsed_query, snapshot)
         strong_match_count = self._match_term_count(searchable_text, strong_keyword_terms)
-        ingredient_field_match_count = self._match_term_count(ingredient_text, parsed_query.ingredient_terms)
+        detail_match_count, detail_coverage_ratio, missing_detail_count = self._detail_match_metrics(
+            searchable_text,
+            detail_terms,
+        )
+        ingredient_match_terms = self._resolve_ingredient_match_terms(parsed_query, snapshot)
+        ingredient_field_match_count = self._match_ingredient_query_count(
+            ingredient_text,
+            parsed_query.ingredient_terms,
+            ingredient_match_terms,
+        )
+        ingredient_name_match_count = self._match_ingredient_query_count(
+            normalize_text(row.name),
+            parsed_query.ingredient_terms,
+            ingredient_match_terms,
+        )
+        ingredient_searchable_match_count = self._match_ingredient_query_count(
+            searchable_text,
+            parsed_query.ingredient_terms,
+            ingredient_match_terms,
+        )
 
         score = 0.0
         brand_match = any(self._matches_brand_text(brand_text, term) for term in parsed_query.brand_terms)
@@ -579,20 +889,36 @@ class ProductSearchService:
         if parsed_query.product_type_terms:
             score += 28.0 * sum(term in searchable_text for term in parsed_query.product_type_terms)
         if parsed_query.ingredient_terms:
-            score += 28.0 * ingredient_field_match_count
-            score += 12.0 * sum(term in searchable_text for term in parsed_query.ingredient_terms)
+            if query_bucket == "long_query":
+                score += 24.0 * ingredient_field_match_count
+                score += 12.0 * ingredient_name_match_count
+                score += 12.0 * ingredient_searchable_match_count
+            elif query_bucket == "ingredient_category":
+                score += 42.0 * ingredient_field_match_count
+                score += 28.0 * ingredient_name_match_count
+                score += 16.0 * ingredient_searchable_match_count
+            else:
+                score += 36.0 * ingredient_field_match_count
+                score += 16.0 * ingredient_name_match_count
+                score += 18.0 * ingredient_searchable_match_count
         if attribute_group_terms:
             score += 18.0 * sum(term in searchable_text for term in attribute_group_terms)
         if parsed_query.attribute_terms:
             score += 12.0 * sum(term in searchable_text for term in parsed_query.attribute_terms)
         if strong_keyword_terms:
             score += 14.0 * strong_match_count
+        if detail_terms:
+            score += 12.0 * detail_match_count
+            score += 20.0 * detail_coverage_ratio
+            score -= 4.0 * missing_detail_count
         if weak_keyword_terms:
             score += 6.0 * self._match_term_count(searchable_text, weak_keyword_terms)
         score += self._negative_ingredient_score_adjustment(searchable_text, parsed_query.negative_ingredient_terms)
         if require_strong_match and strong_match_count <= 0:
             return 0.0
         if query_bucket in {"ingredient_only", "ingredient_category"} and ingredient_field_match_count <= 0:
+            return 0.0
+        if query_bucket == "long_query" and detail_terms and detail_match_count <= 0:
             return 0.0
 
         return score
@@ -674,14 +1000,196 @@ class ProductSearchService:
             weak_terms.append(normalized_term)
         return tuple(weak_terms)
 
+    def _resolve_detail_terms(
+        self,
+        parsed_query,
+        snapshot: ProductSearchDictionarySnapshot,
+    ) -> tuple[str, ...]:
+        # long query detail은 strong/weak keyword를 합친 "설명 커버리지" 관점의 집합이다.
+        # strong은 랭킹 상향, weak는 detail completeness 측정에 주로 사용한다.
+        ordered_terms = (
+            *self._resolve_strong_keyword_terms(parsed_query, snapshot),
+            *self._resolve_weak_keyword_terms(parsed_query, snapshot),
+        )
+        deduped: list[str] = []
+        seen: set[str] = set()
+        for term in ordered_terms:
+            normalized_term = normalize_text(term)
+            if not normalized_term or normalized_term in seen:
+                continue
+            seen.add(normalized_term)
+            deduped.append(normalized_term)
+        return tuple(deduped)
+
+    def _resolve_ambiguous_target_terms(
+        self,
+        parsed_query,
+        snapshot: ProductSearchDictionarySnapshot,
+    ) -> tuple[str, ...]:
+        ordered_terms = (
+            *parsed_query.keyword_terms,
+            *tuple(
+                term
+                for term in parsed_query.line_terms
+                if term in snapshot.ambiguous_term_lookup
+            ),
+            *tuple(
+                term
+                for term in parsed_query.ingredient_terms
+                if term in snapshot.ambiguous_term_lookup
+            ),
+        )
+        deduped: list[str] = []
+        seen: set[str] = set()
+        for term in ordered_terms:
+            normalized_term = normalize_text(term)
+            if not normalized_term or normalized_term in seen:
+                continue
+            seen.add(normalized_term)
+            deduped.append(normalized_term)
+        return tuple(deduped)
+
+    def _detail_match_metrics(
+        self,
+        searchable_text: str,
+        detail_terms: tuple[str, ...],
+    ) -> tuple[float, float, float]:
+        if not detail_terms:
+            return 0.0, 0.0, 0.0
+
+        match_count = float(self._match_term_count(searchable_text, detail_terms))
+        total_count = float(len(detail_terms))
+        coverage_ratio = match_count / total_count if total_count > 0 else 0.0
+        missing_count = max(0.0, total_count - match_count)
+        return match_count, coverage_ratio, missing_count
+
+    def _resolve_ingredient_match_terms(
+        self,
+        parsed_query,
+        snapshot: ProductSearchDictionarySnapshot,
+    ) -> tuple[str, ...]:
+        # ingredient query 하나가 여러 DB canonical을 확장할 수 있으므로
+        # retrieval/ranking 단계에서는 expansion lookup 전체를 함께 본다.
+        resolved_terms: list[str] = []
+        seen: set[str] = set()
+        for ingredient_term in parsed_query.ingredient_terms:
+            normalized_term = normalize_text(ingredient_term)
+            for candidate in (normalized_term, *snapshot.ingredient_expansion_lookup.get(normalized_term, ())):
+                normalized_candidate = normalize_text(candidate)
+                if not normalized_candidate or normalized_candidate in seen:
+                    continue
+                seen.add(normalized_candidate)
+                resolved_terms.append(normalized_candidate)
+        return tuple(resolved_terms)
+
+    def _match_ingredient_query_count(
+        self,
+        searchable_text: str,
+        ingredient_terms: tuple[str, ...],
+        ingredient_match_terms: tuple[str, ...],
+    ) -> int:
+        if not searchable_text or not ingredient_terms:
+            return 0
+
+        match_count = 0
+        for ingredient_term in ingredient_terms:
+            normalized_term = normalize_text(ingredient_term)
+            if not normalized_term:
+                continue
+            candidates = tuple(
+                candidate
+                for candidate in ingredient_match_terms
+                if candidate == normalized_term
+                or normalized_term in candidate
+                or candidate in normalized_term
+            ) or (normalized_term,)
+            if any(candidate in searchable_text for candidate in candidates):
+                match_count += 1
+        return match_count
+
     def _requires_strong_keyword_match(
         self,
         parsed_query,
         snapshot: ProductSearchDictionarySnapshot,
     ) -> bool:
+        query_signals = build_product_search_query_signals(parsed_query)
         if parsed_query.ingredient_terms:
             return True
-        return parsed_query.token_count >= 4 and bool(self._resolve_strong_keyword_terms(parsed_query, snapshot))
+        return query_signals.is_long_query_like and bool(
+            self._resolve_strong_keyword_terms(parsed_query, snapshot)
+        )
+
+    def _resolve_name_matching_policy(
+        self,
+        parsed_query,
+        plan,
+        query_signals,
+        category_ids: tuple[int, ...] | None,
+        big_category_id: int | None,
+        candidate_limit: int,
+    ) -> ProductSearchNameMatchingPolicy:
+        if plan.query_bucket == "ambiguous_keyword":
+            return ProductSearchNameMatchingPolicy(
+                run_exact=True,
+                run_fuzzy=False,
+                fallback_exact=False,
+                fallback_fuzzy=False,
+                reason="ambiguous.exact_only",
+            )
+
+        if not plan.run_exact and not plan.run_fuzzy:
+            return ProductSearchNameMatchingPolicy(
+                run_exact=False,
+                run_fuzzy=False,
+                fallback_exact=False,
+                fallback_fuzzy=False,
+            )
+
+        is_broad_big_category_scope = bool(big_category_id is not None and not category_ids)
+        suppress_for_broad_scope = bool(
+            is_broad_big_category_scope
+            and candidate_limit >= _BROAD_SCOPE_NAME_MATCH_CANDIDATE_LIMIT
+            and query_signals.has_anchor_brand_or_category
+            and query_signals.residual_keyword_count >= 1
+        )
+        should_suppress = bool(query_signals.is_long_query_like or suppress_for_broad_scope)
+        if not should_suppress:
+            return ProductSearchNameMatchingPolicy(
+                run_exact=plan.run_exact,
+                run_fuzzy=plan.run_fuzzy,
+                fallback_exact=False,
+                fallback_fuzzy=False,
+            )
+
+        reason_parts: list[str] = []
+        if query_signals.is_long_query_like:
+            reason_parts.append("suppressed.long_query_like")
+        if suppress_for_broad_scope:
+            reason_parts.append("suppressed.broad_scope")
+        return ProductSearchNameMatchingPolicy(
+            run_exact=False,
+            run_fuzzy=False,
+            fallback_exact=plan.run_exact,
+            fallback_fuzzy=plan.run_fuzzy,
+            reason=",".join(reason_parts),
+        )
+
+    def _should_run_name_matching_fallback(
+        self,
+        name_matching_policy: ProductSearchNameMatchingPolicy,
+        structured_seed_results: list[ProductSearchResult],
+        keyword_results: list[ProductSearchResult],
+        search_limit: int,
+    ) -> bool:
+        if not (name_matching_policy.fallback_exact or name_matching_policy.fallback_fuzzy):
+            return False
+        lexical_result_count = len(
+            {
+                result.product_id
+                for result in [*structured_seed_results, *keyword_results]
+            }
+        )
+        return lexical_result_count < min(max(search_limit, 1), _NAME_MATCH_FALLBACK_MIN_RESULTS)
 
     def _build_observability_terms(
         self,
@@ -690,6 +1198,7 @@ class ProductSearchService:
     ) -> dict[str, tuple[str, ...]]:
         # observability payload는 "왜 이 bucket으로 해석됐는지"를 로그에서 역추적하기 위한 최소 단위다.
         # line은 now structured intent에는 직접 쓰지 않지만, 관찰용으로는 남긴다.
+        query_signals = build_product_search_query_signals(parsed_query)
         return {
             "brands": parsed_query.brand_terms,
             "categories": parsed_query.category_terms + parsed_query.product_type_terms,
@@ -697,7 +1206,17 @@ class ProductSearchService:
             "negativeIngredients": parsed_query.negative_ingredient_terms,
             "strongKeywords": self._resolve_strong_keyword_terms(parsed_query, snapshot),
             "weakKeywords": self._resolve_weak_keyword_terms(parsed_query, snapshot),
+            "detailKeywords": self._resolve_detail_terms(parsed_query, snapshot),
             "observedLineTerms": parsed_query.line_terms,
+            "querySignals": tuple(
+                value
+                for value in (
+                    f"residualKeywords={query_signals.residual_keyword_count}",
+                    f"longQueryLike={query_signals.is_long_query_like}",
+                    f"tokenCount={query_signals.token_count}",
+                )
+                if value
+            ),
         }
 
     def _negative_ingredient_rank_signal(
