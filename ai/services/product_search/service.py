@@ -6,11 +6,6 @@ import asyncio
 import logging
 
 from core.settings import get_settings
-from services.chatbot.retrieval.constants import (
-    AVOID_TERM_ALIASES,
-    NOISY_AVOID_ALIASES,
-    SAFE_FREE_PATTERNS,
-)
 from services.chatbot.retrieval.scoring.config import HybridScoringConfig
 from services.chatbot.retrieval.scoring.fusion import fuse_results
 from services.chatbot.search.entity.service import product_exact_search_service
@@ -28,6 +23,7 @@ from services.chatbot.search.vector import ProductSearchResult
 from services.chatbot.search.vector.service import product_vector_service
 from services.product_search.filters import product_search_category_resolver
 from services.product_search.models import ProductSearchDictionarySnapshot
+from services.product_search.negative_rules import has_negative_safe_pattern
 from services.product_search.observability import ProductSearchTiming
 from services.product_search.parser import product_search_query_parser
 from services.product_search.planning import build_product_search_execution_plan
@@ -683,16 +679,10 @@ class ProductSearchService:
 
         adjustment = 0.0
         for term in negative_terms:
-            safe_patterns = tuple(pattern.lower() for pattern in SAFE_FREE_PATTERNS.get(term, ()))
-            aliases = tuple(
-                alias.lower()
-                for alias in AVOID_TERM_ALIASES.get(term, ())
-                if alias.lower() not in NOISY_AVOID_ALIASES
-            )
-            if any(pattern in searchable_text for pattern in safe_patterns):
+            if has_negative_safe_pattern(searchable_text, term):
                 adjustment += 18.0
                 continue
-            if any(alias in searchable_text for alias in aliases):
+            if normalize_text(term) in searchable_text:
                 adjustment -= 20.0
         return adjustment
 

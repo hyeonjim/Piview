@@ -16,6 +16,7 @@ def _build_snapshot() -> ProductSearchDictionarySnapshot:
         brands=(),
         categories=(),
         product_types=(),
+        ingredients=(),
         line_terms=(),
         attributes=(),
         attribute_groups={
@@ -33,6 +34,10 @@ def _build_snapshot() -> ProductSearchDictionarySnapshot:
             "크림": "크림",
         },
         product_type_lookup={},
+        ingredient_lookup={
+            "판테놀": "판테놀",
+            "향료": "향료",
+        },
         line_lookup={
             "판테놀": "판테놀",
             "그린토마토": "그린토마토",

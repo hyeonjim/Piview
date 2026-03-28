@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-from services.chatbot.retrieval.constants import (
-    AVOID_TERM_ALIASES,
-    NOISY_AVOID_ALIASES,
-    SAFE_FREE_PATTERNS,
-)
 from services.chatbot.search.query_normalizer import normalize_text
 from services.chatbot.search.vector import ProductSearchResult
 from services.product_search.models import ParsedSearchQuery
+from services.product_search.negative_rules import has_negative_safe_pattern
 
 
 def rerank_results(
@@ -199,15 +195,9 @@ def _negative_ingredient_adjustment(
 
     score = 0.0
     for term in negative_terms:
-        safe_patterns = tuple(pattern.lower() for pattern in SAFE_FREE_PATTERNS.get(term, ()))
-        aliases = tuple(
-            alias.lower()
-            for alias in AVOID_TERM_ALIASES.get(term, ())
-            if alias.lower() not in NOISY_AVOID_ALIASES
-        )
-        if any(pattern in searchable_text for pattern in safe_patterns):
+        if has_negative_safe_pattern(searchable_text, term):
             score += 12.0
             continue
-        if any(alias in searchable_text for alias in aliases):
+        if normalize_text(term) in searchable_text:
             score -= 14.0
     return score

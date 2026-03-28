@@ -12,6 +12,7 @@ def _build_snapshot() -> ProductSearchDictionarySnapshot:
         brands=(),
         categories=(),
         product_types=(),
+        ingredients=(),
         line_terms=(),
         attributes=(),
         attribute_groups={
@@ -32,6 +33,11 @@ def _build_snapshot() -> ProductSearchDictionarySnapshot:
             "로션": "로션/에멀젼",
         },
         product_type_lookup={},
+        ingredient_lookup={
+            "판테놀": "판테놀",
+            "나이아신아마이드": "나이아신아마이드",
+            "향료": "향료",
+        },
         line_lookup={
             "판테놀": "판테놀",
             "나이아신아마이드": "나이아신아마이드",
