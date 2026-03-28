@@ -67,6 +67,7 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
     def test_ingredient_seed_requires_ingredient_field_match(self) -> None:
         parsed = product_search_query_parser.parse("판테놀 크림", self.snapshot)
         plan = build_product_search_execution_plan(parsed)
+        self.assertEqual(self.service._resolve_weak_keyword_terms(parsed, self.snapshot), ())
         row_without_ingredient = ProductSearchDataRow(
             product_id=1,
             name="판테놀 크림",

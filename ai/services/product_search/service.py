@@ -71,15 +71,18 @@ class ProductSearchService:
                 big_category_id,
             )
             attribute_group_terms = self._expand_attribute_group_terms(parsed_query, snapshot)
+            observability_terms = self._build_observability_terms(parsed_query, snapshot)
 
         if resolved_scope.force_empty:
             timing.log_summary(
                 logger,
                 query_text=query_text,
                 query_shape=plan.query_shape,
+                query_bucket=plan.query_bucket,
                 result_count=0,
                 category_ids=resolved_scope.category_ids,
                 big_category_id=resolved_scope.big_category_id,
+                observability_terms=observability_terms,
             )
             return []
 
@@ -94,9 +97,11 @@ class ProductSearchService:
                 logger,
                 query_text=query_text,
                 query_shape=plan.query_shape,
+                query_bucket=plan.query_bucket,
                 result_count=0,
                 category_ids=resolved_scope.category_ids,
                 big_category_id=resolved_scope.big_category_id,
+                observability_terms=observability_terms,
             )
             return []
 
@@ -127,9 +132,11 @@ class ProductSearchService:
                     logger,
                     query_text=query_text,
                     query_shape=plan.query_shape,
+                    query_bucket=plan.query_bucket,
                     result_count=len(final_results),
                     category_ids=effective_category_ids,
                     big_category_id=effective_big_category_id,
+                    observability_terms=observability_terms,
                 )
                 return final_results
 
@@ -150,9 +157,11 @@ class ProductSearchService:
                     logger,
                     query_text=query_text,
                     query_shape=plan.query_shape,
+                    query_bucket=plan.query_bucket,
                     result_count=len(final_results),
                     category_ids=effective_category_ids,
                     big_category_id=effective_big_category_id,
+                    observability_terms=observability_terms,
                 )
                 return final_results
 
@@ -243,9 +252,11 @@ class ProductSearchService:
             logger,
             query_text=query_text,
             query_shape=plan.query_shape,
+            query_bucket=plan.query_bucket,
             result_count=len(final_results),
             category_ids=effective_category_ids,
             big_category_id=effective_big_category_id,
+            observability_terms=observability_terms,
         )
         return final_results
 
@@ -616,7 +627,11 @@ class ProductSearchService:
 
         for term in lookup_terms:
             normalized_term = normalize_text(term)
-            if not normalized_term or normalized_term in seen:
+            if (
+                not normalized_term
+                or normalized_term in seen
+                or normalized_term in parsed_query.ingredient_terms
+            ):
                 continue
             seen.add(normalized_term)
             weak_terms.append(normalized_term)
@@ -630,6 +645,21 @@ class ProductSearchService:
         if parsed_query.ingredient_terms:
             return True
         return parsed_query.token_count >= 4 and bool(self._resolve_strong_keyword_terms(parsed_query, snapshot))
+
+    def _build_observability_terms(
+        self,
+        parsed_query,
+        snapshot: ProductSearchDictionarySnapshot,
+    ) -> dict[str, tuple[str, ...]]:
+        return {
+            "brands": parsed_query.brand_terms,
+            "categories": parsed_query.category_terms + parsed_query.product_type_terms,
+            "ingredients": parsed_query.ingredient_terms,
+            "negativeIngredients": parsed_query.negative_ingredient_terms,
+            "strongKeywords": self._resolve_strong_keyword_terms(parsed_query, snapshot),
+            "weakKeywords": self._resolve_weak_keyword_terms(parsed_query, snapshot),
+            "observedLineTerms": parsed_query.line_terms,
+        }
 
     def _negative_ingredient_rank_signal(
         self,

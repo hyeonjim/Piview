@@ -161,7 +161,7 @@ def _weak_keyword_terms(
             continue
         if normalized_term not in attribute_aliases and normalized_term not in parsed_query.attribute_terms:
             continue
-        if normalized_term in seen:
+        if normalized_term in seen or normalized_term in parsed_query.ingredient_terms:
             continue
         seen.add(normalized_term)
         weak_terms.append(normalized_term)
