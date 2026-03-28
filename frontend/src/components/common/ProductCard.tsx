@@ -25,7 +25,7 @@ interface ProductCardProps {
   price?: number;
   reason?: string;
   isRecommended?: boolean;
-  variant?: "default" | "modal";
+  variant?: "default" | "modal" | "routine-modal";
   /** 상세페이지 링크 override — 미지정 시 /product/{id} */
   href?: string;
   /** 액션 버튼 영역 표시 여부 — true 일 때 보유추가/비교 버튼 노출 */
@@ -525,6 +525,145 @@ export default function ProductCard({
   }
 
   // ── 3. MODAL VARIANT ──────────────────────────────────────────────
+  if (variant === "routine-modal") {
+    return (
+      <div
+        className={[
+          "relative rounded-2xl p-3 mx-2 bg-white transition-shadow duration-200 flex flex-col h-[212px]",
+          inRoutine ? "ring-1 ring-(--color-brand-light)" : "",
+        ].join(" ")}
+        style={{
+          boxShadow: inRoutine
+            ? "0 1px 2px rgba(0,0,0,0.04), 0 3px 7px rgba(166,157,146,0.15), 0 7px 18px rgba(0,0,0,0.06)"
+            : "0 1px 2px rgba(0,0,0,0.04), 0 3px 7px rgba(180,155,120,0.09), 0 7px 18px rgba(0,0,0,0.06), 0 14px 32px rgba(180,155,120,0.04)",
+        }}
+      >
+        {/* PICK 배지 */}
+        {showPickBadge && (
+          <div className="absolute top-2 left-2">
+            <PickBadge />
+          </div>
+        )}
+
+        {/* 제품 정보 — overflow-hidden으로 태그 넘침 방지 */}
+        <Link
+          href={productHref}
+          className="no-underline overflow-hidden"
+          style={{ height: "148px" }}
+        >
+          <div className="flex items-start gap-2 h-full">
+            {/* 이미지 */}
+            <div className="relative w-20 h-20 shrink-0">
+              <div
+                className={`w-full h-full flex items-center rounded-xl bg-[#faf9f7] overflow-hidden${imageContainerClassName ? ` ${imageContainerClassName}` : " justify-center"}`}
+              >
+                <ProductImage
+                  imageUrl={imageUrl}
+                  name={name}
+                  emoji={emoji}
+                  width={80}
+                  height={80}
+                  className="object-contain"
+                />
+              </div>
+            </div>
+
+            {/* 텍스트 영역 */}
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <BrandLabel brand={brand} />
+                  {showCategory && category && (
+                    <CategoryChip category={category} />
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  {showLike && (
+                    <button
+                      onClick={handleLike}
+                      className="flex items-center justify-center w-7 h-7 rounded-full border-none cursor-pointer transition-all active:scale-[0.97] bg-transparent"
+                    >
+                      <Heart
+                        size={16}
+                        className="transition-all duration-150"
+                        style={{
+                          color: isLiked ? "#f7a499" : "#d9d5d0",
+                          fill: isLiked ? "#f7a499" : "none",
+                        }}
+                      />
+                    </button>
+                  )}
+                  {onToggleCompare && (
+                    <button
+                      onClick={(event) => handleAction(event, onToggleCompare)}
+                      className={[
+                        "flex items-center justify-center gap-1 h-5 px-1.5 rounded-[18px] text-[11px] font-semibold cursor-pointer transition-all active:scale-[0.97] shrink-0 border",
+                        isInCompare
+                          ? "border-[#f3c9ae] bg-[#f3c9ae] text-white"
+                          : "border-category-pill-default-border bg-white text-[#887a67]",
+                      ].join(" ")}
+                    >
+                      <CompareIcon
+                        size={14}
+                        color={isInCompare ? "white" : "#887a67"}
+                      />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <p className="text-[14px] font-semibold text-[#61574e] leading-[1.4] line-clamp-2 mb-1">
+                {name}
+              </p>
+
+              {skinTypes.length > 0 && (
+                <div className="flex flex-wrap mt-1">
+                  {skinTypes.map((skinType) => (
+                    <SkinTypeTag key={skinType} label={skinType} />
+                  ))}
+                </div>
+              )}
+
+              {effects.length > 0 && (
+                <div className="flex flex-wrap mt-0.5 overflow-hidden max-h-[40px]">
+                  {effects.map((effect) => (
+                    <EffectTag key={effect} label={effect} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </Link>
+
+        {/* 루틴추가 버튼 — 항상 하단 고정 */}
+        {onAddRoutine && (
+          <div className="flex justify-center mt-2 shrink-0">
+            <button
+              onClick={(event) => handleAction(event, onAddRoutine)}
+              disabled={inRoutine}
+              className={[
+                "flex items-center justify-center gap-1 w-28 h-7 rounded-modal border-none cursor-pointer transition-all active:scale-[0.97] text-[14px] font-semibold",
+                inRoutine
+                  ? "bg-[#f7f1ea] text-[#858482]"
+                  : "bg-[#f8eddf] text-[#666463]",
+              ].join(" ")}
+            >
+              {inRoutine ? (
+                <>
+                  <Check size={11} /> 추가됨
+                </>
+              ) : (
+                <>
+                  <Plus size={11} /> 루틴추가
+                </>
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (variant === "modal") {
     return (
       <div
