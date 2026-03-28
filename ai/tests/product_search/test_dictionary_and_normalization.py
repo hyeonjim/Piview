@@ -42,6 +42,7 @@ class ProductSearchDictionarySyncTests(unittest.TestCase):
             rows=rows,
             stopwords=set(),
             blocked_terms=set(),
+            ingredient_family_rules=ProductSearchDictionarySyncer()._load_ingredient_family_rules(),
         )
         by_canonical = {entry.canonical: entry.frequency for entry in entries}
 
@@ -71,6 +72,7 @@ class ProductSearchDictionarySyncTests(unittest.TestCase):
             rows=rows,
             stopwords=set(),
             blocked_terms=set(),
+            ingredient_family_rules=ProductSearchDictionarySyncer()._load_ingredient_family_rules(),
         )
         by_canonical = {entry.canonical: set(entry.aliases) for entry in entries}
 
@@ -100,6 +102,7 @@ class ProductSearchDictionarySyncTests(unittest.TestCase):
             rows=rows,
             stopwords=set(),
             blocked_terms=set(),
+            ingredient_family_rules=ProductSearchDictionarySyncer()._load_ingredient_family_rules(),
         )
         by_canonical = {entry.canonical: set(entry.aliases) for entry in entries}
 
