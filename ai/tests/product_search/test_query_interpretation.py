@@ -3,7 +3,10 @@ import unittest
 
 from services.product_search.models import ParsedSearchQuery, ProductSearchDictionarySnapshot
 from services.product_search.parser import product_search_query_parser
-from services.product_search.planning import build_product_search_execution_plan
+from services.product_search.planning import (
+    build_product_search_execution_plan,
+    build_product_search_query_signals,
+)
 
 
 def _build_snapshot() -> ProductSearchDictionarySnapshot:
@@ -130,6 +133,17 @@ class ProductSearchExecutionPlanTests(unittest.TestCase):
 
         self.assertTrue(ingredient_only_plan.include_ingredient_text_in_prefilter)
         self.assertTrue(ingredient_category_plan.include_ingredient_text_in_prefilter)
+
+    def test_long_query_like_uses_semantic_signals_not_raw_token_threshold(self) -> None:
+        parsed = product_search_query_parser.parse("성분에디터 그린 토마토", self.snapshot)
+        signals = build_product_search_query_signals(parsed)
+        plan = build_product_search_execution_plan(parsed)
+
+        self.assertEqual(signals.residual_keyword_terms, ("그린", "토마토"))
+        self.assertEqual(signals.residual_keyword_count, 2)
+        self.assertTrue(signals.has_anchor_brand_or_category)
+        self.assertTrue(signals.is_long_query_like)
+        self.assertEqual(plan.query_bucket, "long_query")
 
 
 if __name__ == "__main__":
