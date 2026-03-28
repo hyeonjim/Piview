@@ -35,4 +35,9 @@ public interface ProductConcernCacheRepository extends JpaRepository<ProductConc
         "WHERE pcc.productId = :productId " +
         "ORDER BY pcc.totalConcernScore DESC")
     List<String> findTopConcernNamesByProductId(@Param("productId") Long productId);
+
+    // 루틴 내 제품들이 커버하는 고민 ID 목록 — 존재 여부만 체크 (점수 무관)
+    @Query("SELECT DISTINCT pcc.skinConcernId FROM ProductConcernCache pcc " +
+        "WHERE pcc.productId IN :productIds")
+    List<Long> findCoveredConcernIdsByProductIds(@Param("productIds") List<Long> productIds);
 }
