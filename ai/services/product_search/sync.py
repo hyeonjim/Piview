@@ -601,7 +601,7 @@ class ProductSearchDictionarySyncer:
         return {
             normalize_text(alias)
             for alias in aliases
-            if normalize_text(alias) and len(normalize_text(alias)) >= 2
+            if normalize_text(alias)
         }
 
     def _load_ingredient_family_rules(self) -> tuple[dict[str, tuple[str, ...]], ...]:
