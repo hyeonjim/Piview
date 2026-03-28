@@ -10,6 +10,8 @@ class ProductSearchResultItem(BaseModel):
 
 class ProductSearchQueryResponse(BaseModel):
     query: str
+    queryShape: str | None = None
+    queryBucket: str | None = None
     results: list[ProductSearchResultItem] = Field(default_factory=list)
 
 

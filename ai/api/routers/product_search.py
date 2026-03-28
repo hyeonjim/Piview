@@ -9,6 +9,9 @@ from schemas.product_search import (
     ProductSearchResultItem,
 )
 from services.product_search import product_search_service
+from services.product_search.parser import product_search_query_parser
+from services.product_search.planning import build_product_search_execution_plan
+from services.product_search.registry import product_search_dictionary_registry
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -24,6 +27,9 @@ async def search_products(
     try:
         normalized_category_ids = tuple(categoryId or ())
         normalized_big_category_id = None if normalized_category_ids else bigCategoryId
+        snapshot = product_search_dictionary_registry.get_snapshot()
+        parsed_query = product_search_query_parser.parse(q, snapshot)
+        plan = build_product_search_execution_plan(parsed_query)
         results = await product_search_service.search(
             query_text=q,
             limit=candidateLimit,
@@ -33,6 +39,8 @@ async def search_products(
         )
         return ProductSearchQueryResponse(
             query=q,
+            queryShape=plan.query_shape,
+            queryBucket=plan.query_bucket,
             results=[
                 ProductSearchResultItem(
                     productId=result.product_id,
