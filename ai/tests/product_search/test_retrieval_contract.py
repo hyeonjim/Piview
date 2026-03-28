@@ -5,7 +5,10 @@ from services.chatbot.search.product_data import ProductSearchDataRow
 from services.chatbot.search.vector import ProductSearchResult
 from services.product_search.models import ProductSearchDictionarySnapshot
 from services.product_search.parser import product_search_query_parser
-from services.product_search.planning import build_product_search_execution_plan
+from services.product_search.planning import (
+    build_product_search_execution_plan,
+    build_product_search_query_signals,
+)
 from services.product_search.scorer import rerank_results
 from services.product_search.service import ProductSearchService
 
@@ -28,6 +31,8 @@ def _build_snapshot() -> ProductSearchDictionarySnapshot:
         stopwords=frozenset(),
         brand_lookup={
             "성분에디터": "성분에디터",
+            "라운드랩": "라운드랩",
+            "아이소이": "아이소이",
         },
         category_lookup={
             "토너": "토너",
@@ -37,6 +42,14 @@ def _build_snapshot() -> ProductSearchDictionarySnapshot:
         ingredient_lookup={
             "판테놀": "판테놀",
             "향료": "향료",
+            "세라마이드": "세라마이드엔피",
+            "에센셜오일": "에센셜오일",
+        },
+        ingredient_expansion_lookup={
+            "판테놀": ("판테놀",),
+            "향료": ("향료",),
+            "세라마이드": ("세라마이드엔피", "세라마이드에이피"),
+            "에센셜오일": ("에센셜오일", "essential oil"),
         },
         line_lookup={
             "판테놀": "판테놀",
@@ -104,6 +117,7 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
 
         attribute_group_terms = tuple(self.service._expand_attribute_group_terms(parsed, self.snapshot))
         strong_terms = self.service._resolve_strong_keyword_terms(parsed, self.snapshot)
+        detail_terms = self.service._resolve_detail_terms(parsed, self.snapshot)
 
         missing_score = self.service._score_structured_seed_row(
             row_without_ingredient,
@@ -111,6 +125,7 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
             self.snapshot,
             attribute_group_terms,
             strong_terms,
+            detail_terms,
             plan.query_bucket,
         )
         matched_score = self.service._score_structured_seed_row(
@@ -119,11 +134,41 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
             self.snapshot,
             attribute_group_terms,
             strong_terms,
+            detail_terms,
             plan.query_bucket,
         )
 
         self.assertEqual(missing_score, 0.0)
         self.assertGreater(matched_score, 0.0)
+
+    def test_generic_ingredient_family_matches_specific_ingredient_variants(self) -> None:
+        parsed = product_search_query_parser.parse("세라마이드 크림", self.snapshot)
+        row_with_variant = ProductSearchDataRow(
+            product_id=3,
+            name="배리어 크림",
+            brand_name="테스트",
+            category_name="크림",
+            category_id=1,
+            big_category_id=1,
+            description=None,
+            top_skin_type=None,
+            top2_skin_type=None,
+            concern_names=[],
+            ingredient_text_ko="정제수, 세라마이드엔피, 글리세린",
+            ingredient_text_en=None,
+        )
+
+        score = self.service._score_structured_seed_row(
+            row_with_variant,
+            parsed,
+            self.snapshot,
+            tuple(self.service._expand_attribute_group_terms(parsed, self.snapshot)),
+            self.service._resolve_strong_keyword_terms(parsed, self.snapshot),
+            self.service._resolve_detail_terms(parsed, self.snapshot),
+            "ingredient_category",
+        )
+
+        self.assertGreater(score, 0.0)
 
     def test_negative_ingredient_rerank_protects_free_pattern(self) -> None:
         parsed = product_search_query_parser.parse("향료 없는 토너", self.snapshot)
@@ -161,6 +206,52 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
         reranked = rerank_results([unsafe_result, safe_result], parsed, self.snapshot.attribute_groups)
 
         self.assertEqual(reranked[0].product_id, 1)
+
+    def test_ambiguous_constraints_prioritize_name_match(self) -> None:
+        parsed = product_search_query_parser.parse("독도", self.snapshot)
+        weak = ProductSearchResult(
+            product_id=1,
+            name="수분 진정 토너",
+            brand_name="라운드랩",
+            category_name="토너",
+            concern_names=[],
+            top_skin_type=None,
+            top2_skin_type=None,
+            document="수분 진정 토너",
+            description="독도 컨셉 토너",
+            ingredient_preview=None,
+            evidence_snippets=[],
+            matched_sources=["keyword"],
+            raw_score=20.0,
+        )
+        strong = ProductSearchResult(
+            product_id=2,
+            name="1025 독도 토너",
+            brand_name="라운드랩",
+            category_name="토너",
+            concern_names=[],
+            top_skin_type=None,
+            top2_skin_type=None,
+            document="1025 독도 토너",
+            description="진정 토너",
+            ingredient_preview=None,
+            evidence_snippets=[],
+            matched_sources=["exact"],
+            raw_score=18.0,
+        )
+
+        constrained = self.service._apply_ambiguous_constraints(
+            [weak, strong],
+            parsed,
+            self.snapshot,
+        )
+
+        self.assertEqual(constrained[0].product_id, 2)
+
+    def test_negative_parser_handles_missing_generated_family_alias_with_manual_expansion(self) -> None:
+        parsed = product_search_query_parser.parse("에센셜오일 없는 크림", self.snapshot)
+
+        self.assertEqual(parsed.negative_ingredient_terms, ("에센셜오일",))
 
     def test_long_query_rerank_prioritizes_strong_keyword_match(self) -> None:
         parsed = product_search_query_parser.parse(
@@ -201,6 +292,176 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
         reranked = rerank_results([weak_only, strong_match], parsed, self.snapshot.attribute_groups)
 
         self.assertEqual(reranked[0].product_id, 1)
+
+    def test_long_query_constraints_prioritize_detail_coverage(self) -> None:
+        parsed = product_search_query_parser.parse(
+            "성분에디터 그린토마토 모공 진정 토너",
+            self.snapshot,
+        )
+        weak_detail = ProductSearchResult(
+            product_id=1,
+            name="그린토마토 토너",
+            brand_name="성분에디터",
+            category_name="토너",
+            concern_names=[],
+            top_skin_type=None,
+            top2_skin_type=None,
+            document="그린토마토 토너",
+            description="그린토마토 라인 토너",
+            ingredient_preview=None,
+            evidence_snippets=[],
+            matched_sources=["structured"],
+            raw_score=20.0,
+        )
+        rich_detail = ProductSearchResult(
+            product_id=2,
+            name="그린토마토 포어 수딩 토너",
+            brand_name="성분에디터",
+            category_name="토너",
+            concern_names=["모공", "진정"],
+            top_skin_type=None,
+            top2_skin_type=None,
+            document="그린토마토 포어 수딩 토너",
+            description="그린토마토 모공 진정 토너",
+            ingredient_preview=None,
+            evidence_snippets=[],
+            matched_sources=["structured"],
+            raw_score=18.0,
+        )
+
+        constrained = self.service._apply_structured_constraints(
+            [weak_detail, rich_detail],
+            parsed,
+            self.snapshot,
+            "long_query",
+        )
+
+        self.assertEqual(constrained[0].product_id, 2)
+
+    def test_ingredient_category_constraints_prioritize_explicit_ingredient_name(self) -> None:
+        parsed = product_search_query_parser.parse("판테놀 크림", self.snapshot)
+        generic = ProductSearchResult(
+            product_id=1,
+            name="배리어 크림",
+            brand_name="테스트",
+            category_name="크림",
+            concern_names=[],
+            top_skin_type=None,
+            top2_skin_type=None,
+            document="배리어 크림",
+            description="장벽 보습 크림",
+            ingredient_preview="정제수, 판테놀, 글리세린",
+            evidence_snippets=[],
+            matched_sources=["structured"],
+            raw_score=30.0,
+        )
+        explicit = ProductSearchResult(
+            product_id=2,
+            name="판테놀 크림",
+            brand_name="테스트",
+            category_name="크림",
+            concern_names=[],
+            top_skin_type=None,
+            top2_skin_type=None,
+            document="판테놀 크림",
+            description="판테놀 장벽 크림",
+            ingredient_preview="정제수, 판테놀, 글리세린",
+            evidence_snippets=[],
+            matched_sources=["structured"],
+            raw_score=20.0,
+        )
+
+        constrained = self.service._apply_structured_constraints(
+            [generic, explicit],
+            parsed,
+            self.snapshot,
+            "ingredient_category",
+        )
+
+        self.assertEqual(constrained[0].product_id, 2)
+
+    def test_broad_scope_suppresses_name_matching_for_long_query_like(self) -> None:
+        parsed = product_search_query_parser.parse("성분에디터 그린토마토", self.snapshot)
+        plan = build_product_search_execution_plan(parsed)
+        signals = build_product_search_query_signals(parsed)
+
+        policy = self.service._resolve_name_matching_policy(
+            parsed,
+            plan,
+            signals,
+            category_ids=None,
+            big_category_id=1,
+            candidate_limit=180,
+        )
+
+        self.assertFalse(policy.run_exact)
+        self.assertFalse(policy.run_fuzzy)
+        self.assertTrue(policy.fallback_exact)
+        self.assertTrue(policy.fallback_fuzzy)
+        self.assertIn("suppressed.broad_scope", policy.reason or "")
+
+    def test_strong_keyword_requirement_uses_shared_long_query_signal(self) -> None:
+        parsed = product_search_query_parser.parse("성분에디터 그린 토마토", self.snapshot)
+
+        self.assertTrue(self.service._requires_strong_keyword_match(parsed, self.snapshot))
+
+    def test_multi_brand_diversity_keeps_top1_and_covers_requested_brands_early(self) -> None:
+        results = [
+            ProductSearchResult(
+                product_id=1,
+                name="라운드랩 토너 A",
+                brand_name="라운드랩",
+                category_name="토너",
+                concern_names=[],
+                top_skin_type=None,
+                top2_skin_type=None,
+                document="라운드랩 토너 A",
+                description=None,
+                ingredient_preview=None,
+                evidence_snippets=[],
+                matched_sources=["structured"],
+                raw_score=100.0,
+            ),
+            ProductSearchResult(
+                product_id=2,
+                name="라운드랩 토너 B",
+                brand_name="라운드랩",
+                category_name="토너",
+                concern_names=[],
+                top_skin_type=None,
+                top2_skin_type=None,
+                document="라운드랩 토너 B",
+                description=None,
+                ingredient_preview=None,
+                evidence_snippets=[],
+                matched_sources=["structured"],
+                raw_score=90.0,
+            ),
+            ProductSearchResult(
+                product_id=3,
+                name="아이소이 토너",
+                brand_name="아이소이",
+                category_name="토너",
+                concern_names=[],
+                top_skin_type=None,
+                top2_skin_type=None,
+                document="아이소이 토너",
+                description=None,
+                ingredient_preview=None,
+                evidence_snippets=[],
+                matched_sources=["structured"],
+                raw_score=80.0,
+            ),
+        ]
+
+        reranked = self.service._apply_multi_brand_diversity(
+            results,
+            ("라운드랩", "아이소이"),
+            window_size=4,
+        )
+
+        self.assertEqual(reranked[0].product_id, 1)
+        self.assertEqual(reranked[1].product_id, 3)
 
 
 if __name__ == "__main__":
