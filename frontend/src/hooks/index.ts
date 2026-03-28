@@ -43,7 +43,7 @@ export {
   useRoutineListQuery,
   useMainRoutineQuery,
   useRoutineDetailQuery,
-  useRoutineAnalysisQuery,
+  useRoutineAnalysisMutation,
   useAddDraftItemMutation,
   useSyncDraftMutation,
   useClearDraftMutation,

@@ -360,20 +360,20 @@ export default function RoutineAddModal({
                 </button>
               </div>
             </div>
-              {isRecommendMode && (
-                <div className="flex items-center gap-3 py-2 mt-3 mb-1 px-2 rounded-xl text-[13px] bg-[#f7f1f8] font-semibold text-[#625c63]">
-                  {recommendedProducts.length > 0 ? (
-                    <>
-                      <MessageCircleMore size={14} className="shrink-0" />
-                      사용자 맞춤형 {recommendedProducts.length}개 제품 추천
-                      <br />
-                      (내제품에 등록된 알러지성분 제품 제외)
-                    </>
-                  ) : (
-                    "추천 결과가 없습니다"
-                  )}
-                </div>
-              )}
+            {isRecommendMode && (
+              <div className="flex items-center gap-3 py-2 mt-3 mb-1 px-2 rounded-xl text-[13px] bg-[#f7f1f8] font-semibold text-[#625c63]">
+                {recommendedProducts.length > 0 ? (
+                  <>
+                    <MessageCircleMore size={14} className="shrink-0" />
+                    사용자 맞춤형 {recommendedProducts.length}개 제품 추천
+                    <br />
+                    (내제품에 등록된 알러지성분 제품 제외)
+                  </>
+                ) : (
+                  "추천 결과가 없습니다"
+                )}
+              </div>
+            )}
 
             {/* 검색바 — 추천 모드에서는 숨김 */}
             {!isRecommendMode && (
@@ -465,7 +465,7 @@ export default function RoutineAddModal({
                         category={product.category}
                         skinTypes={product.skinTypes}
                         effects={product.effects}
-                        variant="modal"
+                        variant="routine-modal"
                         showCategory={false}
                         imageContainerClassName="mt-6"
                         isRecommended={recommendedProductIdSet.has(product.id)}

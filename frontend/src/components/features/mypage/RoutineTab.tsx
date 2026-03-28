@@ -2,16 +2,7 @@
 
 import { toast } from "sonner";
 import { useMemo, useRef, useState, useEffect } from "react";
-import {
-  Plus,
-  X,
-  Scan,
-  SquarePen,
-  Save,
-  ChessQueen,
-  CircleAlert,
-  AlignLeft,
-} from "lucide-react";
+import { Plus, X, Scan, SquarePen, Save, ChessQueen, CircleAlert, AlignLeft } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -34,11 +25,15 @@ import {
   useSyncDraftMutation,
   useLoadRoutineToDraftMutation,
   useUpdateRoutineMutation,
-  useRoutineAnalysisQuery,
+  useRoutineAnalysisMutation,
 } from "@/hooks";
-import type { DraftItemDto, RoutineListResponse } from "@/types/routine";
+import type {
+  DraftItemDto,
+  RoutineListResponse,
+} from "@/types/routine";
 import type { ProductSummaryResponse } from "@/types/product/product";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
+
 
 // 드래그 상태 타입 — 스텝 간 이동 지원
 interface DragState {
@@ -76,10 +71,7 @@ function groupDraftByStep(
  * columnId 기준으로 routineSteps와 매핑
  */
 function groupRoutineDetailByStep(
-  steps: {
-    columnId: number;
-    products: { stepOrder: number; product: ProductSummaryResponse }[];
-  }[],
+  steps: { columnId: number; products: { stepOrder: number; product: ProductSummaryResponse }[] }[],
   routineSteps: ReturnType<typeof getRoutineSteps>,
 ): Record<string, ProductSummaryResponse[]> {
   const result: Record<string, ProductSummaryResponse[]> = {};
@@ -145,20 +137,18 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   const { mutate: updateRoutine, isPending: isUpdating } =
     useUpdateRoutineMutation();
 
-  // AI 루틴 분석 — 버튼 클릭 시 수동 호출 (enabled: false)
+  // AI 루틴 분석 — 버튼 클릭 시 화면에 보이는 productIds 넘겨서 호출
   const {
     data: routineAnalysis,
-    isFetching: isAnalyzing,
-    refetch: refetchAnalysis,
-  } = useRoutineAnalysisQuery(false);
+    isPending: isAnalyzing,
+    mutate: analyzeRoutine,
+  } = useRoutineAnalysisMutation();
 
   // draft에서 충돌 제품이 없어지면 자동 초기화
   useEffect(() => {
     if (conflictProductIds.length === 0) return;
     const draftIds = draftItems.map((item) => item.product.productId);
-    const allStillInDraft = conflictProductIds.every((id) =>
-      draftIds.includes(id),
-    );
+    const allStillInDraft = conflictProductIds.every((id) => draftIds.includes(id));
     if (!allStillInDraft) clearConflictStore();
   }, [draftItems, conflictProductIds, clearConflictStore]);
 
@@ -214,20 +204,11 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       selectedRoutineId !== null ||
       isNewRoutineMode ||
       editingRoutineId !== null
-    )
-      return;
+    ) return;
     const mainRoutine = routineList.find((r) => r.isMain);
-    const targetId = mainRoutine
-      ? mainRoutine.routineId
-      : routineList[0].routineId;
+    const targetId = mainRoutine ? mainRoutine.routineId : routineList[0].routineId;
     setSelectedRoutineId(targetId);
-  }, [
-    routineList,
-    selectedRoutineId,
-    isNewRoutineMode,
-    editingRoutineId,
-    setSelectedRoutineId,
-  ]);
+  }, [routineList, selectedRoutineId, isNewRoutineMode, editingRoutineId, setSelectedRoutineId]);
 
   // 저장된 루틴 보기 모드 여부
   const isViewingSavedRoutine =
@@ -242,14 +223,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       );
     }
     return localDraftByStep;
-  }, [
-    isViewingSavedRoutine,
-    selectedRoutineDetail,
-    routineSteps,
-    localDraftByStep,
-  ]);
+  }, [isViewingSavedRoutine, selectedRoutineDetail, routineSteps, localDraftByStep]);
 
-  // 저장된 루틴 슬라이더 스크롤 상태 — 도트 인디케이터 연동
+// 저장된 루틴 슬라이더 스크롤 상태 — 도트 인디케이터 연동
   const savedRoutineScrollRef = useRef<HTMLDivElement>(null);
   // 선택된 루틴 카드의 인덱스 — selectedRoutineId 기반으로 계산해 도트 인디케이터와 동기화
   const activeCardIndex = useMemo(() => {
@@ -355,14 +331,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       const current = dragStateRef.current;
       if (!current) return;
 
-      const elementUnder = document.elementFromPoint(
-        event.clientX,
-        event.clientY,
-      );
+      const elementUnder = document.elementFromPoint(event.clientX, event.clientY);
 
-      const itemElement = elementUnder?.closest(
-        "[data-drag-item]",
-      ) as HTMLElement | null;
+      const itemElement = elementUnder?.closest("[data-drag-item]") as HTMLElement | null;
       if (itemElement) {
         const toStepCode = itemElement.getAttribute("data-step-code");
         const indexStr = itemElement.getAttribute("data-item-index");
@@ -376,19 +347,11 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         return;
       }
 
-      const dropZone = elementUnder?.closest(
-        "[data-drop-zone]",
-      ) as HTMLElement | null;
+      const dropZone = elementUnder?.closest("[data-drop-zone]") as HTMLElement | null;
       if (dropZone) {
         const toStepCode = dropZone.getAttribute("data-step-code");
-        const toIndex = parseInt(
-          dropZone.getAttribute("data-drop-index") ?? "0",
-          10,
-        );
-        if (
-          toStepCode &&
-          (toStepCode !== current.toStepCode || toIndex !== current.toIndex)
-        ) {
+        const toIndex = parseInt(dropZone.getAttribute("data-drop-index") ?? "0", 10);
+        if (toStepCode && (toStepCode !== current.toStepCode || toIndex !== current.toIndex)) {
           const next = { ...current, toStepCode, toIndex };
           dragStateRef.current = next;
           setDragState(next);
@@ -442,6 +405,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       window.removeEventListener("pointerup", onPointerUp);
     };
   }, [routineSteps, syncDraft]);
+
 
   // ── 루틴 저장 핸들러 ──────────────────────────────────────────────────
   const handleOpenSaveModal = () => {
@@ -600,10 +564,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       {routineList.length > 0 && (
         <div className="mb-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="flex items-center gap-1 text-[16px] mt-2 font-bold text-[#6b6a69]">
-              <AlignLeft size={16} />
-              내루틴 리스트
-            </p>
+            <p className="flex items-center gap-1 text-[16px] mt-2 font-bold text-[#6b6a69]"><AlignLeft size={16} />내루틴 리스트</p>
             <button
               onClick={handleNewRoutine}
               className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full text-[14px] text-white cursor-pointer bg-[#ece7bb] shadow-xs active:scale-[0.97] transition-transform"
@@ -630,13 +591,13 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                   handleDeleteRoutine(saved.routineId, saved.title)
                 }
                 onClick={() => {
-                  // 다른 루틴 카드 선택 시 Edit mode 및 새 루틴 모드 종료, 충돌 배너 초기화
-                  setEditingRoutineId(null);
-                  setEditingRoutineTitle("");
-                  setIsNewRoutineMode(false);
-                  setSelectedRoutineId(saved.routineId);
-                  clearConflictStore();
-                }}
+                    // 다른 루틴 카드 선택 시 Edit mode 및 새 루틴 모드 종료, 충돌 배너 초기화
+                    setEditingRoutineId(null);
+                    setEditingRoutineTitle("");
+                    setIsNewRoutineMode(false);
+                    setSelectedRoutineId(saved.routineId);
+                    clearConflictStore();
+                  }}
               />
             ))}
           </div>
@@ -656,6 +617,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               ))}
             </div>
           )}
+
         </div>
       )}
 
@@ -675,20 +637,16 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               }}
               className={`flex items-center gap-1 text-[12px] font-semibold px-1 rounded-full cursor-pointer shrink-0 transition-all duration-200 active:scale-[0.97] ${
                 selectedRoutineId !== null &&
-                routineList.find((r) => r.routineId === selectedRoutineId)
-                  ?.isMain
+                routineList.find((r) => r.routineId === selectedRoutineId)?.isMain
                   ? "text-[#C8A96E]"
                   : "text-[#D9D5D0]"
               }`}
               aria-label="메인 루틴으로 설정"
             >
               {selectedRoutineId !== null &&
-              routineList.find((r) => r.routineId === selectedRoutineId)
-                ?.isMain ? (
-                <ChessQueen size={20} fill="#C8A96E" color="#C8A96E" />
-              ) : (
-                <ChessQueen size={20} fill="none" color="#D9D5D0" />
-              )}
+              routineList.find((r) => r.routineId === selectedRoutineId)?.isMain
+                ? <ChessQueen size={20} fill="#C8A96E" color="#C8A96E" />
+                : <ChessQueen size={20} fill="none" color="#D9D5D0" />}
             </button>
             <h2 className="text-[18px] font-bold text-[#636260] truncate">
               {isViewingSavedRoutine
@@ -721,8 +679,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 disabled
                 className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border bg-[#dde1e2] text-[#3f3e3d] opacity-70 cursor-default"
               >
-                <SquarePen size={12} />
-                Editing...
+                <SquarePen size={12} />Editing...
               </button>
             ) : (
               // 일반 모드: 클릭 시 선택된 루틴을 draft로 불러옴
@@ -731,14 +688,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 disabled={selectedRoutineId === null || isLoadingToEdit}
                 className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] disabled:opacity-50 text-[#787775]"
               >
-                {isLoadingToEdit ? (
-                  "불러오는 중..."
-                ) : (
-                  <>
-                    <SquarePen size={12} />
-                    Edit Mode
-                  </>
-                )}
+                {isLoadingToEdit ? "불러오는 중..." : <><SquarePen size={12} />Edit Mode</>}
               </button>
             )}
             <button
@@ -746,22 +696,14 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               disabled={isCreating || isUpdating || filledCount === 0}
               className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] disabled:opacity-50 text-[#787775]"
             >
-              {isCreating || isUpdating ? (
-                "저장 중..."
-              ) : (
-                <>
-                  <Save size={12} />
-                  Save
-                </>
-              )}
+              {isCreating || isUpdating ? "저장 중..." : <><Save size={12} />Save</>}
             </button>
           </div>
         </div>
 
         <p className="text-[13px] font-semibold text-[#6e6e6d]">
-          클릭시 메인루틴으로 변경
-          <br />
-          Edit Mode에서 루틴변경가능
+          클릭시 메인루틴으로 변경 
+          <br />Edit Mode에서 루틴변경가능
         </p>
       </div>
 
@@ -772,12 +714,10 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
           <span>
             {conflictMessage.split(/(\[[^\]]+\])/).map((part, i) =>
               /^\[[^\]]+\]$/.test(part) ? (
-                <span key={i} className="text-[#c0392b]">
-                  {part}
-                </span>
+                <span key={i} className="text-[#c0392b]">{part}</span>
               ) : (
                 part
-              ),
+              )
             )}
           </span>
         </div>
@@ -787,7 +727,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       {routineSteps.map((step, stepIndex) => {
         const products = viewByStep[step.code] ?? [];
         const isDropTarget =
-          !isViewingSavedRoutine && dragState?.toStepCode === step.code;
+          !isViewingSavedRoutine &&
+          dragState?.toStepCode === step.code;
 
         return (
           <div key={step.code} className="mt-3 mx-3">
@@ -795,9 +736,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1 bg-[#f2efe9] rounded-full px-2 py-1">
-                  <span className="text-[13px] font-semibold text-[#746f68]">
-                    {stepIndex + 1}단계
-                  </span>
+                  <span className="text-[13px] font-semibold text-[#746f68]">{stepIndex + 1}단계</span>
                 </div>
                 <span className="text-[15px] font-semibold text-[#4e4e4d]">
                   {step.label}
@@ -872,9 +811,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                       isDropTarget={isProductDropTarget}
                       isEditMode={canDrag}
                       isRecommended={isProductRecommended(product.productId)}
-                      hasConflict={conflictProductIds.includes(
-                        product.productId,
-                      )}
+                      hasConflict={conflictProductIds.includes(product.productId)}
                       onDragHandlePointerDown={
                         canDrag ? handleDragHandlePointerDown : () => {}
                       }
@@ -895,12 +832,20 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       <button
         onClick={() => {
           setShowRoutineScore((previous) => !previous);
-          if (!showRoutineScore) refetchAnalysis();
+          if (!showRoutineScore) {
+            // 화면에 보이는 제품 ID 목록 추출 후 분석 요청
+            const visibleProductIds = Object.values(viewByStep)
+              .flat()
+              .map((p) => p.productId)
+              .filter((id): id is number => id !== undefined);
+            if (visibleProductIds.length > 0) {
+              analyzeRoutine(visibleProductIds);
+            }
+          }
         }}
         className="mt-10 w-50 mx-auto flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 border-[#ddd3f1] bg-[#f7f5fa] text-[16px] font-bold text-[#7b54b4] cursor-pointer transition-colors hover:bg-[#eae0f7]"
         style={{
-          boxShadow:
-            "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(130, 100, 180, 0.14), 0 1px 4px rgba(130, 100, 180, 0.08)",
+          boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(130, 100, 180, 0.14), 0 1px 4px rgba(130, 100, 180, 0.08)",
         }}
       >
         <div className="size-6 rounded-md flex items-center justify-center bg-[#dccdf0]">
@@ -914,8 +859,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         <div
           className="mt-3 rounded-2xl p-5 border-2 border-[#e0d8f0] bg-[#f8f5fc]"
           style={{
-            boxShadow:
-              "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(130, 100, 180, 0.14), 0 1px 4px rgba(130, 100, 180, 0.08)",
+            boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(130, 100, 180, 0.14), 0 1px 4px rgba(130, 100, 180, 0.08)",
           }}
         >
           {/* 헤더 */}
@@ -934,10 +878,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               </p>
             ) : routineAnalysis ? (
               routineAnalysis.analysisText.split("\n").map((line, i) => (
-                <p
-                  key={i}
-                  className="text-xs font-bold text-text-muted leading-relaxed break-keep"
-                >
+                <p key={i} className="text-xs font-bold text-text-muted leading-relaxed break-keep">
                   {line}
                 </p>
               ))
@@ -1000,6 +941,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
           </div>
         </div>
       )}
+
     </div>
   );
 }
@@ -1189,6 +1131,7 @@ function SavedRoutineCard({
           : "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)",
       }}
     >
+
       {/* 메인 루틴 배지 — ChessQueen 아이콘 */}
       {saved.isMain && (
         <span className="absolute top-2 left-3">

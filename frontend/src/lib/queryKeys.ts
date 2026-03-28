@@ -57,12 +57,11 @@ export const queryKeys = {
   productAiComparison: (productIds: [number, number]) =>
     ["productAiComparison", ...productIds] as const,
 
-  // 메인 루틴 AI 분석 — GET /api/v1/routines/analysis
-  routineAnalysis: ["routineAnalysis"] as const,
-
   // 동적 추천 — GET /dynamic/recommendations
-  dynamicRecommendations: (params: { bigCategoryId?: number; categoryId?: number | number[] }) =>
-    ["dynamicRecommendations", params] as const,
+  dynamicRecommendations: (params: {
+    bigCategoryId?: number;
+    categoryId?: number | number[];
+  }) => ["dynamicRecommendations", params] as const,
 
   // 피부 분석 상태 — GET /skin/analysis/{analysisId}
   analysisStatus: (analysisId: string) =>
