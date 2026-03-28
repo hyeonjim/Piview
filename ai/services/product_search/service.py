@@ -332,7 +332,12 @@ class ProductSearchService:
             if plan.query_bucket == "ambiguous_keyword":
                 constrained = self._apply_ambiguous_constraints(reranked, parsed_query, snapshot)
             else:
-                constrained = self._apply_structured_constraints(reranked, parsed_query, snapshot)
+                constrained = self._apply_structured_constraints(
+                    reranked,
+                    parsed_query,
+                    snapshot,
+                    plan.query_bucket,
+                )
 
         final_results = constrained[:search_limit]
         timing.log_summary(
@@ -436,6 +441,7 @@ class ProductSearchService:
         results: list[ProductSearchResult],
         parsed_query,
         snapshot: ProductSearchDictionarySnapshot,
+        query_bucket: str | None = None,
     ) -> list[ProductSearchResult]:
         # fuse 이후 점수가 높더라도, 구조화된 의도를 충분히 못 맞춘 결과는 뒤로 밀어야 한다.
         # 여기서는 brand/category/strong keyword/negative ingredient를 다시 한 번 명시적으로 본다.
@@ -504,6 +510,29 @@ class ProductSearchService:
                     ingredient_name_match_count,
                     1.0 if ingredient_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
                     ingredient_match_count,
+                    self._negative_ingredient_rank_signal(searchable_text, parsed_query.negative_ingredient_terms),
+                    lexical_source_count,
+                    float(result.hybrid_score or result.raw_score or 0.0),
+                )
+            elif query_bucket == "ingredient_category":
+                match_key = (
+                    1.0 if ingredient_field_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
+                    1.0 if ingredient_name_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
+                    ingredient_name_match_count,
+                    ingredient_field_match_count,
+                    1.0 if primary_match_count > 0 else 0.0,
+                    primary_match_count,
+                    1.0 if ingredient_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
+                    ingredient_match_count,
+                    1.0 if brand_match and primary_match_count > 0 else 0.0,
+                    brand_match,
+                    1.0 if detail_match_count > 0 else 0.0 if require_detail_match else 1.0,
+                    detail_coverage_ratio,
+                    detail_match_count,
+                    -missing_detail_count,
+                    1.0 if strong_match_count > 0 else 0.0 if require_strong_match else 1.0,
+                    strong_match_count,
+                    weak_match_count,
                     self._negative_ingredient_rank_signal(searchable_text, parsed_query.negative_ingredient_terms),
                     lexical_source_count,
                     float(result.hybrid_score or result.raw_score or 0.0),
@@ -864,6 +893,10 @@ class ProductSearchService:
                 score += 24.0 * ingredient_field_match_count
                 score += 12.0 * ingredient_name_match_count
                 score += 12.0 * ingredient_searchable_match_count
+            elif query_bucket == "ingredient_category":
+                score += 42.0 * ingredient_field_match_count
+                score += 28.0 * ingredient_name_match_count
+                score += 16.0 * ingredient_searchable_match_count
             else:
                 score += 36.0 * ingredient_field_match_count
                 score += 16.0 * ingredient_name_match_count

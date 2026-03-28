@@ -333,6 +333,49 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
             [weak_detail, rich_detail],
             parsed,
             self.snapshot,
+            "long_query",
+        )
+
+        self.assertEqual(constrained[0].product_id, 2)
+
+    def test_ingredient_category_constraints_prioritize_explicit_ingredient_name(self) -> None:
+        parsed = product_search_query_parser.parse("판테놀 크림", self.snapshot)
+        generic = ProductSearchResult(
+            product_id=1,
+            name="배리어 크림",
+            brand_name="테스트",
+            category_name="크림",
+            concern_names=[],
+            top_skin_type=None,
+            top2_skin_type=None,
+            document="배리어 크림",
+            description="장벽 보습 크림",
+            ingredient_preview="정제수, 판테놀, 글리세린",
+            evidence_snippets=[],
+            matched_sources=["structured"],
+            raw_score=30.0,
+        )
+        explicit = ProductSearchResult(
+            product_id=2,
+            name="판테놀 크림",
+            brand_name="테스트",
+            category_name="크림",
+            concern_names=[],
+            top_skin_type=None,
+            top2_skin_type=None,
+            document="판테놀 크림",
+            description="판테놀 장벽 크림",
+            ingredient_preview="정제수, 판테놀, 글리세린",
+            evidence_snippets=[],
+            matched_sources=["structured"],
+            raw_score=20.0,
+        )
+
+        constrained = self.service._apply_structured_constraints(
+            [generic, explicit],
+            parsed,
+            self.snapshot,
+            "ingredient_category",
         )
 
         self.assertEqual(constrained[0].product_id, 2)
