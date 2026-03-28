@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from services.chatbot.retrieval.parsers import canonicalize_avoid_term
 from services.chatbot.search.query_normalizer import normalize_text, tokenize_text
 from services.product_search.models import ParsedSearchQuery, ProductSearchDictionarySnapshot
 
@@ -37,6 +38,22 @@ _TRAILING_PARTICLES = (
     "로",
     "랑",
 )
+_NEGATIVE_OPERATORS = {
+    "없는",
+    "무첨가",
+    "프리",
+    "제외",
+    "without",
+}
+_NEGATIVE_OPERATOR_SUFFIXES = (
+    "프리",
+    "free",
+)
+_POSITIVE_INGREDIENT_ALIASES: dict[str, tuple[str, ...]] = {
+    "판테놀": ("판테놀", "panthenol"),
+    "나이아신아마이드": ("나이아신아마이드", "niacinamide"),
+    "시카": ("시카", "cica"),
+}
 
 
 class ProductSearchQueryParser:
@@ -50,24 +67,26 @@ class ProductSearchQueryParser:
         if not tokens:
             return ParsedSearchQuery(original=query_text, normalized=normalized)
 
+        negative_terms, negative_covered_indices = self._extract_negative_ingredient_terms(tokens)
         covered_indices: set[int] = set()
         brand_terms = self._match_lookup(tokens, snapshot.brand_lookup, covered_indices)
         category_terms = self._match_lookup(tokens, snapshot.category_lookup, covered_indices)
         product_type_terms = self._match_lookup(tokens, snapshot.product_type_lookup, covered_indices)
-        line_terms = self._match_lookup(tokens, snapshot.line_lookup, covered_indices)
+        line_terms = self._match_lookup(tokens, snapshot.line_lookup, set(covered_indices))
         attribute_group_covered = set(covered_indices)
         attribute_group_terms = self._match_lookup(
             tokens,
             snapshot.attribute_group_lookup,
             attribute_group_covered,
         )
-        attribute_terms = self._match_lookup(tokens, snapshot.attribute_lookup, covered_indices)
+        attribute_terms = self._match_lookup(tokens, snapshot.attribute_lookup, set(covered_indices))
+        ingredient_terms = self._extract_positive_ingredient_terms(tokens, covered_indices | negative_covered_indices)
         line_terms = self._filter_stopword_matches(line_terms, snapshot.stopwords)
         attribute_terms = self._filter_stopword_matches(attribute_terms, snapshot.stopwords)
 
         keyword_terms: list[str] = []
         seen_keywords: set[str] = set()
-        keyword_covered_indices = covered_indices | attribute_group_covered
+        keyword_covered_indices = covered_indices | negative_covered_indices
         for index, token in enumerate(tokens):
             normalized_token = self._strip_particle(normalize_text(token))
             if (
@@ -88,6 +107,8 @@ class ProductSearchQueryParser:
             category_terms=tuple(category_terms),
             product_type_terms=tuple(product_type_terms),
             line_terms=tuple(line_terms),
+            ingredient_terms=tuple(ingredient_terms),
+            negative_ingredient_terms=tuple(negative_terms),
             attribute_terms=tuple(attribute_terms),
             attribute_group_terms=tuple(attribute_group_terms),
             keyword_terms=tuple(keyword_terms),
@@ -158,6 +179,89 @@ class ProductSearchQueryParser:
                     normalized = normalized[: -len(particle)]
                     break
         return normalized
+
+    def _extract_negative_ingredient_terms(
+        self,
+        tokens: list[str],
+    ) -> tuple[list[str], set[int]]:
+        matches: list[str] = []
+        covered_indices: set[int] = set()
+        seen: set[str] = set()
+
+        for index, token in enumerate(tokens):
+            normalized_token = normalize_text(token)
+            stripped_token = self._strip_particle(normalized_token)
+
+            canonical = None
+            local_covered = {index}
+            if stripped_token in _NEGATIVE_OPERATORS and index > 0:
+                canonical = canonicalize_avoid_term(tokens[index - 1])
+                local_covered.add(index - 1)
+            else:
+                for suffix in _NEGATIVE_OPERATOR_SUFFIXES:
+                    if stripped_token.endswith(suffix) and len(stripped_token) > len(suffix):
+                        canonical = canonicalize_avoid_term(stripped_token[: -len(suffix)])
+                        break
+                if canonical is None:
+                    canonical = self._extract_negative_ingredient_from_compound(stripped_token)
+                if canonical is None and stripped_token.startswith("무"):
+                    canonical = canonicalize_avoid_term(stripped_token)
+
+            if canonical and canonical not in seen:
+                seen.add(canonical)
+                matches.append(canonical)
+                covered_indices.update(local_covered)
+
+        return matches, covered_indices
+
+    def _extract_negative_ingredient_from_compound(self, token: str) -> str | None:
+        for operator in _NEGATIVE_OPERATORS:
+            if operator == "without":
+                continue
+            if token.endswith(operator) and len(token) > len(operator):
+                candidate = token[: -len(operator)]
+                canonical = canonicalize_avoid_term(candidate)
+                if canonical:
+                    return canonical
+        if token.startswith("without") and len(token) > len("without"):
+            return canonicalize_avoid_term(token[len("without") :])
+        return None
+
+    def _extract_positive_ingredient_terms(
+        self,
+        tokens: list[str],
+        blocked_indices: set[int],
+    ) -> list[str]:
+        lookup = self._positive_ingredient_lookup()
+        if not lookup:
+            return []
+
+        matches: list[str] = []
+        seen: set[str] = set()
+        max_window = min(2, len(tokens))
+        for window in range(max_window, 0, -1):
+            for start in range(0, len(tokens) - window + 1):
+                end = start + window
+                if any(index in blocked_indices for index in range(start, end)):
+                    continue
+                phrase = normalize_text(" ".join(tokens[start:end]))
+                canonical = self._lookup_phrase(phrase, lookup)
+                if not canonical or canonical in seen:
+                    continue
+                seen.add(canonical)
+                matches.append(canonical)
+        return matches
+
+    def _positive_ingredient_lookup(self) -> dict[str, str]:
+        lookup: dict[str, str] = {}
+        for canonical, aliases in _POSITIVE_INGREDIENT_ALIASES.items():
+            normalized_canonical = normalize_text(canonical)
+            lookup[normalized_canonical] = normalized_canonical
+            for alias in aliases:
+                normalized_alias = normalize_text(alias)
+                if normalized_alias:
+                    lookup[normalized_alias] = normalized_canonical
+        return lookup
 
 
 product_search_query_parser = ProductSearchQueryParser()
