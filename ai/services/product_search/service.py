@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
 import logging
 
 from core.settings import get_settings
@@ -26,12 +27,27 @@ from services.product_search.models import ProductSearchDictionarySnapshot
 from services.product_search.negative_rules import has_negative_safe_pattern
 from services.product_search.observability import ProductSearchTiming
 from services.product_search.parser import product_search_query_parser
-from services.product_search.planning import build_product_search_execution_plan
+from services.product_search.planning import (
+    build_product_search_execution_plan,
+    build_product_search_query_signals,
+)
 from services.product_search.registry import product_search_dictionary_registry
 from services.product_search.scorer import rerank_results
 
 
 logger = logging.getLogger("uvicorn.error")
+_LONG_QUERY_LIKE_CANDIDATE_LIMIT = 120
+_BROAD_SCOPE_NAME_MATCH_CANDIDATE_LIMIT = 150
+_NAME_MATCH_FALLBACK_MIN_RESULTS = 5
+
+
+@dataclass(frozen=True)
+class ProductSearchNameMatchingPolicy:
+    run_exact: bool
+    run_fuzzy: bool
+    fallback_exact: bool
+    fallback_fuzzy: bool
+    reason: str | None = None
 
 
 class ProductSearchService:
@@ -67,6 +83,7 @@ class ProductSearchService:
         with timing.phase("parse"):
             snapshot = product_search_dictionary_registry.get_snapshot()
             parsed_query = product_search_query_parser.parse(query_text, snapshot)
+            query_signals = build_product_search_query_signals(parsed_query)
             plan = build_product_search_execution_plan(parsed_query)
             resolved_scope = product_search_category_resolver.resolve(
                 parsed_query,
@@ -121,8 +138,18 @@ class ProductSearchService:
 
         effective_category_ids = resolved_scope.category_ids
         effective_big_category_id = resolved_scope.big_category_id
+        name_matching_policy = self._resolve_name_matching_policy(
+            parsed_query,
+            plan,
+            query_signals,
+            effective_category_ids,
+            effective_big_category_id,
+            candidate_limit,
+        )
+        if name_matching_policy.reason:
+            observability_terms["nameMatchPolicy"] = (name_matching_policy.reason,)
 
-        if plan.run_exact:
+        if name_matching_policy.run_exact:
             with timing.phase("exact"):
                 # exact는 상품명 직접 탐색 경로다.
                 # structured가 아닌 순수 자유어 이름 검색이라면 exact 결과를 즉시 반환해
@@ -148,7 +175,7 @@ class ProductSearchService:
                 )
                 return final_results
 
-        if plan.run_fuzzy:
+        if name_matching_policy.run_fuzzy:
             with timing.phase("fuzzy"):
                 # fuzzy도 exact와 같은 이유로 비구조화 질의에서는 조기 반환 가능하다.
                 # 다만 structured query에서는 보조 후보군으로만 남긴다.
@@ -237,6 +264,42 @@ class ProductSearchService:
         if isinstance(keyword_results, Exception):
             logger.warning("Product search keyword step failed: %s", keyword_results)
             keyword_results = []
+
+        if self._should_run_name_matching_fallback(
+            name_matching_policy,
+            structured_seed_results,
+            keyword_results,
+            search_limit,
+        ):
+            with timing.phase("name_match_fallback"):
+                if name_matching_policy.fallback_exact:
+                    fallback_exact = await asyncio.to_thread(
+                        product_exact_search_service.search,
+                        search_query,
+                        candidate_limit,
+                        effective_category_ids,
+                        effective_big_category_id,
+                    )
+                    exact_results = self._merge_keyword_tier(
+                        seed_results=list(exact_results),
+                        keyword_results=list(fallback_exact),
+                        exclude_ids=exclude_ids,
+                    )
+                if name_matching_policy.fallback_fuzzy:
+                    exact_ids = {result.product_id for result in exact_results}
+                    fallback_fuzzy = await asyncio.to_thread(
+                        product_fuzzy_search_service.search,
+                        search_query,
+                        candidate_limit,
+                        exact_ids | exclude_ids,
+                        effective_category_ids,
+                        effective_big_category_id,
+                    )
+                    fuzzy_results = self._merge_keyword_tier(
+                        seed_results=list(fuzzy_results),
+                        keyword_results=list(fallback_fuzzy),
+                        exclude_ids=exclude_ids,
+                    )
 
         merged_keyword = self._merge_keyword_tier(
             seed_results=[*structured_seed_results, *exact_results, *fuzzy_results],
@@ -338,6 +401,7 @@ class ProductSearchService:
     def _resolve_candidate_limit(self, search_limit: int, parsed_query) -> int:
         # structured query는 조건을 많이 만족해야 하므로 넉넉한 후보군이 필요하다.
         # ingredient나 long query는 prefilter에서 많이 잘릴 수 있어 candidate_limit을 더 크게 잡는다.
+        query_signals = build_product_search_query_signals(parsed_query)
         if not parsed_query.is_structured:
             return min(max(search_limit * 3, 30), 180)
 
@@ -349,10 +413,10 @@ class ProductSearchService:
             or parsed_query.attribute_terms
         ):
             candidate_limit = max(candidate_limit, 90)
-        if parsed_query.ingredient_terms or parsed_query.token_count >= 4:
-            candidate_limit = max(candidate_limit, 120)
+        if parsed_query.ingredient_terms or query_signals.is_long_query_like:
+            candidate_limit = max(candidate_limit, _LONG_QUERY_LIKE_CANDIDATE_LIMIT)
         if len(parsed_query.brand_terms) > 1:
-            candidate_limit = max(candidate_limit, 120)
+            candidate_limit = max(candidate_limit, _LONG_QUERY_LIKE_CANDIDATE_LIMIT)
         return min(candidate_limit, 240)
 
     def _should_run_vector(self, parsed_query) -> bool:
@@ -679,9 +743,75 @@ class ProductSearchService:
         parsed_query,
         snapshot: ProductSearchDictionarySnapshot,
     ) -> bool:
+        query_signals = build_product_search_query_signals(parsed_query)
         if parsed_query.ingredient_terms:
             return True
-        return parsed_query.token_count >= 4 and bool(self._resolve_strong_keyword_terms(parsed_query, snapshot))
+        return query_signals.is_long_query_like and bool(
+            self._resolve_strong_keyword_terms(parsed_query, snapshot)
+        )
+
+    def _resolve_name_matching_policy(
+        self,
+        parsed_query,
+        plan,
+        query_signals,
+        category_ids: tuple[int, ...] | None,
+        big_category_id: int | None,
+        candidate_limit: int,
+    ) -> ProductSearchNameMatchingPolicy:
+        if not plan.run_exact and not plan.run_fuzzy:
+            return ProductSearchNameMatchingPolicy(
+                run_exact=False,
+                run_fuzzy=False,
+                fallback_exact=False,
+                fallback_fuzzy=False,
+            )
+
+        is_broad_big_category_scope = bool(big_category_id is not None and not category_ids)
+        suppress_for_broad_scope = bool(
+            is_broad_big_category_scope
+            and candidate_limit >= _BROAD_SCOPE_NAME_MATCH_CANDIDATE_LIMIT
+            and query_signals.has_anchor_brand_or_category
+            and query_signals.residual_keyword_count >= 1
+        )
+        should_suppress = bool(query_signals.is_long_query_like or suppress_for_broad_scope)
+        if not should_suppress:
+            return ProductSearchNameMatchingPolicy(
+                run_exact=plan.run_exact,
+                run_fuzzy=plan.run_fuzzy,
+                fallback_exact=False,
+                fallback_fuzzy=False,
+            )
+
+        reason_parts: list[str] = []
+        if query_signals.is_long_query_like:
+            reason_parts.append("suppressed.long_query_like")
+        if suppress_for_broad_scope:
+            reason_parts.append("suppressed.broad_scope")
+        return ProductSearchNameMatchingPolicy(
+            run_exact=False,
+            run_fuzzy=False,
+            fallback_exact=plan.run_exact,
+            fallback_fuzzy=plan.run_fuzzy,
+            reason=",".join(reason_parts),
+        )
+
+    def _should_run_name_matching_fallback(
+        self,
+        name_matching_policy: ProductSearchNameMatchingPolicy,
+        structured_seed_results: list[ProductSearchResult],
+        keyword_results: list[ProductSearchResult],
+        search_limit: int,
+    ) -> bool:
+        if not (name_matching_policy.fallback_exact or name_matching_policy.fallback_fuzzy):
+            return False
+        lexical_result_count = len(
+            {
+                result.product_id
+                for result in [*structured_seed_results, *keyword_results]
+            }
+        )
+        return lexical_result_count < min(max(search_limit, 1), _NAME_MATCH_FALLBACK_MIN_RESULTS)
 
     def _build_observability_terms(
         self,
@@ -690,6 +820,7 @@ class ProductSearchService:
     ) -> dict[str, tuple[str, ...]]:
         # observability payload는 "왜 이 bucket으로 해석됐는지"를 로그에서 역추적하기 위한 최소 단위다.
         # line은 now structured intent에는 직접 쓰지 않지만, 관찰용으로는 남긴다.
+        query_signals = build_product_search_query_signals(parsed_query)
         return {
             "brands": parsed_query.brand_terms,
             "categories": parsed_query.category_terms + parsed_query.product_type_terms,
@@ -698,6 +829,15 @@ class ProductSearchService:
             "strongKeywords": self._resolve_strong_keyword_terms(parsed_query, snapshot),
             "weakKeywords": self._resolve_weak_keyword_terms(parsed_query, snapshot),
             "observedLineTerms": parsed_query.line_terms,
+            "querySignals": tuple(
+                value
+                for value in (
+                    f"residualKeywords={query_signals.residual_keyword_count}",
+                    f"longQueryLike={query_signals.is_long_query_like}",
+                    f"tokenCount={query_signals.token_count}",
+                )
+                if value
+            ),
         }
 
     def _negative_ingredient_rank_signal(

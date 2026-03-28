@@ -5,7 +5,10 @@ from services.chatbot.search.product_data import ProductSearchDataRow
 from services.chatbot.search.vector import ProductSearchResult
 from services.product_search.models import ProductSearchDictionarySnapshot
 from services.product_search.parser import product_search_query_parser
-from services.product_search.planning import build_product_search_execution_plan
+from services.product_search.planning import (
+    build_product_search_execution_plan,
+    build_product_search_query_signals,
+)
 from services.product_search.scorer import rerank_results
 from services.product_search.service import ProductSearchService
 
@@ -201,6 +204,31 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
         reranked = rerank_results([weak_only, strong_match], parsed, self.snapshot.attribute_groups)
 
         self.assertEqual(reranked[0].product_id, 1)
+
+    def test_broad_scope_suppresses_name_matching_for_long_query_like(self) -> None:
+        parsed = product_search_query_parser.parse("성분에디터 그린토마토", self.snapshot)
+        plan = build_product_search_execution_plan(parsed)
+        signals = build_product_search_query_signals(parsed)
+
+        policy = self.service._resolve_name_matching_policy(
+            parsed,
+            plan,
+            signals,
+            category_ids=None,
+            big_category_id=1,
+            candidate_limit=180,
+        )
+
+        self.assertFalse(policy.run_exact)
+        self.assertFalse(policy.run_fuzzy)
+        self.assertTrue(policy.fallback_exact)
+        self.assertTrue(policy.fallback_fuzzy)
+        self.assertIn("suppressed.broad_scope", policy.reason or "")
+
+    def test_strong_keyword_requirement_uses_shared_long_query_signal(self) -> None:
+        parsed = product_search_query_parser.parse("성분에디터 그린 토마토", self.snapshot)
+
+        self.assertTrue(self.service._requires_strong_keyword_match(parsed, self.snapshot))
 
 
 if __name__ == "__main__":
