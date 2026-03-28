@@ -13,7 +13,7 @@ import {
 import RoutineTab from "@/components/features/mypage/RoutineTab";
 import RoutineAddModal from "@/components/features/mypage/RoutineAddModal";
 import OwnedTab from "@/components/features/mypage/OwnedTab";
-import { useUserStore, selectSkinType, selectGender } from "@/stores";
+import { useUserStore, selectSkinType, selectGender, useRoutineStore } from "@/stores";
 
 export default function MyPage() {
   const [activeTab, setActiveTab] = useState<"routine" | "owned">("routine");
@@ -49,6 +49,10 @@ export default function MyPage() {
   const [openStep, setOpenStep] = useState<string | null>(null);
   const [openColumnId, setOpenColumnId] = useState<number>(0);
 
+  // 성분 충돌 상태 — Zustand store (페이지 이동에도 유지)
+  const setConflict = useRoutineStore((s) => s.setConflict);
+  const clearConflict = useRoutineStore((s) => s.clearConflict);
+
   useEffect(() => {
     document.body.style.overflow = openStep ? "hidden" : "";
     return () => {
@@ -74,9 +78,24 @@ export default function MyPage() {
     addDraftItem(
       { columnId: openColumnId, productId },
       {
-        onSuccess: () => {
-          toast("✓ 루틴에 추가되었습니다!");
+        onSuccess: (data) => {
           setOpenStep(null);
+          // 메시지의 [제품명] 파싱 → updatedDraft에서 매칭해 충돌 제품 ID 추출
+          const bracketNames = (data.message?.match(/\[([^\]]+)\]/g) ?? [])
+            .map((m) => m.slice(1, -1));
+          const conflictIds = (data.updatedDraft ?? [])
+            .filter((item) => item.product.name != null && bracketNames.includes(item.product.name))
+            .map((item) => item.product.productId);
+
+          if (data.message && conflictIds.length > 0) {
+            // 실제 충돌 성분이 있을 때만 toast 경고 + store에 저장
+            toast.warning("충돌 성분이 있는 제품이 있습니다.");
+            setConflict(data.message, conflictIds);
+          } else {
+            // 충돌 없거나 "충돌 성분이 없습니다" 류 메시지는 정상 처리
+            toast("✓ 루틴에 추가되었습니다!");
+            clearConflict();
+          }
         },
         onError: () => {
           toast("제품 추가에 실패했습니다. 다시 시도해주세요.");

@@ -85,3 +85,13 @@ export interface UpdateRoutineRequest {
   title: string;
 }
 
+/**
+ * POST /api/v1/routines/draft 응답
+ * 스웨거: DraftUpdateResponse
+ * 제품 추가 후 갱신된 draft 목록과 성분 충돌 메시지 반환
+ */
+export interface DraftUpdateResponse {
+  updatedDraft: DraftItemDto[];
+  message: string | null;
+}
+
