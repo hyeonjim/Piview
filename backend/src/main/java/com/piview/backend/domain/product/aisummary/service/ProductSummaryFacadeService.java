@@ -57,7 +57,7 @@ public class ProductSummaryFacadeService {
         ? "없음"
         : mySkins.stream().map(MySkin::getSkinProblem).collect(Collectors.joining(", "));
 
-    String userSkinType = (user.getMySkinType() != null) ? user.getMySkinType().name() : "알 수 없음";
+    String userSkinType = (user.getMySkinType() != null) ? user.getMySkinType().getKorean() : "알 수 없음";
     String rawIngredientsText = productIngredients.getProductIngredientsKo() != null
         ? productIngredients.getProductIngredientsKo()
         : "성분 정보 없음";
