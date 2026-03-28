@@ -34,6 +34,17 @@ class ProductSearchEvaluationQuerysetTests(unittest.TestCase):
 
         self.assertFalse(ingredient_queries & ambiguous_queries)
 
+    def test_queryset_includes_recent_manual_ingredient_families(self) -> None:
+        cases = build_product_search_evaluation_cases()
+        queries = {case.query for case in cases}
+
+        self.assertIn("알부틴", queries)
+        self.assertIn("트라넥삼산", queries)
+        self.assertIn("바쿠치올", queries)
+        self.assertIn("알부틴 세럼", queries)
+        self.assertIn("트라넥삼산 세럼", queries)
+        self.assertIn("바쿠치올 세럼", queries)
+
     def test_brand_coverage_metric_counts_requested_brands_in_top_k(self) -> None:
         case = next(
             item
