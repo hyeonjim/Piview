@@ -75,12 +75,12 @@ public class AiCompareFacadeService {
         [비교 대상 제품 A]
         제품명: %s
         추천 피부 타입: %s
-        제품 기능(태그): %s
+        피부 고민 케어 효능: %s
 
         [비교 대상 제품 B]
         제품명: %s
         추천 피부 타입: %s
-        제품 기능(태그): %s
+        피부 고민 케어 효능: %s
         """,
         userSkinType, userConcerns,
         prodA.getName(), targetSkinA.isEmpty() ? "모든 피부" : targetSkinA, tagsA,
