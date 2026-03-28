@@ -6,7 +6,6 @@ import com.piview.backend.domain.product.catalog.repository.ProductRepository;
 import com.piview.backend.domain.product.catalog.repository.SkinConcernsRepository;
 import com.piview.backend.domain.product.entity.CategoryIdealScore;
 import com.piview.backend.domain.product.entity.Product;
-import com.piview.backend.domain.product.entity.ProductIngredients;
 import com.piview.backend.domain.product.entity.SkinConcerns;
 import com.piview.backend.domain.product.recommend.repository.CategoryIdealScoreRepository;
 import com.piview.backend.domain.routine.analysis.dto.response.RoutineAnalysisResponse;
@@ -21,6 +20,7 @@ import com.piview.backend.domain.user.login.repository.UserRepository;
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RoutineAnalysisFacadeService {
@@ -47,7 +48,14 @@ public class RoutineAnalysisFacadeService {
     private final ProductConcernCacheRepository productConcernCacheRepository;
     private final RoutineAnalysisAiClient routineAnalysisAiClient;
 
-    // columnId → categoryId 매핑 (routineSteps.ts 기준)
+    // 피부타입별 상위 25% 컷오프 기준값 (findInitialRecommendations 쿼리와 동일)
+    private static final Map<SkinTypeEnum, Double> SKIN_SCORE_THRESHOLD = Map.of(
+        SkinTypeEnum.dry, 66.0,
+        SkinTypeEnum.oily, 70.0,
+        SkinTypeEnum.combination, 39.0,
+        SkinTypeEnum.subuji, 36.0
+    );
+
     private static final Map<Long, List<Long>> COLUMN_TO_CATEGORY_IDS = Map.of(
         1L, List.of(8L, 9L, 10L, 11L, 12L, 13L),
         2L, List.of(22L),
@@ -71,6 +79,7 @@ public class RoutineAnalysisFacadeService {
 
         // 2. 피부 타입(한글) + 고민 조회
         String userSkinType = (user.getMySkinType() != null) ? user.getMySkinType().getKorean() : "알 수 없음";
+        SkinTypeEnum skinTypeEnum = user.getMySkinType();
         List<MySkin> mySkins = mySkinRepository.findAllByUserId(userId);
         String userConcerns = mySkins.isEmpty()
                 ? "없음"
@@ -88,16 +97,16 @@ public class RoutineAnalysisFacadeService {
                                 ? pi.getProductIngredientsKo() : "성분 정보 없음"
                 ));
 
-        // 5. 이상치 일괄 조회 — 제품의 카테고리 → columnId 역매핑 후 조회
+        // 5. 이상치 일괄 조회
         List<Long> routineColIds = products.stream()
-                .map(p -> getCategoryToColumnId(p))
+                .map(this::getCategoryToColumnId)
                 .filter(id -> id != -1L)
                 .distinct()
                 .collect(Collectors.toList());
 
-        Map<Long, CategoryIdealScore> idealScoreMap = (user.getMySkinType() != null && !routineColIds.isEmpty())
+        Map<Long, CategoryIdealScore> idealScoreMap = (skinTypeEnum != null && !routineColIds.isEmpty())
                 ? categoryIdealScoreRepository
-                        .findBySkinTypeAndRoutineColIdIn(user.getMySkinType(), routineColIds)
+                        .findBySkinTypeAndRoutineColIdIn(skinTypeEnum, routineColIds)
                         .stream()
                         .collect(Collectors.toMap(CategoryIdealScore::getRoutineColId, s -> s))
                 : Map.of();
@@ -126,7 +135,7 @@ public class RoutineAnalysisFacadeService {
                 : concernNameToId.getOrDefault(mySkins.get(0).getSkinProblem(), -1L);
 
         SurveyGender gender = user.getGender() != null ? user.getGender() : SurveyGender.WOMEN;
-        SkinTypeEnum skinType = user.getMySkinType() != null ? user.getMySkinType() : SkinTypeEnum.dry;
+        SkinTypeEnum skinType = skinTypeEnum != null ? skinTypeEnum : SkinTypeEnum.dry;
 
         // 7. 성분 충돌 감지
         StringBuilder conflictSection = new StringBuilder();
@@ -156,16 +165,17 @@ public class RoutineAnalysisFacadeService {
                 uncoveredSection.append("- 적합한 추천 후보 없음\n");
             } else {
                 candidates.stream().limit(2).forEach(c -> {
-                    String brandName = c.getBrand() != null ? c.getBrand().getBrandName() : "";
+                    String bName = c.getBrand() != null ? c.getBrand().getBrandName() : "";
                     String tags = getTopConcernTags(c.getProductId());
-                    uncoveredSection.append(String.format("- %s %s (%s)\n", brandName, c.getName(), tags));
+                    uncoveredSection.append(String.format("- %s %s (%s)\n", bName, c.getName(), tags));
                 });
             }
         }
 
-        // 9. 제품별 이상치 분석 + 이상치 미달 추천
-        StringBuilder routineSection = new StringBuilder("[루틴 구성 및 이상치 분석]\n");
+        // 9. 제품별 이상치 분석 + 피부타입 점수 + 이상치 미달 추천
+        StringBuilder routineSection = new StringBuilder("[루틴 구성 및 분석 데이터]\n");
         StringBuilder recommendSection = new StringBuilder();
+        boolean hasImprovements = false;
 
         for (Product product : products) {
             String productName = product.getName();
@@ -175,6 +185,10 @@ public class RoutineAnalysisFacadeService {
             Long routineColId = getCategoryToColumnId(product);
             String ingredients = ingredientMap.getOrDefault(product.getProductId(), "성분 정보 없음");
 
+            // ── 피부타입 점수 분석
+            String skinScoreInfo = buildSkinScoreInfo(product, skinTypeEnum);
+
+            // ── 이상치 분석
             String idealInfo = "";
             boolean needsImprovement = false;
             CategoryIdealScore ideal = idealScoreMap.get(routineColId);
@@ -184,24 +198,33 @@ public class RoutineAnalysisFacadeService {
                 BigDecimal idealO = ideal.getIdealO();
                 BigDecimal productM = product.getMScore();
                 BigDecimal productO = product.getOScore();
-                idealInfo = String.format(" | 이상치 수분=%.2f, 유분=%.2f", idealM, idealO);
 
                 if (productM != null && productO != null) {
                     boolean mDeficient = productM.compareTo(idealM.multiply(BigDecimal.valueOf(0.8))) < 0;
                     boolean oDeficient = productO.compareTo(idealO.multiply(BigDecimal.valueOf(0.8))) < 0;
                     needsImprovement = mDeficient || oDeficient;
-                    idealInfo += String.format(" | 현재 수분=%.2f, 유분=%.2f%s",
-                            productM, productO, needsImprovement ? " ⚠️ 보완 필요" : "");
+
+                    String mStatus = mDeficient ? "수분 부족 ⚠️" : "수분 충족 ✅";
+                    String oStatus = oDeficient ? "유분 부족 ⚠️" : "유분 충족 ✅";
+                    idealInfo = String.format(" | %s / %s", mStatus, oStatus);
+                } else {
+                    idealInfo = " | 수분/유분 데이터 없음 (이상치 비교 불가)";
                 }
             }
 
-            String trimmedIngredients = ingredients.length() > 200
-                    ? ingredients.substring(0, 200) + "..." : ingredients;
+            // ── 성분 정보 (없으면 명시)
+            String ingredientInfo = ingredients.equals("성분 정보 없음")
+                    ? "성분 정보 없음 (성분 관련 언급 금지)"
+                    : (ingredients.length() > 200 ? ingredients.substring(0, 200) + "..." : ingredients);
 
             routineSection.append(String.format(
-                    "- %s %s (%s)%s\n  성분: %s\n",
-                    brandName, productName, categoryName, idealInfo, trimmedIngredients
+                    "- %s %s (%s)\n  피부타입 적합도: %s\n  이상치: %s\n  성분: %s\n",
+                    brandName, productName, categoryName,
+                    skinScoreInfo, idealInfo.isEmpty() ? "이상치 데이터 없음" : idealInfo,
+                    ingredientInfo
             ));
+
+            if (needsImprovement) hasImprovements = true;
 
             // 이상치 미달 추천
             if (needsImprovement && ideal != null && routineColId != -1L) {
@@ -214,7 +237,6 @@ public class RoutineAnalysisFacadeService {
                             ideal.getIdealO().doubleValue(),
                             safeExcludeIds, safeDislikedIds, safeAvoidIngredientIds
                     );
-
                     if (!candidates.isEmpty()) {
                         recommendSection.append(String.format("\n[%s 단계 수분/유분 보완 추천 후보]\n", categoryName));
                         candidates.stream().limit(2).forEach(c -> {
@@ -227,11 +249,11 @@ public class RoutineAnalysisFacadeService {
             }
         }
 
-        // 10. 프롬프트 조립
-        boolean hasImprovements = recommendSection.length() > 0
-                || uncoveredSection.length() > 0
-                || conflictSection.length() > 0;
+        if (uncoveredSection.length() > 0 || conflictSection.length() > 0) {
+            hasImprovements = true;
+        }
 
+        // 10. 프롬프트 조립
         String context = String.format(
                 """
                 [사용자 피부 정보]
@@ -242,11 +264,15 @@ public class RoutineAnalysisFacadeService {
                 %s
                 %s
                 %s
-                [지시사항]
-                - 보완이 필요한 항목이 있으면 추천 후보 중 실제 제품명(브랜드 포함)을 구체적으로 언급하며 추천해줘.
-                - 추천 시 "~을 추가해보세요" 또는 "~가 도움이 될 거예요" 형식으로 자연스럽게 말해줘.
-                - 성분 충돌이 있으면 구체적으로 경고해줘. 대체 제품 추천은 하지 않아도 돼.
-                - %s
+                [지시사항 — 반드시 준수할 것]
+                1. 위에 제공된 데이터만 사용할 것. 제공되지 않은 정보는 절대 추측하거나 지어내지 말 것.
+                2. "성분 정보 없음 (성분 관련 언급 금지)"이면 해당 제품의 성분에 대해 절대 언급하지 말 것.
+                3. "측정불가"로 표시된 수분/유분 값은 비교하지 말 것.
+                4. 피부타입 적합도가 "❌부적합"이면 반드시 경고할 것.
+                5. %s
+                6. 보완이 필요한 항목이 있으면 추천 후보 중 실제 제품명(브랜드 포함)을 언급하며 추천할 것.
+                7. 추천 시 "~을 추가해보세요" 또는 "~가 도움이 될 거예요" 형식으로 말할 것.
+                8. 성분 충돌이 있으면 구체적으로 경고할 것.
                 """,
                 userSkinType, userConcerns,
                 routineSection,
@@ -254,21 +280,40 @@ public class RoutineAnalysisFacadeService {
                 uncoveredSection.length() > 0 ? uncoveredSection.toString() : "",
                 recommendSection.length() > 0 ? recommendSection.toString() : "",
                 hasImprovements
-                        ? "보완이 필요 없는 항목은 언급하지 말고, 개선이 필요한 부분만 간결하게 말해줘."
-                        : "모든 단계가 잘 구성되어 있으니 추천 없이 칭찬만 해줘."
+                        ? "개선이 필요한 항목만 간결하게 언급하고 불필요한 칭찬은 하지 말 것."
+                        : "모든 데이터가 양호하므로 칭찬하되, 데이터에 근거한 구체적인 이유를 언급할 것."
         );
 
+        log.debug("루틴 분석 프롬프트:\n{}", context);
         return routineAnalysisAiClient.analyzeRoutineAsync(context);
     }
 
-    // Category → RoutineColumnId 역매핑
+    // 피부타입 점수 분석 — 수치 없이 판단 결과만 반환
+    private String buildSkinScoreInfo(Product product, SkinTypeEnum skinTypeEnum) {
+        if (skinTypeEnum == null) return "피부타입 정보 없음";
+
+        BigDecimal score = switch (skinTypeEnum) {
+            case dry -> product.getScoreDry();
+            case oily -> product.getScoreOily();
+            case combination -> product.getScoreCombination();
+            case subuji -> product.getScoreSubuji();
+        };
+
+        if (score == null) return "피부타입 점수 데이터 없음";
+
+        double threshold = SKIN_SCORE_THRESHOLD.getOrDefault(skinTypeEnum, 50.0);
+        boolean isSuitable = score.doubleValue() >= threshold;
+
+        return isSuitable
+                ? skinTypeEnum.getKorean() + " 피부에 잘 맞는 제품 ✅"
+                : skinTypeEnum.getKorean() + " 피부에 맞지 않는 제품 ❌ (이 제품은 회원님 피부타입에 적합하지 않습니다)";
+    }
+
     private Long getCategoryToColumnId(Product product) {
         if (product.getCategory() == null) return -1L;
         Long categoryId = product.getCategory().getCategoryId();
         for (Map.Entry<Long, List<Long>> entry : COLUMN_TO_CATEGORY_IDS.entrySet()) {
-            if (entry.getValue().contains(categoryId)) {
-                return entry.getKey();
-            }
+            if (entry.getValue().contains(categoryId)) return entry.getKey();
         }
         return -1L;
     }
@@ -294,8 +339,7 @@ public class RoutineAnalysisFacadeService {
     }
 
     private String getTopConcernTags(Long productId) {
-        List<String> concerns = productConcernCacheRepository
-                .findTopConcernNamesByProductId(productId);
+        List<String> concerns = productConcernCacheRepository.findTopConcernNamesByProductId(productId);
         return concerns.stream().limit(2).collect(Collectors.joining("/"));
     }
 }
