@@ -129,12 +129,12 @@ export const routineService = {
     client.put<ApiResponse<RoutineResponse>>(`/routines/${routineId}`, request),
 
   /**
-   * 메인 루틴 AI 분석
-   * GET /api/v1/routines/analysis
-   * 성분 충돌, 이상치 달성도, 루틴 순서 팁 등 5줄 이내 분석
+   * 루틴 AI 분석
+   * POST /api/v1/routines/analysis
+   * 화면에 보이는 제품 ID 목록을 넘기면 AI가 분석
    */
-  getRoutineAnalysis: (): Promise<RoutineAnalysisResponse> =>
+  getRoutineAnalysis: (productIds: number[]): Promise<RoutineAnalysisResponse> =>
     client
-      .get<ApiResponse<RoutineAnalysisResponse>>("/routines/analysis")
+      .post<ApiResponse<RoutineAnalysisResponse>>("/routines/analysis", { productIds })
       .then((res) => res.data.data),
 };

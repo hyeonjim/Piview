@@ -88,13 +88,14 @@ export default function MyPage() {
           const bracketNames = (
             responseData.message?.match(/\[([^\]]+)\]/g) ?? []
           ).map((m) => m.slice(1, -1));
-          const conflictIds = (responseData.data ?? [])
+          const updatedDraft = (responseData.data as any)?.updatedDraft ?? [];
+          const conflictIds = updatedDraft
             .filter(
-              (item) =>
+              (item: any) =>
                 item.product.name != null &&
                 bracketNames.includes(item.product.name),
             )
-            .map((item) => item.product.productId);
+            .map((item: any) => item.product.productId);
 
           if (responseData.message && conflictIds.length > 0) {
             // 실제 충돌 성분이 있을 때만 toast 경고 + store에 저장
