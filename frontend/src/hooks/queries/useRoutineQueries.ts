@@ -314,16 +314,13 @@ export function useLoadRoutineToDraftMutation() {
 }
 
 /**
- * 메인 루틴 AI 분석
- * GET /api/v1/routines/analysis
- * 메인 루틴이 변경될 때마다 호출 — staleTime 짧게 설정
+ * 루틴 AI 분석
+ * POST /api/v1/routines/analysis
+ * 화면에 보이는 productIds를 넘겨서 수동 호출 — 버튼 클릭 시 mutate(productIds)
  */
-export function useRoutineAnalysisQuery(enabled: boolean = true) {
-  return useQuery<RoutineAnalysisResponse>({
-    queryKey: queryKeys.routineAnalysis,
-    queryFn: () => routineService.getRoutineAnalysis(),
-    enabled,
-    staleTime: 1000 * 60 * 5, // 5분 — 루틴 변경 시 invalidate
+export function useRoutineAnalysisMutation() {
+  return useMutation<RoutineAnalysisResponse, Error, number[]>({
+    mutationFn: (productIds: number[]) => routineService.getRoutineAnalysis(productIds),
     retry: false,
   });
 }
