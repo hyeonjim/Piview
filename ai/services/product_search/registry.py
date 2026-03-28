@@ -30,12 +30,17 @@ class ProductSearchDictionaryRegistry:
         return self.refresh()
 
     def refresh(self) -> ProductSearchDictionarySnapshot:
+        # refresh는 DB -> generated json -> in-memory snapshot 전체를 강제로 다시 만든다.
+        # 운영 중 dictionary drift를 바로 반영해야 할 때 이 경로를 사용한다.
         with self._lock:
             product_search_dictionary_syncer.sync()
             self._snapshot = self._load_snapshot()
             return self._snapshot
 
     def get_snapshot(self) -> ProductSearchDictionarySnapshot:
+        # 기본 경로는 lazy load다.
+        # 메모리에 snapshot이 없으면 generated 파일을 확인하고,
+        # 파일이 비어 있으면 sync까지 한 번 수행한 뒤 snapshot을 만든다.
         with self._lock:
             if self._snapshot is None:
                 if any(not path.exists() for path in _GENERATED_FILES.values()):
@@ -54,6 +59,7 @@ class ProductSearchDictionaryRegistry:
                 "brands": str(_GENERATED_FILES["brands"]),
                 "categories": str(_GENERATED_FILES["categories"]),
                 "productTypes": str(_GENERATED_FILES["product_types"]),
+                "ingredientTerms": str(_GENERATED_FILES["ingredients"]),
                 "lineTerms": str(_GENERATED_FILES["line_terms"]),
                 "attributes": str(_GENERATED_FILES["attributes"]),
             },
@@ -65,6 +71,7 @@ class ProductSearchDictionaryRegistry:
                 "brands": len(snapshot.brands),
                 "categories": len(snapshot.categories),
                 "productTypes": len(snapshot.product_types),
+                "ingredientTerms": len(snapshot.ingredients),
                 "lineTerms": len(snapshot.line_terms),
                 "attributes": len(snapshot.attributes),
                 "attributeGroups": len(snapshot.attribute_groups),
@@ -73,9 +80,12 @@ class ProductSearchDictionaryRegistry:
         }
 
     def _load_snapshot(self) -> ProductSearchDictionarySnapshot:
+        # snapshot은 runtime parser/service가 바로 쓰기 쉬운 lookup 중심 구조다.
+        # generated json에서 raw entry를 읽은 뒤, canonical lookup까지 한 번에 구성해서 메모리에 올린다.
         brands = self._load_generated_entries(_GENERATED_FILES["brands"])
         categories = self._load_generated_entries(_GENERATED_FILES["categories"])
         product_types = self._load_generated_entries(_GENERATED_FILES["product_types"])
+        ingredients = self._load_generated_entries(_GENERATED_FILES["ingredients"])
         line_terms = self._load_generated_entries(_GENERATED_FILES["line_terms"])
         attributes = self._load_generated_entries(_GENERATED_FILES["attributes"])
         attribute_groups = self._load_attribute_groups()
@@ -84,6 +94,7 @@ class ProductSearchDictionaryRegistry:
         brand_lookup = self._build_lookup(brands)
         category_lookup = self._build_lookup(categories)
         product_type_lookup = self._build_lookup(product_types)
+        ingredient_lookup = self._build_lookup(ingredients)
         line_lookup = self._build_lookup(line_terms)
         attribute_lookup = self._build_lookup(attributes)
         attribute_group_lookup = self._build_attribute_group_lookup(attribute_groups)
@@ -93,6 +104,7 @@ class ProductSearchDictionaryRegistry:
             brands=tuple(brands),
             categories=tuple(categories),
             product_types=tuple(product_types),
+            ingredients=tuple(ingredients),
             line_terms=tuple(line_terms),
             attributes=tuple(attributes),
             attribute_groups=attribute_groups,
@@ -100,12 +112,14 @@ class ProductSearchDictionaryRegistry:
             brand_lookup=brand_lookup,
             category_lookup=category_lookup,
             product_type_lookup=product_type_lookup,
+            ingredient_lookup=ingredient_lookup,
             line_lookup=line_lookup,
             attribute_lookup=attribute_lookup,
             attribute_group_lookup=attribute_group_lookup,
         )
 
     def _load_generated_entries(self, path: Path) -> list[DictionaryEntry]:
+        # generated file이 깨져도 서비스 부팅 전체가 죽지 않도록 빈 리스트로 fallback한다.
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -174,6 +188,8 @@ class ProductSearchDictionaryRegistry:
         return groups
 
     def _build_lookup(self, entries: list[DictionaryEntry]) -> dict[str, str]:
+        # lookup은 alias -> canonical 매핑이다.
+        # parser는 이 lookup만 알면 되고, 어떤 canonical이 어디서 왔는지는 registry가 숨긴다.
         lookup: dict[str, str] = {}
         for entry in entries:
             canonical = normalize_text(entry.canonical)
@@ -188,6 +204,8 @@ class ProductSearchDictionaryRegistry:
         self,
         attribute_groups: dict[str, tuple[str, ...]],
     ) -> dict[str, str]:
+        # attribute group은 alias가 canonical group key로 수렴하는 형태다.
+        # 예: "진정", "수딩" -> "soothing" 같은 manual grouping을 parser가 쉽게 쓰도록 만든다.
         lookup: dict[str, str] = {}
         for group_key, terms in attribute_groups.items():
             lookup[group_key] = group_key

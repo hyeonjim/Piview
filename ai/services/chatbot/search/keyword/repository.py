@@ -62,6 +62,8 @@ class ProductKeywordRepository:
             preferred_category_aliases=preferred_categories,
             category_ids=category_ids,
             big_category_id=big_category_id,
+            include_ingredient_text_in_prefilter=False,
+            trace_label="keyword",
         )
 
         return [
@@ -141,7 +143,8 @@ class ProductKeywordRepository:
         aliases: list[str] = []
         seen: set[str] = set()
         for category_key in preferred_categories:
-            for alias in CATEGORY_HINTS.get(category_key, ()):
+            candidate_aliases = CATEGORY_HINTS.get(category_key, ()) or (category_key,)
+            for alias in candidate_aliases:
                 lowered = alias.strip().lower()
                 if not lowered or lowered in seen:
                     continue
