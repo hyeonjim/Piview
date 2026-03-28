@@ -63,7 +63,7 @@ interface ProductCardProps {
 // label은 매핑 단계(productMapper)에서 이미 한글 변환 완료 상태로 전달됨
 export function SkinTypeTag({ label }: { label: string }) {
   return (
-    <span className="inline-block mb-1 mr-1.5 text-[11px] font-medium px-1.5 py-px rounded bg-[#f5ecdf] text-[#514a42]">
+    <span className="inline-block mb-1 mr-1.5 text-[11px] font-medium px-1 py-px rounded-[5px] border bg-[#faf5ee] text-[#514a42]">
       {label}
     </span>
   );
@@ -81,7 +81,7 @@ function EffectTag({ label }: { label: string }) {
 // ── PICK 배지 — RoutineAddModal의 분홍 스타일로 통일
 function PickBadge() {
   return (
-    <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-[10px] tracking-[0.06em] bg-[#faebf2] text-[#707173]">
+    <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-[10px] tracking-[0.06em] bg-[#f1dde7] text-[#707173]">
       PICK
     </span>
   );
@@ -637,7 +637,7 @@ export default function ProductCard({
 
         {/* 루틴추가 버튼 — 중앙 배치 */}
         {onAddRoutine && (
-          <div className="flex justify-center mt-10 mb-2">
+          <div className="flex justify-center mt-7 mb-2">
             <button
               onClick={(event) => handleAction(event, onAddRoutine)}
               disabled={inRoutine}

@@ -85,3 +85,11 @@ export interface UpdateRoutineRequest {
   title: string;
 }
 
+/**
+ * GET /api/v1/routines/analysis 응답
+ * 메인 루틴 AI 분석 결과 — 성분 충돌, 이상치, 루틴 순서 팁 등 5줄 이내
+ */
+export interface RoutineAnalysisResponse {
+  analysisText: string;
+}
+

@@ -533,7 +533,7 @@ function ProductDetailInner() {
                   setShowRoutineCompare(true);
                 }
               }}
-              className="flex items-center gap-1 px-3 h-7 rounded-lg cursor-pointer transition-all active:scale-[0.96] text-[14px] font-normal shrink-0 bg-[#e9f0f4] text-[#686a6c]"
+              className="flex items-center gap-1 px-3 h-7 rounded-lg cursor-pointer transition-all active:scale-[0.96] text-[14px] font-normal shrink-0 bg-[#eff6fa] text-[#686a6c]"
             >
               <CompareIcon size={13} color="#5c5852" />
               내루틴과 비교하기
@@ -626,7 +626,7 @@ function ProductDetailInner() {
           variants={cardVariants}
           initial="hidden"
           animate="visible"
-          className="mx-4 rounded-2xl p-5 my-3 border border-[#dde6ef] bg-[#f8fafb]"
+          className="mx-4 rounded-2xl p-5 my-5 border border-2 border-[#dde6ef] bg-[#f8fafb]"
           style={{
             boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(115, 142, 174, 0.14), 0 1px 4px rgba(115, 142, 174, 0.08)",
           }}
@@ -667,10 +667,10 @@ function ProductDetailInner() {
                 )}
                 {aiSummary.line3AiSummary && (
                   <motion.div
-                    className="mt-1 rounded-xl bg-[#fcf6f6] border border-[#f5d0d0] px-3 py-2.5"
+                    className="mt-2 rounded-xl bg-[#fcfbfb] border border-[#f5dfdf] px-3 py-2.5"
                   >
-                    <p className="text-[14px] text-[#ca2828] leading-[1.6] flex items-start gap-1.5">
-                      <MessageSquareWarning size={14} className="shrink-0 mt-0.5" />
+                    <p className="text-[14px] text-[#aa4646] leading-[1.6] flex items-start gap-3">
+                      <MessageSquareWarning size={16} className="shrink-0 mt-0.5" />
                       {aiSummary.line3AiSummary}
                     </p>
                   </motion.div>

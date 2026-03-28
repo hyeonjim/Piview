@@ -104,11 +104,11 @@ export default function HomePage() {
 
           {/* 루틴 리스트 */}
           {hasRoutine ? (
-            <div className="px-4 py-4 flex flex-col gap-0">
+            <div className="px-1 py-2 flex flex-col gap-0">
               {mainRoutineItems.map(({ step, product }, index) => (
                 <div
                   key={`${step.code}-${product.name}`}
-                  className="flex items-center py-2.5 first:pt-1 last:pb-1"
+                  className="flex items-center py-2.5"
                 >
                   {/* 스텝 번호 뱃지 */}
                   <div className="shrink-0 w-6 h-6 rounded-full bg-[#edeef0] flex items-center justify-center">

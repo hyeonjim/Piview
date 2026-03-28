@@ -7,7 +7,12 @@
  * useRemoveDislikedProduct — DELETE /users/me/disliked/products/{id} 삭제 (낙관적 업데이트)
  */
 
-import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useQueries,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { dislikedService } from "@/services/disliked";
 import { productService } from "@/services/product";
@@ -34,6 +39,10 @@ export function useAddDislikedProduct() {
     onSuccess: () => {
       // 추가 성공 → 목록 캐시 무효화해서 재조회
       queryClient.invalidateQueries({ queryKey: queryKeys.dislikedProducts });
+      // 알러지 성분 캐시 무효화 → store 즉시 동기화
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dislikedIngredients,
+      });
     },
 
     onError: (error) => {
@@ -66,7 +75,9 @@ export function useRemoveDislikedProduct() {
       queryClient.setQueryData<DislikedProduct[]>(
         queryKeys.dislikedProducts,
         (currentList = []) =>
-          currentList.filter((item) => item.dislikedProductId !== dislikedProductId),
+          currentList.filter(
+            (item) => item.dislikedProductId !== dislikedProductId,
+          ),
       );
 
       return { previousList };
@@ -74,12 +85,19 @@ export function useRemoveDislikedProduct() {
 
     onError: (_error, _dislikedProductId, context) => {
       if (context?.previousList) {
-        queryClient.setQueryData(queryKeys.dislikedProducts, context.previousList);
+        queryClient.setQueryData(
+          queryKeys.dislikedProducts,
+          context.previousList,
+        );
       }
     },
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.dislikedProducts });
+      // 알러지 성분 캐시 무효화 → store 즉시 동기화
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dislikedIngredients,
+      });
     },
   });
 }
@@ -100,13 +118,15 @@ export function useDislikedProductsWithTags() {
   });
 
   // dislikedItems에 상세의 tags를 병합
-  const data: (DislikedProduct & { tags: string[] })[] = dislikedItems.map((item, index) => {
-    const detail = detailQueries[index]?.data;
-    return {
-      ...item,
-      tags: detail?.tags?.length ? detail.tags : [],
-    };
-  });
+  const data: (DislikedProduct & { tags: string[] })[] = dislikedItems.map(
+    (item, index) => {
+      const detail = detailQueries[index]?.data;
+      return {
+        ...item,
+        tags: detail?.tags?.length ? detail.tags : [],
+      };
+    },
+  );
 
   return { ...dislikedQuery, data };
 }

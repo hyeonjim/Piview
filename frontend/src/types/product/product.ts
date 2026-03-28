@@ -83,7 +83,7 @@ export interface RecommendRequestDto {
   targetRoutineColId?: number; // int64 — 루틴 컬럼 ID
 }
 
-/** 추천 응답 DTO — 스웨거 기준 */
+/** 추천 응답 DTO */
 export interface RecommendResponseDto {
   productId: number;
   name: string;
@@ -91,7 +91,7 @@ export interface RecommendResponseDto {
   categoryName: string;
   imageUrl: string;
   price: number;
-  skinTypes: string[]; // ["dry", "oily"] — 영문 소문자
-  tags: string[]; // ["수분", "진정", ...] — DB값
+  skinTypes: string[];  // ["dry", "oily"] — 영문 소문자
   liked: boolean;
+  tags: string[];  // 피부기능태그 배열
 }
