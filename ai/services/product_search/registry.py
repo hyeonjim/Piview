@@ -12,6 +12,7 @@ from services.product_search.models import DictionaryEntry, ProductSearchDiction
 from services.product_search.sync import (
     _DICTIONARY_DIR,
     _GENERATED_FILES,
+    _INGREDIENT_FAMILIES_FILE,
     _MANUAL_DIR,
     _STOPWORDS_FILE,
     product_search_dictionary_syncer,
@@ -66,6 +67,7 @@ class ProductSearchDictionaryRegistry:
             "manualFiles": {
                 "stopwords": str(_STOPWORDS_FILE),
                 "attributeGroups": str(_ATTRIBUTE_GROUPS_FILE),
+                "ingredientFamilies": str(_INGREDIENT_FAMILIES_FILE),
             },
             "counts": {
                 "brands": len(snapshot.brands),

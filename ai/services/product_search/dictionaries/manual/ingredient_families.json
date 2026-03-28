@@ -1,0 +1,102 @@
+{
+  "ceramide_family": {
+    "aliases": ["세라마이드"],
+    "matchContains": ["세라마이드"]
+  },
+  "panthenol_family": {
+    "aliases": ["판테놀", "비타민b5"],
+    "matchContains": ["판테놀", "panthenol"]
+  },
+  "niacinamide_family": {
+    "aliases": ["나이아신아마이드"],
+    "matchContains": ["나이아신아마이드", "niacinamide"]
+  },
+  "hyaluron_family": {
+    "aliases": ["히알루론산", "히알루론"],
+    "matchContains": ["하이알루로", "히알루로", "hyaluro"]
+  },
+  "vitamin_c_family": {
+    "aliases": ["비타민c"],
+    "matchContains": ["아스코", "ascorb"],
+    "matchExact": ["비타민c"]
+  },
+  "fragrance_family": {
+    "aliases": ["향료", "fragrance", "parfum"],
+    "matchContains": ["fragrance", "parfum", "perfume"],
+    "matchExact": ["향료"]
+  },
+  "volatile_alcohol_family": {
+    "aliases": ["알코올", "에탄올"],
+    "matchExact": [
+      "alcohol",
+      "변성알코올",
+      "alcohol denat.",
+      "에탄올",
+      "ethanol",
+      "에스디알코올40-b",
+      "sd alcohol 40-b",
+      "아이소프로필알코올",
+      "isopropyl alcohol"
+    ]
+  },
+  "propolis_family": {
+    "aliases": ["프로폴리스"],
+    "matchContains": ["프로폴리스", "propolis"]
+  },
+  "tea_tree_family": {
+    "aliases": ["티트리"],
+    "matchContains": ["티트리", "tea tree"]
+  },
+  "essential_oil_family": {
+    "aliases": ["에센셜오일"],
+    "matchContains": ["에센셜오일", "essential oil"]
+  },
+  "aloe_family": {
+    "aliases": ["알로에"],
+    "matchContains": ["알로에", "aloe"]
+  },
+  "squalane_family": {
+    "aliases": ["스쿠알란"],
+    "matchContains": ["스쿠알란", "squalane"]
+  },
+  "houttuynia_family": {
+    "aliases": ["어성초"],
+    "matchContains": ["어성초", "houttuynia"]
+  },
+  "centella_family": {
+    "aliases": ["병풀", "센텔라", "시카"],
+    "matchContains": ["병풀", "centella", "센텔라"]
+  },
+  "madecassoside_family": {
+    "aliases": ["마데카소사이드"],
+    "matchContains": ["마데카소사이드", "madecassoside"]
+  },
+  "collagen_family": {
+    "aliases": ["콜라겐"],
+    "matchContains": ["콜라겐", "collagen"]
+  },
+  "retinol_family": {
+    "aliases": ["레티놀"],
+    "matchContains": ["레티놀", "retinol"]
+  },
+  "bifida_family": {
+    "aliases": ["비피다"],
+    "matchContains": ["비피다", "bifida"]
+  },
+  "caffeine_family": {
+    "aliases": ["카페인"],
+    "matchContains": ["카페인", "caffeine"]
+  },
+  "glutathione_family": {
+    "aliases": ["글루타치온"],
+    "matchContains": ["글루타치온", "glutathione"]
+  },
+  "adenosine_family": {
+    "aliases": ["아데노신"],
+    "matchContains": ["아데노신", "adenosine"]
+  },
+  "peptide_family": {
+    "aliases": ["펩타이드"],
+    "matchContains": ["펩타이드", "peptide"]
+  }
+}
