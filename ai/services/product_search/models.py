@@ -21,6 +21,7 @@ class ProductSearchDictionarySnapshot:
     line_terms: tuple[DictionaryEntry, ...]
     attributes: tuple[DictionaryEntry, ...]
     attribute_groups: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    ambiguous_terms: tuple[str, ...] = ()
     stopwords: frozenset[str] = field(default_factory=frozenset)
     brand_lookup: dict[str, str] = field(default_factory=dict)
     category_lookup: dict[str, str] = field(default_factory=dict)
@@ -30,6 +31,7 @@ class ProductSearchDictionarySnapshot:
     line_lookup: dict[str, str] = field(default_factory=dict)
     attribute_lookup: dict[str, str] = field(default_factory=dict)
     attribute_group_lookup: dict[str, str] = field(default_factory=dict)
+    ambiguous_term_lookup: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

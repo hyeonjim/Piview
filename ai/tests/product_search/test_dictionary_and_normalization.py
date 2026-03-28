@@ -233,6 +233,9 @@ class ProductSearchNegativeRuleTests(unittest.TestCase):
         self.assertTrue(has_negative_safe_pattern("무향료 토너", "향료"))
         self.assertFalse(has_negative_safe_pattern("향료가 포함된 토너", "향료"))
 
+    def test_negative_safe_patterns_cover_compound_forms(self) -> None:
+        self.assertTrue(has_negative_safe_pattern("향료 무첨가 토너", "향료"))
+
 
 class ConcernNormalizationTests(unittest.TestCase):
     def test_concern_normalization_does_not_depend_on_numeric_ids(self) -> None:

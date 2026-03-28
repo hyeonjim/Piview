@@ -86,6 +86,11 @@ def _structured_bonus(
         parsed_query.ingredient_terms,
         ingredient_expansion_lookup,
     )
+    ingredient_name_match_count = _match_ingredient_query_count(
+        normalize_text(result.name),
+        parsed_query.ingredient_terms,
+        ingredient_expansion_lookup,
+    )
     if parsed_query.brand_terms and _matches_brand(result, parsed_query.brand_terms):
         score += 25.0
     if parsed_query.category_terms and _matches_text(_category_text(result), parsed_query.category_terms):
@@ -94,6 +99,7 @@ def _structured_bonus(
         score += 10.0
     if parsed_query.ingredient_terms:
         score += 24.0 * ingredient_field_match_count
+        score += 10.0 * ingredient_name_match_count
         score += 12.0 * ingredient_match_count
     if parsed_query.attribute_group_terms and _matches_attribute_groups(
         searchable_text,

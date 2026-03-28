@@ -19,6 +19,21 @@ class ProductSearchEvaluationQuerysetTests(unittest.TestCase):
         self.assertEqual(len(case_ids), len(cases))
         self.assertTrue(all(case.expected_query_bucket for case in cases))
 
+    def test_single_token_ingredient_cases_do_not_conflict_with_ambiguous_bucket(self) -> None:
+        cases = build_product_search_evaluation_cases()
+        ingredient_queries = {
+            case.query
+            for case in cases
+            if case.dataset_bucket == "ingredient_only"
+        }
+        ambiguous_queries = {
+            case.query
+            for case in cases
+            if case.dataset_bucket == "ambiguous_keyword"
+        }
+
+        self.assertFalse(ingredient_queries & ambiguous_queries)
+
     def test_brand_coverage_metric_counts_requested_brands_in_top_k(self) -> None:
         case = next(
             item

@@ -43,11 +43,13 @@ def _build_snapshot() -> ProductSearchDictionarySnapshot:
             "판테놀": "판테놀",
             "향료": "향료",
             "세라마이드": "세라마이드엔피",
+            "에센셜오일": "에센셜오일",
         },
         ingredient_expansion_lookup={
             "판테놀": ("판테놀",),
             "향료": ("향료",),
             "세라마이드": ("세라마이드엔피", "세라마이드에이피"),
+            "에센셜오일": ("에센셜오일", "essential oil"),
         },
         line_lookup={
             "판테놀": "판테놀",
@@ -204,6 +206,52 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
         reranked = rerank_results([unsafe_result, safe_result], parsed, self.snapshot.attribute_groups)
 
         self.assertEqual(reranked[0].product_id, 1)
+
+    def test_ambiguous_constraints_prioritize_name_match(self) -> None:
+        parsed = product_search_query_parser.parse("독도", self.snapshot)
+        weak = ProductSearchResult(
+            product_id=1,
+            name="수분 진정 토너",
+            brand_name="라운드랩",
+            category_name="토너",
+            concern_names=[],
+            top_skin_type=None,
+            top2_skin_type=None,
+            document="수분 진정 토너",
+            description="독도 컨셉 토너",
+            ingredient_preview=None,
+            evidence_snippets=[],
+            matched_sources=["keyword"],
+            raw_score=20.0,
+        )
+        strong = ProductSearchResult(
+            product_id=2,
+            name="1025 독도 토너",
+            brand_name="라운드랩",
+            category_name="토너",
+            concern_names=[],
+            top_skin_type=None,
+            top2_skin_type=None,
+            document="1025 독도 토너",
+            description="진정 토너",
+            ingredient_preview=None,
+            evidence_snippets=[],
+            matched_sources=["exact"],
+            raw_score=18.0,
+        )
+
+        constrained = self.service._apply_ambiguous_constraints(
+            [weak, strong],
+            parsed,
+            self.snapshot,
+        )
+
+        self.assertEqual(constrained[0].product_id, 2)
+
+    def test_negative_parser_handles_missing_generated_family_alias_with_manual_expansion(self) -> None:
+        parsed = product_search_query_parser.parse("에센셜오일 없는 크림", self.snapshot)
+
+        self.assertEqual(parsed.negative_ingredient_terms, ("에센셜오일",))
 
     def test_long_query_rerank_prioritizes_strong_keyword_match(self) -> None:
         parsed = product_search_query_parser.parse(
