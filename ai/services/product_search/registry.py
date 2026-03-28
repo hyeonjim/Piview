@@ -95,6 +95,7 @@ class ProductSearchDictionaryRegistry:
         category_lookup = self._build_lookup(categories)
         product_type_lookup = self._build_lookup(product_types)
         ingredient_lookup = self._build_lookup(ingredients)
+        ingredient_expansion_lookup = self._build_expansion_lookup(ingredients)
         line_lookup = self._build_lookup(line_terms)
         attribute_lookup = self._build_lookup(attributes)
         attribute_group_lookup = self._build_attribute_group_lookup(attribute_groups)
@@ -113,6 +114,7 @@ class ProductSearchDictionaryRegistry:
             category_lookup=category_lookup,
             product_type_lookup=product_type_lookup,
             ingredient_lookup=ingredient_lookup,
+            ingredient_expansion_lookup=ingredient_expansion_lookup,
             line_lookup=line_lookup,
             attribute_lookup=attribute_lookup,
             attribute_group_lookup=attribute_group_lookup,
@@ -199,6 +201,33 @@ class ProductSearchDictionaryRegistry:
                 if normalized_alias:
                     lookup[normalized_alias] = canonical
         return lookup
+
+    def _build_expansion_lookup(
+        self,
+        entries: list[DictionaryEntry],
+    ) -> dict[str, tuple[str, ...]]:
+        # ingredient는 generic query 하나가 여러 DB canonical을 가리킬 수 있다.
+        # 예: "세라마이드" -> 세라마이드엔피/에이피/엔에스 ...
+        # parser는 alias 존재 여부만 보고 query term을 ingredient로 인정하고,
+        # service는 expansion lookup으로 실제 prefilter/ranking 대상 canonical 집합을 확장한다.
+        expansions: dict[str, set[str]] = {}
+        for entry in entries:
+            canonical = normalize_text(entry.canonical)
+            values = {canonical}
+            values.update(
+                normalize_text(alias)
+                for alias in entry.aliases
+                if normalize_text(alias)
+            )
+            for alias in values:
+                bucket = expansions.setdefault(alias, set())
+                bucket.add(canonical)
+
+        return {
+            alias: tuple(sorted(values))
+            for alias, values in expansions.items()
+            if alias and values
+        }
 
     def _build_attribute_group_lookup(
         self,

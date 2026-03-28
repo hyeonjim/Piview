@@ -49,6 +49,63 @@ class ProductSearchDictionarySyncTests(unittest.TestCase):
         self.assertIn("나이아신아마이드", by_canonical)
         self.assertIn("panthenol", by_canonical)
 
+    def test_build_ingredient_entries_adds_generated_family_aliases(self) -> None:
+        rows = [
+            ProductSearchDataRow(
+                product_id=1,
+                name="세라마이드 크림",
+                brand_name="브랜드",
+                category_name="크림",
+                category_id=1,
+                big_category_id=1,
+                description=None,
+                top_skin_type=None,
+                top2_skin_type=None,
+                concern_names=[],
+                ingredient_text_ko="정제수, 세라마이드엔피, 병풀추출물, 티트리잎오일",
+                ingredient_text_en="water, ceramide np, centella asiatica extract, tea tree leaf oil",
+            ),
+        ]
+
+        entries = ProductSearchDictionarySyncer()._build_ingredient_entries(
+            rows=rows,
+            stopwords=set(),
+            blocked_terms=set(),
+        )
+        by_canonical = {entry.canonical: set(entry.aliases) for entry in entries}
+
+        self.assertIn("세라마이드", by_canonical["세라마이드엔피"])
+        self.assertIn("병풀", by_canonical["병풀추출물"])
+        self.assertIn("티트리", by_canonical["티트리잎오일"])
+
+    def test_build_ingredient_entries_adds_negative_family_aliases(self) -> None:
+        rows = [
+            ProductSearchDataRow(
+                product_id=1,
+                name="테스트 토너",
+                brand_name="브랜드",
+                category_name="토너",
+                category_id=1,
+                big_category_id=1,
+                description=None,
+                top_skin_type=None,
+                top2_skin_type=None,
+                concern_names=[],
+                ingredient_text_ko="정제수, 향료, 변성알코올",
+                ingredient_text_en="water, fragrance, alcohol denat.",
+            ),
+        ]
+
+        entries = ProductSearchDictionarySyncer()._build_ingredient_entries(
+            rows=rows,
+            stopwords=set(),
+            blocked_terms=set(),
+        )
+        by_canonical = {entry.canonical: set(entry.aliases) for entry in entries}
+
+        self.assertIn("향료", by_canonical["fragrance"])
+        self.assertIn("알코올", by_canonical["변성알코올"])
+
 
 class ProductSearchNegativeRuleTests(unittest.TestCase):
     def test_negative_safe_patterns_are_product_search_specific(self) -> None:

@@ -12,6 +12,7 @@ def rerank_results(
     results: list[ProductSearchResult],
     parsed_query: ParsedSearchQuery,
     attribute_groups: dict[str, tuple[str, ...]] | None = None,
+    ingredient_expansion_lookup: dict[str, tuple[str, ...]] | None = None,
 ) -> list[ProductSearchResult]:
     # 이 reranker는 fuse 결과 위에 product_search 전용 structured bias를 얹는 마지막 단계다.
     # exact/fuzzy/keyword/vector source가 섞여 들어와도, 최종 순서는 parsed_query 기준으로 다시 정렬한다.
@@ -21,7 +22,12 @@ def rerank_results(
     scored: list[tuple[float, int, ProductSearchResult]] = []
     for index, result in enumerate(results):
         score = float(result.hybrid_score or result.raw_score or 0.0)
-        score += _structured_bonus(result, parsed_query, attribute_groups or {})
+        score += _structured_bonus(
+            result,
+            parsed_query,
+            attribute_groups or {},
+            ingredient_expansion_lookup or {},
+        )
         scored.append((score, index, result))
 
     scored.sort(key=lambda item: (item[0], -item[1]), reverse=True)
@@ -61,6 +67,7 @@ def _structured_bonus(
     result: ProductSearchResult,
     parsed_query: ParsedSearchQuery,
     attribute_groups: dict[str, tuple[str, ...]],
+    ingredient_expansion_lookup: dict[str, tuple[str, ...]],
 ) -> float:
     # bonus 계산은 service._apply_structured_constraints보다 더 가벼운 전역 재정렬 용도다.
     # 여기서는 source와 무관하게 각 결과 자체가 query intent를 얼마나 설명하는지 본다.
@@ -69,6 +76,16 @@ def _structured_bonus(
     ingredient_text = normalize_text(result.ingredient_preview)
     strong_keyword_terms = _strong_keyword_terms(parsed_query, attribute_groups)
     weak_keyword_terms = _weak_keyword_terms(parsed_query, attribute_groups)
+    ingredient_match_count = _match_ingredient_query_count(
+        searchable_text,
+        parsed_query.ingredient_terms,
+        ingredient_expansion_lookup,
+    )
+    ingredient_field_match_count = _match_ingredient_query_count(
+        ingredient_text,
+        parsed_query.ingredient_terms,
+        ingredient_expansion_lookup,
+    )
     if parsed_query.brand_terms and _matches_brand(result, parsed_query.brand_terms):
         score += 25.0
     if parsed_query.category_terms and _matches_text(_category_text(result), parsed_query.category_terms):
@@ -76,8 +93,8 @@ def _structured_bonus(
     if parsed_query.product_type_terms and _matches_text(searchable_text, parsed_query.product_type_terms):
         score += 10.0
     if parsed_query.ingredient_terms:
-        score += 18.0 * _match_count(ingredient_text, parsed_query.ingredient_terms)
-        score += 8.0 * _match_count(searchable_text, parsed_query.ingredient_terms)
+        score += 24.0 * ingredient_field_match_count
+        score += 12.0 * ingredient_match_count
     if parsed_query.attribute_group_terms and _matches_attribute_groups(
         searchable_text,
         parsed_query.attribute_group_terms,
@@ -141,6 +158,29 @@ def _match_count(text: str, terms: tuple[str, ...]) -> int:
     if not text:
         return 0
     return sum(1 for term in terms if term and term in text)
+
+
+def _match_ingredient_query_count(
+    text: str,
+    ingredient_terms: tuple[str, ...],
+    ingredient_expansion_lookup: dict[str, tuple[str, ...]],
+) -> int:
+    if not text or not ingredient_terms:
+        return 0
+
+    match_count = 0
+    normalized_text = normalize_text(text)
+    for ingredient_term in ingredient_terms:
+        normalized_term = normalize_text(ingredient_term)
+        if not normalized_term:
+            continue
+        candidates = (
+            normalized_term,
+            *ingredient_expansion_lookup.get(normalized_term, ()),
+        )
+        if any(candidate and candidate in normalized_text for candidate in candidates):
+            match_count += 1
+    return match_count
 
 
 def _weak_keyword_terms(

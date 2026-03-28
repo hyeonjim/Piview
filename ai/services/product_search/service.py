@@ -322,7 +322,12 @@ class ProductSearchService:
                 missing_categories=set(),
                 config=config,
             )
-            reranked = rerank_results(fused, parsed_query, snapshot.attribute_groups)
+            reranked = rerank_results(
+                fused,
+                parsed_query,
+                snapshot.attribute_groups,
+                snapshot.ingredient_expansion_lookup,
+            )
             constrained = self._apply_structured_constraints(reranked, parsed_query, snapshot)
 
         final_results = constrained[:search_limit]
@@ -438,6 +443,7 @@ class ProductSearchService:
         strong_terms = self._resolve_strong_keyword_terms(parsed_query, snapshot)
         weak_terms = self._resolve_weak_keyword_terms(parsed_query, snapshot)
         require_strong_match = self._requires_strong_keyword_match(parsed_query, snapshot)
+        ingredient_match_terms = self._resolve_ingredient_match_terms(parsed_query, snapshot)
 
         scored: list[tuple[tuple[float, ...], int, ProductSearchResult]] = []
         for index, result in enumerate(results):
@@ -446,10 +452,19 @@ class ProductSearchService:
             primary_match_count = float(self._match_term_count(searchable_text, primary_terms))
             strong_match_count = float(self._match_term_count(searchable_text, strong_terms))
             weak_match_count = float(self._match_term_count(searchable_text, weak_terms))
+            ingredient_match_count = float(
+                self._match_ingredient_query_count(
+                    searchable_text,
+                    parsed_query.ingredient_terms,
+                    ingredient_match_terms,
+                )
+            )
             lexical_source_count = float(
                 sum(source in {"exact", "fuzzy", "keyword", "structured"} for source in result.matched_sources)
             )
             match_key = (
+                1.0 if ingredient_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
+                ingredient_match_count,
                 1.0 if brand_match and primary_match_count > 0 else 0.0,
                 brand_match,
                 primary_match_count,
@@ -469,6 +484,20 @@ class ProductSearchService:
             matching = [
                 item for item in ordered
                 if self._match_term_count(self._searchable_text(item), strong_terms) > 0
+            ]
+            if matching:
+                others = [item for item in ordered if item not in matching]
+                ordered = matching + others
+
+        if parsed_query.ingredient_terms:
+            matching = [
+                item
+                for item in ordered
+                if self._match_ingredient_query_count(
+                    self._searchable_text(item),
+                    parsed_query.ingredient_terms,
+                    ingredient_match_terms,
+                ) > 0
             ]
             if matching:
                 others = [item for item in ordered if item not in matching]
@@ -533,6 +562,7 @@ class ProductSearchService:
         if parsed_query.brand_terms:
             seen_ids: set[int] = set()
             per_brand_limit = min(max(candidate_limit * 2, 60), 180)
+            ingredient_filter_terms = self._resolve_ingredient_match_terms(parsed_query, snapshot)
             for brand in parsed_query.brand_terms:
                 brand_rows = product_search_data_repository.search_products_by_terms(
                     terms=[brand],
@@ -541,7 +571,7 @@ class ProductSearchService:
                     category_ids=category_ids,
                     big_category_id=big_category_id,
                     include_ingredient_text_in_prefilter=include_ingredient_text_in_prefilter,
-                    ingredient_must_terms=parsed_query.ingredient_terms if parsed_query.ingredient_terms else None,
+                    ingredient_must_terms=ingredient_filter_terms if ingredient_filter_terms else None,
                     trace_label="structured.brand_seed",
                 )
                 for row in brand_rows:
@@ -564,6 +594,7 @@ class ProductSearchService:
             terms = list(focus_terms or parsed_query.search_terms())
             if not terms:
                 return []
+            ingredient_filter_terms = self._resolve_ingredient_match_terms(parsed_query, snapshot)
             rows = product_search_data_repository.search_products_by_terms(
                 terms=terms,
                 limit=min(max(candidate_limit * 2, 80), 240),
@@ -571,7 +602,7 @@ class ProductSearchService:
                 category_ids=category_ids,
                 big_category_id=big_category_id,
                 include_ingredient_text_in_prefilter=include_ingredient_text_in_prefilter,
-                ingredient_must_terms=parsed_query.ingredient_terms if parsed_query.ingredient_terms else None,
+                ingredient_must_terms=ingredient_filter_terms if ingredient_filter_terms else None,
                 trace_label="structured.generic_seed",
             )
 
@@ -632,7 +663,17 @@ class ProductSearchService:
         weak_keyword_terms = self._resolve_weak_keyword_terms(parsed_query, snapshot)
         require_strong_match = self._requires_strong_keyword_match(parsed_query, snapshot)
         strong_match_count = self._match_term_count(searchable_text, strong_keyword_terms)
-        ingredient_field_match_count = self._match_term_count(ingredient_text, parsed_query.ingredient_terms)
+        ingredient_match_terms = self._resolve_ingredient_match_terms(parsed_query, snapshot)
+        ingredient_field_match_count = self._match_ingredient_query_count(
+            ingredient_text,
+            parsed_query.ingredient_terms,
+            ingredient_match_terms,
+        )
+        ingredient_searchable_match_count = self._match_ingredient_query_count(
+            searchable_text,
+            parsed_query.ingredient_terms,
+            ingredient_match_terms,
+        )
 
         score = 0.0
         brand_match = any(self._matches_brand_text(brand_text, term) for term in parsed_query.brand_terms)
@@ -643,8 +684,8 @@ class ProductSearchService:
         if parsed_query.product_type_terms:
             score += 28.0 * sum(term in searchable_text for term in parsed_query.product_type_terms)
         if parsed_query.ingredient_terms:
-            score += 28.0 * ingredient_field_match_count
-            score += 12.0 * sum(term in searchable_text for term in parsed_query.ingredient_terms)
+            score += 36.0 * ingredient_field_match_count
+            score += 18.0 * ingredient_searchable_match_count
         if attribute_group_terms:
             score += 18.0 * sum(term in searchable_text for term in attribute_group_terms)
         if parsed_query.attribute_terms:
@@ -737,6 +778,50 @@ class ProductSearchService:
             seen.add(normalized_term)
             weak_terms.append(normalized_term)
         return tuple(weak_terms)
+
+    def _resolve_ingredient_match_terms(
+        self,
+        parsed_query,
+        snapshot: ProductSearchDictionarySnapshot,
+    ) -> tuple[str, ...]:
+        # ingredient query 하나가 여러 DB canonical을 확장할 수 있으므로
+        # retrieval/ranking 단계에서는 expansion lookup 전체를 함께 본다.
+        resolved_terms: list[str] = []
+        seen: set[str] = set()
+        for ingredient_term in parsed_query.ingredient_terms:
+            normalized_term = normalize_text(ingredient_term)
+            for candidate in (normalized_term, *snapshot.ingredient_expansion_lookup.get(normalized_term, ())):
+                normalized_candidate = normalize_text(candidate)
+                if not normalized_candidate or normalized_candidate in seen:
+                    continue
+                seen.add(normalized_candidate)
+                resolved_terms.append(normalized_candidate)
+        return tuple(resolved_terms)
+
+    def _match_ingredient_query_count(
+        self,
+        searchable_text: str,
+        ingredient_terms: tuple[str, ...],
+        ingredient_match_terms: tuple[str, ...],
+    ) -> int:
+        if not searchable_text or not ingredient_terms:
+            return 0
+
+        match_count = 0
+        for ingredient_term in ingredient_terms:
+            normalized_term = normalize_text(ingredient_term)
+            if not normalized_term:
+                continue
+            candidates = tuple(
+                candidate
+                for candidate in ingredient_match_terms
+                if candidate == normalized_term
+                or normalized_term in candidate
+                or candidate in normalized_term
+            ) or (normalized_term,)
+            if any(candidate in searchable_text for candidate in candidates):
+                match_count += 1
+        return match_count
 
     def _requires_strong_keyword_match(
         self,

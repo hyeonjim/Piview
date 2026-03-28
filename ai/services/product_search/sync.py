@@ -66,6 +66,7 @@ _PRODUCT_TYPE_MIN_FREQUENCY = 3
 _PRODUCT_TYPE_LIMIT = 200
 _INGREDIENT_MIN_FREQUENCY = 1
 _INGREDIENT_LIMIT = 5000
+_INGREDIENT_ALIAS_LIMIT = 12
 _LINE_TERM_MIN_FREQUENCY = 3
 _LINE_TERM_LIMIT = 300
 _ATTRIBUTE_MIN_FREQUENCY = 5
@@ -130,6 +131,40 @@ _ATTRIBUTE_PARTICLE_SUFFIXES = (
     "로",
     "도",
     "만",
+)
+_INGREDIENT_TRAILING_SUFFIXES = (
+    "추출발효여과물",
+    "발효여과물",
+    "꽃/잎/줄기추출물",
+    "캘러스세포외소포",
+    "캘러스배양추출물",
+    "폴리사카라이드",
+    "잎추출물",
+    "꽃추출물",
+    "뿌리추출물",
+    "열매추출물",
+    "줄기추출물",
+    "씨추출물",
+    "종자추출물",
+    "껍질추출물",
+    "잎오일",
+    "잎가루",
+    "잎즙",
+    "잎수",
+    "꽃가루",
+    "꽃수",
+    "꽃오일",
+    "열매오일",
+    "씨오일",
+    "종자오일",
+    "왁스",
+    "오일",
+    "가루",
+    "즙",
+    "수",
+    "추출물",
+    "추출액",
+    "추출",
 )
 
 
@@ -326,11 +361,22 @@ class ProductSearchDictionarySyncer:
                     normalized = normalize_text(ingredient)
                     if self._is_valid_ingredient_term(normalized, stopwords, blocked_terms):
                         counter[normalized] += 1
-        return self._entries_from_counter(
-            counter,
-            min_frequency=_INGREDIENT_MIN_FREQUENCY,
-            limit=_INGREDIENT_LIMIT,
-        )
+
+        entries: list[DictionaryEntry] = []
+        for canonical, frequency in counter.most_common():
+            if frequency < _INGREDIENT_MIN_FREQUENCY:
+                continue
+            aliases = self._build_ingredient_aliases(canonical, counter)
+            entries.append(
+                DictionaryEntry(
+                    canonical=canonical,
+                    aliases=aliases,
+                    frequency=frequency,
+                )
+            )
+            if len(entries) >= _INGREDIENT_LIMIT:
+                break
+        return entries
 
     def _build_attribute_entries(
         self,
@@ -492,6 +538,124 @@ class ProductSearchDictionarySyncer:
         if len(term) > 120:
             return False
         return True
+
+    def _build_ingredient_aliases(
+        self,
+        canonical: str,
+        counter: Counter[str],
+    ) -> tuple[str, ...]:
+        # ingredient alias는 수동 예시 목록을 두지 않고 DB canonical에서 파생시킨다.
+        # 다만 세라마이드/히알루론산/비타민C처럼 사용자가 generic family term으로 검색하는 패턴은
+        # 전성분 표기와 1:1이 아닌 경우가 많아, family-level normalization을 generated alias에만 한정해 붙인다.
+        aliases: set[str] = {canonical}
+        lower_canonical = canonical.lower()
+
+        stripped = canonical
+        for suffix in _INGREDIENT_TRAILING_SUFFIXES:
+            if stripped.endswith(suffix) and len(stripped) - len(suffix) >= 2:
+                stripped = stripped[: -len(suffix)]
+                aliases.add(stripped)
+                break
+
+        for family_alias in self._derive_ingredient_family_aliases(canonical, lower_canonical):
+            aliases.add(family_alias)
+
+        filtered = [
+            normalize_whitespace(alias)
+            for alias in aliases
+            if normalize_whitespace(alias)
+        ]
+        filtered.sort(
+            key=lambda alias: (
+                0 if alias == canonical else 1,
+                -counter.get(normalize_text(alias), 0),
+                len(alias),
+                alias,
+            )
+        )
+        return tuple(filtered[:_INGREDIENT_ALIAS_LIMIT])
+
+    def _derive_ingredient_family_aliases(
+        self,
+        canonical: str,
+        lower_canonical: str,
+    ) -> set[str]:
+        aliases: set[str] = set()
+        is_volatile_alcohol = canonical in {
+            "alcohol",
+            "변성알코올",
+            "alcohol denat.",
+            "에탄올",
+            "ethanol",
+            "에스디알코올40-b",
+            "sd alcohol 40-b",
+            "아이소프로필알코올",
+            "isopropyl alcohol",
+        }
+
+        if canonical.startswith("세라마이드"):
+            aliases.add("세라마이드")
+        if canonical.startswith("판테놀") or "panthenol" in lower_canonical:
+            aliases.add("판테놀")
+        if canonical.startswith("나이아신아마이드") or "niacinamide" in lower_canonical:
+            aliases.add("나이아신아마이드")
+        if "하이알루로" in canonical or "히알루로" in canonical or "hyaluro" in lower_canonical:
+            aliases.update({"히알루론산", "히알루론"})
+        if "ascorb" in lower_canonical or "아스코" in canonical or canonical.startswith("비타민c"):
+            aliases.add("비타민c")
+        if (
+            canonical == "향료"
+            or "fragrance" in lower_canonical
+            or "parfum" in lower_canonical
+            or "perfume" in lower_canonical
+        ):
+            aliases.update({"향료", "fragrance", "parfum"})
+        if is_volatile_alcohol:
+            aliases.update({"알코올", "에탄올"})
+        if "프로폴리스" in canonical or "propolis" in lower_canonical:
+            aliases.add("프로폴리스")
+        if "티트리" in canonical or "tea tree" in lower_canonical:
+            aliases.add("티트리")
+        if "에센셜오일" in canonical or "essential oil" in lower_canonical:
+            aliases.add("에센셜오일")
+        if "알로에" in canonical or "aloe" in lower_canonical:
+            aliases.add("알로에")
+        if "스쿠알란" in canonical or "squalane" in lower_canonical:
+            aliases.add("스쿠알란")
+        if "어성초" in canonical or "houttuynia" in lower_canonical:
+            aliases.add("어성초")
+        if "병풀" in canonical or "centella" in lower_canonical or "센텔라" in canonical:
+            aliases.update({"병풀", "센텔라"})
+        if "시카" in canonical or "centella" in lower_canonical or "병풀" in canonical or "센텔라" in canonical:
+            aliases.add("시카")
+        if "마데카소사이드" in canonical or "madecassoside" in lower_canonical:
+            aliases.add("마데카소사이드")
+        if "콜라겐" in canonical or "collagen" in lower_canonical:
+            aliases.add("콜라겐")
+        if "레티놀" in canonical or "retinol" in lower_canonical:
+            aliases.add("레티놀")
+        if "프로폴리스" in canonical or "propolis" in lower_canonical:
+            aliases.add("프로폴리스")
+        if "비피다" in canonical or "bifida" in lower_canonical:
+            aliases.add("비피다")
+        if "카페인" in canonical or "caffeine" in lower_canonical:
+            aliases.add("카페인")
+        if "글루타치온" in canonical or "glutathione" in lower_canonical:
+            aliases.add("글루타치온")
+        if "아데노신" in canonical or "adenosine" in lower_canonical:
+            aliases.add("아데노신")
+        if "펩타이드" in canonical or "peptide" in lower_canonical:
+            aliases.add("펩타이드")
+        if canonical.startswith("비타민b5"):
+            aliases.add("비타민b5")
+        if "판테놀" in canonical or "panthenol" in lower_canonical:
+            aliases.add("비타민b5")
+
+        return {
+            normalize_text(alias)
+            for alias in aliases
+            if normalize_text(alias) and len(normalize_text(alias)) >= 2
+        }
 
 
 product_search_dictionary_syncer = ProductSearchDictionarySyncer()
