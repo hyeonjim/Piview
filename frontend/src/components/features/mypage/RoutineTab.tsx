@@ -2,7 +2,7 @@
 
 import { toast } from "sonner";
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Plus, X, Scan, SquarePen, Save, ChessQueen } from "lucide-react";
+import { Plus, X, Scan, SquarePen, Save, ChessQueen, CircleAlert, AlignLeft } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -33,8 +33,6 @@ import type {
 import type { ProductSummaryResponse } from "@/types/product/product";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
 
-// SVG 점수 링 둘레 상수
-const CIRCUMFERENCE = 138;
 
 // 드래그 상태 타입 — 스텝 간 이동 지원
 interface DragState {
@@ -113,6 +111,10 @@ function buildDraftItems(
 export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   // 성별에 따른 루틴 스텝 가져오기
   const currentGender = useUserStore(selectGender);
+  // 성분 충돌 상태 — Zustand store (페이지 이동에도 유지)
+  const conflictMessage = useRoutineStore((s) => s.conflictMessage);
+  const conflictProductIds = useRoutineStore((s) => s.conflictProductIds);
+  const clearConflictStore = useRoutineStore((s) => s.clearConflict);
   const user = useUserStore((state) => state.user);
   const routineSteps = useMemo(
     () => getRoutineSteps(currentGender),
@@ -133,6 +135,14 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     useLoadRoutineToDraftMutation();
   const { mutate: updateRoutine, isPending: isUpdating } =
     useUpdateRoutineMutation();
+
+  // draft에서 충돌 제품이 없어지면 자동 초기화
+  useEffect(() => {
+    if (conflictProductIds.length === 0) return;
+    const draftIds = draftItems.map((item) => item.product.productId);
+    const allStillInDraft = conflictProductIds.every((id) => draftIds.includes(id));
+    if (!allStillInDraft) clearConflictStore();
+  }, [draftItems, conflictProductIds, clearConflictStore]);
 
   // ── PICK 배지 추적 (localStorage 기반) ────────────────────────────────
   const isProductRecommended = useRoutineStore((state) => state.isRecommended);
@@ -159,9 +169,16 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   const [editingRoutineTitle, setEditingRoutineTitle] = useState<string>("");
   // 사용자가 명시적으로 새 루틴 작성 모드로 진입했는지 여부 — 자동 선택 방지 플래그
   const [isNewRoutineMode, setIsNewRoutineMode] = useState(false);
+  // AI 루틴 분석 카드 표시 여부 — 버튼 클릭 시 토글
+  const [showRoutineScore, setShowRoutineScore] = useState(false);
 
   // 카드 클릭 시 상세 보기 대상 루틴 ID — store에서 관리해 재방문 시 복원
   const selectedRoutineId = useRoutineStore((state) => state.selectedRoutineId);
+
+  // 선택된 루틴이 바뀌면 AI 분석 카드 닫기
+  useEffect(() => {
+    setShowRoutineScore(false);
+  }, [selectedRoutineId]);
   const setSelectedRoutineId = useRoutineStore(
     (state) => state.setSelectedRoutineId,
   );
@@ -471,6 +488,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     setEditingRoutineTitle("");
     setSelectedRoutineId(null);
     setIsNewRoutineMode(true);
+    clearConflictStore();
     clearDraft(undefined, {
       onSuccess: () => notify("새 루틴 작성을 시작합니다."),
       onError: () => notify("초기화에 실패했습니다."),
@@ -508,6 +526,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       onSuccess: () => {
         // localStorage에서 추천 정보 제거
         removeRecommended(productId);
+        // 제품 삭제 시 충돌 상태 초기화
+        clearConflictStore();
       },
       onError: () => notify("제품 삭제에 실패했습니다."),
     });
@@ -536,7 +556,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       {routineList.length > 0 && (
         <div className="mb-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[15px] font-bold text-text-secondary">내루틴 리스트</p>
+            <p className="flex items-center gap-1 text-[16px] mt-2 font-bold text-[#6b6a69]"><AlignLeft size={16} />내루틴 리스트</p>
             <button
               onClick={handleNewRoutine}
               className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full text-[14px] text-white cursor-pointer bg-[#ece7bb] shadow-xs active:scale-[0.97] transition-transform"
@@ -563,11 +583,12 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                   handleDeleteRoutine(saved.routineId, saved.title)
                 }
                 onClick={() => {
-                    // 다른 루틴 카드 선택 시 Edit mode 및 새 루틴 모드 종료
+                    // 다른 루틴 카드 선택 시 Edit mode 및 새 루틴 모드 종료, 충돌 배너 초기화
                     setEditingRoutineId(null);
                     setEditingRoutineTitle("");
                     setIsNewRoutineMode(false);
                     setSelectedRoutineId(saved.routineId);
+                    clearConflictStore();
                   }}
               />
             ))}
@@ -678,6 +699,22 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         </p>
       </div>
 
+      {/* ── 성분 충돌 경고 배너 — 1단계 클렌저 위에 표시, [제품명] 빨간색 강조 ── */}
+      {conflictMessage && (
+        <div className="mx-3 mb-1 flex items-start gap-2 rounded-xl px-3 py-2.5 bg-[#fff8e1] border border-[#f5c97a] text-[13px] font-semibold text-[#7a5c00]">
+          <CircleAlert size={16} className="shrink-0 mt-0.5 text-[#d97706]" />
+          <span>
+            {conflictMessage.split(/(\[[^\]]+\])/).map((part, i) =>
+              /^\[[^\]]+\]$/.test(part) ? (
+                <span key={i} className="text-[#c0392b]">{part}</span>
+              ) : (
+                part
+              )
+            )}
+          </span>
+        </div>
+      )}
+
       {/* ── 루틴 스텝별 섹션 ── */}
       {routineSteps.map((step, stepIndex) => {
         const products = viewByStep[step.code] ?? [];
@@ -766,6 +803,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                       isDropTarget={isProductDropTarget}
                       isEditMode={canDrag}
                       isRecommended={isProductRecommended(product.productId)}
+                      hasConflict={conflictProductIds.includes(product.productId)}
                       onDragHandlePointerDown={
                         canDrag ? handleDragHandlePointerDown : () => {}
                       }
@@ -782,41 +820,39 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         );
       })}
 
-      {/* ── 루틴 종합 점수 ── */}
-      <div className="mt-10 p-4 rounded-2xl bg-(--color-warm-bg) border border-[#E2DDD8]">
-        <div className="flex items-center gap-3">
-          <div className="relative w-14 h-14 shrink-0 flex items-center justify-center">
-            <svg width="60" height="60" className="absolute">
-              <circle
-                cx="28"
-                cy="28"
-                r="22"
-                fill="none"
-                stroke="var(--color-border-subtle)"
-                strokeWidth="4"
-              />
-              <circle
-                cx="28"
-                cy="28"
-                r="22"
-                fill="none"
-                stroke={
-                  filledCount > 0 ? "#A69D92" : "var(--color-border-subtle)"
-                }
-                strokeWidth="4"
-                strokeDasharray={`${(filledCount / routineSteps.length) * CIRCUMFERENCE} ${CIRCUMFERENCE}`}
-                strokeLinecap="round"
-                transform="rotate(-90 28 28)"
-                style={{ transition: "stroke-dasharray 0.6s ease" }}
-              />
-            </svg>
-            <span className="relative z-10 text-[13px] font-semibold text-text-muted">
-              85점
-            </span>
+      {/* ── AI 루틴 분석 버튼 + 카드 ── */}
+      <button
+        onClick={() => setShowRoutineScore((previous) => !previous)}
+        className="mt-10 w-50 mx-auto flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 border-[#ddd3f1] bg-[#f7f5fa] text-[16px] font-bold text-[#7b54b4] cursor-pointer transition-colors hover:bg-[#eae0f7]"
+        style={{
+          boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(130, 100, 180, 0.14), 0 1px 4px rgba(130, 100, 180, 0.08)",
+        }}
+      >
+        <div className="size-6 rounded-md flex items-center justify-center bg-[#dccdf0]">
+          <ChessQueen size={14} className="text-white" />
+        </div>
+        AI 루틴 분석
+      </button>
+
+      {/* 분석 카드 — 버튼 클릭 시 표시 */}
+      {showRoutineScore && (
+        <div
+          className="mt-3 rounded-2xl p-5 border-2 border-[#e0d8f0] bg-[#f8f5fc]"
+          style={{
+            boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(130, 100, 180, 0.14), 0 1px 4px rgba(130, 100, 180, 0.08)",
+          }}
+        >
+          {/* 헤더 */}
+          <div className="flex items-center gap-2 mb-3">
+            <div className="size-6 rounded-lg flex items-center justify-center bg-[#c4aee0]">
+              <ChessQueen size={12} className="text-white" />
+            </div>
+            <p className="text-[16px] font-bold text-[#5a5060]">분석 결과</p>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-text-primary mb-1">
-              루틴 종합 점수
+
+          {/* 점수 + 메시지 */}
+          <div className="flex flex-col gap-1.5">
+            <p className="text-[28px] font-bold text-[#7a5ba8] leading-none">
             </p>
             <p className="text-xs font-bold text-text-muted leading-relaxed break-keep">
               {filledCount === 0
@@ -827,7 +863,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             </p>
           </div>
         </div>
-      </div>
+      )}
 
       {/* ── 루틴 저장 이름 입력 모달 ── */}
       {showSaveModal && (
@@ -893,6 +929,8 @@ interface RoutineProductCardProps {
   isEditMode: boolean;
   /** 추천 제품 여부 - PICK 배지 표시 */
   isRecommended?: boolean;
+  /** 성분 충돌 여부 - CircleAlert 아이콘 표시 */
+  hasConflict?: boolean;
   priority?: boolean;
   onDragHandlePointerDown: (
     event: React.PointerEvent<HTMLDivElement>,
@@ -910,6 +948,7 @@ function RoutineProductCard({
   isDropTarget,
   isEditMode,
   isRecommended = false,
+  hasConflict = false,
   onDragHandlePointerDown,
   onRemove,
   priority = false,
@@ -920,7 +959,7 @@ function RoutineProductCard({
       data-drag-item
       data-step-code={stepCode}
       data-item-index={index}
-      className="relative h-25 rounded-2xl overflow-hidden bg-white"
+      className="relative h-27 rounded-2xl overflow-hidden bg-white"
       style={{
         opacity: isDragging ? 0.4 : 1,
         border: isDropTarget ? "2px solid #A69D92" : "none",
@@ -955,11 +994,18 @@ function RoutineProductCard({
               : undefined
           }
         >
-          {/* PICK 배지 — 이미지 영역 왼쪽 상단 */}
-          {isRecommended && (
-            <span className="absolute top-2 left-1.5 z-10 text-[10px] font-semibold px-1.5 py-0.5 rounded-[10px] tracking-[0.06em] bg-[#faebf2] text-[#707173]">
-              PICK
-            </span>
+          {/* 왼쪽 상단 배지 영역 — PICK 배지 + 충돌 아이콘 */}
+          {(isRecommended || hasConflict) && (
+            <div className="absolute top-2 left-1.5 z-10 flex flex-col gap-1 items-start">
+              {isRecommended && (
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-[10px] tracking-[0.06em] bg-[#f0dfe7] text-[#707173]">
+                  PICK
+                </span>
+              )}
+              {hasConflict && (
+                <CircleAlert size={15} className="text-[#d97706]" />
+              )}
+            </div>
           )}
 
           {/* 이미지 — py-5 패딩을 주기 위해 relative 래퍼로 감쌈 (fill은 positioned 조상 기준) */}
@@ -985,7 +1031,7 @@ function RoutineProductCard({
         {/* 텍스트 영역 */}
         <Link
           href={`/product/${product.productId}`}
-          className="flex-1 px-1 py-1 mt-1 min-w-0 no-underline"
+          className="flex-1 px-1 mt-1 no-underline"
         >
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-[13px] font-semibold text-[#7e6b52] tracking-[0.08em]">
@@ -1004,7 +1050,7 @@ function RoutineProductCard({
             {product.skinTypes?.slice(0, 1).map((skinType) => (
               <span
                 key={skinType}
-                className="inline-block mb-1 mr-1.5 text-[10px] font-medium px-1.5 py-px rounded bg-[#f7f2ea] text-[#514a42]"
+                className="inline-block mb-1 mr-1.5 text-[10px] font-medium px-1.5 py-px rounded-[5px] border bg-[#f7f2ea] text-[#514a42]"
               >
                 {fromSkinTypeEnum(skinType)}
               </span>
@@ -1047,8 +1093,8 @@ function SavedRoutineCard({
           : "border border-[#e2ddd8] bg-white"
       }`}
       style={{
-        minWidth: "calc(28% - 6px)",
-        maxWidth: "calc(28% - 6px)",
+        minWidth: "calc(30% - 6px)",
+        maxWidth: "calc(50% - 6px)",
         scrollSnapAlign: "start",
         scrollSnapStop: "always",
         transform: isSelected ? "scale(1.03)" : "scale(1)",

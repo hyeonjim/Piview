@@ -23,6 +23,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { routineService } from "@/services/routine";
 import type {
   DraftItemDto,
+  DraftUpdateResponse,
   RoutineListResponse,
   RoutineResponse,
   CreateRoutineRequest,
@@ -104,18 +105,17 @@ export function useRoutineDetailQuery(routineId: number | undefined) {
 export function useAddDraftItemMutation() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({
-      columnId,
-      productId,
-    }: {
-      columnId: number;
-      productId: number;
-    }) => routineService.addDraft(columnId, productId),
+  return useMutation<DraftUpdateResponse, Error, { columnId: number; productId: number }>({
+    mutationFn: ({ columnId, productId }) =>
+      routineService.addDraft(columnId, productId).then((res) => res.data.data),
 
-    onSuccess: () => {
-      // 드래프트 캐시 무효화 — 서버에서 최신 상태 재조회
-      queryClient.invalidateQueries({ queryKey: queryKeys.routineDraft });
+    onSuccess: (data) => {
+      // updatedDraft로 드래프트 캐시 직접 갱신
+      if (data.updatedDraft) {
+        queryClient.setQueryData<DraftItemDto[]>(queryKeys.routineDraft, data.updatedDraft);
+      } else {
+        queryClient.invalidateQueries({ queryKey: queryKeys.routineDraft });
+      }
     },
   });
 }
