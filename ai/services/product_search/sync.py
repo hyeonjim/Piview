@@ -6,6 +6,7 @@ from collections import Counter
 from datetime import datetime, timezone
 import json
 from pathlib import Path
+import re
 from typing import Iterable
 
 from services.chatbot.search.product_data import (
@@ -24,6 +25,7 @@ _GENERATED_FILES = {
     "brands": _GENERATED_DIR / "brands.generated.json",
     "categories": _GENERATED_DIR / "categories.generated.json",
     "product_types": _GENERATED_DIR / "product_types.generated.json",
+    "ingredients": _GENERATED_DIR / "ingredients.generated.json",
     "line_terms": _GENERATED_DIR / "line_terms.generated.json",
     "attributes": _GENERATED_DIR / "attributes.generated.json",
 }
@@ -62,6 +64,8 @@ _GENERIC_NOISE = {
 }
 _PRODUCT_TYPE_MIN_FREQUENCY = 3
 _PRODUCT_TYPE_LIMIT = 200
+_INGREDIENT_MIN_FREQUENCY = 1
+_INGREDIENT_LIMIT = 5000
 _LINE_TERM_MIN_FREQUENCY = 3
 _LINE_TERM_LIMIT = 300
 _ATTRIBUTE_MIN_FREQUENCY = 5
@@ -151,23 +155,31 @@ class ProductSearchDictionarySyncer:
         )
         product_type_terms = self._normalized_terms(product_types)
 
-        line_terms = self._build_line_term_entries(
+        ingredients = self._build_ingredient_entries(
             rows=rows,
             stopwords=stopwords,
             blocked_terms=brand_terms | category_terms | product_type_terms,
+        )
+        ingredient_terms = self._normalized_terms(ingredients)
+
+        line_terms = self._build_line_term_entries(
+            rows=rows,
+            stopwords=stopwords,
+            blocked_terms=brand_terms | category_terms | product_type_terms | ingredient_terms,
         )
         line_term_values = self._normalized_terms(line_terms)
 
         attributes = self._build_attribute_entries(
             rows=rows,
             stopwords=stopwords,
-            blocked_terms=brand_terms | category_terms | product_type_terms | line_term_values,
+            blocked_terms=brand_terms | category_terms | product_type_terms | ingredient_terms | line_term_values,
         )
 
         generated_at = datetime.now(timezone.utc).isoformat()
         self._write_generated("brands", brands, generated_at)
         self._write_generated("categories", categories, generated_at)
         self._write_generated("product_types", product_types, generated_at)
+        self._write_generated("ingredients", ingredients, generated_at)
         self._write_generated("line_terms", line_terms, generated_at)
         self._write_generated("attributes", attributes, generated_at)
 
@@ -175,6 +187,7 @@ class ProductSearchDictionarySyncer:
             "brands": len(brands),
             "categories": len(categories),
             "product_types": len(product_types),
+            "ingredients": len(ingredients),
             "line_terms": len(line_terms),
             "attributes": len(attributes),
             "products": len(rows),
@@ -285,6 +298,25 @@ class ProductSearchDictionarySyncer:
             limit=_LINE_TERM_LIMIT,
         )
 
+    def _build_ingredient_entries(
+        self,
+        rows: list[ProductSearchDataRow],
+        stopwords: set[str],
+        blocked_terms: set[str],
+    ) -> list[DictionaryEntry]:
+        counter: Counter[str] = Counter()
+        for row in rows:
+            for source in (row.ingredient_text_ko, row.ingredient_text_en):
+                for ingredient in self._split_ingredient_terms(source):
+                    normalized = normalize_text(ingredient)
+                    if self._is_valid_ingredient_term(normalized, stopwords, blocked_terms):
+                        counter[normalized] += 1
+        return self._entries_from_counter(
+            counter,
+            min_frequency=_INGREDIENT_MIN_FREQUENCY,
+            limit=_INGREDIENT_LIMIT,
+        )
+
     def _build_attribute_entries(
         self,
         rows: list[ProductSearchDataRow],
@@ -364,6 +396,20 @@ class ProductSearchDictionarySyncer:
                 break
         return entries
 
+    def _split_ingredient_terms(self, text: str | None) -> list[str]:
+        normalized = normalize_whitespace(text)
+        if not normalized:
+            return []
+
+        parts = [
+            part.strip(" '\"")
+            for part in re.split(r"(?:\r?\n|;|,\s+|(?<!\d),(?!\d))", normalized)
+            if part and part.strip(" '\"")
+        ]
+        if not parts:
+            return [normalized]
+        return parts
+
     def _normalized_terms(self, entries: Iterable[DictionaryEntry]) -> set[str]:
         values: set[str] = set()
         for entry in entries:
@@ -403,6 +449,18 @@ class ProductSearchDictionarySyncer:
         if any(term.endswith(suffix) and len(term) >= len(suffix) for suffix in _ATTRIBUTE_EXCLUDED_SUFFIXES):
             return False
         if any(term.endswith(suffix) and len(term) > len(suffix) + 1 for suffix in _ATTRIBUTE_PARTICLE_SUFFIXES):
+            return False
+        return True
+
+    def _is_valid_ingredient_term(
+        self,
+        term: str,
+        stopwords: set[str],
+        blocked_terms: set[str],
+    ) -> bool:
+        if not self._is_valid_term(term, stopwords, blocked_terms):
+            return False
+        if len(term) > 120:
             return False
         return True
 

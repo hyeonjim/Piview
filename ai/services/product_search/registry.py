@@ -54,6 +54,7 @@ class ProductSearchDictionaryRegistry:
                 "brands": str(_GENERATED_FILES["brands"]),
                 "categories": str(_GENERATED_FILES["categories"]),
                 "productTypes": str(_GENERATED_FILES["product_types"]),
+                "ingredientTerms": str(_GENERATED_FILES["ingredients"]),
                 "lineTerms": str(_GENERATED_FILES["line_terms"]),
                 "attributes": str(_GENERATED_FILES["attributes"]),
             },
@@ -65,6 +66,7 @@ class ProductSearchDictionaryRegistry:
                 "brands": len(snapshot.brands),
                 "categories": len(snapshot.categories),
                 "productTypes": len(snapshot.product_types),
+                "ingredientTerms": len(snapshot.ingredients),
                 "lineTerms": len(snapshot.line_terms),
                 "attributes": len(snapshot.attributes),
                 "attributeGroups": len(snapshot.attribute_groups),
@@ -76,6 +78,7 @@ class ProductSearchDictionaryRegistry:
         brands = self._load_generated_entries(_GENERATED_FILES["brands"])
         categories = self._load_generated_entries(_GENERATED_FILES["categories"])
         product_types = self._load_generated_entries(_GENERATED_FILES["product_types"])
+        ingredients = self._load_generated_entries(_GENERATED_FILES["ingredients"])
         line_terms = self._load_generated_entries(_GENERATED_FILES["line_terms"])
         attributes = self._load_generated_entries(_GENERATED_FILES["attributes"])
         attribute_groups = self._load_attribute_groups()
@@ -84,6 +87,7 @@ class ProductSearchDictionaryRegistry:
         brand_lookup = self._build_lookup(brands)
         category_lookup = self._build_lookup(categories)
         product_type_lookup = self._build_lookup(product_types)
+        ingredient_lookup = self._build_lookup(ingredients)
         line_lookup = self._build_lookup(line_terms)
         attribute_lookup = self._build_lookup(attributes)
         attribute_group_lookup = self._build_attribute_group_lookup(attribute_groups)
@@ -93,6 +97,7 @@ class ProductSearchDictionaryRegistry:
             brands=tuple(brands),
             categories=tuple(categories),
             product_types=tuple(product_types),
+            ingredients=tuple(ingredients),
             line_terms=tuple(line_terms),
             attributes=tuple(attributes),
             attribute_groups=attribute_groups,
@@ -100,6 +105,7 @@ class ProductSearchDictionaryRegistry:
             brand_lookup=brand_lookup,
             category_lookup=category_lookup,
             product_type_lookup=product_type_lookup,
+            ingredient_lookup=ingredient_lookup,
             line_lookup=line_lookup,
             attribute_lookup=attribute_lookup,
             attribute_group_lookup=attribute_group_lookup,

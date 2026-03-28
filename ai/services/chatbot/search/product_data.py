@@ -10,10 +10,6 @@ import pymysql
 
 from core.settings import get_settings
 
-
-_ANTI_AGING_IDS = {5, 6}
-_PIGMENTATION_ID = 4
-_HYDRATION_ID = 9
 logger = logging.getLogger("uvicorn.error")
 
 
@@ -376,10 +372,7 @@ class ProductSearchDataRepository:
                     )
                     for row in cursor.fetchall():
                         product_id = int(row["product_id"])
-                        concern_name = normalize_concern_name(
-                            int(row["skin_concern_id"]),
-                            str(row["concern_name"]),
-                        )
+                        concern_name = normalize_concern_name(str(row["concern_name"]))
                         if not concern_name:
                             continue
                         bucket = concerns_by_product_id.setdefault(product_id, [])
@@ -478,14 +471,15 @@ class ProductSearchDataRepository:
 
 
 
-def normalize_concern_name(concern_id: int, concern_name: str) -> str:
-    if concern_id in _ANTI_AGING_IDS or concern_name in {"주름/탄력", "노화방지-40대이상", "안티에이징"}:
+def normalize_concern_name(concern_name: str) -> str:
+    normalized = concern_name.strip()
+    if normalized in {"주름/탄력", "노화방지-40대이상", "안티에이징"}:
         return "안티에이징"
-    if concern_id == _PIGMENTATION_ID or concern_name in {"기미/주근깨/잡티", "색소침착"}:
+    if normalized in {"기미/주근깨/잡티", "색소침착"}:
         return "색소침착"
-    if concern_id == _HYDRATION_ID or concern_name in {"속건조", "수분"}:
+    if normalized in {"속건조", "수분"}:
         return "수분"
-    return concern_name.strip()
+    return normalized
 
 
 def _chunked(values: Sequence[int], size: int) -> Iterable[list[int]]:

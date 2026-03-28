@@ -17,6 +17,7 @@ class ProductSearchDictionarySnapshot:
     brands: tuple[DictionaryEntry, ...]
     categories: tuple[DictionaryEntry, ...]
     product_types: tuple[DictionaryEntry, ...]
+    ingredients: tuple[DictionaryEntry, ...]
     line_terms: tuple[DictionaryEntry, ...]
     attributes: tuple[DictionaryEntry, ...]
     attribute_groups: dict[str, tuple[str, ...]] = field(default_factory=dict)
@@ -24,6 +25,7 @@ class ProductSearchDictionarySnapshot:
     brand_lookup: dict[str, str] = field(default_factory=dict)
     category_lookup: dict[str, str] = field(default_factory=dict)
     product_type_lookup: dict[str, str] = field(default_factory=dict)
+    ingredient_lookup: dict[str, str] = field(default_factory=dict)
     line_lookup: dict[str, str] = field(default_factory=dict)
     attribute_lookup: dict[str, str] = field(default_factory=dict)
     attribute_group_lookup: dict[str, str] = field(default_factory=dict)
