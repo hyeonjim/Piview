@@ -223,6 +223,45 @@ class ProductSearchDictionarySyncTests(unittest.TestCase):
         self.assertIn("약콩", by_canonical["glycine soja (soybean) seed extract"])
         self.assertIn("쌀", by_canonical["oryza sativa (rice) extract"])
 
+    def test_build_ingredient_entries_adds_manual_aliases_for_common_active_derivatives(self) -> None:
+        rows = [
+            ProductSearchDataRow(
+                product_id=1,
+                name="테스트 액티브 세럼",
+                brand_name="브랜드",
+                category_name="세럼",
+                category_id=1,
+                big_category_id=1,
+                description=None,
+                top_skin_type=None,
+                top2_skin_type=None,
+                concern_names=[],
+                ingredient_text_ko=None,
+                ingredient_text_en=(
+                    "retinyl palmitate, bifida ferment lysate, tranexamic acid, "
+                    "alpha-arbutin, aloe barbadensis leaf juice, sodium ascorbyl phosphate, "
+                    "ceramide ap, panax ginseng root extract"
+                ),
+            ),
+        ]
+
+        entries = ProductSearchDictionarySyncer()._build_ingredient_entries(
+            rows=rows,
+            stopwords=set(),
+            blocked_terms=set(),
+            ingredient_family_rules=ProductSearchDictionarySyncer()._load_ingredient_family_rules(),
+        )
+        by_canonical = {entry.canonical: set(entry.aliases) for entry in entries}
+
+        self.assertIn("레티놀", by_canonical["retinyl palmitate"])
+        self.assertIn("비피다", by_canonical["bifida ferment lysate"])
+        self.assertIn("트라넥삼산", by_canonical["tranexamic acid"])
+        self.assertIn("알부틴", by_canonical["alpha-arbutin"])
+        self.assertIn("알로에", by_canonical["aloe barbadensis leaf juice"])
+        self.assertIn("비타민c", by_canonical["sodium ascorbyl phosphate"])
+        self.assertIn("세라마이드", by_canonical["ceramide ap"])
+        self.assertIn("인삼", by_canonical["panax ginseng root extract"])
+
 
 class ProductSearchNegativeRuleTests(unittest.TestCase):
     def test_negative_safe_patterns_are_product_search_specific(self) -> None:

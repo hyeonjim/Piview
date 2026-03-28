@@ -1,24 +1,65 @@
 {
   "ceramide_family": {
     "aliases": ["세라마이드"],
-    "matchContains": ["세라마이드"]
+    "matchContains": ["세라마이드", "ceramide"],
+    "matchExact": [
+      "ceramide np",
+      "ceramide ap",
+      "ceramide as",
+      "ceramide eop",
+      "ceramide ns",
+      "ceramide ng",
+      "세라마이드엔피"
+    ]
   },
   "panthenol_family": {
-    "aliases": ["판테놀", "비타민b5"],
-    "matchContains": ["판테놀", "panthenol"]
+    "aliases": ["판테놀", "비타민b5", "덱스판테놀"],
+    "matchContains": ["판테놀", "panthenol"],
+    "matchExact": ["panthenol", "판테놀", "dexpanthenol", "pantothenic acid"]
   },
   "niacinamide_family": {
-    "aliases": ["나이아신아마이드"],
-    "matchContains": ["나이아신아마이드", "niacinamide"]
+    "aliases": ["나이아신아마이드", "비타민b3"],
+    "matchContains": ["나이아신아마이드", "niacinamide"],
+    "matchExact": ["niacinamide"]
   },
   "hyaluron_family": {
     "aliases": ["히알루론산", "히알루론", "히알루로닉애씨드"],
-    "matchContains": ["하이알루로", "히알루로", "hyaluro"]
+    "matchContains": ["하이알루로", "히알루로", "hyaluro"],
+    "matchExact": [
+      "hyaluronic acid",
+      "sodium hyaluronate",
+      "hydrolyzed hyaluronic acid",
+      "sodium hyaluronate crosspolymer",
+      "sodium acetylated hyaluronate",
+      "hydrolyzed sodium hyaluronate",
+      "potassium hyaluronate",
+      "hydroxypropyltrimonium hyaluronate",
+      "소듐하이알루로네이트",
+      "하이알루로닉애씨드",
+      "하이드롤라이즈드하이알루로닉애씨드",
+      "소듐하이알루로네이트크로스폴리머",
+      "소듐아세틸레이티드하이알루로네이트",
+      "하이드롤라이즈드소듐하이알루로네이트",
+      "포타슘하이알루로네이트",
+      "하이드록시프로필트라이모늄하이알루로네이트"
+    ]
   },
   "vitamin_c_family": {
     "aliases": ["비타민c", "비타민씨"],
     "matchContains": ["아스코", "ascorb"],
-    "matchExact": ["비타민c"]
+    "matchExact": [
+      "비타민c",
+      "ascorbic acid",
+      "sodium ascorbyl phosphate",
+      "magnesium ascorbyl phosphate",
+      "ascorbyl glucoside",
+      "3-o-ethyl ascorbic acid",
+      "ethyl ascorbyl ether",
+      "ascorbyl tetraisopalmitate",
+      "tetrahexyldecyl ascorbate",
+      "sodium ascorbate",
+      "aminopropyl ascorbyl phosphate"
+    ]
   },
   "aha_family": {
     "aliases": ["아하", "aha"],
@@ -68,19 +109,36 @@
   },
   "propolis_family": {
     "aliases": ["프로폴리스"],
-    "matchContains": ["프로폴리스", "propolis"]
+    "matchContains": ["프로폴리스", "propolis"],
+    "matchExact": ["propolis extract", "propolis wax"]
   },
   "tea_tree_family": {
     "aliases": ["티트리"],
-    "matchContains": ["티트리", "tea tree"]
+    "matchContains": ["티트리", "tea tree", "melaleuca"],
+    "matchExact": [
+      "melaleuca alternifolia (tea tree) leaf oil",
+      "melaleuca alternifolia (tea tree) leaf extract",
+      "melaleuca alternifolia (tea tree) extract",
+      "melaleuca alternifolia (tea tree) leaf water",
+      "melaleuca alternifolia (tea tree) flower/leaf/stem extract"
+    ]
   },
   "essential_oil_family": {
     "aliases": ["에센셜오일"],
     "matchContains": ["에센셜오일", "essential oil"]
   },
   "aloe_family": {
-    "aliases": ["알로에"],
-    "matchContains": ["알로에", "aloe"]
+    "aliases": ["알로에", "알로에베라"],
+    "matchContains": ["알로에", "aloe"],
+    "matchExact": [
+      "aloe barbadensis leaf extract",
+      "aloe barbadensis leaf juice",
+      "aloe barbadensis leaf water",
+      "aloe barbadensis leaf juice powder",
+      "aloe ferox leaf extract",
+      "aloe arborescens leaf extract",
+      "알로에베라잎추출물"
+    ]
   },
   "green_tomato_family": {
     "aliases": ["그린토마토"],
@@ -98,6 +156,12 @@
       "hydrolyzed rice",
       "rice amino",
       "rice sh-oligopeptide"
+    ],
+    "matchExact": [
+      "oryza sativa (rice) extract",
+      "oryza sativa (rice) bran water",
+      "oryza sativa (rice) bran extract",
+      "oryza sativa (rice) seed water"
     ]
   },
   "squalane_family": {
@@ -105,28 +169,67 @@
     "matchContains": ["스쿠알란", "squalane"]
   },
   "houttuynia_family": {
-    "aliases": ["어성초"],
-    "matchContains": ["어성초", "houttuynia"]
+    "aliases": ["어성초", "약모밀"],
+    "matchContains": ["어성초", "houttuynia"],
+    "matchExact": [
+      "houttuynia cordata extract",
+      "houttuynia cordata powder",
+      "약모밀추출물"
+    ]
   },
   "centella_family": {
     "aliases": ["병풀", "센텔라", "시카"],
-    "matchContains": ["병풀", "centella", "센텔라"]
+    "matchContains": ["병풀", "centella", "센텔라"],
+    "matchExact": [
+      "centella asiatica extract",
+      "centella asiatica leaf extract",
+      "centella asiatica leaf water",
+      "centella asiatica root extract",
+      "asiaticoside",
+      "asiatic acid",
+      "madecassic acid",
+      "아시아티코사이드",
+      "아시아틱애씨드",
+      "마데카식애씨드"
+    ]
   },
   "madecassoside_family": {
     "aliases": ["마데카소사이드"],
-    "matchContains": ["마데카소사이드", "madecassoside"]
+    "matchContains": ["마데카소사이드", "madecassoside"],
+    "matchExact": ["madecassoside", "madecassic acid"]
   },
   "collagen_family": {
     "aliases": ["콜라겐"],
-    "matchContains": ["콜라겐", "collagen"]
+    "matchContains": ["콜라겐", "collagen"],
+    "matchExact": [
+      "hydrolyzed collagen",
+      "soluble collagen",
+      "collagen extract",
+      "collagen",
+      "atelocollagen",
+      "hydrolyzed collagen extract",
+      "collagen amino acids",
+      "procollagen"
+    ]
   },
   "retinol_family": {
-    "aliases": ["레티놀"],
-    "matchContains": ["레티놀", "retinol"]
+    "aliases": ["레티놀", "레티날", "레티노이드"],
+    "matchContains": ["레티놀", "retinol", "retinyl", "retino"],
+    "matchExact": [
+      "retinol",
+      "retinal",
+      "retinyl palmitate",
+      "hydroxypinacolone retinoate"
+    ]
   },
   "bifida_family": {
     "aliases": ["비피다"],
-    "matchContains": ["비피다", "bifida"]
+    "matchContains": ["비피다", "bifida"],
+    "matchExact": [
+      "bifida ferment lysate",
+      "bifida ferment filtrate",
+      "bifida ferment extract"
+    ]
   },
   "caffeine_family": {
     "aliases": ["카페인"],
@@ -142,6 +245,85 @@
   },
   "peptide_family": {
     "aliases": ["펩타이드"],
-    "matchContains": ["펩타이드", "peptide"]
+    "matchContains": [
+      "펩타이드",
+      "peptide",
+      "dipeptide",
+      "tripeptide",
+      "tetrapeptide",
+      "pentapeptide",
+      "hexapeptide",
+      "oligopeptide",
+      "polypeptide"
+    ]
+  },
+  "allantoin_family": {
+    "aliases": ["알란토인"],
+    "matchContains": ["알란토인", "allantoin"]
+  },
+  "beta_glucan_family": {
+    "aliases": ["베타글루칸", "베타-글루칸"],
+    "matchContains": ["beta-glucan", "베타글루칸", "베타-글루칸"],
+    "matchExact": ["beta-glucan", "yeast beta-glucan"]
+  },
+  "arbutin_family": {
+    "aliases": ["알부틴", "알파알부틴"],
+    "matchContains": ["arbutin", "알부틴"],
+    "matchExact": ["arbutin", "alpha-arbutin", "알파-알부틴", "알파알부틴"]
+  },
+  "tranexamic_family": {
+    "aliases": ["트라넥삼산", "트라넥사믹애씨드"],
+    "matchContains": ["tranexamic", "트라넥사"],
+    "matchExact": ["tranexamic acid"]
+  },
+  "bakuchiol_family": {
+    "aliases": ["바쿠치올"],
+    "matchContains": ["bakuchiol", "바쿠치올"]
+  },
+  "green_tea_family": {
+    "aliases": ["녹차"],
+    "matchContains": ["녹차", "camellia sinensis"],
+    "matchExact": ["camellia sinensis leaf extract", "녹차추출물"]
+  },
+  "licorice_family": {
+    "aliases": ["감초"],
+    "matchContains": ["licorice", "glycyrrhiza", "감초"],
+    "matchExact": [
+      "glycyrrhiza glabra (licorice) root extract",
+      "glycyrrhiza uralensis (licorice) root extract",
+      "dipotassium glycyrrhizate",
+      "ammonium glycyrrhizate",
+      "glycyrrhetinic acid"
+    ]
+  },
+  "polyglutamic_family": {
+    "aliases": ["폴리글루탐산"],
+    "matchContains": ["polyglutamic", "폴리글루탐산"],
+    "matchExact": ["polyglutamic acid"]
+  },
+  "ferulic_family": {
+    "aliases": ["페룰릭애씨드", "페룰산"],
+    "matchContains": ["ferulic", "페룰"],
+    "matchExact": ["ferulic acid"]
+  },
+  "snail_family": {
+    "aliases": ["달팽이점액", "스네일"],
+    "matchContains": ["snail", "달팽이"],
+    "matchExact": ["snail secretion filtrate"]
+  },
+  "ginseng_family": {
+    "aliases": ["인삼", "진생"],
+    "matchContains": ["ginseng", "panax ginseng", "인삼"],
+    "matchExact": ["panax ginseng root extract", "panax ginseng berry extract"]
+  },
+  "oat_family": {
+    "aliases": ["오트", "귀리"],
+    "matchContains": ["oat", "avena sativa", "귀리"],
+    "matchExact": ["avena sativa (oat) kernel extract", "avena sativa (oat) meal extract"]
+  },
+  "royal_jelly_family": {
+    "aliases": ["로얄젤리"],
+    "matchContains": ["royal jelly", "로얄젤리"],
+    "matchExact": ["royal jelly extract", "royal jelly"]
   }
 }
