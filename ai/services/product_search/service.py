@@ -1,4 +1,4 @@
-"""Product search application service."""
+"""상품 검색 애플리케이션 서비스."""
 
 from __future__ import annotations
 
@@ -56,6 +56,13 @@ class ProductSearchService:
         category_ids: tuple[int, ...] | None = None,
         big_category_id: int | None = None,
     ) -> list[ProductSearchResult]:
+        # 전체 흐름:
+        # 1. query를 structured intent로 파싱
+        # 2. execution plan과 category scope 결정
+        # 3. exact/fuzzy/structured seed/keyword 후보 수집
+        # 4. hybrid fuse 후 structured rerank 적용
+        # product_search는 "자유어 검색"보다 "문서화된 contract를 따르는 구조화 검색"이 우선이라
+        # plan과 parsed_query가 뒤 단계 거의 모든 판단의 기준이 된다.
         timing = ProductSearchTiming()
         with timing.phase("parse"):
             snapshot = product_search_dictionary_registry.get_snapshot()
@@ -84,6 +91,8 @@ class ProductSearchService:
 
         normalized = normalize_query(query_text)
         base_search_terms = parsed_query.search_terms()
+        # attribute_group 확장어는 retrieval recall 보조용으로만 search term 뒤에 얹는다.
+        # 원 질의의 핵심 entity를 덮어쓰지 않도록 base_search_terms를 앞에 유지한다.
         search_terms = base_search_terms + [
             term for term in attribute_group_terms if term not in base_search_terms
         ][:4]
@@ -115,6 +124,9 @@ class ProductSearchService:
 
         if plan.run_exact:
             with timing.phase("exact"):
+                # exact는 상품명 직접 탐색 경로다.
+                # structured가 아닌 순수 자유어 이름 검색이라면 exact 결과를 즉시 반환해
+                # 불필요한 hybrid 단계가 relevance를 흐리지 않게 한다.
                 exact_results = await asyncio.to_thread(
                     product_exact_search_service.search,
                     search_query,
@@ -138,6 +150,8 @@ class ProductSearchService:
 
         if plan.run_fuzzy:
             with timing.phase("fuzzy"):
+                # fuzzy도 exact와 같은 이유로 비구조화 질의에서는 조기 반환 가능하다.
+                # 다만 structured query에서는 보조 후보군으로만 남긴다.
                 exact_ids = {result.product_id for result in exact_results}
                 fuzzy_results = await asyncio.to_thread(
                     product_fuzzy_search_service.search,
@@ -163,6 +177,9 @@ class ProductSearchService:
 
         if parsed_query.is_structured:
             with timing.phase("structured_seed"):
+                # structured seed는 product_search 전용 retrieval contract 핵심이다.
+                # vector에 맡기지 않고, brand/category/ingredient 같은 명시적 조건을 먼저 만족하는
+                # lexical candidate pool을 별도로 만든다.
                 structured_seed_results = await asyncio.to_thread(
                     self._search_structured_seed_results,
                     parsed_query,
@@ -229,6 +246,8 @@ class ProductSearchService:
         config = self._resolve_scoring_config(parsed_query)
 
         with timing.phase("rerank"):
+            # fuse_results는 공용 hybrid fusion을 쓰지만,
+            # 그 뒤 rerank/constraint는 product_search 문서 규칙에 맞춘 전용 로직을 다시 적용한다.
             fused = fuse_results(
                 message=search_query.spaced,
                 vector_results=list(vector_results),
@@ -257,6 +276,9 @@ class ProductSearchService:
         return final_results
 
     def _resolve_scoring_config(self, parsed_query) -> HybridScoringConfig:
+        # structured query일수록 vector 비중을 낮추고 lexical/keyword 비중을 높인다.
+        # 특히 brand + category/ingredient 조합은 사용자가 의도한 entity 제약이 강하므로
+        # semantic 근사치보다 literal match를 우선한다.
         settings = get_settings()
         config = HybridScoringConfig.from_settings(settings)
         if not parsed_query.is_structured:
@@ -295,6 +317,8 @@ class ProductSearchService:
         keyword_results: list[ProductSearchResult],
         exclude_ids: set[int],
     ) -> list[ProductSearchResult]:
+        # structured seed를 keyword tier 앞에 붙여 "먼저 찾아온 정확 후보"를 보전한다.
+        # 이후 hybrid fuse에서 source signal은 다시 계산되지만, candidate set 자체는 이 순서 영향을 받는다.
         merged: list[ProductSearchResult] = []
         seen: set[int] = set()
 
@@ -312,6 +336,8 @@ class ProductSearchService:
         return merged
 
     def _resolve_candidate_limit(self, search_limit: int, parsed_query) -> int:
+        # structured query는 조건을 많이 만족해야 하므로 넉넉한 후보군이 필요하다.
+        # ingredient나 long query는 prefilter에서 많이 잘릴 수 있어 candidate_limit을 더 크게 잡는다.
         if not parsed_query.is_structured:
             return min(max(search_limit * 3, 30), 180)
 
@@ -338,6 +364,9 @@ class ProductSearchService:
         parsed_query,
         snapshot: ProductSearchDictionarySnapshot,
     ) -> list[ProductSearchResult]:
+        # fuse 이후 점수가 높더라도, 구조화된 의도를 충분히 못 맞춘 결과는 뒤로 밀어야 한다.
+        # 여기서는 brand/category/strong keyword/negative ingredient를 다시 한 번 명시적으로 본다.
+        # long query는 strong keyword 1개 이상을 사실상 must처럼 다루는 게 핵심이다.
         if not results or not parsed_query.is_structured:
             return results
 
@@ -430,6 +459,9 @@ class ProductSearchService:
         preferred_category_aliases: tuple[str, ...],
         include_ingredient_text_in_prefilter: bool,
     ) -> list[ProductSearchResult]:
+        # structured seed는 DB lexical prefilter 단계다.
+        # brand query는 브랜드별로 따로 seed를 모아 multi-brand query도 버틸 수 있게 하고,
+        # non-brand structured query는 ingredient/attribute/strong keyword 중심으로 seed를 만든다.
         attribute_group_terms = tuple(self._expand_attribute_group_terms(parsed_query, snapshot))
         strong_keyword_terms = self._resolve_strong_keyword_terms(parsed_query, snapshot)
         rows: list[ProductSearchDataRow] = []
@@ -455,6 +487,7 @@ class ProductSearchService:
                     rows.append(row)
         else:
             if plan.query_bucket in {"ingredient_only", "ingredient_category", "long_query"}:
+                # ingredient_only / ingredient_category / long_query는 strong keyword recall이 가장 중요하다.
                 focus_terms = strong_keyword_terms
             else:
                 focus_terms = tuple(
@@ -509,6 +542,9 @@ class ProductSearchService:
         strong_keyword_terms: tuple[str, ...],
         query_bucket: str,
     ) -> float:
+        # structured seed score는 "후보를 남길지"를 판단하는 1차 게이트 성격이 강하다.
+        # 따라서 ingredient query에서는 ingredient field match를 강하게 보고,
+        # long query에서는 strong keyword 부재 시 아예 탈락시킬 수 있다.
         searchable_text = normalize_text(
             " ".join(
                 part
@@ -589,6 +625,9 @@ class ProductSearchService:
         parsed_query,
         snapshot: ProductSearchDictionarySnapshot,
     ) -> tuple[str, ...]:
+        # strong keyword는 long query에서 사실상 must에 가까운 신호다.
+        # ingredient는 항상 strong으로 승격하고,
+        # 나머지 keyword는 weak term으로 빠지지 않은 것만 strong으로 남긴다.
         weak_terms = set(self._resolve_weak_keyword_terms(parsed_query, snapshot))
         strong_terms: list[str] = []
         seen: set[str] = set()
@@ -612,6 +651,8 @@ class ProductSearchService:
         parsed_query,
         snapshot: ProductSearchDictionarySnapshot,
     ) -> tuple[str, ...]:
+        # weak keyword는 attribute/attribute-group 성격의 보조 신호다.
+        # ranking 보정에는 쓰되, ingredient처럼 hard gate로 다루지는 않는다.
         weak_terms: list[str] = []
         seen: set[str] = set()
         lookup_terms = parsed_query.attribute_terms + tuple(
@@ -647,6 +688,8 @@ class ProductSearchService:
         parsed_query,
         snapshot: ProductSearchDictionarySnapshot,
     ) -> dict[str, tuple[str, ...]]:
+        # observability payload는 "왜 이 bucket으로 해석됐는지"를 로그에서 역추적하기 위한 최소 단위다.
+        # line은 now structured intent에는 직접 쓰지 않지만, 관찰용으로는 남긴다.
         return {
             "brands": parsed_query.brand_terms,
             "categories": parsed_query.category_terms + parsed_query.product_type_terms,
@@ -674,6 +717,9 @@ class ProductSearchService:
         searchable_text: str,
         negative_terms: tuple[str, ...],
     ) -> float:
+        # negative ingredient는 polarity가 중요하다.
+        # 먼저 "무향료/향료 프리" 같은 safe pattern을 찾아 가산하고,
+        # 그런 문맥 없이 term만 등장하면 오히려 회피 대상 포함으로 보고 감점한다.
         if not negative_terms or not searchable_text:
             return 0.0
 

@@ -1,4 +1,4 @@
-"""Structured reranking for product search results."""
+"""상품 검색 결과용 구조화 재정렬 로직."""
 
 from __future__ import annotations
 
@@ -13,6 +13,8 @@ def rerank_results(
     parsed_query: ParsedSearchQuery,
     attribute_groups: dict[str, tuple[str, ...]] | None = None,
 ) -> list[ProductSearchResult]:
+    # 이 reranker는 fuse 결과 위에 product_search 전용 structured bias를 얹는 마지막 단계다.
+    # exact/fuzzy/keyword/vector source가 섞여 들어와도, 최종 순서는 parsed_query 기준으로 다시 정렬한다.
     if not results:
         return []
 
@@ -60,6 +62,8 @@ def _structured_bonus(
     parsed_query: ParsedSearchQuery,
     attribute_groups: dict[str, tuple[str, ...]],
 ) -> float:
+    # bonus 계산은 service._apply_structured_constraints보다 더 가벼운 전역 재정렬 용도다.
+    # 여기서는 source와 무관하게 각 결과 자체가 query intent를 얼마나 설명하는지 본다.
     score = 0.0
     searchable_text = _searchable_text(result)
     ingredient_text = normalize_text(result.ingredient_preview)
@@ -143,6 +147,8 @@ def _weak_keyword_terms(
     parsed_query: ParsedSearchQuery,
     attribute_groups: dict[str, tuple[str, ...]],
 ) -> tuple[str, ...]:
+    # weak keyword는 attribute alias와 겹치는 경우만 남긴다.
+    # 그렇지 않은 자유어는 strong keyword 또는 일반 keyword relevance에서 처리하는 편이 안전하다.
     weak_terms: list[str] = []
     seen: set[str] = set()
     attribute_aliases = {
@@ -168,6 +174,8 @@ def _strong_keyword_terms(
     parsed_query: ParsedSearchQuery,
     attribute_groups: dict[str, tuple[str, ...]],
 ) -> tuple[str, ...]:
+    # long query에서 상위권을 결정하는 실질적인 본문 키워드 집합이다.
+    # ingredient는 무조건 strong에 포함하고, weak로 빠진 term은 제외한다.
     weak_terms = set(_weak_keyword_terms(parsed_query, attribute_groups))
     strong_terms: list[str] = []
     seen: set[str] = set()
@@ -190,6 +198,8 @@ def _negative_ingredient_adjustment(
     searchable_text: str,
     negative_terms: tuple[str, ...],
 ) -> float:
+    # polarity handling은 service 쪽과 동일 원칙을 유지한다.
+    # safe pattern 우선, 그 외 단순 포함은 패널티다.
     if not searchable_text or not negative_terms:
         return 0.0
 
