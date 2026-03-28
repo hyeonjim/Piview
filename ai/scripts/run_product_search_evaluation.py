@@ -34,6 +34,7 @@ DATASET_PATH = ROOT_DIR / "docs" / "search" / "PRODUCT_SEARCH_EVAL_DATASET.jsonl
 REPORT_PATH = ROOT_DIR / "docs" / "search" / "PRODUCT_SEARCH_EVAL_REPORT.md"
 REPORT_JSON_PATH = ROOT_DIR / "docs" / "search" / "PRODUCT_SEARCH_EVAL_REPORT.json"
 DEFAULT_BASE_URL = "http://127.0.0.1:8000"
+_MULTI_BRAND_COVERAGE_K = 6
 
 
 @dataclass
@@ -75,6 +76,7 @@ def main() -> int:
                     "overallPassRate": report["summary"]["overallPassRate"],
                     "zeroResultRate": report["summary"]["zeroResultRate"],
                     "negativePrecisionAt10": report["summary"]["negativePrecisionAt10"],
+                    "multiBrandCoverageAt6": report["summary"]["multiBrandCoverageAt6"],
                     "meanLatencyMs": report["summary"]["meanLatencyMs"],
                     "p95LatencyMs": report["summary"]["p95LatencyMs"],
                 },
@@ -193,6 +195,11 @@ def _build_report(
         for item in evaluated_cases
         if item["negativePrecisionAt10"] is not None
     ]
+    multi_brand_coverages = [
+        item["brandCoverageAt6"]
+        for item in evaluated_cases
+        if item["brandCoverageAt6"] is not None
+    ]
     report = {
         "generatedAt": datetime.now(UTC).isoformat(),
         "datasetPath": str(DATASET_PATH),
@@ -205,6 +212,7 @@ def _build_report(
             "overallPassRate": round(_ratio(sum(1 for item in evaluated_cases if item["overallPass"]), len(evaluated_cases)), 4),
             "zeroResultRate": round(_ratio(sum(1 for item in evaluated_cases if item["resultCount"] == 0), len(evaluated_cases)), 4),
             "negativePrecisionAt10": round(statistics.mean(negative_precisions), 4) if negative_precisions else None,
+            "multiBrandCoverageAt6": round(statistics.mean(multi_brand_coverages), 4) if multi_brand_coverages else None,
             "meanLatencyMs": round(statistics.mean(latencies), 2),
             "p50LatencyMs": round(statistics.median(latencies), 2),
             "p95LatencyMs": round(_percentile(latencies, 95), 2),
@@ -235,6 +243,7 @@ def _evaluate_case(result: QueryRunResult, rows: list[ProductSearchDataRow]) -> 
         "weakTop1Pass": _row_matches_case(top1, result.case) if top1 else False,
         "weakTop10Pass": any(_row_matches_case(row, result.case) for row in rows),
         "negativePrecisionAt10": _negative_precision_at_10(rows, result.case),
+        "brandCoverageAt6": _brand_coverage_at_k(rows, result.case, _MULTI_BRAND_COVERAGE_K),
         "overallPass": result.status_code == 200 and result.query_bucket == result.case.expected_query_bucket and any(_row_matches_case(row, result.case) for row in rows),
         "top1": _serialize_row(top1),
         "error": result.error,
@@ -298,6 +307,23 @@ def _negative_precision_at_10(rows: list[ProductSearchDataRow], case: ProductSea
     return round(safe_count / max(1, len(rows[:10])), 4)
 
 
+def _brand_coverage_at_k(
+    rows: list[ProductSearchDataRow],
+    case: ProductSearchEvaluationCase,
+    k: int,
+) -> float | None:
+    if len(case.expected_brands) <= 1 or not rows:
+        return None
+
+    expected_brands = {normalize_text(brand) for brand in case.expected_brands if normalize_text(brand)}
+    observed_brands = {
+        normalize_text(row.brand_name)
+        for row in rows[:k]
+        if normalize_text(row.brand_name) in expected_brands
+    }
+    return round(len(observed_brands) / max(1, len(expected_brands)), 4)
+
+
 def _searchable_text(row: ProductSearchDataRow) -> str:
     return normalize_text(
         " ".join(
@@ -330,6 +356,7 @@ def _serialize_row(row: ProductSearchDataRow | None) -> dict[str, Any] | None:
 def _summarize_bucket(items: list[dict[str, Any]]) -> dict[str, Any]:
     latencies = [item["latencyMs"] for item in items]
     negative_precisions = [item["negativePrecisionAt10"] for item in items if item["negativePrecisionAt10"] is not None]
+    brand_coverages = [item["brandCoverageAt6"] for item in items if item["brandCoverageAt6"] is not None]
     return {
         "caseCount": len(items),
         "bucketAccuracy": round(_ratio(sum(1 for item in items if item["bucketMatch"]), len(items)), 4),
@@ -340,6 +367,7 @@ def _summarize_bucket(items: list[dict[str, Any]]) -> dict[str, Any]:
         "meanLatencyMs": round(statistics.mean(latencies), 2),
         "p95LatencyMs": round(_percentile(latencies, 95), 2),
         "negativePrecisionAt10": round(statistics.mean(negative_precisions), 4) if negative_precisions else None,
+        "brandCoverageAt6": round(statistics.mean(brand_coverages), 4) if brand_coverages else None,
     }
 
 
@@ -368,6 +396,7 @@ def _render_markdown_report(report: dict[str, Any]) -> str:
         f"- overall pass: `{summary['overallPassRate']}`",
         f"- zero-result rate: `{summary['zeroResultRate']}`",
         f"- negative precision@10: `{summary['negativePrecisionAt10']}`",
+        f"- multi-brand coverage@6: `{summary['multiBrandCoverageAt6']}`",
         f"- mean latency(ms): `{summary['meanLatencyMs']}`",
         f"- p50 latency(ms): `{summary['p50LatencyMs']}`",
         f"- p95 latency(ms): `{summary['p95LatencyMs']}`",
@@ -375,14 +404,14 @@ def _render_markdown_report(report: dict[str, Any]) -> str:
         "",
         "## 버킷별 요약",
         "",
-        "| bucket | caseCount | bucketAcc | top1Acc | top10Acc | overallPass | zeroResult | meanMs | p95Ms | negPrecision |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| bucket | caseCount | bucketAcc | top1Acc | top10Acc | overallPass | zeroResult | meanMs | p95Ms | negPrecision | brandCoverage@6 |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for bucket, item in report["bucketSummary"].items():
         lines.append(
             f"| {bucket} | {item['caseCount']} | {item['bucketAccuracy']} | {item['weakTop1Accuracy']} | "
             f"{item['weakTop10Accuracy']} | {item['overallPassRate']} | {item['zeroResultRate']} | "
-            f"{item['meanLatencyMs']} | {item['p95LatencyMs']} | {item['negativePrecisionAt10']} |"
+            f"{item['meanLatencyMs']} | {item['p95LatencyMs']} | {item['negativePrecisionAt10']} | {item['brandCoverageAt6']} |"
         )
     lines.extend(["", "## 실패 사례 일부", ""])
     for item in report["failedCases"][:25]:
