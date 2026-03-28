@@ -12,6 +12,7 @@ from services.product_search.models import DictionaryEntry, ProductSearchDiction
 from services.product_search.sync import (
     _DICTIONARY_DIR,
     _GENERATED_FILES,
+    _INGREDIENT_FAMILIES_FILE,
     _MANUAL_DIR,
     _STOPWORDS_FILE,
     product_search_dictionary_syncer,
@@ -19,6 +20,7 @@ from services.product_search.sync import (
 
 
 _ATTRIBUTE_GROUPS_FILE = _MANUAL_DIR / "attribute_groups.json"
+_AMBIGUOUS_TERMS_FILE = _MANUAL_DIR / "ambiguous_terms.json"
 
 
 class ProductSearchDictionaryRegistry:
@@ -66,6 +68,8 @@ class ProductSearchDictionaryRegistry:
             "manualFiles": {
                 "stopwords": str(_STOPWORDS_FILE),
                 "attributeGroups": str(_ATTRIBUTE_GROUPS_FILE),
+                "ingredientFamilies": str(_INGREDIENT_FAMILIES_FILE),
+                "ambiguousTerms": str(_AMBIGUOUS_TERMS_FILE),
             },
             "counts": {
                 "brands": len(snapshot.brands),
@@ -75,8 +79,10 @@ class ProductSearchDictionaryRegistry:
                 "lineTerms": len(snapshot.line_terms),
                 "attributes": len(snapshot.attributes),
                 "attributeGroups": len(snapshot.attribute_groups),
+                "ambiguousTerms": len(snapshot.ambiguous_terms),
                 "stopwords": len(snapshot.stopwords),
             },
+            "overlapAudit": self._build_overlap_audit(snapshot),
         }
 
     def _load_snapshot(self) -> ProductSearchDictionarySnapshot:
@@ -89,15 +95,22 @@ class ProductSearchDictionaryRegistry:
         line_terms = self._load_generated_entries(_GENERATED_FILES["line_terms"])
         attributes = self._load_generated_entries(_GENERATED_FILES["attributes"])
         attribute_groups = self._load_attribute_groups()
+        ambiguous_terms = self._load_ambiguous_terms()
         stopwords = self._load_stopwords()
 
         brand_lookup = self._build_lookup(brands)
         category_lookup = self._build_lookup(categories)
         product_type_lookup = self._build_lookup(product_types)
         ingredient_lookup = self._build_lookup(ingredients)
+        ingredient_expansion_lookup = self._build_expansion_lookup(ingredients)
+        ingredient_lookup, ingredient_expansion_lookup = self._augment_ingredient_lookup_from_manual_families(
+            ingredient_lookup,
+            ingredient_expansion_lookup,
+        )
         line_lookup = self._build_lookup(line_terms)
         attribute_lookup = self._build_lookup(attributes)
         attribute_group_lookup = self._build_attribute_group_lookup(attribute_groups)
+        ambiguous_term_lookup = self._build_ambiguous_term_lookup(ambiguous_terms)
 
         return ProductSearchDictionarySnapshot(
             loaded_at=datetime.now(timezone.utc),
@@ -108,14 +121,17 @@ class ProductSearchDictionaryRegistry:
             line_terms=tuple(line_terms),
             attributes=tuple(attributes),
             attribute_groups=attribute_groups,
+            ambiguous_terms=tuple(sorted(ambiguous_terms)),
             stopwords=frozenset(stopwords),
             brand_lookup=brand_lookup,
             category_lookup=category_lookup,
             product_type_lookup=product_type_lookup,
             ingredient_lookup=ingredient_lookup,
+            ingredient_expansion_lookup=ingredient_expansion_lookup,
             line_lookup=line_lookup,
             attribute_lookup=attribute_lookup,
             attribute_group_lookup=attribute_group_lookup,
+            ambiguous_term_lookup=ambiguous_term_lookup,
         )
 
     def _load_generated_entries(self, path: Path) -> list[DictionaryEntry]:
@@ -187,6 +203,24 @@ class ProductSearchDictionaryRegistry:
                 groups[normalized_key] = terms
         return groups
 
+    def _load_ambiguous_terms(self) -> set[str]:
+        try:
+            payload = json.loads(_AMBIGUOUS_TERMS_FILE.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return set()
+        if not isinstance(payload, dict):
+            return set()
+
+        terms: set[str] = set()
+        for item in payload.values():
+            if not isinstance(item, dict):
+                continue
+            for alias in item.get("aliases", []):
+                normalized_alias = normalize_text(str(alias))
+                if normalized_alias:
+                    terms.add(normalized_alias)
+        return terms
+
     def _build_lookup(self, entries: list[DictionaryEntry]) -> dict[str, str]:
         # lookup은 alias -> canonical 매핑이다.
         # parser는 이 lookup만 알면 되고, 어떤 canonical이 어디서 왔는지는 registry가 숨긴다.
@@ -199,6 +233,67 @@ class ProductSearchDictionaryRegistry:
                 if normalized_alias:
                     lookup[normalized_alias] = canonical
         return lookup
+
+    def _augment_ingredient_lookup_from_manual_families(
+        self,
+        ingredient_lookup: dict[str, str],
+        ingredient_expansion_lookup: dict[str, tuple[str, ...]],
+    ) -> tuple[dict[str, str], dict[str, tuple[str, ...]]]:
+        try:
+            payload = json.loads(_INGREDIENT_FAMILIES_FILE.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return ingredient_lookup, ingredient_expansion_lookup
+        if not isinstance(payload, dict):
+            return ingredient_lookup, ingredient_expansion_lookup
+
+        augmented_lookup = dict(ingredient_lookup)
+        augmented_expansion_lookup = dict(ingredient_expansion_lookup)
+        for item in payload.values():
+            if not isinstance(item, dict):
+                continue
+            aliases = [
+                normalize_text(str(value))
+                for value in item.get("aliases", [])
+                if normalize_text(str(value))
+            ]
+            expansion_terms = {
+                normalize_text(str(value))
+                for key in ("aliases", "matchContains", "matchExact")
+                for value in item.get(key, [])
+                if normalize_text(str(value))
+            }
+            for alias in aliases:
+                augmented_lookup.setdefault(alias, alias)
+                if alias not in augmented_expansion_lookup:
+                    augmented_expansion_lookup[alias] = tuple(sorted(expansion_terms | {alias}))
+        return augmented_lookup, augmented_expansion_lookup
+
+    def _build_expansion_lookup(
+        self,
+        entries: list[DictionaryEntry],
+    ) -> dict[str, tuple[str, ...]]:
+        # ingredient는 generic query 하나가 여러 DB canonical을 가리킬 수 있다.
+        # 예: "세라마이드" -> 세라마이드엔피/에이피/엔에스 ...
+        # parser는 alias 존재 여부만 보고 query term을 ingredient로 인정하고,
+        # service는 expansion lookup으로 실제 prefilter/ranking 대상 canonical 집합을 확장한다.
+        expansions: dict[str, set[str]] = {}
+        for entry in entries:
+            canonical = normalize_text(entry.canonical)
+            values = {canonical}
+            values.update(
+                normalize_text(alias)
+                for alias in entry.aliases
+                if normalize_text(alias)
+            )
+            for alias in values:
+                bucket = expansions.setdefault(alias, set())
+                bucket.add(canonical)
+
+        return {
+            alias: tuple(sorted(values))
+            for alias, values in expansions.items()
+            if alias and values
+        }
 
     def _build_attribute_group_lookup(
         self,
@@ -214,6 +309,48 @@ class ProductSearchDictionaryRegistry:
                 if normalized_term:
                     lookup[normalized_term] = group_key
         return lookup
+
+    def _build_ambiguous_term_lookup(
+        self,
+        ambiguous_terms: set[str],
+    ) -> dict[str, str]:
+        return {
+            term: term
+            for term in ambiguous_terms
+            if term
+        }
+
+    def _build_overlap_audit(
+        self,
+        snapshot: ProductSearchDictionarySnapshot,
+    ) -> dict[str, dict[str, object]]:
+        buckets = {
+            "brands": set(snapshot.brand_lookup.keys()),
+            "categories": set(snapshot.category_lookup.keys()),
+            "productTypes": set(snapshot.product_type_lookup.keys()),
+            "ingredients": set(snapshot.ingredient_lookup.keys()),
+            "lineTerms": set(snapshot.line_lookup.keys()),
+            "attributes": set(snapshot.attribute_lookup.keys()),
+            "attributeGroupTerms": {
+                normalize_text(term)
+                for terms in snapshot.attribute_groups.values()
+                for term in terms
+                if normalize_text(term)
+            },
+            "ambiguousTerms": set(snapshot.ambiguous_term_lookup.keys()),
+        }
+        bucket_names = tuple(buckets.keys())
+        overlap_audit: dict[str, dict[str, object]] = {}
+        for index, left_name in enumerate(bucket_names):
+            for right_name in bucket_names[index + 1 :]:
+                overlap_terms = sorted(buckets[left_name] & buckets[right_name])
+                if not overlap_terms:
+                    continue
+                overlap_audit[f"{left_name}__{right_name}"] = {
+                    "count": len(overlap_terms),
+                    "samples": overlap_terms[:10],
+                }
+        return overlap_audit
 
 
 product_search_dictionary_registry = ProductSearchDictionaryRegistry()

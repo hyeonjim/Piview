@@ -24,6 +24,7 @@ def _build_snapshot() -> ProductSearchDictionarySnapshot:
         category_lookup={"크림": "크림"},
         product_type_lookup={},
         ingredient_lookup={"판테놀": "판테놀"},
+        ingredient_expansion_lookup={"판테놀": ("판테놀",)},
         line_lookup={"판테놀": "판테놀"},
         attribute_lookup={},
         attribute_group_lookup={"판테놀": "barrier"},

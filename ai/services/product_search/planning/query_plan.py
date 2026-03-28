@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from services.product_search.planning.query_signals import build_product_search_query_signals
+
 
 @dataclass(frozen=True)
 class ProductSearchExecutionPlan:
@@ -15,18 +17,15 @@ class ProductSearchExecutionPlan:
 
 
 def build_product_search_execution_plan(parsed_query) -> ProductSearchExecutionPlan:
+    signals = build_product_search_query_signals(parsed_query)
     has_brand = bool(parsed_query.brand_terms)
     has_category = bool(parsed_query.category_terms or parsed_query.product_type_terms)
     has_textual_detail = bool(parsed_query.keyword_terms)
     has_attributes = bool(parsed_query.attribute_terms or parsed_query.attribute_group_terms)
     has_ingredient = bool(parsed_query.ingredient_terms)
     has_negative_ingredient = bool(parsed_query.negative_ingredient_terms)
-    remaining_keywords = tuple(
-        term for term in parsed_query.keyword_terms if term not in parsed_query.ingredient_terms
-    )
-    is_long_query = parsed_query.token_count >= 4 and bool(
-        remaining_keywords or parsed_query.attribute_terms or parsed_query.attribute_group_terms
-    )
+    remaining_keywords = signals.residual_keyword_terms
+    is_long_query = signals.is_long_query_like
     is_free_text = not parsed_query.is_structured
 
     if has_negative_ingredient:
@@ -46,7 +45,7 @@ def build_product_search_execution_plan(parsed_query) -> ProductSearchExecutionP
             include_ingredient_text_in_prefilter=True,
         )
 
-    if has_ingredient and has_category:
+    if has_ingredient and has_category and not has_brand and not remaining_keywords:
         return ProductSearchExecutionPlan(
             query_shape="ingredient_category",
             query_bucket="ingredient_category",
@@ -106,8 +105,8 @@ def build_product_search_execution_plan(parsed_query) -> ProductSearchExecutionP
         )
 
     allow_name_matching = has_textual_detail or not has_category
-    run_exact = allow_name_matching and len(parsed_query.brand_terms) <= 1 and len(parsed_query.keyword_terms) <= 4
-    run_fuzzy = run_exact and len(parsed_query.keyword_terms) <= 2
+    run_exact = allow_name_matching and len(parsed_query.brand_terms) <= 1 and not is_long_query
+    run_fuzzy = run_exact and signals.residual_keyword_count <= 2
 
     return ProductSearchExecutionPlan(
         query_shape="mixed_structured",
