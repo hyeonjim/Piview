@@ -536,7 +536,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       {routineList.length > 0 && (
         <div className="mb-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[15px] font-bold text-text-secondary">내루틴 리스트</p>
+            <p className="text-[16px] mt-2 font-bold text-text-secondary">내루틴 리스트</p>
             <button
               onClick={handleNewRoutine}
               className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full text-[14px] text-white cursor-pointer bg-[#ece7bb] shadow-xs active:scale-[0.97] transition-transform"
@@ -920,7 +920,7 @@ function RoutineProductCard({
       data-drag-item
       data-step-code={stepCode}
       data-item-index={index}
-      className="relative h-25 rounded-2xl overflow-hidden bg-white"
+      className="relative h-27 rounded-2xl overflow-hidden bg-white"
       style={{
         opacity: isDragging ? 0.4 : 1,
         border: isDropTarget ? "2px solid #A69D92" : "none",
@@ -985,7 +985,7 @@ function RoutineProductCard({
         {/* 텍스트 영역 */}
         <Link
           href={`/product/${product.productId}`}
-          className="flex-1 px-1 py-1 mt-1 min-w-0 no-underline"
+          className="flex-1 px-1 mt-1 no-underline"
         >
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-[13px] font-semibold text-[#7e6b52] tracking-[0.08em]">
@@ -1004,7 +1004,7 @@ function RoutineProductCard({
             {product.skinTypes?.slice(0, 1).map((skinType) => (
               <span
                 key={skinType}
-                className="inline-block mb-1 mr-1.5 text-[10px] font-medium px-1.5 py-px rounded bg-[#f7f2ea] text-[#514a42]"
+                className="inline-block mb-1 mr-1.5 text-[10px] font-medium px-1.5 py-px rounded-[5px] border bg-[#f7f2ea] text-[#514a42]"
               >
                 {fromSkinTypeEnum(skinType)}
               </span>
