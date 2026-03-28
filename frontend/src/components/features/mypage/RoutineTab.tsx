@@ -2,7 +2,7 @@
 
 import { toast } from "sonner";
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Plus, X, Scan, SquarePen, Save, ChessQueen, CircleAlert } from "lucide-react";
+import { Plus, X, Scan, SquarePen, Save, ChessQueen, CircleAlert, AlignLeft } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -33,8 +33,6 @@ import type {
 import type { ProductSummaryResponse } from "@/types/product/product";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
 
-// SVG 점수 링 둘레 상수
-const CIRCUMFERENCE = 138;
 
 // 드래그 상태 타입 — 스텝 간 이동 지원
 interface DragState {
@@ -171,9 +169,16 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   const [editingRoutineTitle, setEditingRoutineTitle] = useState<string>("");
   // 사용자가 명시적으로 새 루틴 작성 모드로 진입했는지 여부 — 자동 선택 방지 플래그
   const [isNewRoutineMode, setIsNewRoutineMode] = useState(false);
+  // AI 루틴 분석 카드 표시 여부 — 버튼 클릭 시 토글
+  const [showRoutineScore, setShowRoutineScore] = useState(false);
 
   // 카드 클릭 시 상세 보기 대상 루틴 ID — store에서 관리해 재방문 시 복원
   const selectedRoutineId = useRoutineStore((state) => state.selectedRoutineId);
+
+  // 선택된 루틴이 바뀌면 AI 분석 카드 닫기
+  useEffect(() => {
+    setShowRoutineScore(false);
+  }, [selectedRoutineId]);
   const setSelectedRoutineId = useRoutineStore(
     (state) => state.setSelectedRoutineId,
   );
@@ -551,7 +556,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       {routineList.length > 0 && (
         <div className="mb-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[16px] mt-2 font-bold text-text-secondary">내루틴 리스트</p>
+            <p className="flex items-center gap-1 text-[16px] mt-2 font-bold text-[#6b6a69]"><AlignLeft size={16} />내루틴 리스트</p>
             <button
               onClick={handleNewRoutine}
               className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full text-[14px] text-white cursor-pointer bg-[#ece7bb] shadow-xs active:scale-[0.97] transition-transform"
@@ -815,41 +820,39 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         );
       })}
 
-      {/* ── 루틴 종합 점수 ── */}
-      <div className="mt-10 p-4 rounded-2xl bg-(--color-warm-bg) border border-[#E2DDD8]">
-        <div className="flex items-center gap-3">
-          <div className="relative w-14 h-14 shrink-0 flex items-center justify-center">
-            <svg width="60" height="60" className="absolute">
-              <circle
-                cx="28"
-                cy="28"
-                r="22"
-                fill="none"
-                stroke="var(--color-border-subtle)"
-                strokeWidth="4"
-              />
-              <circle
-                cx="28"
-                cy="28"
-                r="22"
-                fill="none"
-                stroke={
-                  filledCount > 0 ? "#A69D92" : "var(--color-border-subtle)"
-                }
-                strokeWidth="4"
-                strokeDasharray={`${(filledCount / routineSteps.length) * CIRCUMFERENCE} ${CIRCUMFERENCE}`}
-                strokeLinecap="round"
-                transform="rotate(-90 28 28)"
-                style={{ transition: "stroke-dasharray 0.6s ease" }}
-              />
-            </svg>
-            <span className="relative z-10 text-[13px] font-semibold text-text-muted">
-              85점
-            </span>
+      {/* ── AI 루틴 분석 버튼 + 카드 ── */}
+      <button
+        onClick={() => setShowRoutineScore((previous) => !previous)}
+        className="mt-10 w-50 mx-auto flex items-center justify-center gap-2 py-2.5 rounded-2xl border-2 border-[#ddd3f1] bg-[#f7f5fa] text-[16px] font-bold text-[#7b54b4] cursor-pointer transition-colors hover:bg-[#eae0f7]"
+        style={{
+          boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(130, 100, 180, 0.14), 0 1px 4px rgba(130, 100, 180, 0.08)",
+        }}
+      >
+        <div className="size-6 rounded-md flex items-center justify-center bg-[#dccdf0]">
+          <ChessQueen size={14} className="text-white" />
+        </div>
+        AI 루틴 분석
+      </button>
+
+      {/* 분석 카드 — 버튼 클릭 시 표시 */}
+      {showRoutineScore && (
+        <div
+          className="mt-3 rounded-2xl p-5 border-2 border-[#e0d8f0] bg-[#f8f5fc]"
+          style={{
+            boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(130, 100, 180, 0.14), 0 1px 4px rgba(130, 100, 180, 0.08)",
+          }}
+        >
+          {/* 헤더 */}
+          <div className="flex items-center gap-2 mb-3">
+            <div className="size-6 rounded-lg flex items-center justify-center bg-[#c4aee0]">
+              <ChessQueen size={12} className="text-white" />
+            </div>
+            <p className="text-[16px] font-bold text-[#5a5060]">분석 결과</p>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-text-primary mb-1">
-              루틴 종합 점수
+
+          {/* 점수 + 메시지 */}
+          <div className="flex flex-col gap-1.5">
+            <p className="text-[28px] font-bold text-[#7a5ba8] leading-none">
             </p>
             <p className="text-xs font-bold text-text-muted leading-relaxed break-keep">
               {filledCount === 0
@@ -860,7 +863,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             </p>
           </div>
         </div>
-      </div>
+      )}
 
       {/* ── 루틴 저장 이름 입력 모달 ── */}
       {showSaveModal && (
@@ -1090,8 +1093,8 @@ function SavedRoutineCard({
           : "border border-[#e2ddd8] bg-white"
       }`}
       style={{
-        minWidth: "calc(28% - 6px)",
-        maxWidth: "calc(28% - 6px)",
+        minWidth: "calc(30% - 6px)",
+        maxWidth: "calc(50% - 6px)",
         scrollSnapAlign: "start",
         scrollSnapStop: "always",
         transform: isSelected ? "scale(1.03)" : "scale(1)",
