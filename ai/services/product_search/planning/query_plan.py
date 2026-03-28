@@ -45,7 +45,7 @@ def build_product_search_execution_plan(parsed_query) -> ProductSearchExecutionP
             include_ingredient_text_in_prefilter=True,
         )
 
-    if has_ingredient and has_category:
+    if has_ingredient and has_category and not has_brand and not remaining_keywords:
         return ProductSearchExecutionPlan(
             query_shape="ingredient_category",
             query_bucket="ingredient_category",

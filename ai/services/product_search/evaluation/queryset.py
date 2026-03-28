@@ -365,6 +365,33 @@ _AMBIGUOUS_TERMS = (
     "레드블레미쉬",
     "독도라인",
     "포어리셋",
+    "아토베리어",
+    "세이프미",
+    "순정",
+    "부활초",
+    "인테카",
+    "갈락토미",
+    "워터뱅크",
+    "아쿠아밤",
+    "비피다",
+    "마데카",
+    "릴리프",
+    "하트리프",
+    "리얼베리어",
+    "시카리페어",
+    "프로바이오덤",
+    "아토덤",
+    "시카페어",
+    "더마토리",
+    "아크네스",
+    "카밍패드",
+    "하이드라",
+    "시카풀",
+    "포어리파이닝",
+    "수퍼아쿠아",
+    "자작나무수분",
+    "어성초카밍",
+    "포어수딩",
 )
 
 _LONG_QUERY_CASES = (
@@ -465,9 +492,16 @@ _NOISY_CASES = (
 
 def build_product_search_evaluation_cases() -> list[ProductSearchEvaluationCase]:
     cases: list[ProductSearchEvaluationCase] = []
+    seen_queries: set[str] = set()
+
+    def append_case(case: ProductSearchEvaluationCase) -> None:
+        if case.query in seen_queries:
+            return
+        seen_queries.add(case.query)
+        cases.append(case)
 
     for index, brand in enumerate(_BRANDS, start=1):
-        cases.append(
+        append_case(
             ProductSearchEvaluationCase(
                 case_id=f"brand_only_{index:03d}",
                 dataset_bucket="brand_only",
@@ -479,7 +513,7 @@ def build_product_search_evaluation_cases() -> list[ProductSearchEvaluationCase]
 
     for index, category_query in enumerate(_CATEGORY_QUERIES, start=1):
         terms = _category_terms_for(category_query)
-        cases.append(
+        append_case(
             ProductSearchEvaluationCase(
                 case_id=f"category_only_{index:03d}",
                 dataset_bucket="category_only",
@@ -492,7 +526,7 @@ def build_product_search_evaluation_cases() -> list[ProductSearchEvaluationCase]
 
     for index, (brand, category_query) in enumerate(_BRAND_CATEGORY_PAIRS, start=1):
         terms = _category_terms_for(category_query)
-        cases.append(
+        append_case(
             ProductSearchEvaluationCase(
                 case_id=f"brand_category_{index:03d}",
                 dataset_bucket="brand_category",
@@ -513,7 +547,7 @@ def build_product_search_evaluation_cases() -> list[ProductSearchEvaluationCase]
             for brand in dict.fromkeys((brand_a, brand_b, *split_terms[:-1]))
             if brand in _BRANDS
         )
-        cases.append(
+        append_case(
             ProductSearchEvaluationCase(
                 case_id=f"multi_brand_category_{index:03d}",
                 dataset_bucket="multi_brand_category",
@@ -526,7 +560,7 @@ def build_product_search_evaluation_cases() -> list[ProductSearchEvaluationCase]
         )
 
     for index, ingredient in enumerate(_INGREDIENTS, start=1):
-        cases.append(
+        append_case(
             ProductSearchEvaluationCase(
                 case_id=f"ingredient_only_{index:03d}",
                 dataset_bucket="ingredient_only",
@@ -539,7 +573,7 @@ def build_product_search_evaluation_cases() -> list[ProductSearchEvaluationCase]
 
     for index, (ingredient, category_query) in enumerate(_INGREDIENT_CATEGORY_PAIRS, start=1):
         terms = _category_terms_for(category_query)
-        cases.append(
+        append_case(
             ProductSearchEvaluationCase(
                 case_id=f"ingredient_category_{index:03d}",
                 dataset_bucket="ingredient_category",
@@ -554,7 +588,7 @@ def build_product_search_evaluation_cases() -> list[ProductSearchEvaluationCase]
     for index, (negative_term, operator, tail) in enumerate(_NEGATIVE_CASES, start=1):
         query = _negative_query_text(negative_term, operator, tail)
         tail_last = tail.split()[-1]
-        cases.append(
+        append_case(
             ProductSearchEvaluationCase(
                 case_id=f"negative_ingredient_{index:03d}",
                 dataset_bucket="negative_ingredient",
@@ -569,7 +603,7 @@ def build_product_search_evaluation_cases() -> list[ProductSearchEvaluationCase]
         )
 
     for index, term in enumerate(_AMBIGUOUS_TERMS, start=1):
-        cases.append(
+        append_case(
             ProductSearchEvaluationCase(
                 case_id=f"ambiguous_keyword_{index:03d}",
                 dataset_bucket="ambiguous_keyword",
@@ -581,7 +615,7 @@ def build_product_search_evaluation_cases() -> list[ProductSearchEvaluationCase]
         )
 
     for index, (query, brand, category_query, detail_terms) in enumerate(_LONG_QUERY_CASES, start=1):
-        cases.append(
+        append_case(
             ProductSearchEvaluationCase(
                 case_id=f"long_query_{index:03d}",
                 dataset_bucket="long_query",
@@ -604,7 +638,7 @@ def build_product_search_evaluation_cases() -> list[ProductSearchEvaluationCase]
         negative_terms,
         detail_terms,
     ) in enumerate(_NOISY_CASES, start=1):
-        cases.append(
+        append_case(
             ProductSearchEvaluationCase(
                 case_id=f"noisy_mixed_{index:03d}",
                 dataset_bucket="noisy_mixed",
@@ -616,6 +650,38 @@ def build_product_search_evaluation_cases() -> list[ProductSearchEvaluationCase]
                 negative_ingredient_terms=negative_terms,
                 expected_name_terms=detail_terms or _extract_known_ingredients(query) or _extract_known_brands(query),
                 detail_terms=detail_terms,
+            )
+        )
+
+    for index, (query, brand, category_query, detail_terms) in enumerate(_build_long_query_variants(), start=1):
+        append_case(
+            ProductSearchEvaluationCase(
+                case_id=f"long_query_variant_{index:03d}",
+                dataset_bucket="long_query",
+                expected_query_bucket="long_query",
+                query=query,
+                expected_brands=(brand,),
+                expected_category_terms=_category_terms_for(category_query),
+                expected_ingredient_terms=_extract_known_ingredients(query),
+                expected_name_terms=detail_terms,
+                detail_terms=detail_terms,
+            )
+        )
+
+    for index, (
+        query,
+        expected_brands,
+        category_query,
+    ) in enumerate(_build_multi_brand_order_variants(), start=1):
+        append_case(
+            ProductSearchEvaluationCase(
+                case_id=f"multi_brand_variant_{index:03d}",
+                dataset_bucket="multi_brand_category",
+                expected_query_bucket="multi_brand_category",
+                query=query,
+                expected_brands=expected_brands,
+                expected_category_terms=_category_terms_for(category_query),
+                expected_name_terms=_category_terms_for(category_query),
             )
         )
 
@@ -654,3 +720,27 @@ def _extract_known_brands(query: str) -> tuple[str, ...]:
 
 def _extract_known_ingredients(query: str) -> tuple[str, ...]:
     return tuple(ingredient for ingredient in _INGREDIENTS if ingredient in query)
+
+
+def _build_long_query_variants() -> list[tuple[str, str, str, tuple[str, ...]]]:
+    variants: list[tuple[str, str, str, tuple[str, ...]]] = []
+    for query, brand, category_query, detail_terms in _LONG_QUERY_CASES[:40]:
+        detail_phrase = " ".join(detail_terms)
+        if detail_phrase:
+            variants.append((f"{detail_phrase} {brand} {category_query}", brand, category_query, detail_terms))
+            variants.append((f"{brand} {category_query} {detail_phrase}", brand, category_query, detail_terms))
+    return variants
+
+
+def _build_multi_brand_order_variants() -> list[tuple[str, tuple[str, ...], str]]:
+    variants: list[tuple[str, tuple[str, ...], str]] = []
+    for brand_a, brand_b, category_query in _MULTI_BRAND_CATEGORY_CASES[:20]:
+        split_terms = category_query.split()
+        category_seed = split_terms[-1]
+        expected_brands = tuple(
+            brand
+            for brand in dict.fromkeys((brand_a, brand_b, *split_terms[:-1]))
+            if brand in _BRANDS
+        )
+        variants.append((f"{category_query} {brand_a} {brand_b}", expected_brands, category_seed))
+    return variants

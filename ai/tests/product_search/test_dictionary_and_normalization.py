@@ -6,6 +6,82 @@ from services.product_search.sync import ProductSearchDictionarySyncer
 
 
 class ProductSearchDictionarySyncTests(unittest.TestCase):
+    def test_product_type_entries_exclude_manual_ingredient_and_attribute_terms(self) -> None:
+        rows = [
+            ProductSearchDataRow(
+                product_id=1,
+                name="시카",
+                brand_name="브랜드",
+                category_name="시카 토너",
+                category_id=1,
+                big_category_id=1,
+                description=None,
+                top_skin_type=None,
+                top2_skin_type=None,
+                concern_names=[],
+                ingredient_text_ko="정제수, 병풀추출물",
+                ingredient_text_en=None,
+            ),
+            ProductSearchDataRow(
+                product_id=2,
+                name="히알루론산",
+                brand_name="브랜드",
+                category_name="히알루론산 세럼",
+                category_id=2,
+                big_category_id=1,
+                description=None,
+                top_skin_type=None,
+                top2_skin_type=None,
+                concern_names=[],
+                ingredient_text_ko="정제수, 히알루론산",
+                ingredient_text_en=None,
+            ),
+            ProductSearchDataRow(
+                product_id=3,
+                name="브라이트닝",
+                brand_name="브랜드",
+                category_name="브라이트닝 크림",
+                category_id=3,
+                big_category_id=1,
+                description=None,
+                top_skin_type=None,
+                top2_skin_type=None,
+                concern_names=[],
+                ingredient_text_ko=None,
+                ingredient_text_en=None,
+            ),
+            ProductSearchDataRow(
+                product_id=4,
+                name="토너",
+                brand_name="브랜드",
+                category_name="토너",
+                category_id=4,
+                big_category_id=1,
+                description=None,
+                top_skin_type=None,
+                top2_skin_type=None,
+                concern_names=[],
+                ingredient_text_ko=None,
+                ingredient_text_en=None,
+            ),
+        ]
+        syncer = ProductSearchDictionarySyncer()
+
+        entries = syncer._build_product_type_entries(
+            rows=rows,
+            stopwords=set(),
+            brand_terms=set(),
+            category_terms=set(),
+            excluded_terms=syncer._load_attribute_group_terms()
+            | syncer._build_ingredient_family_alias_terms(syncer._load_ingredient_family_rules()),
+        )
+        canonicals = {entry.canonical for entry in entries}
+
+        self.assertIn("토너", canonicals)
+        self.assertNotIn("시카", canonicals)
+        self.assertNotIn("히알루론산", canonicals)
+        self.assertNotIn("브라이트닝", canonicals)
+
     def test_build_ingredient_entries_uses_db_ingredient_text(self) -> None:
         rows = [
             ProductSearchDataRow(

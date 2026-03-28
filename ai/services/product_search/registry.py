@@ -79,6 +79,7 @@ class ProductSearchDictionaryRegistry:
                 "attributeGroups": len(snapshot.attribute_groups),
                 "stopwords": len(snapshot.stopwords),
             },
+            "overlapAudit": self._build_overlap_audit(snapshot),
         }
 
     def _load_snapshot(self) -> ProductSearchDictionarySnapshot:
@@ -245,6 +246,37 @@ class ProductSearchDictionaryRegistry:
                 if normalized_term:
                     lookup[normalized_term] = group_key
         return lookup
+
+    def _build_overlap_audit(
+        self,
+        snapshot: ProductSearchDictionarySnapshot,
+    ) -> dict[str, dict[str, object]]:
+        buckets = {
+            "brands": set(snapshot.brand_lookup.keys()),
+            "categories": set(snapshot.category_lookup.keys()),
+            "productTypes": set(snapshot.product_type_lookup.keys()),
+            "ingredients": set(snapshot.ingredient_lookup.keys()),
+            "lineTerms": set(snapshot.line_lookup.keys()),
+            "attributes": set(snapshot.attribute_lookup.keys()),
+            "attributeGroupTerms": {
+                normalize_text(term)
+                for terms in snapshot.attribute_groups.values()
+                for term in terms
+                if normalize_text(term)
+            },
+        }
+        bucket_names = tuple(buckets.keys())
+        overlap_audit: dict[str, dict[str, object]] = {}
+        for index, left_name in enumerate(bucket_names):
+            for right_name in bucket_names[index + 1 :]:
+                overlap_terms = sorted(buckets[left_name] & buckets[right_name])
+                if not overlap_terms:
+                    continue
+                overlap_audit[f"{left_name}__{right_name}"] = {
+                    "count": len(overlap_terms),
+                    "samples": overlap_terms[:10],
+                }
+        return overlap_audit
 
 
 product_search_dictionary_registry = ProductSearchDictionaryRegistry()

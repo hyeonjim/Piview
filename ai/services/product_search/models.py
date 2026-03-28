@@ -67,6 +67,9 @@ class ParsedSearchQuery:
 
     @property
     def is_structured(self) -> bool:
+        # attribute_group는 "진정/수딩/브라이트닝" 같은 soft hint 성격이 강하다.
+        # brand/category/ingredient 없이 attribute_group만 있는 질의까지 structured로 올리면
+        # ambiguous/free-text 질의를 과하게 고정시켜 recall과 explainability가 함께 나빠진다.
         return bool(
             self.brand_terms
             or self.category_terms
@@ -74,7 +77,6 @@ class ParsedSearchQuery:
             or self.ingredient_terms
             or self.negative_ingredient_terms
             or self.attribute_terms
-            or self.attribute_group_terms
         )
 
     @property

@@ -70,7 +70,9 @@ def main() -> int:
                     "reportPath": str(REPORT_PATH),
                     "reportJsonPath": str(REPORT_JSON_PATH),
                     "caseCount": report["summary"]["caseCount"],
+                    "routingAccuracy": report["summary"]["routingAccuracy"],
                     "bucketAccuracy": report["summary"]["bucketAccuracy"],
+                    "relevancePassRate": report["summary"]["relevancePassRate"],
                     "weakTop1Accuracy": report["summary"]["weakTop1Accuracy"],
                     "weakTop10Accuracy": report["summary"]["weakTop10Accuracy"],
                     "overallPassRate": report["summary"]["overallPassRate"],
@@ -206,7 +208,9 @@ def _build_report(
         "datasetCount": dataset_count,
         "summary": {
             "caseCount": len(evaluated_cases),
+            "routingAccuracy": round(_ratio(sum(1 for item in evaluated_cases if item["bucketMatch"]), len(evaluated_cases)), 4),
             "bucketAccuracy": round(_ratio(sum(1 for item in evaluated_cases if item["bucketMatch"]), len(evaluated_cases)), 4),
+            "relevancePassRate": round(_ratio(sum(1 for item in evaluated_cases if item["relevancePass"]), len(evaluated_cases)), 4),
             "weakTop1Accuracy": round(_ratio(sum(1 for item in evaluated_cases if item["weakTop1Pass"]), len(evaluated_cases)), 4),
             "weakTop10Accuracy": round(_ratio(sum(1 for item in evaluated_cases if item["weakTop10Pass"]), len(evaluated_cases)), 4),
             "overallPassRate": round(_ratio(sum(1 for item in evaluated_cases if item["overallPass"]), len(evaluated_cases)), 4),
@@ -230,6 +234,7 @@ def _build_report(
 
 def _evaluate_case(result: QueryRunResult, rows: list[ProductSearchDataRow]) -> dict[str, Any]:
     top1 = rows[0] if rows else None
+    relevance_pass = any(_row_matches_case(row, result.case) for row in rows)
     return {
         "caseId": result.case.case_id,
         "datasetBucket": result.case.dataset_bucket,
@@ -240,11 +245,12 @@ def _evaluate_case(result: QueryRunResult, rows: list[ProductSearchDataRow]) -> 
         "latencyMs": round(result.latency_ms, 2),
         "resultCount": len(result.result_ids),
         "bucketMatch": result.query_bucket == result.case.expected_query_bucket,
+        "relevancePass": relevance_pass,
         "weakTop1Pass": _row_matches_case(top1, result.case) if top1 else False,
-        "weakTop10Pass": any(_row_matches_case(row, result.case) for row in rows),
+        "weakTop10Pass": relevance_pass,
         "negativePrecisionAt10": _negative_precision_at_10(rows, result.case),
         "brandCoverageAt6": _brand_coverage_at_k(rows, result.case, _MULTI_BRAND_COVERAGE_K),
-        "overallPass": result.status_code == 200 and result.query_bucket == result.case.expected_query_bucket and any(_row_matches_case(row, result.case) for row in rows),
+        "overallPass": result.status_code == 200 and result.query_bucket == result.case.expected_query_bucket and relevance_pass,
         "top1": _serialize_row(top1),
         "error": result.error,
     }
@@ -359,7 +365,9 @@ def _summarize_bucket(items: list[dict[str, Any]]) -> dict[str, Any]:
     brand_coverages = [item["brandCoverageAt6"] for item in items if item["brandCoverageAt6"] is not None]
     return {
         "caseCount": len(items),
+        "routingAccuracy": round(_ratio(sum(1 for item in items if item["bucketMatch"]), len(items)), 4),
         "bucketAccuracy": round(_ratio(sum(1 for item in items if item["bucketMatch"]), len(items)), 4),
+        "relevancePassRate": round(_ratio(sum(1 for item in items if item["relevancePass"]), len(items)), 4),
         "weakTop1Accuracy": round(_ratio(sum(1 for item in items if item["weakTop1Pass"]), len(items)), 4),
         "weakTop10Accuracy": round(_ratio(sum(1 for item in items if item["weakTop10Pass"]), len(items)), 4),
         "overallPassRate": round(_ratio(sum(1 for item in items if item["overallPass"]), len(items)), 4),
@@ -390,7 +398,9 @@ def _render_markdown_report(report: dict[str, Any]) -> str:
         "",
         f"- 생성 시각: `{report['generatedAt']}`",
         f"- 질의 수: `{summary['caseCount']}`",
+        f"- routing accuracy: `{summary['routingAccuracy']}`",
         f"- 버킷 정확도: `{summary['bucketAccuracy']}`",
+        f"- relevance pass rate: `{summary['relevancePassRate']}`",
         f"- Top-1 약한 정확도: `{summary['weakTop1Accuracy']}`",
         f"- Top-10 약한 정확도: `{summary['weakTop10Accuracy']}`",
         f"- overall pass: `{summary['overallPassRate']}`",
@@ -404,12 +414,13 @@ def _render_markdown_report(report: dict[str, Any]) -> str:
         "",
         "## 버킷별 요약",
         "",
-        "| bucket | caseCount | bucketAcc | top1Acc | top10Acc | overallPass | zeroResult | meanMs | p95Ms | negPrecision | brandCoverage@6 |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| bucket | caseCount | routingAcc | bucketAcc | relevancePass | top1Acc | top10Acc | overallPass | zeroResult | meanMs | p95Ms | negPrecision | brandCoverage@6 |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for bucket, item in report["bucketSummary"].items():
         lines.append(
-            f"| {bucket} | {item['caseCount']} | {item['bucketAccuracy']} | {item['weakTop1Accuracy']} | "
+            f"| {bucket} | {item['caseCount']} | {item['routingAccuracy']} | {item['bucketAccuracy']} | "
+            f"{item['relevancePassRate']} | {item['weakTop1Accuracy']} | "
             f"{item['weakTop10Accuracy']} | {item['overallPassRate']} | {item['zeroResultRate']} | "
             f"{item['meanLatencyMs']} | {item['p95LatencyMs']} | {item['negativePrecisionAt10']} | {item['brandCoverageAt6']} |"
         )
