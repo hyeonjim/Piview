@@ -133,7 +133,7 @@ export default function OwnedTab() {
         <div className="mb-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <p className="text-base font-bold text-[#b45959]">제외 제품</p>
+              <p className="text-base font-bold text-[#b84949]">제외 제품</p>
               <Ban size={14} className="text-[#b45959]" />
             </div>
             <button
