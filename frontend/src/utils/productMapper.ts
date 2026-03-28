@@ -8,7 +8,10 @@
  * ProductSummaryResponse (API) → ProductCard props 형태
  */
 
-import type { ProductSummaryResponse, RecommendResponseDto } from "@/types/product";
+import type {
+  ProductSummaryResponse,
+  RecommendResponseDto,
+} from "@/types/product";
 import { fromSkinTypeEnum } from "./enumConvert";
 
 // ── 안티에이징 태그 제외 카테고리 ────────────────────────────────
@@ -22,10 +25,10 @@ export const ANTI_AGING_EXCLUDED_CATEGORIES = new Set([
   "로션/에멀젼",
   "미스트",
   "토너패드",
-  "선케어",   // 대분류명 기준
-  "선크림",   // 선케어 + 맨즈 소분류
-  "선스틱",   // 선케어 소분류
-  "올인원",   // 맨즈 소분류
+  "선케어", // 대분류명 기준
+  "선크림", // 선케어 + 맨즈 소분류
+  "선스틱", // 선케어 소분류
+  "올인원", // 맨즈 소분류
   "쉐이빙",
 ]);
 
@@ -72,8 +75,8 @@ export interface MappedProduct {
   category: string;
   imageUrl: string | null;
   skinTypes: string[]; // 한글 변환 완료 ["건성", "지성"]
-  effects: string[];   // 카테고리별 제외 필터링 완료
-  liked: boolean;      // API 응답 기준 찜 상태
+  effects: string[]; // 카테고리별 제외 필터링 완료
+  liked: boolean; // API 응답 기준 찜 상태
   // EWG: 목록 API 응답에 없음 — undefined로 두면 ProductCard가 EWG 표시 안 함
   ewgSafe?: number;
   ewgCaution?: number;
@@ -111,7 +114,9 @@ export function mapProductSummaryList(
 /** RecommendResponseDto → MappedProduct
  *  추천 API 응답의 tags를 effects(피부기능태그)로 매핑
  */
-export function mapRecommendResponse(product: RecommendResponseDto): MappedProduct {
+export function mapRecommendResponse(
+  product: RecommendResponseDto,
+): MappedProduct {
   const category = product.categoryName ?? "";
   return {
     id: product.productId,
@@ -119,7 +124,6 @@ export function mapRecommendResponse(product: RecommendResponseDto): MappedProdu
     brand: product.brandName ?? "",
     category,
     imageUrl: product.imageUrl ?? null,
-    // "dry" | "oily" → "건성" | "지성" 한글 변환
     skinTypes: (product.skinTypes ?? []).map(fromSkinTypeEnum),
     effects: filterEffectsByCategory(product.tags ?? [], category),
     liked: product.liked ?? false,

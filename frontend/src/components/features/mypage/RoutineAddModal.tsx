@@ -7,11 +7,21 @@ import CompareModal from "@/components/common/CompareModal";
 import { useMutation } from "@tanstack/react-query";
 import { getRoutineSteps } from "@/constants/routineSteps";
 import { Pagination } from "@/components/common/Pagination";
-import { useProductSearch, useProductFilters, useLike, useDislikedProductsQuery } from "@/hooks";
+import {
+  useProductSearch,
+  useProductFilters,
+  useLike,
+  useDislikedProductsQuery,
+} from "@/hooks";
 import { useCompare } from "@/hooks/useCompare";
-import { useUserStore, selectGender, selectSkinType, useRoutineStore } from "@/stores";
+import {
+  useUserStore,
+  selectGender,
+  selectSkinType,
+  useRoutineStore,
+} from "@/stores";
 import { getCategoryDisplayName } from "@/utils/format";
-import { toSkinTypeEnum } from "@/utils/enumConvert";
+import { toSkinTypeEnum, concernLabelToDb } from "@/utils/enumConvert";
 import { mapRecommendResponse } from "@/utils/productMapper";
 import type { MappedProduct } from "@/utils/productMapper";
 import { productService } from "@/services/product";
@@ -60,7 +70,14 @@ export default function RoutineAddModal({
   // 좋아요 API 연동 — toggleLike만 사용 (likeList는 ProductCard 내부에서 처리)
   const { toggleLike } = useLike();
   // 비교하기 상태 관리
-  const { compareItems, toggleCompare, showCompare, openCompare, closeCompare, canCompare } = useCompare<MappedProduct>();
+  const {
+    compareItems,
+    toggleCompare,
+    showCompare,
+    openCompare,
+    closeCompare,
+    canCompare,
+  } = useCompare<MappedProduct>();
   // PICK 배지 추적 — 추천 제품 마킹용
   const markAsRecommended = useRoutineStore((state) => state.markAsRecommended);
 
@@ -92,7 +109,12 @@ export default function RoutineAddModal({
   // 탭 표시용 — displayName 기준으로 탭 합산
   // backendNames: 이 탭에 매핑되는 백엔드 응답 키 목록 (라운드로빈 필터링에 사용)
   const uniqueCategoryTabs = availableCategories.reduce<
-    { name: string; categoryId: number; categoryIds: number[]; backendNames: string[] }[]
+    {
+      name: string;
+      categoryId: number;
+      categoryIds: number[];
+      backendNames: string[];
+    }[]
   >((acc, cat) => {
     const displayName = CATEGORY_DISPLAY_ALIAS[cat.name] ?? cat.name;
     const existing = acc.find((t) => t.name === displayName);
@@ -139,12 +161,17 @@ export default function RoutineAddModal({
     q: searchQuery || undefined,
     bigCategoryId: selectedCategory?.bigCategoryId ?? undefined,
     // 선택된 탭의 모든 categoryId 배열로 전달 (남성 복합 탭 대응)
-    categoryId: selectedTab ? selectedTab.categoryIds : effectiveCategoryId ? [effectiveCategoryId] : undefined,
+    categoryId: selectedTab
+      ? selectedTab.categoryIds
+      : effectiveCategoryId
+        ? [effectiveCategoryId]
+        : undefined,
     page: isRecommendMode ? 0 : currentPage - 1, // 서버 페이지네이션 (0-indexed)
     size: PAGE_SIZE,
   };
 
-  const { products, isLoading, totalCount, hasNext } = useProductSearch(searchParams);
+  const { products, isLoading, totalCount, hasNext } =
+    useProductSearch(searchParams);
 
   // 피뷰추천 API 뮤테이션 — POST /recommendations/products
   const recommendationMutation = useMutation({
@@ -155,7 +182,11 @@ export default function RoutineAddModal({
       const concernId = userConcerns
         .map(
           (concern) =>
-            filterMeta?.tags?.find((tag) => tag.tag === concern)?.tagId,
+            // store.concerns = label값("속건조"), tag.tag = DB값("수분")
+            // → concernLabelToDb로 변환 후 비교
+            filterMeta?.tags?.find(
+              (tag) => tag.tag === concernLabelToDb(concern),
+            )?.tagId,
         )
         .find((id) => id !== undefined);
       return productService.getRecommendations({
@@ -208,15 +239,22 @@ export default function RoutineAddModal({
           tabBackendNames.length > 0
             ? tabBackendNames
                 .map((name) => recommendedData[name])
-                .filter((arr): arr is NonNullable<typeof arr> => !!arr && arr.length > 0)
+                .filter(
+                  (arr): arr is NonNullable<typeof arr> =>
+                    !!arr && arr.length > 0,
+                )
             : Object.values(recommendedData);
 
         if (sources.length === 0) return [];
 
         // 라운드로빈 인터리브 — 각 소스에서 1개씩 번갈아 뽑아 RECOMMEND_LIMIT까지
-        const interleaved: typeof sources[0] = [];
+        const interleaved: (typeof sources)[0] = [];
         const maxLen = Math.max(...sources.map((s) => s.length));
-        for (let i = 0; i < maxLen && interleaved.length < RECOMMEND_LIMIT; i++) {
+        for (
+          let i = 0;
+          i < maxLen && interleaved.length < RECOMMEND_LIMIT;
+          i++
+        ) {
           for (const source of sources) {
             if (interleaved.length >= RECOMMEND_LIMIT) break;
             if (source[i] !== undefined) interleaved.push(source[i]);
@@ -237,7 +275,10 @@ export default function RoutineAddModal({
         : Math.max(maxKnownPage, currentPage);
   // 추천 모드만 클라이언트 slice — 일반 모드는 서버가 이미 PAGE_SIZE만큼 잘라서 줌
   const pagedProducts = isRecommendMode
-    ? recommendedProducts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    ? recommendedProducts.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE,
+      )
     : products;
 
   const handlePageChange = (p: number) => {
@@ -443,9 +484,12 @@ export default function RoutineAddModal({
                         onToggleLike={() => toggleLike(product.id)}
                         isInCompare={isInCompare}
                         onToggleCompare={() => {
-                          const alreadyIn = compareItems.some((x) => x.id === product.id);
+                          const alreadyIn = compareItems.some(
+                            (x) => x.id === product.id,
+                          );
                           toggleCompare(product);
-                          if (!alreadyIn && compareItems.length === 1) openCompare();
+                          if (!alreadyIn && compareItems.length === 1)
+                            openCompare();
                         }}
                       />
                     );

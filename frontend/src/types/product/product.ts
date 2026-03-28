@@ -77,9 +77,9 @@ export interface ProductPageResponse {
 
 /** 추천 요청 DTO — 모든 필드 optional */
 export interface RecommendRequestDto {
-  skinType?: string;           // "dry" | "oily" | "combination" | "subuji"
-  gender?: string;             // "MEN" | "WOMEN"
-  concernId?: number;          // int64 — 피부 고민 ID
+  skinType?: string; // "dry" | "oily" | "combination" | "subuji"
+  gender?: string; // "MEN" | "WOMEN"
+  concernId?: number; // int64 — 피부 고민 ID
   targetRoutineColId?: number; // int64 — 루틴 컬럼 ID
 }
 
