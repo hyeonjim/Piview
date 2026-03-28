@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from services.chatbot.search.query_normalizer import tokenize_text
+
 
 @dataclass(frozen=True)
 class DictionaryEntry:
@@ -15,6 +17,7 @@ class ProductSearchDictionarySnapshot:
     brands: tuple[DictionaryEntry, ...]
     categories: tuple[DictionaryEntry, ...]
     product_types: tuple[DictionaryEntry, ...]
+    ingredients: tuple[DictionaryEntry, ...]
     line_terms: tuple[DictionaryEntry, ...]
     attributes: tuple[DictionaryEntry, ...]
     attribute_groups: dict[str, tuple[str, ...]] = field(default_factory=dict)
@@ -22,6 +25,7 @@ class ProductSearchDictionarySnapshot:
     brand_lookup: dict[str, str] = field(default_factory=dict)
     category_lookup: dict[str, str] = field(default_factory=dict)
     product_type_lookup: dict[str, str] = field(default_factory=dict)
+    ingredient_lookup: dict[str, str] = field(default_factory=dict)
     line_lookup: dict[str, str] = field(default_factory=dict)
     attribute_lookup: dict[str, str] = field(default_factory=dict)
     attribute_group_lookup: dict[str, str] = field(default_factory=dict)
@@ -35,6 +39,8 @@ class ParsedSearchQuery:
     category_terms: tuple[str, ...] = ()
     product_type_terms: tuple[str, ...] = ()
     line_terms: tuple[str, ...] = ()
+    ingredient_terms: tuple[str, ...] = ()
+    negative_ingredient_terms: tuple[str, ...] = ()
     attribute_terms: tuple[str, ...] = ()
     attribute_group_terms: tuple[str, ...] = ()
     keyword_terms: tuple[str, ...] = ()
@@ -44,7 +50,7 @@ class ParsedSearchQuery:
             *self.brand_terms,
             *self.category_terms,
             *self.product_type_terms,
-            *self.line_terms,
+            *self.ingredient_terms,
             *self.attribute_terms,
             *self.keyword_terms,
         ]
@@ -64,7 +70,10 @@ class ParsedSearchQuery:
             self.brand_terms
             or self.category_terms
             or self.product_type_terms
-            or self.line_terms
             or self.attribute_terms
             or self.attribute_group_terms
         )
+
+    @property
+    def token_count(self) -> int:
+        return len(tokenize_text(self.normalized))
