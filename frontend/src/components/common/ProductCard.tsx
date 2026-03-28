@@ -63,7 +63,7 @@ interface ProductCardProps {
 // label은 매핑 단계(productMapper)에서 이미 한글 변환 완료 상태로 전달됨
 export function SkinTypeTag({ label }: { label: string }) {
   return (
-    <span className="inline-block mb-1 mr-1.5 text-[11px] font-medium px-1.5 py-px rounded bg-[#f5ecdf] text-[#514a42]">
+    <span className="inline-block mb-1 mr-1.5 text-[11px] font-medium px-1 py-px rounded-[5px] border bg-[#faf5ee] text-[#514a42]">
       {label}
     </span>
   );

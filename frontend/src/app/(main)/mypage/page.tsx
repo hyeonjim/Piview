@@ -140,11 +140,7 @@ export default function MyPage() {
             </div>
 
             {/* 피부 프로필 태그 영역 */}
-            {!hasSkinProfile ? (
-              <p className="mt-[3px] text-[13px] font-medium text-brand">
-                피부 타입을 진단해보세요
-              </p>
-            ) : (
+            {hasSkinProfile && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {/* 피부 타입 배지 — ProductCard SkinTypeTag 배경색 스타일 */}
                 <span className="text-[13px] py-0.5 px-2 rounded-full border bg-[#f0e4c7] text-[#5f564c] font-semibold">
@@ -159,11 +155,12 @@ export default function MyPage() {
                     {concern}
                   </span>
                 ))}
-                {/* 기피 성분 배지 */}
+                {/* 기피 성분 배지 — 줄바꿈 구분 */}
+                {savedAvoidContents.length > 0 && <span className="w-full" />}
                 {savedAvoidContents.map((item, index) => (
                   <span
                     key={`${item.avoidContent}-${index}`}
-                    className="text-[12px] font-medium py-0.5 px-2 border rounded-full bg-[#F5EDE8] text-[#8C5A4A]"
+                    className="text-[12px] font-semibold py-0.5 px-2 border rounded-full bg-[#F5EDE8] text-[#8C5A4A]"
                   >
                     {item.avoidContent}
                   </span>
