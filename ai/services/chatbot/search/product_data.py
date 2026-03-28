@@ -166,10 +166,14 @@ class ProductSearchDataRepository:
         category_ids: Sequence[int] | None = None,
         big_category_id: int | None = None,
         include_ingredient_text_in_prefilter: bool = True,
+        ingredient_must_terms: Sequence[str] | None = None,
         trace_label: str | None = None,
     ) -> list[ProductSearchDataRow]:
         normalized_terms = [term.strip().lower() for term in terms if term.strip()]
-        if not normalized_terms:
+        normalized_ingredient_must_terms = [
+            term.strip().lower() for term in (ingredient_must_terms or ()) if term and term.strip()
+        ]
+        if not normalized_terms and not normalized_ingredient_must_terms:
             return []
         started_at = time.perf_counter()
         base_rows = self._fetch_products_base(
@@ -179,6 +183,7 @@ class ProductSearchDataRepository:
             category_ids=category_ids,
             big_category_id=big_category_id,
             include_ingredient_text_in_prefilter=include_ingredient_text_in_prefilter,
+            ingredient_must_terms=normalized_ingredient_must_terms,
         )
         base_elapsed_ms = (time.perf_counter() - started_at) * 1000.0
 
@@ -230,6 +235,7 @@ class ProductSearchDataRepository:
         big_category_id: int | None = None,
         limit: int | None = None,
         include_ingredient_text_in_prefilter: bool = True,
+        ingredient_must_terms: Sequence[str] | None = None,
     ) -> list[ProductSearchDataRow]:
         sql = """
             SELECT
@@ -297,6 +303,17 @@ class ProductSearchDataRepository:
                     params.extend([like_pattern, like_pattern])
                 term_clauses.append("(\n                        " + "\n                        OR ".join(clause_parts) + "\n                    )")
             sql += " AND (" + " OR ".join(term_clauses) + ")"
+
+        if ingredient_must_terms:
+            ingredient_clauses: list[str] = []
+            for term in ingredient_must_terms:
+                like_pattern = f"%{term}%"
+                ingredient_clauses.append(
+                    "(\n                        COALESCE(pi.product_ingredients_ko, '') LIKE %s\n"
+                    "                        OR COALESCE(pi.product_ingredients_en, '') LIKE %s\n                    )"
+                )
+                params.extend([like_pattern, like_pattern])
+            sql += " AND (" + " OR ".join(ingredient_clauses) + ")"
 
         if preferred_category_aliases:
             category_clauses: list[str] = []
