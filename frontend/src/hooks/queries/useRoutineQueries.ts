@@ -23,12 +23,12 @@ import { queryKeys } from "@/lib/queryKeys";
 import { routineService } from "@/services/routine";
 import type {
   DraftItemDto,
-  DraftUpdateResponse,
   RoutineListResponse,
   RoutineResponse,
   CreateRoutineRequest,
   EditRoutineLoadResponse,
   UpdateRoutineRequest,
+  RoutineAnalysisResponse,
 } from "@/types/routine";
 
 // ── 조회 훅 ───────────────────────────────────────────────────────
@@ -105,17 +105,18 @@ export function useRoutineDetailQuery(routineId: number | undefined) {
 export function useAddDraftItemMutation() {
   const queryClient = useQueryClient();
 
-  return useMutation<DraftUpdateResponse, Error, { columnId: number; productId: number }>({
-    mutationFn: ({ columnId, productId }) =>
-      routineService.addDraft(columnId, productId).then((res) => res.data.data),
+  return useMutation({
+    mutationFn: ({
+      columnId,
+      productId,
+    }: {
+      columnId: number;
+      productId: number;
+    }) => routineService.addDraft(columnId, productId),
 
-    onSuccess: (data) => {
-      // updatedDraft로 드래프트 캐시 직접 갱신
-      if (data.updatedDraft) {
-        queryClient.setQueryData<DraftItemDto[]>(queryKeys.routineDraft, data.updatedDraft);
-      } else {
-        queryClient.invalidateQueries({ queryKey: queryKeys.routineDraft });
-      }
+    onSuccess: () => {
+      // 드래프트 캐시 무효화 — 서버에서 최신 상태 재조회
+      queryClient.invalidateQueries({ queryKey: queryKeys.routineDraft });
     },
   });
 }
@@ -309,6 +310,21 @@ export function useLoadRoutineToDraftMutation() {
       // draft가 새로운 루틴 데이터로 교체되었으므로 캐시 무효화
       queryClient.invalidateQueries({ queryKey: queryKeys.routineDraft });
     },
+  });
+}
+
+/**
+ * 메인 루틴 AI 분석
+ * GET /api/v1/routines/analysis
+ * 메인 루틴이 변경될 때마다 호출 — staleTime 짧게 설정
+ */
+export function useRoutineAnalysisQuery(enabled: boolean = true) {
+  return useQuery<RoutineAnalysisResponse>({
+    queryKey: queryKeys.routineAnalysis,
+    queryFn: () => routineService.getRoutineAnalysis(),
+    enabled,
+    staleTime: 1000 * 60 * 5, // 5분 — 루틴 변경 시 invalidate
+    retry: false,
   });
 }
 

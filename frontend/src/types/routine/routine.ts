@@ -86,12 +86,10 @@ export interface UpdateRoutineRequest {
 }
 
 /**
- * POST /api/v1/routines/draft 응답
- * 스웨거: DraftUpdateResponse
- * 제품 추가 후 갱신된 draft 목록과 성분 충돌 메시지 반환
+ * GET /api/v1/routines/analysis 응답
+ * 메인 루틴 AI 분석 결과 — 성분 충돌, 이상치, 루틴 순서 팁 등 5줄 이내
  */
-export interface DraftUpdateResponse {
-  updatedDraft: DraftItemDto[];
-  message: string | null;
+export interface RoutineAnalysisResponse {
+  analysisText: string;
 }
 
