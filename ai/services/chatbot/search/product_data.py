@@ -1,7 +1,9 @@
 """Shared product data access for chatbot retrieval/indexing."""
 
 from dataclasses import dataclass
+import logging
 import re
+import time
 from typing import Iterable, Sequence
 
 import pymysql
@@ -12,6 +14,7 @@ from core.settings import get_settings
 _ANTI_AGING_IDS = {5, 6}
 _PIGMENTATION_ID = 4
 _HYDRATION_ID = 9
+logger = logging.getLogger("uvicorn.error")
 
 
 @dataclass
@@ -36,6 +39,13 @@ class ProductNameIndexRow:
     brand_name: str | None
     category_id: int | None
     big_category_id: int | None
+
+
+@dataclass
+class ProductCategoryRow:
+    category_id: int
+    big_category_id: int | None
+    category_name: str
 
 
 def normalize_whitespace(text: str | None) -> str:
@@ -155,18 +165,36 @@ class ProductSearchDataRepository:
         preferred_category_aliases: Sequence[str] | None = None,
         category_ids: Sequence[int] | None = None,
         big_category_id: int | None = None,
+        include_ingredient_text_in_prefilter: bool = True,
+        trace_label: str | None = None,
     ) -> list[ProductSearchDataRow]:
         normalized_terms = [term.strip().lower() for term in terms if term.strip()]
         if not normalized_terms:
             return []
-        rows = self._fetch_products_base(
+        started_at = time.perf_counter()
+        base_rows = self._fetch_products_base(
             search_terms=normalized_terms,
             limit=limit,
             preferred_category_aliases=preferred_category_aliases,
             category_ids=category_ids,
             big_category_id=big_category_id,
+            include_ingredient_text_in_prefilter=include_ingredient_text_in_prefilter,
         )
-        return self._attach_concerns(rows)
+        base_elapsed_ms = (time.perf_counter() - started_at) * 1000.0
+
+        attach_started_at = time.perf_counter()
+        rows = self._attach_concerns(base_rows)
+        concern_elapsed_ms = (time.perf_counter() - attach_started_at) * 1000.0
+
+        if trace_label:
+            logger.info(
+                "Product search data fetch [%s]: base_query_ms=%.1f concern_attach_ms=%.1f row_count=%d",
+                trace_label,
+                base_elapsed_ms,
+                concern_elapsed_ms,
+                len(rows),
+            )
+        return rows
 
     def _attach_concerns(self, rows: list[ProductSearchDataRow]) -> list[ProductSearchDataRow]:
         if not rows:
@@ -201,6 +229,7 @@ class ProductSearchDataRepository:
         category_ids: Sequence[int] | None = None,
         big_category_id: int | None = None,
         limit: int | None = None,
+        include_ingredient_text_in_prefilter: bool = True,
     ) -> list[ProductSearchDataRow]:
         sql = """
             SELECT
@@ -244,28 +273,29 @@ class ProductSearchDataRepository:
             term_clauses: list[str] = []
             for term in search_terms:
                 like_pattern = f"%{term}%"
-                term_clauses.append(
-                    """
-                    (
-                        p.name LIKE %s
-                        OR COALESCE(p.description, '') LIKE %s
-                        OR COALESCE(b.brand_name, '') LIKE %s
-                        OR COALESCE(c.category_name, '') LIKE %s
-                        OR COALESCE(pi.product_ingredients_ko, '') LIKE %s
-                        OR COALESCE(pi.product_ingredients_en, '') LIKE %s
-                    )
-                    """.strip()
-                )
+                clause_parts = [
+                    "p.name LIKE %s",
+                    "COALESCE(p.description, '') LIKE %s",
+                    "COALESCE(b.brand_name, '') LIKE %s",
+                    "COALESCE(c.category_name, '') LIKE %s",
+                ]
                 params.extend(
                     [
                         like_pattern,
                         like_pattern,
                         like_pattern,
                         like_pattern,
-                        like_pattern,
-                        like_pattern,
                     ]
                 )
+                if include_ingredient_text_in_prefilter:
+                    clause_parts.extend(
+                        [
+                            "COALESCE(pi.product_ingredients_ko, '') LIKE %s",
+                            "COALESCE(pi.product_ingredients_en, '') LIKE %s",
+                        ]
+                    )
+                    params.extend([like_pattern, like_pattern])
+                term_clauses.append("(\n                        " + "\n                        OR ".join(clause_parts) + "\n                    )")
             sql += " AND (" + " OR ".join(term_clauses) + ")"
 
         if preferred_category_aliases:
@@ -366,7 +396,7 @@ class ProductSearchDataRepository:
             charset="utf8mb4",
             cursorclass=pymysql.cursors.DictCursor,
         )
-    
+
     def fetch_name_index_rows(
         self,
         category_ids: Sequence[int] | None = None,
@@ -404,6 +434,27 @@ class ProductSearchDataRepository:
                 brand_name=row["brand_name"],
                 category_id=int(row["category_id"]) if row["category_id"] is not None else None,
                 big_category_id=int(row["big_category_id"]) if row["big_category_id"] is not None else None,
+            )
+            for row in rows
+        ]
+
+    def fetch_category_rows(self) -> list[ProductCategoryRow]:
+        sql = """
+            SELECT c.category_id, c.big_category_id, c.category_name
+            FROM category c
+            WHERE c.category_name IS NOT NULL
+            ORDER BY c.big_category_id ASC, c.category_id ASC
+        """
+        with self._get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(sql)
+                rows = cursor.fetchall()
+
+        return [
+            ProductCategoryRow(
+                category_id=int(row["category_id"]),
+                big_category_id=int(row["big_category_id"]) if row["big_category_id"] is not None else None,
+                category_name=str(row["category_name"]),
             )
             for row in rows
         ]
