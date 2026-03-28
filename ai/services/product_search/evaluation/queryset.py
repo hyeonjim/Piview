@@ -394,6 +394,8 @@ _AMBIGUOUS_TERMS = (
     "포어수딩",
 )
 
+_AMBIGUOUS_SINGLE_TOKEN_SET = frozenset(_AMBIGUOUS_TERMS)
+
 _LONG_QUERY_CASES = (
     ("성분에디터 그린토마토 모공 진정 토너", "성분에디터", "토너", ("그린토마토", "모공", "진정")),
     ("성분에디터 그린토마토 포어 수딩 토너", "성분에디터", "토너", ("그린토마토", "포어", "수딩")),
@@ -559,7 +561,12 @@ def build_product_search_evaluation_cases() -> list[ProductSearchEvaluationCase]
             )
         )
 
-    for index, ingredient in enumerate(_INGREDIENTS, start=1):
+    ingredient_only_terms = tuple(
+        ingredient
+        for ingredient in _INGREDIENTS
+        if ingredient not in _AMBIGUOUS_SINGLE_TOKEN_SET
+    )
+    for index, ingredient in enumerate(ingredient_only_terms, start=1):
         append_case(
             ProductSearchEvaluationCase(
                 case_id=f"ingredient_only_{index:03d}",

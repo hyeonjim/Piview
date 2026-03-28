@@ -85,7 +85,7 @@ class ProductSearchQueryParserTests(unittest.TestCase):
 
         self.assertEqual(parsed.category_terms, ("크림",))
         self.assertEqual(parsed.ingredient_terms, ("판테놀",))
-        self.assertEqual(parsed.keyword_terms, ("판테놀",))
+        self.assertEqual(parsed.keyword_terms, ())
         self.assertEqual(parsed.line_terms, ("판테놀",))
 
     def test_parses_negative_ingredient_expression(self) -> None:
@@ -101,6 +101,18 @@ class ProductSearchQueryParserTests(unittest.TestCase):
         self.assertEqual(parsed.category_terms, ("크림",))
         self.assertEqual(parsed.ingredient_terms, ("세라마이드",))
         self.assertTrue(parsed.is_structured)
+
+    def test_single_token_ingredient_alias_does_not_promote_duplicate_keyword(self) -> None:
+        parsed = product_search_query_parser.parse("판테놀", self.snapshot)
+
+        self.assertEqual(parsed.ingredient_terms, ("판테놀",))
+        self.assertEqual(parsed.keyword_terms, ())
+
+    def test_negative_compound_operator_is_not_broken_by_particle_strip(self) -> None:
+        parsed = product_search_query_parser.parse("향료 무첨가 토너", self.snapshot)
+
+        self.assertEqual(parsed.negative_ingredient_terms, ("향료",))
+        self.assertEqual(parsed.keyword_terms, ())
 
     def test_keeps_ambiguous_and_concern_tokens_as_keywords(self) -> None:
         parsed = product_search_query_parser.parse(
@@ -119,6 +131,33 @@ class ProductSearchQueryParserTests(unittest.TestCase):
         self.assertEqual(parsed.attribute_group_terms, ("soothing",))
         self.assertEqual(parsed.keyword_terms, ("진정",))
         self.assertFalse(parsed.is_structured)
+
+    def test_manual_ambiguous_term_does_not_force_single_token_ingredient_bucket(self) -> None:
+        snapshot = ProductSearchDictionarySnapshot(
+            loaded_at=self.snapshot.loaded_at,
+            brands=self.snapshot.brands,
+            categories=self.snapshot.categories,
+            product_types=self.snapshot.product_types,
+            ingredients=self.snapshot.ingredients,
+            line_terms=self.snapshot.line_terms,
+            attributes=self.snapshot.attributes,
+            attribute_groups=self.snapshot.attribute_groups,
+            ambiguous_terms=("그린토마토",),
+            stopwords=self.snapshot.stopwords,
+            brand_lookup=self.snapshot.brand_lookup,
+            category_lookup=self.snapshot.category_lookup,
+            product_type_lookup=self.snapshot.product_type_lookup,
+            ingredient_lookup={**self.snapshot.ingredient_lookup, "그린토마토": "그린토마토오일"},
+            ingredient_expansion_lookup={**self.snapshot.ingredient_expansion_lookup, "그린토마토": ("그린토마토오일",)},
+            line_lookup=self.snapshot.line_lookup,
+            attribute_lookup=self.snapshot.attribute_lookup,
+            attribute_group_lookup=self.snapshot.attribute_group_lookup,
+            ambiguous_term_lookup={"그린토마토": "그린토마토"},
+        )
+        parsed = product_search_query_parser.parse("그린토마토", snapshot)
+
+        self.assertEqual(parsed.ingredient_terms, ())
+        self.assertEqual(parsed.keyword_terms, ("그린토마토",))
 
 
 class ProductSearchExecutionPlanTests(unittest.TestCase):

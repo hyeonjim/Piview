@@ -162,7 +162,7 @@ class ProductSearchService:
                     effective_category_ids,
                     effective_big_category_id,
                 )
-            if exact_results and not parsed_query.is_structured:
+            if exact_results and not parsed_query.is_structured and plan.query_bucket != "ambiguous_keyword":
                 final_results = exact_results[:search_limit]
                 timing.log_summary(
                     logger,
@@ -189,7 +189,7 @@ class ProductSearchService:
                     effective_category_ids,
                     effective_big_category_id,
                 )
-            if fuzzy_results and not parsed_query.is_structured:
+            if fuzzy_results and not parsed_query.is_structured and plan.query_bucket != "ambiguous_keyword":
                 final_results = fuzzy_results[:search_limit]
                 timing.log_summary(
                     logger,
@@ -329,7 +329,10 @@ class ProductSearchService:
                 snapshot.attribute_groups,
                 snapshot.ingredient_expansion_lookup,
             )
-            constrained = self._apply_structured_constraints(reranked, parsed_query, snapshot)
+            if plan.query_bucket == "ambiguous_keyword":
+                constrained = self._apply_ambiguous_constraints(reranked, parsed_query, snapshot)
+            else:
+                constrained = self._apply_structured_constraints(reranked, parsed_query, snapshot)
 
         final_results = constrained[:search_limit]
         timing.log_summary(
@@ -444,8 +447,9 @@ class ProductSearchService:
         strong_terms = self._resolve_strong_keyword_terms(parsed_query, snapshot)
         weak_terms = self._resolve_weak_keyword_terms(parsed_query, snapshot)
         detail_terms = self._resolve_detail_terms(parsed_query, snapshot)
+        query_signals = build_product_search_query_signals(parsed_query)
         require_strong_match = self._requires_strong_keyword_match(parsed_query, snapshot)
-        require_detail_match = build_product_search_query_signals(parsed_query).is_long_query_like and bool(detail_terms)
+        require_detail_match = query_signals.is_long_query_like and bool(detail_terms)
         ingredient_match_terms = self._resolve_ingredient_match_terms(parsed_query, snapshot)
 
         scored: list[tuple[tuple[float, ...], int, ProductSearchResult]] = []
@@ -459,6 +463,20 @@ class ProductSearchService:
                 searchable_text,
                 detail_terms,
             )
+            ingredient_field_match_count = float(
+                self._match_ingredient_query_count(
+                    normalize_text(result.ingredient_preview),
+                    parsed_query.ingredient_terms,
+                    ingredient_match_terms,
+                )
+            )
+            ingredient_name_match_count = float(
+                self._match_ingredient_query_count(
+                    normalize_text(result.name),
+                    parsed_query.ingredient_terms,
+                    ingredient_match_terms,
+                )
+            )
             ingredient_match_count = float(
                 self._match_ingredient_query_count(
                     searchable_text,
@@ -469,23 +487,48 @@ class ProductSearchService:
             lexical_source_count = float(
                 sum(source in {"exact", "fuzzy", "keyword", "structured"} for source in result.matched_sources)
             )
-            match_key = (
-                1.0 if ingredient_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
-                ingredient_match_count,
-                1.0 if brand_match and primary_match_count > 0 else 0.0,
-                brand_match,
-                primary_match_count,
-                1.0 if detail_match_count > 0 else 0.0 if require_detail_match else 1.0,
-                detail_coverage_ratio,
-                detail_match_count,
-                -missing_detail_count,
-                1.0 if strong_match_count > 0 else 0.0 if require_strong_match else 1.0,
-                strong_match_count,
-                weak_match_count,
-                self._negative_ingredient_rank_signal(searchable_text, parsed_query.negative_ingredient_terms),
-                lexical_source_count,
-                float(result.hybrid_score or result.raw_score or 0.0),
-            )
+            if query_signals.is_long_query_like:
+                match_key = (
+                    1.0 if brand_match and primary_match_count > 0 else 0.0,
+                    brand_match,
+                    primary_match_count,
+                    1.0 if detail_match_count > 0 else 0.0 if require_detail_match else 1.0,
+                    detail_coverage_ratio,
+                    detail_match_count,
+                    -missing_detail_count,
+                    1.0 if strong_match_count > 0 else 0.0 if require_strong_match else 1.0,
+                    strong_match_count,
+                    weak_match_count,
+                    1.0 if ingredient_field_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
+                    ingredient_field_match_count,
+                    ingredient_name_match_count,
+                    1.0 if ingredient_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
+                    ingredient_match_count,
+                    self._negative_ingredient_rank_signal(searchable_text, parsed_query.negative_ingredient_terms),
+                    lexical_source_count,
+                    float(result.hybrid_score or result.raw_score or 0.0),
+                )
+            else:
+                match_key = (
+                    1.0 if ingredient_field_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
+                    ingredient_field_match_count,
+                    ingredient_name_match_count,
+                    1.0 if ingredient_match_count > 0 else 0.0 if parsed_query.ingredient_terms else 1.0,
+                    ingredient_match_count,
+                    1.0 if brand_match and primary_match_count > 0 else 0.0,
+                    brand_match,
+                    primary_match_count,
+                    1.0 if detail_match_count > 0 else 0.0 if require_detail_match else 1.0,
+                    detail_coverage_ratio,
+                    detail_match_count,
+                    -missing_detail_count,
+                    1.0 if strong_match_count > 0 else 0.0 if require_strong_match else 1.0,
+                    strong_match_count,
+                    weak_match_count,
+                    self._negative_ingredient_rank_signal(searchable_text, parsed_query.negative_ingredient_terms),
+                    lexical_source_count,
+                    float(result.hybrid_score or result.raw_score or 0.0),
+                )
             scored.append((match_key, index, result))
 
         scored.sort(key=lambda item: (item[0], -item[1]), reverse=True)
@@ -532,6 +575,46 @@ class ProductSearchService:
             )
 
         return ordered
+
+    def _apply_ambiguous_constraints(
+        self,
+        results: list[ProductSearchResult],
+        parsed_query,
+        snapshot: ProductSearchDictionarySnapshot,
+    ) -> list[ProductSearchResult]:
+        if not results:
+            return results
+
+        target_terms = self._resolve_ambiguous_target_terms(parsed_query, snapshot)
+        if not target_terms:
+            return results
+
+        scored: list[tuple[tuple[float, ...], int, ProductSearchResult]] = []
+        for index, result in enumerate(results):
+            name_text = normalize_text(result.name)
+            searchable_text = self._searchable_text(result)
+            prefix_match_count = float(sum(1 for term in target_terms if term and name_text.startswith(term)))
+            name_match_count = float(sum(1 for term in target_terms if term and term in name_text))
+            detail_match_count = float(sum(1 for term in target_terms if term and term in searchable_text))
+            exact_source = 1.0 if "exact" in result.matched_sources else 0.0
+            fuzzy_source = 1.0 if "fuzzy" in result.matched_sources else 0.0
+            lexical_source_count = float(
+                sum(source in {"exact", "fuzzy", "keyword"} for source in result.matched_sources)
+            )
+            match_key = (
+                1.0 if name_match_count > 0 else 0.0,
+                prefix_match_count,
+                name_match_count,
+                detail_match_count,
+                exact_source,
+                fuzzy_source,
+                lexical_source_count,
+                float(result.hybrid_score or result.raw_score or 0.0),
+            )
+            scored.append((match_key, index, result))
+
+        scored.sort(key=lambda item: (item[0], -item[1]), reverse=True)
+        return [item[2] for item in scored]
 
     def _matches_brand(self, result: ProductSearchResult, brand_terms: tuple[str, ...]) -> bool:
         if not brand_terms:
@@ -757,6 +840,11 @@ class ProductSearchService:
             parsed_query.ingredient_terms,
             ingredient_match_terms,
         )
+        ingredient_name_match_count = self._match_ingredient_query_count(
+            normalize_text(row.name),
+            parsed_query.ingredient_terms,
+            ingredient_match_terms,
+        )
         ingredient_searchable_match_count = self._match_ingredient_query_count(
             searchable_text,
             parsed_query.ingredient_terms,
@@ -772,8 +860,14 @@ class ProductSearchService:
         if parsed_query.product_type_terms:
             score += 28.0 * sum(term in searchable_text for term in parsed_query.product_type_terms)
         if parsed_query.ingredient_terms:
-            score += 36.0 * ingredient_field_match_count
-            score += 18.0 * ingredient_searchable_match_count
+            if query_bucket == "long_query":
+                score += 24.0 * ingredient_field_match_count
+                score += 12.0 * ingredient_name_match_count
+                score += 12.0 * ingredient_searchable_match_count
+            else:
+                score += 36.0 * ingredient_field_match_count
+                score += 16.0 * ingredient_name_match_count
+                score += 18.0 * ingredient_searchable_match_count
         if attribute_group_terms:
             score += 18.0 * sum(term in searchable_text for term in attribute_group_terms)
         if parsed_query.attribute_terms:
@@ -894,6 +988,34 @@ class ProductSearchService:
             deduped.append(normalized_term)
         return tuple(deduped)
 
+    def _resolve_ambiguous_target_terms(
+        self,
+        parsed_query,
+        snapshot: ProductSearchDictionarySnapshot,
+    ) -> tuple[str, ...]:
+        ordered_terms = (
+            *parsed_query.keyword_terms,
+            *tuple(
+                term
+                for term in parsed_query.line_terms
+                if term in snapshot.ambiguous_term_lookup
+            ),
+            *tuple(
+                term
+                for term in parsed_query.ingredient_terms
+                if term in snapshot.ambiguous_term_lookup
+            ),
+        )
+        deduped: list[str] = []
+        seen: set[str] = set()
+        for term in ordered_terms:
+            normalized_term = normalize_text(term)
+            if not normalized_term or normalized_term in seen:
+                continue
+            seen.add(normalized_term)
+            deduped.append(normalized_term)
+        return tuple(deduped)
+
     def _detail_match_metrics(
         self,
         searchable_text: str,
@@ -973,6 +1095,15 @@ class ProductSearchService:
         big_category_id: int | None,
         candidate_limit: int,
     ) -> ProductSearchNameMatchingPolicy:
+        if plan.query_bucket == "ambiguous_keyword":
+            return ProductSearchNameMatchingPolicy(
+                run_exact=True,
+                run_fuzzy=False,
+                fallback_exact=False,
+                fallback_fuzzy=False,
+                reason="ambiguous.exact_only",
+            )
+
         if not plan.run_exact and not plan.run_fuzzy:
             return ProductSearchNameMatchingPolicy(
                 run_exact=False,

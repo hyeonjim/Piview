@@ -78,11 +78,20 @@ class ProductSearchQueryParser:
             attribute_group_covered,
         )
         attribute_terms = self._match_lookup(tokens, snapshot.attribute_lookup, set(covered_indices))
-        ingredient_terms = self._extract_positive_ingredient_terms(
+        single_token_ambiguous_override = bool(
+            len(tokens) == 1
+            and not brand_terms
+            and not category_terms
+            and not product_type_terms
+            and not negative_terms
+            and self._lookup_phrase(normalized, snapshot.ambiguous_term_lookup)
+        )
+        ingredient_terms, ingredient_covered_indices = self._extract_positive_ingredient_terms(
             tokens,
             snapshot.ingredient_lookup,
             snapshot.ingredient_expansion_lookup,
             covered_indices | negative_covered_indices,
+            defer_single_token_match=single_token_ambiguous_override,
         )
         line_terms = self._filter_stopword_matches(line_terms, snapshot.stopwords)
         attribute_terms = self._filter_stopword_matches(attribute_terms, snapshot.stopwords)
@@ -92,9 +101,11 @@ class ProductSearchQueryParser:
         # keyword는 최종 잔여 영역이다.
         # 이미 구조화된 토큰, 조사 제거 후 비는 토큰, noise token, stopword는 모두 제외하고
         # 나머지만 자유어 relevance 신호로 남긴다.
-        keyword_covered_indices = covered_indices | negative_covered_indices
+        keyword_covered_indices = covered_indices | negative_covered_indices | ingredient_covered_indices
         for index, token in enumerate(tokens):
-            normalized_token = self._strip_particle(normalize_text(token))
+            normalized_token = normalize_text(token)
+            if normalized_token not in snapshot.ingredient_lookup:
+                normalized_token = self._strip_particle(normalized_token)
             if (
                 index in keyword_covered_indices
                 or not normalized_token
@@ -218,7 +229,16 @@ class ProductSearchQueryParser:
 
             canonical = None
             local_covered = {index}
-            if stripped_token in NEGATIVE_OPERATOR_TOKENS and index > 0:
+            if normalized_token in NEGATIVE_OPERATOR_TOKENS and index > 0:
+                canonical, target_indices = self._lookup_negative_target(
+                    tokens,
+                    ingredient_lookup,
+                    ingredient_expansion_lookup,
+                    index - 1,
+                    blocked_indices,
+                )
+                local_covered.update(target_indices)
+            elif stripped_token in NEGATIVE_OPERATOR_TOKENS and index > 0:
                 # "향료 없는"처럼 연산자가 독립 토큰인 경우, 바로 앞 1~2 token에서 ingredient target을 찾는다.
                 canonical, target_indices = self._lookup_negative_target(
                     tokens,
@@ -231,6 +251,13 @@ class ProductSearchQueryParser:
             else:
                 # "향료프리", "무향료"처럼 한 token에 operator가 붙은 패턴도 따로 본다.
                 for suffix in NEGATIVE_OPERATOR_SUFFIXES:
+                    if normalized_token.endswith(suffix) and len(normalized_token) > len(suffix):
+                        canonical = self._resolve_ingredient_term(
+                            normalized_token[: -len(suffix)],
+                            ingredient_lookup,
+                            ingredient_expansion_lookup,
+                        )
+                        break
                     if stripped_token.endswith(suffix) and len(stripped_token) > len(suffix):
                         canonical = self._resolve_ingredient_term(
                             stripped_token[: -len(suffix)],
@@ -290,14 +317,16 @@ class ProductSearchQueryParser:
         ingredient_lookup: dict[str, str],
         ingredient_expansion_lookup: dict[str, tuple[str, ...]],
         blocked_indices: set[int],
-    ) -> list[str]:
+        defer_single_token_match: bool = False,
+    ) -> tuple[list[str], set[int]]:
         # positive ingredient는 negative로 이미 소비된 토큰과 앞선 structured token을 제외한 뒤 본다.
         # 그래야 "향료 없는 토너"가 positive ingredient=향료로도 동시에 잡히는 충돌을 막을 수 있다.
-        if not ingredient_lookup:
-            return []
+        if not ingredient_lookup or defer_single_token_match:
+            return [], set()
 
         matches: list[str] = []
         seen: set[str] = set()
+        covered_indices: set[int] = set()
         max_window = min(2, len(tokens))
         for window in range(max_window, 0, -1):
             for start in range(0, len(tokens) - window + 1):
@@ -314,7 +343,8 @@ class ProductSearchQueryParser:
                     continue
                 seen.add(canonical)
                 matches.append(canonical)
-        return matches
+                covered_indices.update(range(start, end))
+        return matches, covered_indices
 
     def _lookup_negative_target(
         self,
@@ -356,15 +386,14 @@ class ProductSearchQueryParser:
         # 이 fallback은 사용자가 DB 성분명과 거의 같은 단어를 입력했는데 generated top-N에 아직 안 올라오지 않은 경우를 버티기 위한 것이다.
         # 다만 너무 짧은 token은 오탐을 만들기 쉬워 길이 2 이상만 허용한다.
         normalized = normalize_text(phrase)
+        if normalized in ingredient_expansion_lookup:
+            return normalized
         stripped = self._strip_particle(normalized)
-        expansion_candidates = ingredient_expansion_lookup.get(stripped, ())
-        if stripped and len(expansion_candidates) > 1:
+        if stripped in ingredient_expansion_lookup:
             return stripped
         canonical = self._lookup_phrase(phrase, ingredient_lookup)
         if canonical:
             return canonical
-        if stripped in ingredient_expansion_lookup:
-            return stripped
         return None
 
 
