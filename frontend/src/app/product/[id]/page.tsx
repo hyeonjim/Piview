@@ -669,8 +669,8 @@ function ProductDetailInner() {
                   <motion.div
                     className="mt-2 rounded-xl bg-[#fcfbfb] border border-[#f5dfdf] px-3 py-2.5"
                   >
-                    <p className="text-[14px] text-[#aa4646] leading-[1.6] flex items-start gap-1.5">
-                      <MessageSquareWarning size={14} className="shrink-0 mt-0.5" />
+                    <p className="text-[14px] text-[#aa4646] leading-[1.6] flex items-start gap-3">
+                      <MessageSquareWarning size={16} className="shrink-0 mt-0.5" />
                       {aiSummary.line3AiSummary}
                     </p>
                   </motion.div>
