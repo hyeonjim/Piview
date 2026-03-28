@@ -47,6 +47,16 @@ interface RoutineStore {
   selectedRoutineId: number | null;
   setSelectedRoutineId: (id: number | null) => void;
 
+  // 성분 충돌 상태 (메모리 전용) — 페이지 이동에도 유지
+  /** 충돌 성분 메시지 */
+  conflictMessage: string | null;
+  /** 충돌을 유발한 제품 ID 목록 */
+  conflictProductIds: number[];
+  /** 충돌 상태 저장 */
+  setConflict: (message: string, productIds: number[]) => void;
+  /** 충돌 상태 초기화 */
+  clearConflict: () => void;
+
   // PICK 배지 추적 (localStorage 영구 저장)
 
   /** 추천으로 추가된 제품 ID Set */
@@ -67,6 +77,12 @@ export const useRoutineStore = create<RoutineStore>()((set, get) => ({
   // UI 상태 (메모리 전용)
   selectedRoutineId: null,
   setSelectedRoutineId: (id) => set({ selectedRoutineId: id }),
+
+  // 성분 충돌 상태
+  conflictMessage: null,
+  conflictProductIds: [],
+  setConflict: (message, productIds) => set({ conflictMessage: message, conflictProductIds: productIds }),
+  clearConflict: () => set({ conflictMessage: null, conflictProductIds: [] }),
 
   // PICK 배지 추적 (localStorage 연동)
   recommendedProductIds: loadRecommendedIds(),

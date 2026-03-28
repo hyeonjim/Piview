@@ -83,7 +83,7 @@ export interface RecommendRequestDto {
   targetRoutineColId?: number; // int64 — 루틴 컬럼 ID
 }
 
-/** 추천 응답 DTO — ProductSummaryResponse와 달리 tags 필드 없음 */
+/** 추천 응답 DTO */
 export interface RecommendResponseDto {
   productId: number;
   name: string;
@@ -91,9 +91,7 @@ export interface RecommendResponseDto {
   categoryName: string;
   imageUrl: string;
   price: number;
-  volume: string;
-  description: string;
   skinTypes: string[];  // ["dry", "oily"] — 영문 소문자
-  concernName: string;
   liked: boolean;
+  tags: string[];  // 피부기능태그 배열
 }

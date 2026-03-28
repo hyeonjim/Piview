@@ -2,7 +2,7 @@
 
 import { toast } from "sonner";
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Plus, X, Scan, SquarePen, Save, ChessQueen } from "lucide-react";
+import { Plus, X, Scan, SquarePen, Save, ChessQueen, CircleAlert } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -113,6 +113,10 @@ function buildDraftItems(
 export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   // 성별에 따른 루틴 스텝 가져오기
   const currentGender = useUserStore(selectGender);
+  // 성분 충돌 상태 — Zustand store (페이지 이동에도 유지)
+  const conflictMessage = useRoutineStore((s) => s.conflictMessage);
+  const conflictProductIds = useRoutineStore((s) => s.conflictProductIds);
+  const clearConflictStore = useRoutineStore((s) => s.clearConflict);
   const user = useUserStore((state) => state.user);
   const routineSteps = useMemo(
     () => getRoutineSteps(currentGender),
@@ -133,6 +137,14 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     useLoadRoutineToDraftMutation();
   const { mutate: updateRoutine, isPending: isUpdating } =
     useUpdateRoutineMutation();
+
+  // draft에서 충돌 제품이 없어지면 자동 초기화
+  useEffect(() => {
+    if (conflictProductIds.length === 0) return;
+    const draftIds = draftItems.map((item) => item.product.productId);
+    const allStillInDraft = conflictProductIds.every((id) => draftIds.includes(id));
+    if (!allStillInDraft) clearConflictStore();
+  }, [draftItems, conflictProductIds, clearConflictStore]);
 
   // ── PICK 배지 추적 (localStorage 기반) ────────────────────────────────
   const isProductRecommended = useRoutineStore((state) => state.isRecommended);
@@ -471,6 +483,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     setEditingRoutineTitle("");
     setSelectedRoutineId(null);
     setIsNewRoutineMode(true);
+    clearConflictStore();
     clearDraft(undefined, {
       onSuccess: () => notify("새 루틴 작성을 시작합니다."),
       onError: () => notify("초기화에 실패했습니다."),
@@ -508,6 +521,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       onSuccess: () => {
         // localStorage에서 추천 정보 제거
         removeRecommended(productId);
+        // 제품 삭제 시 충돌 상태 초기화
+        clearConflictStore();
       },
       onError: () => notify("제품 삭제에 실패했습니다."),
     });
@@ -563,11 +578,12 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                   handleDeleteRoutine(saved.routineId, saved.title)
                 }
                 onClick={() => {
-                    // 다른 루틴 카드 선택 시 Edit mode 및 새 루틴 모드 종료
+                    // 다른 루틴 카드 선택 시 Edit mode 및 새 루틴 모드 종료, 충돌 배너 초기화
                     setEditingRoutineId(null);
                     setEditingRoutineTitle("");
                     setIsNewRoutineMode(false);
                     setSelectedRoutineId(saved.routineId);
+                    clearConflictStore();
                   }}
               />
             ))}
@@ -678,6 +694,22 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         </p>
       </div>
 
+      {/* ── 성분 충돌 경고 배너 — 1단계 클렌저 위에 표시, [제품명] 빨간색 강조 ── */}
+      {conflictMessage && (
+        <div className="mx-3 mb-1 flex items-start gap-2 rounded-xl px-3 py-2.5 bg-[#fff8e1] border border-[#f5c97a] text-[13px] font-semibold text-[#7a5c00]">
+          <CircleAlert size={16} className="shrink-0 mt-0.5 text-[#d97706]" />
+          <span>
+            {conflictMessage.split(/(\[[^\]]+\])/).map((part, i) =>
+              /^\[[^\]]+\]$/.test(part) ? (
+                <span key={i} className="text-[#c0392b]">{part}</span>
+              ) : (
+                part
+              )
+            )}
+          </span>
+        </div>
+      )}
+
       {/* ── 루틴 스텝별 섹션 ── */}
       {routineSteps.map((step, stepIndex) => {
         const products = viewByStep[step.code] ?? [];
@@ -766,6 +798,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                       isDropTarget={isProductDropTarget}
                       isEditMode={canDrag}
                       isRecommended={isProductRecommended(product.productId)}
+                      hasConflict={conflictProductIds.includes(product.productId)}
                       onDragHandlePointerDown={
                         canDrag ? handleDragHandlePointerDown : () => {}
                       }
@@ -893,6 +926,8 @@ interface RoutineProductCardProps {
   isEditMode: boolean;
   /** 추천 제품 여부 - PICK 배지 표시 */
   isRecommended?: boolean;
+  /** 성분 충돌 여부 - CircleAlert 아이콘 표시 */
+  hasConflict?: boolean;
   priority?: boolean;
   onDragHandlePointerDown: (
     event: React.PointerEvent<HTMLDivElement>,
@@ -910,6 +945,7 @@ function RoutineProductCard({
   isDropTarget,
   isEditMode,
   isRecommended = false,
+  hasConflict = false,
   onDragHandlePointerDown,
   onRemove,
   priority = false,
@@ -955,11 +991,18 @@ function RoutineProductCard({
               : undefined
           }
         >
-          {/* PICK 배지 — 이미지 영역 왼쪽 상단 */}
-          {isRecommended && (
-            <span className="absolute top-2 left-1.5 z-10 text-[10px] font-semibold px-1.5 py-0.5 rounded-[10px] tracking-[0.06em] bg-[#faebf2] text-[#707173]">
-              PICK
-            </span>
+          {/* 왼쪽 상단 배지 영역 — PICK 배지 + 충돌 아이콘 */}
+          {(isRecommended || hasConflict) && (
+            <div className="absolute top-2 left-1.5 z-10 flex flex-col gap-1 items-start">
+              {isRecommended && (
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-[10px] tracking-[0.06em] bg-[#f0dfe7] text-[#707173]">
+                  PICK
+                </span>
+              )}
+              {hasConflict && (
+                <CircleAlert size={15} className="text-[#d97706]" />
+              )}
+            </div>
           )}
 
           {/* 이미지 — py-5 패딩을 주기 위해 relative 래퍼로 감쌈 (fill은 positioned 조상 기준) */}

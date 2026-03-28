@@ -109,12 +109,10 @@ export function mapProductSummaryList(
 }
 
 /** RecommendResponseDto → MappedProduct
- *  추천 API 응답의 concernName을 effects(피부기능태그)로 매핑
- *  피뷰추천 제품은 사용자 피부 고민 기반이므로 카테고리별 필터링 미적용
+ *  추천 API 응답의 tags를 effects(피부기능태그)로 매핑
  */
 export function mapRecommendResponse(product: RecommendResponseDto): MappedProduct {
   const category = product.categoryName ?? "";
-  const effects = product.concernName ? [product.concernName] : [];
   return {
     id: product.productId,
     name: product.name ?? "",
@@ -123,8 +121,7 @@ export function mapRecommendResponse(product: RecommendResponseDto): MappedProdu
     imageUrl: product.imageUrl ?? null,
     // "dry" | "oily" → "건성" | "지성" 한글 변환
     skinTypes: (product.skinTypes ?? []).map(fromSkinTypeEnum),
-    // 피뷰추천은 카테고리별 제외 필터링 없이 concernName 그대로 표시
-    effects,
+    effects: filterEffectsByCategory(product.tags ?? [], category),
     liked: product.liked ?? false,
   };
 }
