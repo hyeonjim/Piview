@@ -109,6 +109,44 @@ class ProductSearchDictionarySyncTests(unittest.TestCase):
         self.assertIn("향료", by_canonical["fragrance"])
         self.assertIn("알코올", by_canonical["변성알코올"])
 
+    def test_build_ingredient_entries_adds_family_aliases_for_db_english_canonicals(self) -> None:
+        rows = [
+            ProductSearchDataRow(
+                product_id=1,
+                name="테스트 세럼",
+                brand_name="브랜드",
+                category_name="세럼",
+                category_id=1,
+                big_category_id=1,
+                description=None,
+                top_skin_type=None,
+                top2_skin_type=None,
+                concern_names=[],
+                ingredient_text_ko=None,
+                ingredient_text_en=(
+                    "hyaluronic acid, glycolic acid, betaine salicylate, gluconolactone, "
+                    "solanum lycopersicum (tomato) fruit extract, glycine soja (soybean) seed extract, "
+                    "oryza sativa (rice) extract"
+                ),
+            ),
+        ]
+
+        entries = ProductSearchDictionarySyncer()._build_ingredient_entries(
+            rows=rows,
+            stopwords=set(),
+            blocked_terms=set(),
+            ingredient_family_rules=ProductSearchDictionarySyncer()._load_ingredient_family_rules(),
+        )
+        by_canonical = {entry.canonical: set(entry.aliases) for entry in entries}
+
+        self.assertIn("히알루로닉애씨드", by_canonical["hyaluronic acid"])
+        self.assertIn("아하", by_canonical["glycolic acid"])
+        self.assertIn("바하", by_canonical["betaine salicylate"])
+        self.assertIn("pha", by_canonical["gluconolactone"])
+        self.assertIn("그린토마토", by_canonical["solanum lycopersicum (tomato) fruit extract"])
+        self.assertIn("약콩", by_canonical["glycine soja (soybean) seed extract"])
+        self.assertIn("쌀", by_canonical["oryza sativa (rice) extract"])
+
 
 class ProductSearchNegativeRuleTests(unittest.TestCase):
     def test_negative_safe_patterns_are_product_search_specific(self) -> None:

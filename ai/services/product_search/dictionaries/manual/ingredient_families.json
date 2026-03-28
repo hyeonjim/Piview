@@ -12,13 +12,40 @@
     "matchContains": ["나이아신아마이드", "niacinamide"]
   },
   "hyaluron_family": {
-    "aliases": ["히알루론산", "히알루론"],
+    "aliases": ["히알루론산", "히알루론", "히알루로닉애씨드"],
     "matchContains": ["하이알루로", "히알루로", "hyaluro"]
   },
   "vitamin_c_family": {
-    "aliases": ["비타민c"],
+    "aliases": ["비타민c", "비타민씨"],
     "matchContains": ["아스코", "ascorb"],
     "matchExact": ["비타민c"]
+  },
+  "aha_family": {
+    "aliases": ["아하", "aha"],
+    "matchExact": [
+      "glycolic acid",
+      "lactic acid",
+      "mandelic acid",
+      "malic acid",
+      "tartaric acid",
+      "citric acid",
+      "lactic acid/glycolic acid copolymer"
+    ]
+  },
+  "bha_family": {
+    "aliases": ["바하", "bha"],
+    "matchExact": [
+      "salicylic acid",
+      "capryloyl salicylic acid",
+      "betaine salicylate"
+    ]
+  },
+  "pha_family": {
+    "aliases": ["pha", "파하"],
+    "matchExact": [
+      "gluconolactone",
+      "lactobionic acid"
+    ]
   },
   "fragrance_family": {
     "aliases": ["향료", "fragrance", "parfum"],
@@ -54,6 +81,24 @@
   "aloe_family": {
     "aliases": ["알로에"],
     "matchContains": ["알로에", "aloe"]
+  },
+  "green_tomato_family": {
+    "aliases": ["그린토마토"],
+    "matchContains": ["lycopersicum (tomato)", "tomato"]
+  },
+  "soybean_family": {
+    "aliases": ["약콩"],
+    "matchContains": ["(soybean)", "soybean", "glycine soja", "glycine max"]
+  },
+  "rice_family": {
+    "aliases": ["쌀"],
+    "matchContains": [
+      "oryza sativa (rice)",
+      "rice ferment",
+      "hydrolyzed rice",
+      "rice amino",
+      "rice sh-oligopeptide"
+    ]
   },
   "squalane_family": {
     "aliases": ["스쿠알란"],
