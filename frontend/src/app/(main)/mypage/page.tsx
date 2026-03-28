@@ -13,7 +13,12 @@ import {
 import RoutineTab from "@/components/features/mypage/RoutineTab";
 import RoutineAddModal from "@/components/features/mypage/RoutineAddModal";
 import OwnedTab from "@/components/features/mypage/OwnedTab";
-import { useUserStore, selectSkinType, selectGender } from "@/stores";
+import {
+  useUserStore,
+  selectSkinType,
+  selectGender,
+  useRoutineStore,
+} from "@/stores";
 
 export default function MyPage() {
   const [activeTab, setActiveTab] = useState<"routine" | "owned">("routine");
@@ -32,8 +37,6 @@ export default function MyPage() {
   const savedAvoidContents = useUserStore((store) => store.avoidContents);
   const hasSkinProfile = !!savedSkinType;
 
-
-
   // ── 루틴 Draft API 연동 ────────────────────────────────────────────
   // 현재 draft에 담긴 productId 목록 — RoutineAddModal 중복 방지용
   const { data: draftItems = [] } = useDraftQuery();
@@ -48,6 +51,10 @@ export default function MyPage() {
   // 열린 스텝 코드 + columnId (RoutineTab → RoutineAddModal로 전달)
   const [openStep, setOpenStep] = useState<string | null>(null);
   const [openColumnId, setOpenColumnId] = useState<number>(0);
+
+  // 성분 충돌 상태 — Zustand store (페이지 이동에도 유지)
+  const setConflict = useRoutineStore((s) => s.setConflict);
+  const clearConflict = useRoutineStore((s) => s.clearConflict);
 
   useEffect(() => {
     document.body.style.overflow = openStep ? "hidden" : "";
@@ -74,9 +81,30 @@ export default function MyPage() {
     addDraftItem(
       { columnId: openColumnId, productId },
       {
-        onSuccess: () => {
-          toast("✓ 루틴에 추가되었습니다!");
+        onSuccess: (data) => {
           setOpenStep(null);
+          // 메시지의 [제품명] 파싱 → updatedDraft에서 매칭해 충돌 제품 ID 추출
+          const responseData = data.data;
+          const bracketNames = (
+            responseData.message?.match(/\[([^\]]+)\]/g) ?? []
+          ).map((m) => m.slice(1, -1));
+          const conflictIds = (responseData.data ?? [])
+            .filter(
+              (item) =>
+                item.product.name != null &&
+                bracketNames.includes(item.product.name),
+            )
+            .map((item) => item.product.productId);
+
+          if (responseData.message && conflictIds.length > 0) {
+            // 실제 충돌 성분이 있을 때만 toast 경고 + store에 저장
+            toast.warning("충돌 성분이 있는 제품이 있습니다.");
+            setConflict(responseData.message, conflictIds);
+          } else {
+            // 충돌 없거나 "충돌 성분이 없습니다" 류 메시지는 정상 처리
+            toast("✓ 루틴에 추가되었습니다!");
+            clearConflict();
+          }
         },
         onError: () => {
           toast("제품 추가에 실패했습니다. 다시 시도해주세요.");
@@ -140,11 +168,7 @@ export default function MyPage() {
             </div>
 
             {/* 피부 프로필 태그 영역 */}
-            {!hasSkinProfile ? (
-              <p className="mt-[3px] text-[13px] font-medium text-brand">
-                피부 타입을 진단해보세요
-              </p>
-            ) : (
+            {hasSkinProfile && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {/* 피부 타입 배지 — ProductCard SkinTypeTag 배경색 스타일 */}
                 <span className="text-[13px] py-0.5 px-2 rounded-full border bg-[#f0e4c7] text-[#5f564c] font-semibold">
@@ -159,11 +183,12 @@ export default function MyPage() {
                     {concern}
                   </span>
                 ))}
-                {/* 기피 성분 배지 */}
+                {/* 기피 성분 배지 — 줄바꿈 구분 */}
+                {savedAvoidContents.length > 0 && <span className="w-full" />}
                 {savedAvoidContents.map((item, index) => (
                   <span
                     key={`${item.avoidContent}-${index}`}
-                    className="text-[12px] font-medium py-0.5 px-2 border rounded-full bg-[#F5EDE8] text-[#8C5A4A]"
+                    className="text-[12px] font-semibold py-0.5 px-2 border rounded-full bg-[#F5EDE8] text-[#8C5A4A]"
                   >
                     {item.avoidContent}
                   </span>
@@ -200,12 +225,8 @@ export default function MyPage() {
       </div>
 
       {/* 탭 콘텐츠 */}
-      {activeTab === "routine" && (
-        <RoutineTab onOpenModal={handleOpenModal} />
-      )}
-      {activeTab === "owned" && (
-        <OwnedTab />
-      )}
+      {activeTab === "routine" && <RoutineTab onOpenModal={handleOpenModal} />}
+      {activeTab === "owned" && <OwnedTab />}
 
       {/* 제품 추가 모달 — openStep이 있을 때만 렌더링 */}
       {openStep && (
@@ -217,7 +238,6 @@ export default function MyPage() {
           onAdd={handleAddToRoutine}
         />
       )}
-
     </div>
   );
 }

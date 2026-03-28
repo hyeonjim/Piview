@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Search, Package, Loader2 } from "lucide-react";
+import { X, Search, Package, Loader2, MessageCircleMore } from "lucide-react";
 import ProductCard from "@/components/common/ProductCard";
 import CompareModal from "@/components/common/CompareModal";
 import { useMutation } from "@tanstack/react-query";
@@ -360,19 +360,20 @@ export default function RoutineAddModal({
                 </button>
               </div>
             </div>
-            {isRecommendMode && (
-              <div className="flex items-center gap-1.5 py-2 mt-3 mb-1 px-2 rounded-xl text-[12px] bg-[#f7f1f8] font-semibold text-[#625c63]">
-                {recommendedProducts.length > 0 ? (
-                  <>
-                    사용자 맞춤형 {recommendedProducts.length}개 제품 추천
-                    <br />
-                    (내제품에 등록된 알러지성분 제품 제외)
-                  </>
-                ) : (
-                  "추천 결과가 없습니다"
-                )}
-              </div>
-            )}
+              {isRecommendMode && (
+                <div className="flex items-center gap-3 py-2 mt-3 mb-1 px-2 rounded-xl text-[13px] bg-[#f7f1f8] font-semibold text-[#625c63]">
+                  {recommendedProducts.length > 0 ? (
+                    <>
+                      <MessageCircleMore size={14} className="shrink-0" />
+                      사용자 맞춤형 {recommendedProducts.length}개 제품 추천
+                      <br />
+                      (내제품에 등록된 알러지성분 제품 제외)
+                    </>
+                  ) : (
+                    "추천 결과가 없습니다"
+                  )}
+                </div>
+              )}
 
             {/* 검색바 — 추천 모드에서는 숨김 */}
             {!isRecommendMode && (

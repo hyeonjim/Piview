@@ -15,6 +15,7 @@ import type {
   CreateRoutineRequest,
   EditRoutineLoadResponse,
   UpdateRoutineRequest,
+  RoutineAnalysisResponse,
 } from "@/types/routine";
 
 export const routineService = {
@@ -126,4 +127,14 @@ export const routineService = {
    */
   updateRoutine: (routineId: number, request: UpdateRoutineRequest) =>
     client.put<ApiResponse<RoutineResponse>>(`/routines/${routineId}`, request),
+
+  /**
+   * 메인 루틴 AI 분석
+   * GET /api/v1/routines/analysis
+   * 성분 충돌, 이상치 달성도, 루틴 순서 팁 등 5줄 이내 분석
+   */
+  getRoutineAnalysis: (): Promise<RoutineAnalysisResponse> =>
+    client
+      .get<ApiResponse<RoutineAnalysisResponse>>("/routines/analysis")
+      .then((res) => res.data.data),
 };

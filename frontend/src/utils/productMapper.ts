@@ -112,8 +112,7 @@ export function mapProductSummaryList(
 }
 
 /** RecommendResponseDto → MappedProduct
- *  추천 API 응답의 concernName을 effects(피부기능태그)로 매핑
- *  피뷰추천 제품은 사용자 피부 고민 기반이므로 카테고리별 필터링 미적용
+ *  추천 API 응답의 tags를 effects(피부기능태그)로 매핑
  */
 export function mapRecommendResponse(
   product: RecommendResponseDto,
@@ -126,8 +125,7 @@ export function mapRecommendResponse(
     category,
     imageUrl: product.imageUrl ?? null,
     skinTypes: (product.skinTypes ?? []).map(fromSkinTypeEnum),
-    // 피뷰추천도 일반 검색과 동일하게 tags → effects (카테고리 필터링 미적용)
-    effects: product.tags ?? [],
+    effects: filterEffectsByCategory(product.tags ?? [], category),
     liked: product.liked ?? false,
   };
 }
