@@ -1,17 +1,16 @@
 """Shared product data access for chatbot retrieval/indexing."""
 
 from dataclasses import dataclass
+import logging
 import re
+import time
 from typing import Iterable, Sequence
 
 import pymysql
 
 from core.settings import get_settings
 
-
-_ANTI_AGING_IDS = {5, 6}
-_PIGMENTATION_ID = 4
-_HYDRATION_ID = 9
+logger = logging.getLogger("uvicorn.error")
 
 
 @dataclass
@@ -36,6 +35,13 @@ class ProductNameIndexRow:
     brand_name: str | None
     category_id: int | None
     big_category_id: int | None
+
+
+@dataclass
+class ProductCategoryRow:
+    category_id: int
+    big_category_id: int | None
+    category_name: str
 
 
 def normalize_whitespace(text: str | None) -> str:
@@ -155,18 +161,41 @@ class ProductSearchDataRepository:
         preferred_category_aliases: Sequence[str] | None = None,
         category_ids: Sequence[int] | None = None,
         big_category_id: int | None = None,
+        include_ingredient_text_in_prefilter: bool = True,
+        ingredient_must_terms: Sequence[str] | None = None,
+        trace_label: str | None = None,
     ) -> list[ProductSearchDataRow]:
         normalized_terms = [term.strip().lower() for term in terms if term.strip()]
-        if not normalized_terms:
+        normalized_ingredient_must_terms = [
+            term.strip().lower() for term in (ingredient_must_terms or ()) if term and term.strip()
+        ]
+        if not normalized_terms and not normalized_ingredient_must_terms:
             return []
-        rows = self._fetch_products_base(
+        started_at = time.perf_counter()
+        base_rows = self._fetch_products_base(
             search_terms=normalized_terms,
             limit=limit,
             preferred_category_aliases=preferred_category_aliases,
             category_ids=category_ids,
             big_category_id=big_category_id,
+            include_ingredient_text_in_prefilter=include_ingredient_text_in_prefilter,
+            ingredient_must_terms=normalized_ingredient_must_terms,
         )
-        return self._attach_concerns(rows)
+        base_elapsed_ms = (time.perf_counter() - started_at) * 1000.0
+
+        attach_started_at = time.perf_counter()
+        rows = self._attach_concerns(base_rows)
+        concern_elapsed_ms = (time.perf_counter() - attach_started_at) * 1000.0
+
+        if trace_label:
+            logger.info(
+                "Product search data fetch [%s]: base_query_ms=%.1f concern_attach_ms=%.1f row_count=%d",
+                trace_label,
+                base_elapsed_ms,
+                concern_elapsed_ms,
+                len(rows),
+            )
+        return rows
 
     def _attach_concerns(self, rows: list[ProductSearchDataRow]) -> list[ProductSearchDataRow]:
         if not rows:
@@ -201,6 +230,8 @@ class ProductSearchDataRepository:
         category_ids: Sequence[int] | None = None,
         big_category_id: int | None = None,
         limit: int | None = None,
+        include_ingredient_text_in_prefilter: bool = True,
+        ingredient_must_terms: Sequence[str] | None = None,
     ) -> list[ProductSearchDataRow]:
         sql = """
             SELECT
@@ -244,29 +275,41 @@ class ProductSearchDataRepository:
             term_clauses: list[str] = []
             for term in search_terms:
                 like_pattern = f"%{term}%"
-                term_clauses.append(
-                    """
-                    (
-                        p.name LIKE %s
-                        OR COALESCE(p.description, '') LIKE %s
-                        OR COALESCE(b.brand_name, '') LIKE %s
-                        OR COALESCE(c.category_name, '') LIKE %s
-                        OR COALESCE(pi.product_ingredients_ko, '') LIKE %s
-                        OR COALESCE(pi.product_ingredients_en, '') LIKE %s
-                    )
-                    """.strip()
-                )
+                clause_parts = [
+                    "p.name LIKE %s",
+                    "COALESCE(p.description, '') LIKE %s",
+                    "COALESCE(b.brand_name, '') LIKE %s",
+                    "COALESCE(c.category_name, '') LIKE %s",
+                ]
                 params.extend(
                     [
                         like_pattern,
                         like_pattern,
                         like_pattern,
                         like_pattern,
-                        like_pattern,
-                        like_pattern,
                     ]
                 )
+                if include_ingredient_text_in_prefilter:
+                    clause_parts.extend(
+                        [
+                            "COALESCE(pi.product_ingredients_ko, '') LIKE %s",
+                            "COALESCE(pi.product_ingredients_en, '') LIKE %s",
+                        ]
+                    )
+                    params.extend([like_pattern, like_pattern])
+                term_clauses.append("(\n                        " + "\n                        OR ".join(clause_parts) + "\n                    )")
             sql += " AND (" + " OR ".join(term_clauses) + ")"
+
+        if ingredient_must_terms:
+            ingredient_clauses: list[str] = []
+            for term in ingredient_must_terms:
+                like_pattern = f"%{term}%"
+                ingredient_clauses.append(
+                    "(\n                        COALESCE(pi.product_ingredients_ko, '') LIKE %s\n"
+                    "                        OR COALESCE(pi.product_ingredients_en, '') LIKE %s\n                    )"
+                )
+                params.extend([like_pattern, like_pattern])
+            sql += " AND (" + " OR ".join(ingredient_clauses) + ")"
 
         if preferred_category_aliases:
             category_clauses: list[str] = []
@@ -329,10 +372,7 @@ class ProductSearchDataRepository:
                     )
                     for row in cursor.fetchall():
                         product_id = int(row["product_id"])
-                        concern_name = normalize_concern_name(
-                            int(row["skin_concern_id"]),
-                            str(row["concern_name"]),
-                        )
+                        concern_name = normalize_concern_name(str(row["concern_name"]))
                         if not concern_name:
                             continue
                         bucket = concerns_by_product_id.setdefault(product_id, [])
@@ -366,7 +406,7 @@ class ProductSearchDataRepository:
             charset="utf8mb4",
             cursorclass=pymysql.cursors.DictCursor,
         )
-    
+
     def fetch_name_index_rows(
         self,
         category_ids: Sequence[int] | None = None,
@@ -408,16 +448,38 @@ class ProductSearchDataRepository:
             for row in rows
         ]
 
+    def fetch_category_rows(self) -> list[ProductCategoryRow]:
+        sql = """
+            SELECT c.category_id, c.big_category_id, c.category_name
+            FROM category c
+            WHERE c.category_name IS NOT NULL
+            ORDER BY c.big_category_id ASC, c.category_id ASC
+        """
+        with self._get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(sql)
+                rows = cursor.fetchall()
+
+        return [
+            ProductCategoryRow(
+                category_id=int(row["category_id"]),
+                big_category_id=int(row["big_category_id"]) if row["big_category_id"] is not None else None,
+                category_name=str(row["category_name"]),
+            )
+            for row in rows
+        ]
 
 
-def normalize_concern_name(concern_id: int, concern_name: str) -> str:
-    if concern_id in _ANTI_AGING_IDS or concern_name in {"주름/탄력", "노화방지-40대이상", "안티에이징"}:
+
+def normalize_concern_name(concern_name: str) -> str:
+    normalized = concern_name.strip()
+    if normalized in {"주름/탄력", "노화방지-40대이상", "안티에이징"}:
         return "안티에이징"
-    if concern_id == _PIGMENTATION_ID or concern_name in {"기미/주근깨/잡티", "색소침착"}:
+    if normalized in {"기미/주근깨/잡티", "색소침착"}:
         return "색소침착"
-    if concern_id == _HYDRATION_ID or concern_name in {"속건조", "수분"}:
+    if normalized in {"속건조", "수분"}:
         return "수분"
-    return concern_name.strip()
+    return normalized
 
 
 def _chunked(values: Sequence[int], size: int) -> Iterable[list[int]]:
