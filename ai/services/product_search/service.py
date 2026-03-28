@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import deque
+import logging
 
 from core.settings import get_settings
 from services.chatbot.retrieval.scoring.config import HybridScoringConfig
@@ -21,19 +22,27 @@ from services.chatbot.search.product_data import (
 from services.chatbot.search.query_normalizer import normalize_query, normalize_text, tokenize_text
 from services.chatbot.search.vector import ProductSearchResult
 from services.chatbot.search.vector.service import product_vector_service
+from services.product_search.filters import product_search_category_resolver
 from services.product_search.models import ProductSearchDictionarySnapshot
+from services.product_search.observability import ProductSearchTiming
 from services.product_search.parser import product_search_query_parser
+from services.product_search.planning import build_product_search_execution_plan
 from services.product_search.registry import product_search_dictionary_registry
 from services.product_search.scorer import rerank_results
+
+
+logger = logging.getLogger("uvicorn.error")
 
 
 class ProductSearchService:
     def initialize(self) -> dict[str, object]:
         product_search_dictionary_registry.initialize()
+        product_search_category_resolver.refresh()
         return self.dictionary_status()
 
     def refresh_dictionaries(self) -> dict[str, object]:
         product_search_dictionary_registry.refresh()
+        product_search_category_resolver.refresh()
         return self.dictionary_status()
 
     def dictionary_status(self) -> dict[str, object]:
@@ -47,9 +56,28 @@ class ProductSearchService:
         category_ids: tuple[int, ...] | None = None,
         big_category_id: int | None = None,
     ) -> list[ProductSearchResult]:
-        snapshot = product_search_dictionary_registry.get_snapshot()
-        parsed_query = product_search_query_parser.parse(query_text, snapshot)
-        attribute_group_terms = self._expand_attribute_group_terms(parsed_query, snapshot)
+        timing = ProductSearchTiming()
+        with timing.phase("parse"):
+            snapshot = product_search_dictionary_registry.get_snapshot()
+            parsed_query = product_search_query_parser.parse(query_text, snapshot)
+            plan = build_product_search_execution_plan(parsed_query)
+            resolved_scope = product_search_category_resolver.resolve(
+                parsed_query,
+                category_ids,
+                big_category_id,
+            )
+            attribute_group_terms = self._expand_attribute_group_terms(parsed_query, snapshot)
+
+        if resolved_scope.force_empty:
+            timing.log_summary(
+                logger,
+                query_text=query_text,
+                query_shape=plan.query_shape,
+                result_count=0,
+                category_ids=resolved_scope.category_ids,
+                big_category_id=resolved_scope.big_category_id,
+            )
+            return []
 
         normalized = normalize_query(query_text)
         base_search_terms = parsed_query.search_terms()
@@ -58,6 +86,14 @@ class ProductSearchService:
         ][:4]
         search_text = " ".join(search_terms) if search_terms else normalized.spaced
         if not search_text:
+            timing.log_summary(
+                logger,
+                query_text=query_text,
+                query_shape=plan.query_shape,
+                result_count=0,
+                category_ids=resolved_scope.category_ids,
+                big_category_id=resolved_scope.big_category_id,
+            )
             return []
 
         search_query = normalize_query(search_text)
@@ -66,42 +102,69 @@ class ProductSearchService:
         exclude_ids = exclude_product_ids or set()
         settings = get_settings()
         structured_seed_results: list[ProductSearchResult] = []
-
         exact_results: list[ProductSearchResult] = []
         fuzzy_results: list[ProductSearchResult] = []
-        if self._should_run_exact(parsed_query):
-            exact_results = await asyncio.to_thread(
-                product_exact_search_service.search,
-                search_query,
-                candidate_limit,
-                category_ids,
-                big_category_id,
-            )
-            if exact_results and not parsed_query.is_structured:
-                return exact_results[:search_limit]
 
-            exact_ids = {result.product_id for result in exact_results}
-            fuzzy_results = await asyncio.to_thread(
-                product_fuzzy_search_service.search,
-                search_query,
-                candidate_limit,
-                exact_ids | exclude_ids,
-                category_ids,
-                big_category_id,
-            )
+        effective_category_ids = resolved_scope.category_ids
+        effective_big_category_id = resolved_scope.big_category_id
+
+        if plan.run_exact:
+            with timing.phase("exact"):
+                exact_results = await asyncio.to_thread(
+                    product_exact_search_service.search,
+                    search_query,
+                    candidate_limit,
+                    effective_category_ids,
+                    effective_big_category_id,
+                )
+            if exact_results and not parsed_query.is_structured:
+                final_results = exact_results[:search_limit]
+                timing.log_summary(
+                    logger,
+                    query_text=query_text,
+                    query_shape=plan.query_shape,
+                    result_count=len(final_results),
+                    category_ids=effective_category_ids,
+                    big_category_id=effective_big_category_id,
+                )
+                return final_results
+
+        if plan.run_fuzzy:
+            with timing.phase("fuzzy"):
+                exact_ids = {result.product_id for result in exact_results}
+                fuzzy_results = await asyncio.to_thread(
+                    product_fuzzy_search_service.search,
+                    search_query,
+                    candidate_limit,
+                    exact_ids | exclude_ids,
+                    effective_category_ids,
+                    effective_big_category_id,
+                )
             if fuzzy_results and not parsed_query.is_structured:
-                return fuzzy_results[:search_limit]
+                final_results = fuzzy_results[:search_limit]
+                timing.log_summary(
+                    logger,
+                    query_text=query_text,
+                    query_shape=plan.query_shape,
+                    result_count=len(final_results),
+                    category_ids=effective_category_ids,
+                    big_category_id=effective_big_category_id,
+                )
+                return final_results
 
         if parsed_query.is_structured:
-            structured_seed_results = await asyncio.to_thread(
-                self._search_structured_seed_results,
-                parsed_query,
-                snapshot,
-                candidate_limit,
-                exclude_ids,
-                category_ids,
-                big_category_id,
-            )
+            with timing.phase("structured_seed"):
+                structured_seed_results = await asyncio.to_thread(
+                    self._search_structured_seed_results,
+                    parsed_query,
+                    snapshot,
+                    candidate_limit,
+                    exclude_ids,
+                    effective_category_ids,
+                    effective_big_category_id,
+                    resolved_scope.preferred_category_aliases,
+                    plan.include_ingredient_text_in_prefilter,
+                )
 
         keyword_prefilter_limit = min(
             max(settings.chatbot_keyword_prefilter_limit, candidate_limit * 8),
@@ -111,37 +174,41 @@ class ProductSearchService:
         keyword_results: list[ProductSearchResult] = []
 
         if self._should_run_vector(parsed_query):
-            vector_task = product_vector_service.query_async(
-                query_text=search_query.spaced,
-                limit=candidate_limit,
-                exclude_product_ids=exclude_ids,
-            )
-            keyword_task = product_keyword_service.search_async(
-                query_text=search_query.spaced,
-                limit=candidate_limit,
-                candidate_limit=keyword_prefilter_limit,
-                preferred_categories=set(parsed_query.category_terms),
-                category_ids=category_ids,
-                big_category_id=big_category_id,
-            )
-            vector_results, keyword_results = await asyncio.gather(
-                vector_task,
-                keyword_task,
-                return_exceptions=True,
-            )
+            with timing.phase("vector_keyword"):
+                vector_task = product_vector_service.query_async(
+                    query_text=search_query.spaced,
+                    limit=candidate_limit,
+                    exclude_product_ids=exclude_ids,
+                )
+                keyword_task = product_keyword_service.search_async(
+                    query_text=search_query.spaced,
+                    limit=candidate_limit,
+                    candidate_limit=keyword_prefilter_limit,
+                    preferred_categories=set(resolved_scope.preferred_category_aliases),
+                    category_ids=effective_category_ids,
+                    big_category_id=effective_big_category_id,
+                )
+                vector_results, keyword_results = await asyncio.gather(
+                    vector_task,
+                    keyword_task,
+                    return_exceptions=True,
+                )
         else:
-            keyword_results = await product_keyword_service.search_async(
-                query_text=search_query.spaced,
-                limit=candidate_limit,
-                candidate_limit=keyword_prefilter_limit,
-                preferred_categories=set(parsed_query.category_terms),
-                category_ids=category_ids,
-                big_category_id=big_category_id,
-            )
+            with timing.phase("keyword"):
+                keyword_results = await product_keyword_service.search_async(
+                    query_text=search_query.spaced,
+                    limit=candidate_limit,
+                    candidate_limit=keyword_prefilter_limit,
+                    preferred_categories=set(resolved_scope.preferred_category_aliases),
+                    category_ids=effective_category_ids,
+                    big_category_id=effective_big_category_id,
+                )
 
         if isinstance(vector_results, Exception):
+            logger.warning("Product search vector step failed: %s", vector_results)
             vector_results = []
         if isinstance(keyword_results, Exception):
+            logger.warning("Product search keyword step failed: %s", keyword_results)
             keyword_results = []
 
         merged_keyword = self._merge_keyword_tier(
@@ -150,27 +217,32 @@ class ProductSearchService:
             exclude_ids=exclude_ids,
         )
         config = self._resolve_scoring_config(parsed_query)
-        fused = fuse_results(
-            message=search_query.spaced,
-            vector_results=list(vector_results),
-            keyword_results=merged_keyword,
-            limit=candidate_limit,
-            preferred_categories=set(parsed_query.category_terms),
-            avoid_terms=set(),
-            existing_categories=set(),
-            missing_categories=set(),
-            config=config,
-        )
-        reranked = rerank_results(fused, parsed_query, snapshot.attribute_groups)
-        constrained = self._apply_structured_constraints(reranked, parsed_query, snapshot)
-        return constrained[:search_limit]
 
-    def _should_run_exact(self, parsed_query) -> bool:
-        if len(parsed_query.brand_terms) > 1:
-            return False
-        if len(parsed_query.category_terms) + len(parsed_query.product_type_terms) > 1:
-            return False
-        return len(parsed_query.keyword_terms) <= 4
+        with timing.phase("rerank"):
+            fused = fuse_results(
+                message=search_query.spaced,
+                vector_results=list(vector_results),
+                keyword_results=merged_keyword,
+                limit=candidate_limit,
+                preferred_categories=set(parsed_query.category_terms),
+                avoid_terms=set(),
+                existing_categories=set(),
+                missing_categories=set(),
+                config=config,
+            )
+            reranked = rerank_results(fused, parsed_query, snapshot.attribute_groups)
+            constrained = self._apply_structured_constraints(reranked, parsed_query, snapshot)
+
+        final_results = constrained[:search_limit]
+        timing.log_summary(
+            logger,
+            query_text=query_text,
+            query_shape=plan.query_shape,
+            result_count=len(final_results),
+            category_ids=effective_category_ids,
+            big_category_id=effective_big_category_id,
+        )
+        return final_results
 
     def _resolve_scoring_config(self, parsed_query) -> HybridScoringConfig:
         settings = get_settings()
@@ -368,10 +440,9 @@ class ProductSearchService:
         exclude_ids: set[int],
         category_ids: tuple[int, ...] | None,
         big_category_id: int | None,
+        preferred_category_aliases: tuple[str, ...],
+        include_ingredient_text_in_prefilter: bool,
     ) -> list[ProductSearchResult]:
-        preferred_category_aliases = tuple(
-            dict.fromkeys(parsed_query.category_terms + parsed_query.product_type_terms)
-        )
         attribute_group_terms = tuple(self._expand_attribute_group_terms(parsed_query, snapshot))
         rows: list[ProductSearchDataRow] = []
 
@@ -385,6 +456,8 @@ class ProductSearchService:
                     preferred_category_aliases=preferred_category_aliases or None,
                     category_ids=category_ids,
                     big_category_id=big_category_id,
+                    include_ingredient_text_in_prefilter=include_ingredient_text_in_prefilter,
+                    trace_label="structured.brand_seed",
                 )
                 for row in brand_rows:
                     if row.product_id in seen_ids:
@@ -409,6 +482,8 @@ class ProductSearchService:
                 preferred_category_aliases=preferred_category_aliases or None,
                 category_ids=category_ids,
                 big_category_id=big_category_id,
+                include_ingredient_text_in_prefilter=include_ingredient_text_in_prefilter,
+                trace_label="structured.generic_seed",
             )
 
         scored_rows: list[tuple[float, ProductSearchDataRow]] = []
