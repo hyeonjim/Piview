@@ -39,6 +39,7 @@ logger = logging.getLogger("uvicorn.error")
 _LONG_QUERY_LIKE_CANDIDATE_LIMIT = 120
 _BROAD_SCOPE_NAME_MATCH_CANDIDATE_LIMIT = 150
 _NAME_MATCH_FALLBACK_MIN_RESULTS = 5
+_MULTI_BRAND_DIVERSITY_WINDOW = 6
 
 
 @dataclass(frozen=True)
@@ -503,6 +504,13 @@ class ProductSearchService:
                 others = [item for item in ordered if item not in matching]
                 ordered = matching + others
 
+        if len(parsed_query.brand_terms) > 1 and primary_terms:
+            ordered = self._apply_multi_brand_diversity(
+                ordered,
+                parsed_query.brand_terms,
+                window_size=_MULTI_BRAND_DIVERSITY_WINDOW,
+            )
+
         return ordered
 
     def _matches_brand(self, result: ProductSearchResult, brand_terms: tuple[str, ...]) -> bool:
@@ -510,6 +518,20 @@ class ProductSearchService:
             return False
         brand_text = normalize_text(result.brand_name)
         return any(self._matches_brand_text(brand_text, term) for term in brand_terms)
+
+    def _matched_brand_terms(
+        self,
+        result: ProductSearchResult,
+        brand_terms: tuple[str, ...],
+    ) -> tuple[str, ...]:
+        if not brand_terms:
+            return ()
+        brand_text = normalize_text(result.brand_name)
+        return tuple(
+            brand_term
+            for brand_term in brand_terms
+            if self._matches_brand_text(brand_text, brand_term)
+        )
 
     def _matches_brand_text(self, brand_text: str, brand_term: str) -> bool:
         if not brand_text or not brand_term:
@@ -527,6 +549,45 @@ class ProductSearchService:
         if not searchable_text or not terms:
             return 0
         return sum(1 for term in terms if term and term in searchable_text)
+
+    def _apply_multi_brand_diversity(
+        self,
+        results: list[ProductSearchResult],
+        brand_terms: tuple[str, ...],
+        window_size: int,
+    ) -> list[ProductSearchResult]:
+        # multi-brand query는 완전 round-robin보다 relevance-first diversity가 안전하다.
+        # 1위는 그대로 두고, 초반 window 안에서 아직 안 나온 요청 브랜드를 우선 채운다.
+        if len(results) <= 1 or len(brand_terms) <= 1 or window_size <= 1:
+            return results
+
+        reordered = list(results)
+        requested_brands = tuple(dict.fromkeys(brand_terms))
+        observed_brands = set(self._matched_brand_terms(reordered[0], requested_brands))
+
+        limit = min(len(reordered), window_size)
+        for index in range(1, limit):
+            missing_brands = [brand for brand in requested_brands if brand not in observed_brands]
+            if missing_brands:
+                candidate_index = next(
+                    (
+                        candidate_index
+                        for candidate_index in range(index, len(reordered))
+                        if any(
+                            brand in self._matched_brand_terms(reordered[candidate_index], requested_brands)
+                            for brand in missing_brands
+                        )
+                    ),
+                    None,
+                )
+                if candidate_index is not None and candidate_index != index:
+                    reordered[index], reordered[candidate_index] = reordered[candidate_index], reordered[index]
+
+            current_matches = self._matched_brand_terms(reordered[index], requested_brands)
+            if current_matches:
+                observed_brands.update(current_matches)
+
+        return reordered
 
     def _searchable_text(self, result: ProductSearchResult) -> str:
         parts = [

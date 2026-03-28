@@ -31,6 +31,8 @@ def _build_snapshot() -> ProductSearchDictionarySnapshot:
         stopwords=frozenset(),
         brand_lookup={
             "성분에디터": "성분에디터",
+            "라운드랩": "라운드랩",
+            "아이소이": "아이소이",
         },
         category_lookup={
             "토너": "토너",
@@ -263,6 +265,64 @@ class ProductSearchRetrievalContractTests(unittest.TestCase):
         parsed = product_search_query_parser.parse("성분에디터 그린 토마토", self.snapshot)
 
         self.assertTrue(self.service._requires_strong_keyword_match(parsed, self.snapshot))
+
+    def test_multi_brand_diversity_keeps_top1_and_covers_requested_brands_early(self) -> None:
+        results = [
+            ProductSearchResult(
+                product_id=1,
+                name="라운드랩 토너 A",
+                brand_name="라운드랩",
+                category_name="토너",
+                concern_names=[],
+                top_skin_type=None,
+                top2_skin_type=None,
+                document="라운드랩 토너 A",
+                description=None,
+                ingredient_preview=None,
+                evidence_snippets=[],
+                matched_sources=["structured"],
+                raw_score=100.0,
+            ),
+            ProductSearchResult(
+                product_id=2,
+                name="라운드랩 토너 B",
+                brand_name="라운드랩",
+                category_name="토너",
+                concern_names=[],
+                top_skin_type=None,
+                top2_skin_type=None,
+                document="라운드랩 토너 B",
+                description=None,
+                ingredient_preview=None,
+                evidence_snippets=[],
+                matched_sources=["structured"],
+                raw_score=90.0,
+            ),
+            ProductSearchResult(
+                product_id=3,
+                name="아이소이 토너",
+                brand_name="아이소이",
+                category_name="토너",
+                concern_names=[],
+                top_skin_type=None,
+                top2_skin_type=None,
+                document="아이소이 토너",
+                description=None,
+                ingredient_preview=None,
+                evidence_snippets=[],
+                matched_sources=["structured"],
+                raw_score=80.0,
+            ),
+        ]
+
+        reranked = self.service._apply_multi_brand_diversity(
+            results,
+            ("라운드랩", "아이소이"),
+            window_size=4,
+        )
+
+        self.assertEqual(reranked[0].product_id, 1)
+        self.assertEqual(reranked[1].product_id, 3)
 
 
 if __name__ == "__main__":
