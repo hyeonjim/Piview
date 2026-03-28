@@ -305,7 +305,7 @@ export default function OcrModal({ onClose }: OcrModalProps) {
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <div
                       className="border-2 border-white/70 rounded-xl"
-                      style={{ width: "70%", aspectRatio: "3/2" }}
+                      style={{ width: "70%", aspectRatio: "1/1" }}
                     />
                     <p className="text-white text-xs mt-3 opacity-80">
                       화장품 라벨을 가이드 안에 맞춰주세요
