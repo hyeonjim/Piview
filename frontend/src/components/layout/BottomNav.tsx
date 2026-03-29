@@ -32,7 +32,7 @@ export default function BottomNav() {
     // iOS Safari 스크롤 시 주소창 변화로 nav가 줄어드는 버그 방지: will-change: transform
     <nav
       className={`fixed bottom-0 left-0 right-0 z-50 flex justify-center${isChatKeyboardOpen ? " max-[500px]:hidden" : ""}`}
-      style={{ willChange: "transform", backgroundColor: "var(--color-nav-bg)" }}
+      style={{ willChange: "transform" }}
     >
       <div className="bottom-nav-container">
         {TABS.map((tab) => {
