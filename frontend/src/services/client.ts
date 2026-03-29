@@ -83,8 +83,11 @@ client.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // _retry 플래그가 이미 있으면 refresh도 실패한 것 → 무한루프 방지
+    // _retry 플래그가 이미 있으면 재시도 후에도 실패한 것
+    // - 401: 토큰 재발급 후에도 인증 실패 → 세션 만료, 로그아웃
+    // - 403: 비즈니스 로직 권한 오류(토큰과 무관) → 로그아웃 없이 에러 전달
     if (originalRequest._retry) {
+      if (status === 403) return Promise.reject(error);
       clearAllStores();
       window.location.href = "/welcome";
       return Promise.reject(error);
