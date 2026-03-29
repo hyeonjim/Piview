@@ -84,25 +84,29 @@ export default function MyPage() {
         onSuccess: (data) => {
           setOpenStep(null);
           // 메시지의 [제품명] 파싱 → updatedDraft에서 매칭해 충돌 제품 ID 추출
-          const responseData = data.data;
+          // data.data = ApiResponse, data.data.data = DraftUpdateResponse
+          const draftUpdateResponse = data.data.data;
+          const conflictMsg = draftUpdateResponse.message;
+          const updatedDraft = draftUpdateResponse.updatedDraft ?? [];
+
+          // 충돌 메시지의 [제품명] 파싱 → updatedDraft에서 매칭해 충돌 제품 ID 추출
           const bracketNames = (
-            responseData.message?.match(/\[([^\]]+)\]/g) ?? []
+            conflictMsg?.match(/\[([^\]]+)\]/g) ?? []
           ).map((m) => m.slice(1, -1));
-          const updatedDraft = (responseData.data as any)?.updatedDraft ?? [];
           const conflictIds = updatedDraft
             .filter(
-              (item: any) =>
+              (item) =>
                 item.product.name != null &&
                 bracketNames.includes(item.product.name),
             )
-            .map((item: any) => item.product.productId);
+            .map((item) => item.product.productId);
 
-          if (responseData.message && conflictIds.length > 0) {
+          if (conflictMsg && conflictIds.length > 0) {
             // 실제 충돌 성분이 있을 때만 toast 경고 + store에 저장
             toast.warning("충돌 성분이 있는 제품이 있습니다.");
-            setConflict(responseData.message, conflictIds);
+            setConflict(conflictMsg, conflictIds);
           } else {
-            // 충돌 없거나 "충돌 성분이 없습니다" 류 메시지는 정상 처리
+            // 충돌 없거나 충돌 제품 ID 매칭 실패 시 정상 처리
             toast("✓ 루틴에 추가되었습니다!");
             clearConflict();
           }
@@ -201,7 +205,7 @@ export default function MyPage() {
       </div>
 
       {/* 탭 스위처 */}
-      <div className="bg-[#fbfaf8] sticky top-0 z-10 border-b border-border flex">
+      <div className="bg-[#fbfaf8] border-b border-border flex">
         {(["routine", "owned"] as const).map((tabType) => (
           <button
             key={tabType}

@@ -53,6 +53,7 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
 
   // 대화 내역은 Zustand store에서 — 페이지 이동 후에도 유지
   const messages = useChatbotStore((state) => state.messages);
+  const setChatKeyboardOpen = useChatbotStore((state) => state.setChatKeyboardOpen);
   const { isPending, sendMessage, resetSession } = useChatbot();
 
   // 메시지 추가 시 자동 스크롤
@@ -81,6 +82,8 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
 
   const handleClose = () => {
     setIsOpen(false);
+    // 패널 닫힐 때 키보드 상태 초기화
+    setChatKeyboardOpen(false);
   };
 
   return (
@@ -193,8 +196,10 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
                       if (e.key === "Enter" && !e.nativeEvent.isComposing)
                         handleSend();
                     }}
+                    onFocus={() => setChatKeyboardOpen(true)}
+                    onBlur={() => setChatKeyboardOpen(false)}
                     placeholder="궁금한 점을 물어보세요"
-                    className="flex-1 bg-transparent text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] outline-none"
+                    className="flex-1 min-w-0 bg-transparent text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] outline-none"
                     disabled={isPending}
                   />
                   <button
