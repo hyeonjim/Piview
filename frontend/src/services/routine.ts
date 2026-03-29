@@ -10,6 +10,7 @@ import client from "./client";
 import type { ApiResponse } from "@/types/common";
 import type {
   DraftItemDto,
+  DraftUpdateResponse,
   RoutineListResponse,
   RoutineResponse,
   CreateRoutineRequest,
@@ -26,7 +27,7 @@ export const routineService = {
    * @param productId - 추가할 화장품 ID
    */
   addDraft: (columnId: number, productId: number) =>
-    client.post<ApiResponse<DraftItemDto[]>>("/routines/draft", { columnId, productId }),
+    client.post<ApiResponse<DraftUpdateResponse>>("/routines/draft", { columnId, productId }),
 
   /**
    * 임시 루틴(draft) 전체 동기화 (덮어쓰기)

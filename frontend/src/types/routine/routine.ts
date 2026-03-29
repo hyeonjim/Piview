@@ -77,6 +77,17 @@ export interface EditRoutineLoadResponse {
 }
 
 /**
+ * POST /api/v1/routines/draft 응답
+ * 스웨거: DraftUpdateResponse
+ * 제품 추가 후 갱신된 draft + 성분 충돌 메시지
+ */
+export interface DraftUpdateResponse {
+  updatedDraft: DraftItemDto[];
+  /** 성분 충돌 시 "[제품명] 충돌 ..." 형식, 없으면 null */
+  message: string | null;
+}
+
+/**
  * PUT /api/v1/routines/{routineId} 요청 body
  * 스웨거: UpdateRoutineRequest
  * Redis draft 내용 + title로 기존 루틴을 완전 덮어씀
