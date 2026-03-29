@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, SwitchCamera, ImagePlus } from "lucide-react";
 import { useCaptureAnalysis, useAnalysisStatus } from "@/hooks";
@@ -32,14 +33,13 @@ const TITLE_TEXT_STYLE = {
   color: "#fff",
   textShadow: "0 1px 4px rgba(0,0,0,0.4)",
 };
-const SPACER_40 = { width: 40 };
 const HINT_BOX_STYLE = {
   borderRadius: "20px",
   backgroundColor: "rgba(0,0,0,0.45)",
   backdropFilter: "blur(12px)",
 };
 const HINT_TEXT_STYLE = {
-  fontSize: "13px",
+  fontSize: "18px",
   color: "#fff",
   fontWeight: 600,
   textAlign: "center" as const,
@@ -81,11 +81,6 @@ const SHUTTER_INNER_STYLE = {
   alignItems: "center",
   justifyContent: "center",
 };
-const HINT_BOTTOM_TEXT = {
-  fontSize: "13px",
-  color: "rgba(255,255,255,0.5)",
-  fontWeight: 600,
-};
 const UPLOAD_BTN_STYLE = {
   height: 44,
   borderRadius: "12px",
@@ -96,15 +91,6 @@ const UPLOAD_BTN_STYLE = {
   fontWeight: 600,
   border: "1px solid rgba(255,255,255,0.2)",
 };
-const RETRY_BTN_STYLE = {
-  height: 44,
-  borderRadius: "12px",
-  backgroundColor: "rgba(255,255,255,0.1)",
-  color: "rgba(255,255,255,0.55)",
-  fontSize: "13px",
-  fontWeight: 600,
-};
-
 export default function PhotoAnalysisPage() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -130,27 +116,32 @@ export default function PhotoAnalysisPage() {
 
   /* ── 카메라 시작 ── */
   const startCamera = useCallback(async (facing: "user" | "environment") => {
-    setCameraLoading(true);
+    // 기존 스트림 정리 (동기)
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
 
+    // setState는 await 이후에 호출해 useEffect 내 동기 setState 경고 방지
+    await Promise.resolve();
+    setCameraLoading(true);
+
     try {
       let stream: MediaStream;
       try {
+        // 4:3 비율 (세로 기준 3:4) 요청
         stream = await navigator.mediaDevices.getUserMedia({
           video:
             facing === "user"
               ? {
                   facingMode: { exact: "user" },
-                  width: { ideal: 720 },
+                  width: { ideal: 960 },
                   height: { ideal: 1280 },
                 }
               : {
                   facingMode: { exact: "environment" },
                   width: { ideal: 1080 },
-                  height: { ideal: 1920 },
+                  height: { ideal: 1440 },
                 },
           audio: false,
         });
@@ -206,11 +197,13 @@ export default function PhotoAnalysisPage() {
   });
 
   useEffect(() => {
-    startCamera(facingMode);
+    // 마운트 시 1회만 실행 — startCamera 내 setState는 await 이후 실행되므로 false positive
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void startCamera(facingMode);
     return () => {
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
-  }, []);
+  }, []); // intentional mount-only
 
   // 권한 허용 후 탭으로 돌아올 때 카메라 재시도
   useEffect(() => {
@@ -320,7 +313,7 @@ export default function PhotoAnalysisPage() {
 
   return (
     <div
-      className="absolute inset-0 flex flex-col bg-black overflow-hidden"
+      className="absolute inset-0 bg-black overflow-hidden"
       style={CAMERA_Z_INDEX}
     >
       {/* 숨김 헬퍼 */}
@@ -333,55 +326,70 @@ export default function PhotoAnalysisPage() {
         onChange={handleFileChange}
       />
 
-      {/* ── 카메라 / 프리뷰 영역 ── */}
-      <div className="flex-1 relative overflow-hidden">
-        {/* 카메라 피드 */}
-        {!preview && !cameraError && (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ transform: facingMode === "user" ? "scaleX(-1)" : "none" }}
-          />
-        )}
+      {/* ── 카메라 / 프리뷰 영역 (전체화면) ── */}
+      <div className="absolute inset-0 flex items-center justify-center bg-black">
 
-        {/* 프리뷰 이미지 */}
-        {preview && (
-          <img
-            src={preview}
-            alt="Captured"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        )}
-
-        {/* 카메라 오류: 뷰파인더 플레이스홀더 */}
-        {cameraError && !preview && (
-          <div className="absolute inset-0" style={DARK_BG_STYLE} />
-        )}
-
-        {/* 비네팅 */}
+        {/* 4:3 뷰파인더 컨테이너 (세로 기준 width:height = 3:4) */}
         <div
-          className="absolute inset-0 pointer-events-none z-[3]"
-          style={VIGNETTE_STYLE}
-        />
+          className="relative overflow-hidden w-full"
+          style={{ aspectRatio: "3/4" }}
+        >
+          {/* 카메라 피드 */}
+          {!preview && !cameraError && (
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ transform: facingMode === "user" ? "scaleX(-1)" : "none" }}
+            />
+          )}
 
-        {/* 플래시 효과 */}
-        {flash && (
+          {/* 프리뷰 이미지 (base64 data URL → unoptimized + fill) */}
+          {preview && (
+            <Image
+              src={preview}
+              alt="Captured"
+              fill
+              unoptimized
+              className="object-cover"
+            />
+          )}
+
+          {/* 카메라 오류: 뷰파인더 플레이스홀더 */}
+          {cameraError && !preview && (
+            <div className="absolute inset-0" style={DARK_BG_STYLE} />
+          )}
+
+          {/* 비네팅 */}
           <div
-            className="absolute inset-0 bg-white z-30 pointer-events-none"
-            style={{ animation: "flashFade 0.15s ease forwards" }}
+            className="absolute inset-0 pointer-events-none z-[3]"
+            style={VIGNETTE_STYLE}
           />
-        )}
 
-        {/* 상단 그라디언트 */}
-        <div
-          className="absolute top-0 left-0 right-0 h-28 pointer-events-none z-[6]"
-          style={TOP_GRAD_STYLE}
-        />
+          {/* 플래시 효과 */}
+          {flash && (
+            <div
+              className="absolute inset-0 bg-white z-30 pointer-events-none"
+              style={{ animation: "flashFade 0.15s ease forwards" }}
+            />
+          )}
 
-        {/* ── 상단 바 ── */}
+          {/* 상단 그라디언트 */}
+          <div
+            className="absolute top-0 left-0 right-0 h-28 pointer-events-none z-[6]"
+            style={TOP_GRAD_STYLE}
+          />
+
+          {/* 하단 그라디언트 */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-44 pointer-events-none z-[6]"
+            style={BOTTOM_GRAD_STYLE}
+          />
+        </div>
+
+        {/* ── 상단 바 (전체화면 기준 오버레이) ── */}
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-4 pb-2 z-[10]">
           <button
             onClick={() => router.back()}
@@ -390,14 +398,13 @@ export default function PhotoAnalysisPage() {
           >
             <ArrowLeft size={20} color="#fff" />
           </button>
-
           <span style={TITLE_TEXT_STYLE}>AI 피부 분석</span>
         </div>
 
         {/* ── 가이드 텍스트 ── */}
         {!preview && (
-          <div className="absolute top-[72px] left-0 right-0 flex justify-center z-[10]">
-            <div className="px-5 py-2.5" style={HINT_BOX_STYLE}>
+          <div className="absolute top-[92px] left-0 right-0 flex justify-center z-[10]">
+            <div className="px-5 py-2.5 "  style={HINT_BOX_STYLE}>
               <p style={HINT_TEXT_STYLE}>
                 {cameraError
                   ? "사진을 업로드하거나 촬영 버튼을 눌러주세요"
@@ -415,16 +422,10 @@ export default function PhotoAnalysisPage() {
             </div>
           </div>
         )}
-
-        {/* 하단 그라디언트 */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-44 pointer-events-none z-[6]"
-          style={BOTTOM_GRAD_STYLE}
-        />
       </div>
 
-      {/* ── 하단 컨트롤 ── */}
-      <div className="shrink-0 relative z-[10]" style={BOTTOM_BAR_STYLE}>
+      {/* ── 하단 컨트롤 (카메라 위 오버레이) ── */}
+      <div className="absolute bottom-0 left-0 right-0 z-[10]" style={BOTTOM_BAR_STYLE}>
         {!preview ? (
           <div className="flex flex-col items-center pt-5 pb-3 gap-4">
             {/* 촬영 버튼 행 */}
