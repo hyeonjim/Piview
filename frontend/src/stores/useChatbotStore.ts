@@ -15,9 +15,12 @@ export interface ChatMessage {
 interface ChatbotStore {
   messages: ChatMessage[];
   sessionId: string | null;
+  /** 챗봇 입력창 포커스(모바일 키보드 열림) 여부 */
+  isChatKeyboardOpen: boolean;
 
   addMessage: (message: ChatMessage) => void;
   setSessionId: (id: string) => void;
+  setChatKeyboardOpen: (open: boolean) => void;
   reset: () => void;
 }
 
@@ -31,11 +34,14 @@ const GREETING_MESSAGE: ChatMessage = {
 export const useChatbotStore = create<ChatbotStore>((set) => ({
   messages: [GREETING_MESSAGE],
   sessionId: null,
+  isChatKeyboardOpen: false,
 
   addMessage: (message) =>
     set((state) => ({ messages: [...state.messages, message] })),
 
   setSessionId: (id) => set({ sessionId: id }),
+
+  setChatKeyboardOpen: (open) => set({ isChatKeyboardOpen: open }),
 
   reset: () => set({ messages: [GREETING_MESSAGE], sessionId: null }),
 }));
