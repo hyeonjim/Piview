@@ -2,7 +2,7 @@
 
 import { toast } from "sonner";
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Plus, X, Scan, SquarePen, Save, ChessQueen, CircleAlert, AlignLeft } from "lucide-react";
+import { Plus, X, Scan, SquarePen, Save, ChessQueen, CircleAlert, AlignLeft, MessageSquareText, Star } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -145,12 +145,15 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   } = useRoutineAnalysisMutation();
 
   // draft에서 충돌 제품이 없어지면 자동 초기화
+  // conflictProductIds는 deps에서 제외: 제품 추가 직후 stale draftItems로 잘못 초기화되는 race condition 방지
+  // draftItems가 갱신될 때만 체크하면 충분 (제품 삭제 시 새 draft에 해당 ID가 없어서 정상 초기화됨)
   useEffect(() => {
     if (conflictProductIds.length === 0) return;
     const draftIds = draftItems.map((item) => item.product.productId);
     const allStillInDraft = conflictProductIds.every((id) => draftIds.includes(id));
     if (!allStillInDraft) clearConflictStore();
-  }, [draftItems, conflictProductIds, clearConflictStore]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftItems, clearConflictStore]);
 
   // ── PICK 배지 추적 (localStorage 기반) ────────────────────────────────
   const isProductRecommended = useRoutineStore((state) => state.isRecommended);
@@ -567,7 +570,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             <p className="flex items-center gap-1 text-[16px] mt-2 font-bold text-[#6b6a69]"><AlignLeft size={16} />내루틴 리스트</p>
             <button
               onClick={handleNewRoutine}
-              className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full text-[14px] text-white cursor-pointer bg-[#ece7bb] shadow-xs active:scale-[0.97] transition-transform"
+              className="flex items-center gap-1 font-semibold px-2.5 py-1 rounded-full text-[14px] text-white cursor-pointer bg-[#e2db9d] shadow-xs active:scale-[0.97] transition-transform"
             >
               <Plus size={12} /> New
             </button>
@@ -709,7 +712,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
 
       {/* ── 성분 충돌 경고 배너 — 1단계 클렌저 위에 표시, [제품명] 빨간색 강조 ── */}
       {conflictMessage && (
-        <div className="mx-3 mb-1 flex items-start gap-2 rounded-xl px-3 py-2.5 bg-[#fff8e1] border border-[#f5c97a] text-[13px] font-semibold text-[#7a5c00]">
+        <div className="mx-3 mb-1 flex items-start gap-2 rounded-xl px-3 py-2.5 bg-[#fff8e1] border border-[#f5c97a] text-[14px] font-semibold text-[#584303]">
           <CircleAlert size={16} className="shrink-0 mt-0.5 text-[#d97706]" />
           <span>
             {conflictMessage.split(/(\[[^\]]+\])/).map((part, i) =>
@@ -848,8 +851,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
           boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(130, 100, 180, 0.14), 0 1px 4px rgba(130, 100, 180, 0.08)",
         }}
       >
-        <div className="size-6 rounded-md flex items-center justify-center bg-[#dccdf0]">
-          <ChessQueen size={14} className="text-white" />
+        <div className="size-6 rounded-md flex items-center justify-center bg-[#c9aaf1]">
+          <Star size={14} className="text-white" />
         </div>
         AI 루틴 분석
       </button>
@@ -857,17 +860,17 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       {/* 분석 카드 — 버튼 클릭 시 표시 */}
       {showRoutineScore && (
         <div
-          className="mt-3 rounded-2xl p-5 border-2 border-[#e0d8f0] bg-[#f8f5fc]"
+          className="mt-3 rounded-2xl p-5 border-2 border-[#e0d8f0] bg-[#faf9fa]"
           style={{
             boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(130, 100, 180, 0.14), 0 1px 4px rgba(130, 100, 180, 0.08)",
           }}
         >
           {/* 헤더 */}
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-5">
             <div className="size-6 rounded-lg flex items-center justify-center bg-[#c4aee0]">
-              <ChessQueen size={12} className="text-white" />
+              <MessageSquareText size={12} className="text-white" />
             </div>
-            <p className="text-[16px] font-bold text-[#5a5060]">분석 결과</p>
+            <p className="text-[16px] font-bold text-[#7b54b4]">분석 결과</p>
           </div>
 
           {/* 점수 + 메시지 */}
@@ -878,7 +881,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
               </p>
             ) : routineAnalysis ? (
               routineAnalysis.analysisText.split("\n").map((line, i) => (
-                <p key={i} className="text-xs font-bold text-text-muted leading-relaxed break-keep">
+                <p key={i} className="text-[16px] font-semibold text-[#5f5b57] leading-relaxed break-keep">
                   {line}
                 </p>
               ))
