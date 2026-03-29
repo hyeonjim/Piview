@@ -35,9 +35,11 @@ export const ANTI_AGING_EXCLUDED_CATEGORIES = new Set([
 /** 해당 카테고리에서 안티에이징 태그를 숨겨야 하는지 여부 */
 export function shouldExcludeAntiAging(category?: string): boolean {
   if (!category) return false;
+  // 앞뒤 공백 제거 + 전각 슬래시(／) → 일반 슬래시(/) 정규화
+  const normalized = category.trim().replace(/／/g, "/");
   return (
-    ANTI_AGING_EXCLUDED_CATEGORIES.has(category) ||
-    category.startsWith("클렌징")
+    ANTI_AGING_EXCLUDED_CATEGORIES.has(normalized) ||
+    normalized.startsWith("클렌징")
   );
 }
 
@@ -95,8 +97,7 @@ export function mapProductSummary(
     name: product.name ?? "",
     brand: product.brandName ?? "",
     category,
-    imageUrl: product.imageUrl ?? null, // null이면 ProductCard에서 emoji fallback 처리
-    // "dry" | "oily" → "건성" | "지성" 한글 변환
+    imageUrl: product.imageUrl ?? null,
     skinTypes: (product.skinTypes ?? []).map(fromSkinTypeEnum),
     // 카테고리에 맞는 제외 태그 필터링 적용
     effects: filterEffectsByCategory(product.tags ?? [], category),
@@ -104,11 +105,30 @@ export function mapProductSummary(
   };
 }
 
-/** ProductSummaryResponse[] → MappedProduct[] */
+/** ProductSummaryResponse[] → MappedProduct[]
+ *
+ * @param categoryIdMap - categoryId → categoryName 맵 (선택)
+ *   전체 탭 조회 시 categoryName이 null이거나 대분류명으로 내려오는 경우
+ *   categoryId로 소분류명을 역추적해 필터링에 사용
+ */
 export function mapProductSummaryList(
   products: ProductSummaryResponse[],
+  categoryIdMap?: Map<number, string>,
 ): MappedProduct[] {
-  return products.map(mapProductSummary);
+  return products.map((product) => {
+    // categoryName이 없거나 대분류명이면 categoryId로 소분류명 역추적
+    const resolvedCategory =
+      product.categoryName ??
+      (categoryIdMap && product.categoryId != null
+        ? (categoryIdMap.get(product.categoryId) ?? null)
+        : null);
+
+    return mapProductSummary(
+      resolvedCategory !== product.categoryName
+        ? { ...product, categoryName: resolvedCategory }
+        : product,
+    );
+  });
 }
 
 /** RecommendResponseDto → MappedProduct

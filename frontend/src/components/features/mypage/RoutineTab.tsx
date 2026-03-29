@@ -33,6 +33,7 @@ import type {
 } from "@/types/routine";
 import type { ProductSummaryResponse } from "@/types/product/product";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
+import { filterEffectsByCategory } from "@/utils/productMapper";
 
 
 // 드래그 상태 타입 — 스텝 간 이동 지원
@@ -1085,7 +1086,7 @@ function RoutineProductCard({
                 {fromSkinTypeEnum(skinType)}
               </span>
             ))}
-            {product.tags?.slice(0, 2).map((effect) => (
+            {filterEffectsByCategory(product.tags ?? [], product.categoryName ?? undefined).slice(0, 2).map((effect) => (
               <span
                 key={effect}
                 className="inline-block text-[10px] mb-1 mr-1.5 font-medium px-1.5 py-px border rounded-3xl bg-[#fcfcfc] text-[#7a664e]"

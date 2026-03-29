@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useUserStore } from "@/stores";
 // 웰컴 슬라이드 데이터 (welcome 페이지 전용)
 interface WelcomeSlide {
   image: string;
@@ -34,9 +36,18 @@ const GRADIENT_OVERLAY =
   "linear-gradient(to top, rgba(30,27,36,0.92) 0%, rgba(30,27,36,0.5) 40%, rgba(30,27,36,0.1) 65%, transparent 100%)";
 
 export default function WelcomePage() {
+  const router = useRouter();
+  const user = useUserStore((s) => s.user);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+
+  // TokenInitializer가 세션 복원 완료 후 user가 채워지면 홈으로 자동 이동
+  useEffect(() => {
+    if (user) {
+      router.replace("/home");
+    }
+  }, [user, router]);
 
   // Auto-slide effect
   useEffect(() => {

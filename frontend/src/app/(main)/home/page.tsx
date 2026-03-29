@@ -6,6 +6,7 @@ import { useUserStore } from "@/stores";
 import { useUserQuery, useMainRoutineQuery } from "@/hooks";
 import { ROUTINE_STEPS } from "@/constants/routineSteps";
 import { fromSkinTypeEnum } from "@/utils/enumConvert";
+import { filterEffectsByCategory } from "@/utils/productMapper";
 import ProductCard from "@/components/common/ProductCard";
 import DataSourcesSection from "@/components/features/home/DataSourcesSection";
 import ChatbotWidget from "@/components/common/ChatbotWidget";
@@ -128,7 +129,7 @@ export default function HomePage() {
                       skinTypes={
                         product.skinTypes?.map(fromSkinTypeEnum) ?? []
                       }
-                      effects={product.tags ?? []}
+                      effects={filterEffectsByCategory(product.tags ?? [], product.categoryName ?? undefined)}
                       showLike={false}
                       showEwg={false}
                       imageContainerClassName="justify-center"
