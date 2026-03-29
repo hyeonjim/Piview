@@ -16,7 +16,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
-      duration={1000}
+      duration={2000}
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-5" />,
