@@ -403,7 +403,7 @@ export default function PhotoAnalysisPage() {
 
         {/* ── 가이드 텍스트 ── */}
         {!preview && (
-          <div className="absolute top-[92px] left-0 right-0 flex justify-center z-[10]">
+          <div className="absolute left-0 right-0 top-15 flex justify-center">
             <div className="px-5 py-2.5 "  style={HINT_BOX_STYLE}>
               <p style={HINT_TEXT_STYLE}>
                 {cameraError
