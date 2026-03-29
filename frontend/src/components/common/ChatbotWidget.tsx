@@ -54,19 +54,14 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
   // 대화 내역은 Zustand store에서 — 페이지 이동 후에도 유지
   const messages = useChatbotStore((state) => state.messages);
   const setChatKeyboardOpen = useChatbotStore((state) => state.setChatKeyboardOpen);
+  // 키보드 열림 상태 — BottomNav 숨김 시 패널 하단을 bottom-0으로 확장
+  const isChatKeyboardOpen = useChatbotStore((state) => state.isChatKeyboardOpen);
   const { isPending, sendMessage, resetSession } = useChatbot();
 
   // 메시지 추가 시 자동 스크롤
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isPending]);
-
-  // 열릴 때 input 포커스
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 150);
-    }
-  }, [isOpen]);
 
   const handleSend = () => {
     const trimmedInput = input.trim();
@@ -92,7 +87,7 @@ export default function ChatbotWidget({ context }: ChatbotWidgetProps) {
       {isOpen && (
         <div className="fixed top-0 bottom-0 left-0 right-0 z-80 flex justify-center pointer-events-none">
           <div className="relative w-full h-full pointer-events-none max-w-app">
-            <div className="absolute right-0 top-[10%] bottom-14 w-[72%] flex flex-col bg-white pointer-events-auto rounded-tl-[16px] shadow-[-4px_0_24px_rgba(0,0,0,0.10)]">
+            <div className={`absolute right-0 top-[10%] w-[72%] flex flex-col bg-white pointer-events-auto rounded-tl-[16px] shadow-[-4px_0_24px_rgba(0,0,0,0.10)] transition-[bottom] duration-200 ${isChatKeyboardOpen ? "bottom-0" : "bottom-14"}`}>
               {/* 핸들 바 */}
               <div className="flex justify-center pt-2 pb-1 shrink-0">
                 <div className="w-8 h-1 rounded-full bg-[#e7e6e5]" />
