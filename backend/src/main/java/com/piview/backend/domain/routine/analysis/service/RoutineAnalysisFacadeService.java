@@ -152,9 +152,12 @@ public class RoutineAnalysisFacadeService {
             Long concernId = concernNameToId.getOrDefault(mySkin.getSkinProblem(), -1L);
             if (concernId == -1L || coveredConcernIds.contains(concernId)) continue;
 
-            List<Long> searchCategoryIds = COLUMN_TO_CATEGORY_IDS.getOrDefault(4L, List.of());
+            // 고민 케어 제품을 세럼(4번)에 국한하지 않고 전체 카테고리에서 탐색
+            List<Long> allCategoryIds = COLUMN_TO_CATEGORY_IDS.values().stream()
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
             List<Product> candidates = productRepository.findRoutineCandidates(
-                    searchCategoryIds, skinType, gender,
+                    allCategoryIds, skinType, gender,
                     concernId, 2.0, 1.0,
                     safeExcludeIds, safeDislikedIds, safeAvoidIngredientIds
             );
@@ -215,13 +218,22 @@ public class RoutineAnalysisFacadeService {
             // ── 성분 정보 (없으면 명시)
             String ingredientInfo = ingredients.equals("성분 정보 없음")
                     ? "성분 정보 없음 (성분 관련 언급 금지)"
-                    : (ingredients.length() > 200 ? ingredients.substring(0, 200) + "..." : ingredients);
+                    : ingredients;
+
+            // ── 충돌 위험 성분 플래그 (has_* 컬럼 직접 활용)
+            List<String> conflictFlags = new ArrayList<>();
+            if (Boolean.TRUE.equals(product.getHasRetinol()))     conflictFlags.add("레티놀");
+            if (Boolean.TRUE.equals(product.getHasAcid()))        conflictFlags.add("AHA/BHA");
+            if (Boolean.TRUE.equals(product.getHasPureVitC()))    conflictFlags.add("순수비타민C");
+            if (Boolean.TRUE.equals(product.getHasCopperPep()))   conflictFlags.add("구리펩타이드");
+            if (Boolean.TRUE.equals(product.getHasBenzoyl()))     conflictFlags.add("벤조일퍼옥사이드");
+            String conflictFlagInfo = conflictFlags.isEmpty() ? "없음" : String.join(", ", conflictFlags);
 
             routineSection.append(String.format(
-                    "- %s %s (%s)\n  피부타입 적합도: %s\n  이상치: %s\n  성분: %s\n",
+                    "- %s %s (%s)\n  피부타입 적합도: %s\n  이상치: %s\n  충돌주의성분: %s\n  성분: %s\n",
                     brandName, productName, categoryName,
                     skinScoreInfo, idealInfo.isEmpty() ? "이상치 데이터 없음" : idealInfo,
-                    ingredientInfo
+                    conflictFlagInfo, ingredientInfo
             ));
 
             if (needsImprovement) hasImprovements = true;
@@ -272,7 +284,7 @@ public class RoutineAnalysisFacadeService {
                 5. %s
                 6. 보완이 필요한 항목이 있으면 추천 후보 중 실제 제품명(브랜드 포함)을 언급하며 추천할 것.
                 7. 추천 시 "~을 추가해보세요" 또는 "~가 도움이 될 거예요" 형식으로 말할 것.
-                8. 성분 충돌이 있으면 구체적으로 경고할 것.
+                8. [충돌주의성분]이 "없음"이 아닌 제품이 루틴에 2개 이상 있을 때만 성분 충돌을 경고할 것. 단일 제품의 충돌주의성분은 언급하지 말 것.
                 """,
                 userSkinType, userConcerns,
                 routineSection,
@@ -280,8 +292,8 @@ public class RoutineAnalysisFacadeService {
                 uncoveredSection.length() > 0 ? uncoveredSection.toString() : "",
                 recommendSection.length() > 0 ? recommendSection.toString() : "",
                 hasImprovements
-                        ? "개선이 필요한 항목만 간결하게 언급하고 불필요한 칭찬은 하지 말 것."
-                        : "모든 데이터가 양호하므로 칭찬하되, 데이터에 근거한 구체적인 이유를 언급할 것."
+                        ? "개선이 필요한 항목만 간결하게 언급하고, 불필요한 칭찬은 하지 말 것. 문제 항목과 추천 제품을 중심으로 말할 것."
+                        : "루틴의 모든 항목이 양호하므로 구체적인 데이터 근거를 들어 칭찬할 것. 개선 사항은 언급하지 말 것."
         );
 
         log.debug("루틴 분석 프롬프트:\n{}", context);
