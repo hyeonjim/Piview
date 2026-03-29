@@ -305,6 +305,8 @@
     color: #2a2118;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* 모바일 오버스크롤(당김 새로고침, 바운스) 방지 */
+    overscroll-behavior: none;
   }
 
   @media (max-width: 767px) {
