@@ -48,14 +48,6 @@ public class RoutineAnalysisFacadeService {
     private final ProductConcernCacheRepository productConcernCacheRepository;
     private final RoutineAnalysisAiClient routineAnalysisAiClient;
 
-    // 피부타입별 상위 25% 컷오프 기준값 (findInitialRecommendations 쿼리와 동일)
-    private static final Map<SkinTypeEnum, Double> SKIN_SCORE_THRESHOLD = Map.of(
-        SkinTypeEnum.dry, 66.0,
-        SkinTypeEnum.oily, 70.0,
-        SkinTypeEnum.combination, 39.0,
-        SkinTypeEnum.subuji, 36.0
-    );
-
     private static final Map<Long, List<Long>> COLUMN_TO_CATEGORY_IDS = Map.of(
         1L, List.of(8L, 9L, 10L, 11L, 12L, 13L),
         2L, List.of(22L),
@@ -131,8 +123,15 @@ public class RoutineAnalysisFacadeService {
         Map<String, Long> concernNameToId = allConcerns.stream()
                 .collect(Collectors.toMap(SkinConcerns::getConcernName, SkinConcerns::getId));
 
+        // my_skin에 저장된 값(색소침착/안티에이징/수분)과 skin_concerns DB값(기미/주근깨/잡티 등)이 달라서
+        // SurveySkinProblemMapper가 변환한 내부 태그명을 DB concern_name으로 역매핑 필요
+        Map<String, Long> internalTagToConcernId = new java.util.HashMap<>();
+        internalTagToConcernId.put("색소침착",   concernNameToId.getOrDefault("기미/주근깨/잡티", -1L));
+        internalTagToConcernId.put("안티에이징",  concernNameToId.getOrDefault("주름/탄력", -1L));
+        internalTagToConcernId.put("수분",       concernNameToId.getOrDefault("속건조", -1L));
+
         Long primaryConcernId = mySkins.isEmpty() ? -1L
-                : concernNameToId.getOrDefault(mySkins.get(0).getSkinProblem(), -1L);
+                : resolveConcernId(mySkins.get(0).getSkinProblem(), concernNameToId, internalTagToConcernId);
 
         SurveyGender gender = user.getGender() != null ? user.getGender() : SurveyGender.WOMEN;
         SkinTypeEnum skinType = skinTypeEnum != null ? skinTypeEnum : SkinTypeEnum.dry;
@@ -147,15 +146,16 @@ public class RoutineAnalysisFacadeService {
                 .stream()
                 .collect(Collectors.toSet());
 
+        // 고민 케어 제품을 세럼(4번)에 국한하지 않고 전체 카테고리에서 탐색 (루프 밖에서 한번만 생성)
+        List<Long> allCategoryIds = COLUMN_TO_CATEGORY_IDS.values().stream()
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+
         StringBuilder uncoveredSection = new StringBuilder();
         for (MySkin mySkin : mySkins) {
-            Long concernId = concernNameToId.getOrDefault(mySkin.getSkinProblem(), -1L);
+            Long concernId = resolveConcernId(mySkin.getSkinProblem(), concernNameToId, internalTagToConcernId);
             if (concernId == -1L || coveredConcernIds.contains(concernId)) continue;
 
-            // 고민 케어 제품을 세럼(4번)에 국한하지 않고 전체 카테고리에서 탐색
-            List<Long> allCategoryIds = COLUMN_TO_CATEGORY_IDS.values().stream()
-                    .flatMap(List::stream)
-                    .collect(Collectors.toList());
             List<Product> candidates = productRepository.findRoutineCandidates(
                     allCategoryIds, skinType, gender,
                     concernId, 2.0, 1.0,
@@ -304,21 +304,23 @@ public class RoutineAnalysisFacadeService {
     private String buildSkinScoreInfo(Product product, SkinTypeEnum skinTypeEnum) {
         if (skinTypeEnum == null) return "피부타입 정보 없음";
 
-        BigDecimal score = switch (skinTypeEnum) {
-            case dry -> product.getScoreDry();
-            case oily -> product.getScoreOily();
-            case combination -> product.getScoreCombination();
-            case subuji -> product.getScoreSubuji();
-        };
-
-        if (score == null) return "피부타입 점수 데이터 없음";
-
-        double threshold = SKIN_SCORE_THRESHOLD.getOrDefault(skinTypeEnum, 50.0);
-        boolean isSuitable = score.doubleValue() >= threshold;
+        // top_skin_type 또는 top2_skin_type 일치 여부로 적합도 판단
+        // 점수는 추천 순위용이지 적합 여부 기준이 아님
+        boolean isSuitable = skinTypeEnum.equals(product.getTopSkinType())
+                || skinTypeEnum.equals(product.getTop2SkinType());
 
         return isSuitable
                 ? skinTypeEnum.getKorean() + " 피부에 잘 맞는 제품 ✅"
                 : skinTypeEnum.getKorean() + " 피부에 맞지 않는 제품 ❌ (이 제품은 회원님 피부타입에 적합하지 않습니다)";
+    }
+
+    // my_skin 저장값(내부 태그)과 skin_concerns DB값 불일치 해소용 역매핑 헬퍼
+    private Long resolveConcernId(String skinProblem, Map<String, Long> concernNameToId, Map<String, Long> internalTagToConcernId) {
+        // 1. DB concern_name과 직접 일치하면 바로 반환
+        Long directId = concernNameToId.get(skinProblem);
+        if (directId != null) return directId;
+        // 2. 내부 태그명(색소침착/안티에이징/수분)이면 역매핑해서 반환
+        return internalTagToConcernId.getOrDefault(skinProblem, -1L);
     }
 
     private Long getCategoryToColumnId(Product product) {
