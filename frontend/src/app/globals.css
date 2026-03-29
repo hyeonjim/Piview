@@ -297,6 +297,8 @@
     font-size: 16px;
     /* 브라우저가 임의로 폰트 굵기/기울임 합성하는 것을 방지 */
     font-synthesis: none;
+    /* html 레벨 오버스크롤 방지 (body만으로는 일부 브라우저에서 바운스 발생) */
+    overscroll-behavior: none;
   }
 
   /* ─── Body Background ─── */
@@ -307,6 +309,8 @@
     -moz-osx-font-smoothing: grayscale;
     /* 모바일 오버스크롤(당김 새로고침, 바운스) 방지 */
     overscroll-behavior: none;
+    /* iOS 16 미만 Safari bounce 효과 방지 */
+    -webkit-overflow-scrolling: auto;
   }
 
   @media (max-width: 767px) {
