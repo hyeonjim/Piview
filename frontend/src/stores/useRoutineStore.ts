@@ -47,6 +47,19 @@ interface RoutineStore {
   selectedRoutineId: number | null;
   setSelectedRoutineId: (id: number | null) => void;
 
+  // 에딧모드 상태 (메모리 전용) — 상세페이지 이동 후 복귀 시 유지
+  /** 편집 중인 루틴 ID — null이면 에딧모드 아님 */
+  editingRoutineId: number | null;
+  /** 편집 시작 시점의 루틴 이름 — 저장 모달 기본값용 */
+  editingRoutineTitle: string;
+  /** 새 루틴 작성 모드 — 자동 선택 방지 플래그 */
+  isNewRoutineMode: boolean;
+  setEditingRoutineId: (id: number | null) => void;
+  setEditingRoutineTitle: (title: string) => void;
+  setIsNewRoutineMode: (mode: boolean) => void;
+  /** 에딧모드 종료 시 일괄 초기화 — 종료 시점마다 이걸로 통일 */
+  resetEditMode: () => void;
+
   // 성분 충돌 상태 (메모리 전용) — 페이지 이동에도 유지
   /** 충돌 성분 메시지 */
   conflictMessage: string | null;
@@ -77,6 +90,15 @@ export const useRoutineStore = create<RoutineStore>()((set, get) => ({
   // UI 상태 (메모리 전용)
   selectedRoutineId: null,
   setSelectedRoutineId: (id) => set({ selectedRoutineId: id }),
+
+  // 에딧모드 상태
+  editingRoutineId: null,
+  editingRoutineTitle: "",
+  isNewRoutineMode: false,
+  setEditingRoutineId: (id) => set({ editingRoutineId: id }),
+  setEditingRoutineTitle: (title) => set({ editingRoutineTitle: title }),
+  setIsNewRoutineMode: (mode) => set({ isNewRoutineMode: mode }),
+  resetEditMode: () => set({ editingRoutineId: null, editingRoutineTitle: "", isNewRoutineMode: false }),
 
   // 성분 충돌 상태
   conflictMessage: null,

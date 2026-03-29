@@ -37,6 +37,7 @@ export function useLogout() {
       useLikeStore.getState().initFromServer([]);
       useLikeStore.getState().setPage(1);
       useRoutineStore.getState().setSelectedRoutineId(null);
+      useRoutineStore.getState().resetEditMode();
 
       router.push("/welcome");
     }

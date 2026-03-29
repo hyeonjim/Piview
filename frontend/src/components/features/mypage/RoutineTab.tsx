@@ -170,16 +170,19 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     setLocalDraftByStep(groupDraftByStep(draftItems, routineSteps));
   }, [draftItems, routineSteps]);
 
+  // ── 에딧모드 상태 — Zustand store (페이지 이동에도 유지) ──────────────
+  const editingRoutineId = useRoutineStore((s) => s.editingRoutineId);
+  const editingRoutineTitle = useRoutineStore((s) => s.editingRoutineTitle);
+  const isNewRoutineMode = useRoutineStore((s) => s.isNewRoutineMode);
+  const setEditingRoutineId = useRoutineStore((s) => s.setEditingRoutineId);
+  const setEditingRoutineTitle = useRoutineStore((s) => s.setEditingRoutineTitle);
+  const setIsNewRoutineMode = useRoutineStore((s) => s.setIsNewRoutineMode);
+  const resetEditMode = useRoutineStore((s) => s.resetEditMode);
+
   // ── UI 상태 ────────────────────────────────────────────────────────
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveModalName, setSaveModalName] = useState("");
   const [showOcrModal, setShowOcrModal] = useState(false);
-  // 편집 중인 루틴 ID — null이면 새 루틴 생성 모드, 값이 있으면 기존 루틴 수정 모드
-  const [editingRoutineId, setEditingRoutineId] = useState<number | null>(null);
-  // 편집 시작 시점의 루틴 이름 — 수정 저장 모달에 미리 채워줄 기본값
-  const [editingRoutineTitle, setEditingRoutineTitle] = useState<string>("");
-  // 사용자가 명시적으로 새 루틴 작성 모드로 진입했는지 여부 — 자동 선택 방지 플래그
-  const [isNewRoutineMode, setIsNewRoutineMode] = useState(false);
   // AI 루틴 분석 카드 표시 여부 — 버튼 클릭 시 토글
   const [showRoutineScore, setShowRoutineScore] = useState(false);
 
@@ -436,8 +439,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
           onSuccess: () => {
             setShowSaveModal(false);
             setSaveModalName("");
-            setEditingRoutineId(null);
-            setEditingRoutineTitle("");
+            resetEditMode();
             // 저장 완료 후 수정된 루틴을 보기 모드로 바로 표시
             setSelectedRoutineId(savedRoutineId);
             notify(`"${trimmedName}" 루틴이 수정되었습니다!`);
@@ -460,8 +462,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         onSuccess: (newRoutineId) => {
           setShowSaveModal(false);
           setSaveModalName("");
-          // 새로 생성된 루틴을 바로 보기 모드로 표시 + 새 루틴 모드 종료
-          setIsNewRoutineMode(false);
+          // 새로 생성된 루틴을 바로 보기 모드로 표시 + 에딧모드 종료
+          resetEditMode();
           setSelectedRoutineId(newRoutineId);
           notify(`"${trimmedName}" 루틴이 저장되었습니다!`);
         },
@@ -495,10 +497,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
    * isNewRoutineMode를 true로 설정해 자동 선택 방지
    */
   const handleNewRoutine = () => {
-    setEditingRoutineId(null);
-    setEditingRoutineTitle("");
-    setSelectedRoutineId(null);
+    resetEditMode();
     setIsNewRoutineMode(true);
+    setSelectedRoutineId(null);
     clearConflictStore();
     clearDraft(undefined, {
       onSuccess: () => notify("새 루틴 작성을 시작합니다."),
@@ -595,9 +596,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 }
                 onClick={() => {
                     // 다른 루틴 카드 선택 시 Edit mode 및 새 루틴 모드 종료, 충돌 배너 초기화
-                    setEditingRoutineId(null);
-                    setEditingRoutineTitle("");
-                    setIsNewRoutineMode(false);
+                    resetEditMode();
                     setSelectedRoutineId(saved.routineId);
                     clearConflictStore();
                   }}
