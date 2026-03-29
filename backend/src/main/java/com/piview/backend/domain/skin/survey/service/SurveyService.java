@@ -10,6 +10,9 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import com.piview.backend.global.exception.CustomException;
 import com.piview.backend.global.exception.ErrorCode;
@@ -40,6 +43,12 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class SurveyService {
+
+    private static final String DRY_SIDE = "dry_side";
+    private static final double DRY_DISPLAY_PROBABILITY = 70.0;
+    private static final double OILY_DISPLAY_PROBABILITY = 30.0;
+    private static final double DRY_FALLBACK_CHEEK_MEAN_SCORE = 45.0;
+    private static final String LOW_MOISTURE_STATE = "low";
 
     private final UserRepository userRepository;
     private final MySkinRepository mySkinRepository;
@@ -74,8 +83,11 @@ public class SurveyService {
             User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
+            // 피부 분석 응답에 regional/moisture 누락이 있으면 얼굴 판정이 불완전한 상태로 간주한다.
+            // 이 경우 설문은 유지하고, AI 신호만 건성 쪽 의미값으로 정규화해 계산과 응답 모두 일관되게 맞춘다.
+            JsonNode normalizedAiResult = normalizeAiResultForSurvey(cachedState.path("result"));
             // Redis에 저장된 AI 원본 JSON에서 최종 피부타입 계산에 필요한 신호만 추출한다.
-            AiSkinSurveySignals aiSignals = extractAiSignals(cachedState.path("result"));
+            AiSkinSurveySignals aiSignals = extractAiSignals(normalizedAiResult);
             SkinTypeEnum mySkinType = calculateSkinType(request, aiSignals);
             // Q7 원문은 프론트 문구이고, DB에는 서비스에서 쓰는 내부 태그 문자열로 저장한다.
             // 여기에 연령대(40대 이상) 기반 파생 태그도 함께 합친다.
@@ -109,13 +121,86 @@ public class SurveyService {
                 .analysisId(analysisId)
                 .mySkinType(mySkinType)
                 .skinProblems(mappedSkinProblems)
-                .aiResult(buildClientAiResult(cachedState.path("result")))
+                .aiResult(buildClientAiResult(normalizedAiResult))
                 .build();
         } finally {
             if (releaseLockImmediately) {
                 skinAnalysisCacheService.releaseSurveySubmitLock(analysisId);
             }
         }
+    }
+
+    private JsonNode normalizeAiResultForSurvey(JsonNode aiResult) {
+        if (!shouldApplyDryFallback(aiResult)) {
+            return aiResult;
+        }
+
+        ObjectNode normalized = aiResult instanceof ObjectNode objectNode
+            ? objectNode.deepCopy()
+            : JsonNodeFactory.instance.objectNode();
+
+        normalized.set("global_face", buildDryAxisNode());
+        normalized.set("regional_skin_type", buildDryRegionalSkinTypeNode());
+        normalized.set("moisture", buildDryMoistureNode());
+
+        JsonNode roiMetadata = aiResult.path("roi_metadata");
+        normalized.set("roi_metadata", roiMetadata.isMissingNode() ? JsonNodeFactory.instance.nullNode() : roiMetadata.deepCopy());
+        normalized.set("warnings", appendDryFallbackWarning(aiResult.path("warnings")));
+
+        return normalized;
+    }
+
+    private boolean shouldApplyDryFallback(JsonNode aiResult) {
+        if (aiResult.isMissingNode() || aiResult.isNull()) {
+            return true;
+        }
+
+        return aiResult.path("regional_skin_type").isMissingNode()
+            || aiResult.path("regional_skin_type").isNull()
+            || aiResult.path("moisture").isMissingNode()
+            || aiResult.path("moisture").isNull();
+    }
+
+    private ObjectNode buildDryAxisNode() {
+        ObjectNode axisNode = JsonNodeFactory.instance.objectNode();
+        axisNode.put("axis", DRY_SIDE);
+        axisNode.put("display_dry_probability", DRY_DISPLAY_PROBABILITY);
+        axisNode.put("display_oily_probability", OILY_DISPLAY_PROBABILITY);
+        return axisNode;
+    }
+
+    private ObjectNode buildDryRegionalSkinTypeNode() {
+        ObjectNode regionalNode = JsonNodeFactory.instance.objectNode();
+        regionalNode.set("forehead", buildDryAxisNode());
+        regionalNode.set("left_cheek", buildDryAxisNode());
+        regionalNode.set("right_cheek", buildDryAxisNode());
+        regionalNode.put("cheek_mean_axis", DRY_SIDE);
+        regionalNode.put("display_dry_probability", DRY_DISPLAY_PROBABILITY);
+        regionalNode.put("display_oily_probability", OILY_DISPLAY_PROBABILITY);
+        regionalNode.put("regional_difference_exists", false);
+        regionalNode.put("forehead_oily_cheek_dry", false);
+        return regionalNode;
+    }
+
+    private ObjectNode buildDryMoistureNode() {
+        ObjectNode moistureNode = JsonNodeFactory.instance.objectNode();
+        moistureNode.put("cheek_mean_score", DRY_FALLBACK_CHEEK_MEAN_SCORE);
+        moistureNode.put("state", LOW_MOISTURE_STATE);
+        return moistureNode;
+    }
+
+    private ArrayNode appendDryFallbackWarning(JsonNode warningsNode) {
+        ArrayNode warnings = JsonNodeFactory.instance.arrayNode();
+        if (warningsNode.isArray()) {
+            warningsNode.forEach(warning -> warnings.add(warning.deepCopy()));
+        }
+
+        ObjectNode warning = JsonNodeFactory.instance.objectNode();
+        warning.put("stage", "backend_dry_fallback");
+        warning.put("detail", "regional_skin_type 또는 moisture 누락으로 건성 fallback을 적용했습니다.");
+        warnings.add(warning);
+
+        return warnings;
     }
 
     private SkinTypeEnum calculateSkinType(SurveySubmitRequest request, AiSkinSurveySignals aiSignals) {
