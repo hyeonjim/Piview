@@ -27,7 +27,7 @@ const ICON_BTN_STYLE = {
   backdropFilter: "blur(8px)",
 };
 const TITLE_TEXT_STYLE = {
-  fontSize: "14px",
+  fontSize: "22px",
   fontWeight: 600,
   color: "#fff",
   textShadow: "0 1px 4px rgba(0,0,0,0.4)",
@@ -342,7 +342,7 @@ export default function PhotoAnalysisPage() {
             autoPlay
             playsInline
             muted
-            className="absolute inset-0 w-full h-full object-contain"
+            className="absolute inset-0 w-full h-full object-cover"
             style={{ transform: facingMode === "user" ? "scaleX(-1)" : "none" }}
           />
         )}
