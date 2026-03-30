@@ -319,6 +319,14 @@
     }
   }
 
+  /* 카메라 플래시 효과 애니메이션
+   * photo/page.tsx의 <style> 태그에서 분리.
+   * 전역 CSS에 선언하여 컴포넌트가 직접 주입하지 않도록 함 */
+  @keyframes flashFade {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+  }
+
   /* ─── Scrollbar Hidden ─── */
   ::-webkit-scrollbar {
     display: none;
@@ -719,5 +727,77 @@
 
   .pagination-icon {
     color: var(--color-text-hint);
+  }
+
+  /* ───────────────────────────────────────────────────────────
+     🛤️ Onboarding Components
+     Tailwind만으로 표현할 수 없는 스타일을 CSS 클래스로 분리.
+     radial-gradient, text-shadow, safe-area 등이 해당됨.
+     ─────────────────────────────────────────────────────────── */
+
+  /* 폰트 패밀리 헬퍼
+   * style={{ fontFamily: "var(--font-english)" }} 인라인 스타일을
+   * className으로 대체하기 위한 유틸리티 클래스 */
+  .font-english {
+    font-family: var(--font-english);
+  }
+
+  .font-korean {
+    font-family: var(--font-korean);
+  }
+
+  /* 웰컴 페이지 배경 그라디언트
+   * 슬라이드 이미지 위에 올라가는 하단→상단 어두운 오버레이.
+   * Tailwind의 bg-gradient-to-t는 두 색상 사이만 지원하므로
+   * 3단계 불투명도 변화는 CSS로 직접 작성 */
+  .welcome-gradient-overlay {
+    background: linear-gradient(
+      to top,
+      rgba(30, 27, 36, 0.92) 0%,
+      rgba(30, 27, 36, 0.5) 40%,
+      rgba(30, 27, 36, 0.1) 65%,
+      transparent 100%
+    );
+  }
+
+  /* 카메라 뷰파인더 어두운 배경 (카메라 에러 시 플레이스홀더)
+   * radial-gradient는 Tailwind 임의값으로 표현 불가 */
+  .camera-dark-bg {
+    background: radial-gradient(
+      ellipse 80% 60% at 50% 45%,
+      #2a2a2a 0%,
+      #111 50%,
+      #000 100%
+    );
+  }
+
+  /* 카메라 비네팅 효과
+   * 뷰파인더 가장자리를 어둡게 만들어 피사체를 강조 */
+  .camera-vignette {
+    background: radial-gradient(
+      ellipse 80% 60% at 50% 42%,
+      transparent 50%,
+      rgba(0, 0, 0, 0.5) 100%
+    );
+  }
+
+  /* 카메라 제목 텍스트 그림자
+   * text-shadow는 Tailwind 기본 유틸리티에 없음 */
+  .camera-title-shadow {
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  }
+
+  /* 하단 바 safe-area 패딩
+   * iOS 홈 인디케이터, Android 내비게이션 바 영역 침범 방지.
+   * env(safe-area-inset-bottom)은 CSS 환경 변수로 Tailwind로 표현 불가 */
+  .camera-bottom-safe {
+    padding-bottom: max(env(safe-area-inset-bottom, 12px), 12px);
+  }
+
+  /* 셔터 버튼 내부 그라디언트
+   * 135도 선형 그라디언트는 Tailwind 임의값으로 가능하지만
+   * 두 색상 코드가 길어 CSS 클래스로 분리 */
+  .shutter-gradient {
+    background: linear-gradient(135deg, #f5809d, #e8607e);
   }
 }

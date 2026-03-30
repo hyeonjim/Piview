@@ -25,18 +25,8 @@ export const toSkinTypeParam = (skinType: SkinType): string => {
   return map[skinType] ?? skinType;
 };
 
-/** "건성" | "지성" | "복합성" | "수부지" → "dry" | "oily" | "combination" | "subuji"
- *  POST /skin/surveys gender/ageGroup/skinType 필드용
- */
-export const toSkinTypeEnum = (skinType: SkinType): string => {
-  const map: Record<SkinType, string> = {
-    건성: "dry",
-    지성: "oily",
-    복합성: "combination",
-    수부지: "subuji",
-  };
-  return map[skinType] ?? skinType;
-};
+/** POST /skin/surveys gender/ageGroup/skinType 필드용 — toSkinTypeParam과 동일 로직 */
+export const toSkinTypeEnum = toSkinTypeParam;
 
 // ── 백엔드 → 프론트 ──────────────────────────────────────────────
 

@@ -14,13 +14,13 @@ import { useSurveySubmit } from "@/hooks";
 import type { SurveySubmitRequest } from "@/types/user";
 import type { AgeGroup, Gender } from "@/types/user";
 
-/** 전체 질문 수: 성별(1) + 연령대(1) + Q3~Q6(4) + 피부고민(1) = 7 */
+// ── 상수 ───────────────────────────────────────────────────────
+// 총 질문 수: 성별(1) + 연령대(1) + Q3~Q6(4) + 피부고민(1) = 7
 const TOTAL_QUESTIONS = 7;
 
-/**
- * 페이지 번호 → 질문 반환
- * 1: 성별, 2: 연령대, 3~6: Q3~Q6(공통), 7: 피부고민
- */
+// ── 페이지 번호 → 질문 객체 매핑 ──────────────────────────────
+// Next.js 동적 라우트 [id]의 숫자를 질문 데이터로 변환
+// id: -1=성별, 0=연령대, 1~4=공통질문, 5=피부고민
 function getQuestionByNumber(number: number) {
   if (number === 1) return GENDER_QUESTION;       // id: -1
   if (number === 2) return COMMON_QUESTIONS[0];   // id: 0  연령대
@@ -32,10 +32,8 @@ function getQuestionByNumber(number: number) {
   return null;
 }
 
-/**
- * answers[questionId] value → API A/B/C/D 변환
- * Q3~Q6 value가 이미 "A"|"B"|"C"|"D" 이므로 options 인덱스로 변환
- */
+// ── 답변 value → API A/B/C/D 변환 ─────────────────────────────
+// COMMON_QUESTIONS의 options 배열 인덱스를 A/B/C/D로 변환
 function valueToOption(
   questionId: number,
   value: string,
@@ -45,7 +43,7 @@ function valueToOption(
   return (["A", "B", "C", "D"][index] ?? "A") as "A" | "B" | "C" | "D";
 }
 
-/** ageGroup value → AgeGroup enum */
+// ── ageGroup value → AgeGroup 열거형 변환 ─────────────────────
 function valueToAgeGroup(value: string): AgeGroup {
   const map: Record<string, AgeGroup> = {
     TEENS: "TEENS",
@@ -61,6 +59,7 @@ export default function SurveyPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  // Next.js 15: params가 Promise → use()로 언래핑
   const { id } = use(params);
   const questionNumber = parseInt(id, 10);
 
@@ -83,34 +82,43 @@ export default function SurveyPage({
     return null;
   }
 
-  const isSkinProblem = question.id === 5;
-  const isGender = question.id === -1;
+  // 질문 종류 판별 플래그
+  const isSkinProblem = question.id === 5;  // Q7: 다중선택
+  const isGenderQuestion = question.id === -1;
   const isLast = questionNumber === TOTAL_QUESTIONS;
+
+  // 진행률: 현재 질문 번호 / 전체 질문 수 (0~100%)
   const progressPercent = (questionNumber / TOTAL_QUESTIONS) * 100;
 
   const selectedAnswer = answers[question.id];
-  // Q7은 1개 이상 선택이면 통과, 나머지는 단일 선택 필수
+  // Q7(피부고민)은 1개 이상 선택 시 통과, 나머지는 단일 선택 필수
   const hasAnswer = isSkinProblem ? skinProblems.length > 0 : !!selectedAnswer;
 
+  // ── 답변 선택 핸들러 ──────────────────────────────────────────
+  // useCallback: question.id가 바뀔 때만 재생성 (불필요한 리렌더링 방지)
   const selectAnswer = useCallback(
     (value: string) => {
       if (isSkinProblem) {
+        // Q7: 다중선택 토글
         toggleSkinProblem(value);
         return;
       }
       setAnswer(question.id, value);
-      if (question.id === -1 && (value === "MEN" || value === "WOMEN")) {
+      // 성별 질문이면 store의 gender도 함께 업데이트
+      if (isGenderQuestion && (value === "MEN" || value === "WOMEN")) {
         setGender(value as "WOMEN" | "MEN");
       }
     },
-    [question.id, isSkinProblem, setAnswer, setGender, toggleSkinProblem],
+    [question.id, isSkinProblem, isGenderQuestion, setAnswer, setGender, toggleSkinProblem],
   );
 
+  // ── 다음 질문 / 제출 ──────────────────────────────────────────
   const goNext = () => {
     if (!hasAnswer || isPending) return;
 
     if (isLast) {
       if (!analysisId) {
+        // AI 분석 없이 설문 도달 시 → 사진 촬영 페이지로 복귀
         router.replace("/skin-test/photo");
         return;
       }
@@ -136,6 +144,7 @@ export default function SurveyPage({
             );
           },
           onError: () => {
+            // 제출 실패 시 기본값(combination)으로 결과 페이지 이동
             resetSurvey();
             router.push(`/skin-test/result?type=combination`);
           },
@@ -146,7 +155,8 @@ export default function SurveyPage({
     }
   };
 
-  const goPrev = () => {
+  // ── 이전 질문으로 이동 ────────────────────────────────────────
+  const goPrevious = () => {
     if (questionNumber > 1) {
       router.push(`/skin-test/survey/${questionNumber - 1}`);
     } else {
@@ -156,7 +166,8 @@ export default function SurveyPage({
 
   return (
     <div className="flex flex-col h-dvh bg-bg-surface relative">
-      {/* 진행 상태 바 */}
+      {/* 상단 진행률 바
+       * Tailwind transition으로 너비 변화를 부드럽게 애니메이션 */}
       <div className="px-6 pt-6">
         <div className="flex items-center gap-3 mb-2">
           <div className="flex-1 h-1 rounded-full overflow-hidden bg-bg-chip">
@@ -165,6 +176,7 @@ export default function SurveyPage({
               style={{ width: `${progressPercent}%` }}
             />
           </div>
+          {/* tabular-nums: 숫자 너비를 고정해 텍스트 흔들림 방지 */}
           <span className="text-[13px] text-text-muted min-w-9 text-right tabular-nums">
             {questionNumber}/{TOTAL_QUESTIONS}
           </span>
@@ -180,7 +192,7 @@ export default function SurveyPage({
               Q{questionNumber}
             </span>
 
-            {/* 다중 선택 안내 배지 */}
+            {/* Q7(피부고민)일 때만 다중선택 안내 배지 표시 */}
             {isSkinProblem && (
               <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-brand-bg text-brand">
                 복수 선택 가능
@@ -188,7 +200,6 @@ export default function SurveyPage({
             )}
           </div>
 
-          {/* 질문 텍스트 */}
           <h2 className="text-[18px] font-semibold text-[#515152] leading-[1.45] mt-3">
             {question.question}
           </h2>
@@ -213,18 +224,13 @@ export default function SurveyPage({
                     : "bg-white border-border-subtle",
                 ].join(" ")}
               >
-                <span
-                  className={[
-                    "text-[16px] leading-[1.45] flex-1",
-                    isSelected
-                      ? "font-semibold text-[#434345]"
-                      : "font-semibold text-[#434345]",
-                  ].join(" ")}
-                >
+                {/* 선택지 텍스트: 활성/비활성 모두 동일한 스타일 */}
+                <span className="text-[16px] leading-[1.45] flex-1 font-semibold text-[#434345]">
                   {option.text}
                 </span>
 
-                {/* 선택 체크 인디케이터 */}
+                {/* 선택 체크 인디케이터
+                 * 단일선택: 원형 / 다중선택(isSkinProblem): 사각형 */}
                 {isSelected && (
                   <div
                     className={[
@@ -249,15 +255,16 @@ export default function SurveyPage({
         </div>
       </div>
 
-      {/* 하단 네비게이션 */}
+      {/* 하단 고정 네비게이션 (이전/다음 버튼) */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-app px-6 pb-8 pt-3 flex items-center justify-between bg-bg-surface border-t border-border">
         <button
-          onClick={goPrev}
+          onClick={goPrevious}
           className="w-11 h-11 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer hover:opacity-70 transition-opacity text-text-hint"
         >
           <ArrowLeft size={22} />
         </button>
 
+        {/* 다음 버튼: 답변 선택 여부에 따라 활성/비활성 */}
         <button
           onClick={goNext}
           disabled={isPending}

@@ -1,1 +1,3 @@
-export { SkinTypeChip } from "./SkinTypeChip";
+// onboarding 전용 컴포넌트 내보내기 진입점
+// 현재는 별도 공유 컴포넌트 없음 — 각 페이지가 내부에서 직접 UI를 구성함
+export {};

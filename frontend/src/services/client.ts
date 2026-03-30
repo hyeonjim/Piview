@@ -8,10 +8,7 @@
  */
 
 import axios, { type InternalAxiosRequestConfig } from "axios";
-import { useUserStore } from "@/stores";
-import { useSearchStore } from "@/stores/useSearchStore";
-import { useLikeStore } from "@/stores";
-import { useRecommendStore } from "@/stores/useRecommendStore";
+import { useUserStore, storeResets } from "@/stores";
 
 // _retry 플래그 타입 확장 (TypeScript 에러 방지)
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
@@ -46,12 +43,7 @@ const client = axios.create({
 
 // ── 전체 store 초기화 헬퍼 — 로그아웃/세션 만료 시 호출 ──────────────────
 function clearAllStores() {
-  useUserStore.getState().clearUser();
-  useSearchStore.getState().setSearchQuery("");
-  useSearchStore.getState().resetFilter();
-  useRecommendStore.getState().resetPage();
-  useLikeStore.getState().initFromServer([]);
-  useLikeStore.getState().setPage(1);
+  storeResets.forEach((reset) => reset());
 }
 
 // ── 요청 인터셉터: accessToken → Authorization 헤더 주입 ───────────────────

@@ -5,31 +5,34 @@ import { Suspense } from "react";
 import { SKIN_TYPES } from "@/constants";
 import { useUserStore } from "@/stores";
 
+// ── ResultContent를 별도 컴포넌트로 분리하는 이유 ──────────────
+// useSearchParams()는 클라이언트 전용 훅이며 Suspense 경계 안에서만 사용 가능.
+// Next.js가 강제: 상위에 <Suspense>가 없으면 빌드 에러 발생
 function ResultContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // URL param으로 넘어온 피부 타입 ID (예: "dry", "oily")
+  // URL 쿼리 파라미터로 전달받은 피부 타입 ID (예: "dry", "oily")
   const skinTypeId = searchParams.get("type") || "combination";
 
-  // SKIN_TYPES에서 label 조회
+  // SKIN_TYPES 상수 배열에서 해당 ID로 label 조회
   const skinType = SKIN_TYPES.find((type) => type.id === skinTypeId);
   const skinLabel = skinType?.label ?? "복합성";
 
-  // Zustand store에서 실제 저장된 데이터 읽기
+  // Zustand store에서 저장된 피부 고민 목록 읽기
   const concerns = useUserStore((state) => state.concerns);
 
   return (
     <div className="flex flex-col min-h-full bg-white">
       <div className="flex-1 px-6 pb-3 mt-15 overflow-y-auto">
-        {/* 뱃지 */}
+        {/* 진단 완료 뱃지 */}
         <div className="flex justify-center mt-4">
           <span className="bg-[#c4c3bb] text-white font-semibold px-4 py-1.5 rounded-xl text-[15px] tracking-wide">
             진단 완료!
           </span>
         </div>
 
-        {/* 결과 */}
+        {/* 피부 타입 결과 표시 */}
         <div className="text-center mt-5">
           <p className="text-text-muted font-bold text-[16px]">회원님의 피부 타입은</p>
           <p className="font-bold text-[#5d5d5e] text-[28px] mt-1.5 tracking-tight">
@@ -37,11 +40,13 @@ function ResultContent() {
           </p>
         </div>
 
-        {/* 피부 고민 카드 */}
+        {/* 피부 고민 카드
+         * bg-brand-bg: @theme의 --color-brand-bg를 Tailwind가 자동 생성한 유틸리티 */}
         <div className="mt-10 p-5 bg-brand-bg rounded-2xl">
           <div className="flex items-start gap-3">
             <div>
-              <p className="text-[#757579] font-bold text[16px] mb-2">피부 고민</p>
+              {/* 오타 수정: text[16px] → text-[16px] (대괄호 누락) */}
+              <p className="text-[#757579] font-bold text-[16px] mb-2">피부 고민</p>
               <div className="flex flex-wrap gap-1.5">
                 {concerns.length > 0 ? (
                   concerns.map((concern) => (
@@ -53,9 +58,7 @@ function ResultContent() {
                     </span>
                   ))
                 ) : (
-                  <p className="text-[#575758] font-semibold text-[15px]">
-                    없음
-                  </p>
+                  <p className="text-[#575758] font-semibold text-[15px]">없음</p>
                 )}
               </div>
             </div>
@@ -63,7 +66,9 @@ function ResultContent() {
         </div>
       </div>
 
-      {/* 하단 CTA — 페이지 너비에 맞춰 하단 고정 */}
+      {/* 하단 고정 CTA 버튼
+       * fixed + left-1/2 -translate-x-1/2: 최대 너비(max-w-app) 중앙 고정
+       * max-w-app: globals.css @theme의 --max-width-app(500px) */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-app px-6 pb-20 pt-4 bg-white flex justify-center">
         <button
           onClick={() => router.push("/mypage")}
@@ -78,6 +83,8 @@ function ResultContent() {
 
 export default function SkinTestResultPage() {
   return (
+    // Suspense: useSearchParams 사용을 위한 필수 경계
+    // fallback은 데이터 로딩 중 표시되는 UI
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-full text-text-faint">
