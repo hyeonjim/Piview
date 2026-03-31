@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.piview.backend.domain.product.catalog.repository.ProductConcernCacheRepository;
 import com.piview.backend.domain.product.entity.Product;
 import com.piview.backend.domain.product.like.repository.ProductLikeRepository;
+import com.piview.backend.domain.product.recommend.dto.RecommendMultiRequestDto;
 import com.piview.backend.domain.product.recommend.dto.RecommendRequestDto;
 import com.piview.backend.domain.product.recommend.dto.RecommendResponseDto;
 import com.piview.backend.domain.product.recommend.dto.RoutineContextDto;
@@ -86,5 +87,54 @@ public class RecommendationController {
             ));
         return ApiResponse.success(groupedResponse);
 
+    }
+
+    /**
+     * 루틴 스텝별로 가장 적합한 제품 1개씩만 추천하는 API
+     */
+    @PostMapping("/products/multi")
+    public ApiResponse<Map<String, List<RecommendResponseDto>>> getMultiRecommendedProducts(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestBody RecommendMultiRequestDto request) throws JsonProcessingException {
+
+        Long userId = userPrincipal.getId();
+        List<Long> currentRoutineIds = redisRoutineService.getDraftProductsIds(userId);
+
+        // 루틴 컨텍스트 빌드
+        RoutineContextDto routineContext = routineSessionService.buildRoutineContext(
+                currentRoutineIds,
+                request.getSkinType()
+        );
+
+        // 스텝별 최적 1개 제품 추천 로직 호출
+        List<Product> recommendedProducts = recommendationService.getMultiRecommendations(userId, request, routineContext);
+
+        List<Long> recommendedProductIds = recommendedProducts.stream()
+                .map(Product::getProductId)
+                .collect(Collectors.toList());
+
+        Set<Long> likedProductIds = productLikeRepository.findLikedProductIds(userId, recommendedProductIds);
+
+        List<ProductConcernCacheRepository.ConcernView> concernViews = productConcernCacheRepository.findConcernViewsByProductIds(recommendedProductIds);
+        Map<Long, List<String>> productConcernsMap = concernViews.stream()
+                .collect(Collectors.groupingBy(
+                        ProductConcernCacheRepository.ConcernView::getProductId,
+                        Collectors.mapping(ProductConcernCacheRepository.ConcernView::getConcernName, Collectors.toList())
+                ));
+
+        Map<String, List<RecommendResponseDto>> groupedResponse = recommendedProducts.stream()
+                .map(product -> RecommendResponseDto.from(
+                        product,
+                        likedProductIds.contains(product.getProductId()),
+                        request.getConcernId(),
+                        productConcernsMap.getOrDefault(product.getProductId(), List.of())
+                ))
+                .collect(Collectors.groupingBy(
+                        RecommendResponseDto::getCategoryName,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        return ApiResponse.success(groupedResponse);
     }
 }
