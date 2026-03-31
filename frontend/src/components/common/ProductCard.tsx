@@ -533,7 +533,7 @@ export default function ProductCard({
     return (
       <div
         className={[
-          "relative rounded-2xl p-3 mx-2 bg-white transition-shadow duration-200 flex flex-col h-[212px]",
+          "relative rounded-2xl p-3 mx-2 bg-white transition-shadow duration-200 flex flex-col h-[180px]",
           inRoutine ? "ring-1 ring-(--color-brand-light)" : "",
         ].join(" ")}
         style={{
@@ -645,7 +645,7 @@ export default function ProductCard({
 
         {/* 루틴추가 버튼 — 항상 하단 고정 */}
         {onAddRoutine && (
-          <div className="flex justify-center mt-2 shrink-0">
+          <div className="flex justify-center shrink-0">
             <button
               onClick={(event) => handleAction(event, onAddRoutine)}
               disabled={inRoutine}

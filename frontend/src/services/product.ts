@@ -17,6 +17,7 @@ import type {
   ProductCompareRequest,
   ProductCompareResponse,
   RecommendRequestDto,
+  RecommendMultiRequestDto,
   RecommendResponseDto,
   ProductAiSummaryResponse,
   AiComparisonResponse,
@@ -96,6 +97,17 @@ export const productService = {
     client
       .post<ApiResponse<Record<string, RecommendResponseDto[]>>>(
         "/recommendations/products",
+        request,
+      )
+      .then((res) => res.data.data),
+
+  // POST /recommendations/products/multi — 다중 단계 맞춤형 추천
+  getMultiRecommendations: (
+    request: RecommendMultiRequestDto,
+  ): Promise<Record<string, RecommendResponseDto[]>> =>
+    client
+      .post<ApiResponse<Record<string, RecommendResponseDto[]>>>(
+        "/recommendations/products/multi",
         request,
       )
       .then((res) => res.data.data),
