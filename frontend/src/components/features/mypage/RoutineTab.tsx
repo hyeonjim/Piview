@@ -848,7 +848,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 )}
                 모두 추천
               </button>
-              <div className="relative" ref={multiDropdownRef}>
+              {/* 맞춤형 추천 버튼 + 드롭다운 — 임시 비활성화 */}
+              {/* <div className="relative" ref={multiDropdownRef}>
               <button
                 onClick={handleMultiRecommendToggle}
                 disabled={isMultiRecommendPending}
@@ -865,7 +866,6 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 맞춤형 추천
               </button>
 
-              {/* 단계 선택 드롭다운 — 버튼 클릭 시 표시 */}
               {showMultiDropdown && (
                 <div className="absolute top-full right-0 mt-1.5 z-50 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.14)] border border-[#f0ece6] p-3 w-55">
                   <p className="text-[14px] font-bold text-[#7a6f5c] mb-2 px-1">
@@ -903,7 +903,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 </div>
               )}
 
-            </div>
+            </div> */}
             </div>}
           </div>
         </div>
