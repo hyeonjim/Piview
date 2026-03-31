@@ -4,9 +4,11 @@ import com.piview.backend.domain.product.catalog.repository.ProductRepository;
 import com.piview.backend.domain.product.entity.Category;
 import com.piview.backend.domain.product.entity.CategoryIdealScore;
 import com.piview.backend.domain.product.entity.Product;
+import com.piview.backend.domain.product.recommend.dto.RecommendMultiRequestDto;
 import com.piview.backend.domain.product.recommend.dto.RecommendRequestDto;
 import com.piview.backend.domain.product.recommend.dto.RoutineContextDto;
 import com.piview.backend.domain.product.recommend.repository.CategoryIdealScoreRepository;
+import com.piview.backend.domain.skin.survey.entity.SurveyGender;
 import com.piview.backend.domain.user.disliked.entity.MyAvoidContri;
 import com.piview.backend.domain.user.disliked.repository.MyAvoidContriRepository;
 import com.piview.backend.domain.user.disliked.repository.MyDislikeProductRepository;
@@ -119,5 +121,87 @@ public class RecommendationService {
 
         return finalRecommendations;
 
+    }
+
+    /**
+     * 루틴 스텝별로 가장 최적의 제품 1개씩만 추천하는 신규 로직
+     * (남성의 경우 5번 스텝이면 올인원(19번) 우선 추천)
+     */
+    public List<Product> getMultiRecommendations(Long userId, RecommendMultiRequestDto req, RoutineContextDto routineContext) {
+
+        List<Long> targetRoutineColIds = req.getTargetRoutineColIds();
+        if (targetRoutineColIds == null || targetRoutineColIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // 공통: 사용자가 등록한 '안 맞는 제품' 및 '피해야 할 성분' 가져오기
+        List<Long> dislikedProductIds = dislikeProductRepository.findProductIdsByUserId(userId);
+        if (dislikedProductIds.isEmpty()) dislikedProductIds = List.of(-1L);
+
+        List<Long> avoidIngredientIds = avoidContriRepository.findAllByUserIdWithIngredient(userId)
+                .stream()
+                .map(mac -> mac.getIngredient().getIngredientId())
+                .collect(Collectors.toList());
+        if (avoidIngredientIds.isEmpty()) avoidIngredientIds = List.of(-1L);
+
+        List<Product> finalRecommendations = new ArrayList<>();
+
+        for (Long targetRoutineColId : targetRoutineColIds) {
+            List<Long> targetCategoryIds = ROUTINE_COL_TO_CATEGORIES.get(targetRoutineColId);
+            if (targetCategoryIds == null || targetCategoryIds.isEmpty()) continue;
+
+            // [추가 조건] 남성 유저가 5번(로션/에멀전/올인원) 스텝을 요청하면, 올인원(19)을 최우선으로 고려
+            // targetCategoryIds 리스트의 맨 앞으로 19번을 보냅니다 (order by score 시 동점이면 category_id 순 등으로 제어할 순 없으니 Java에서 처리)
+            List<Long> processedCategoryIds = new ArrayList<>(targetCategoryIds);
+            boolean isMaleStep5 = (req.getGender() == SurveyGender.MEN && targetRoutineColId == 5L);
+
+            boolean isInitial = routineContext.isEmpty() || targetRoutineColId == 1L || targetRoutineColId == 2L;
+            double finalTargetM = 0.0;
+            double finalTargetO = 0.0;
+
+            if (!isInitial) {
+                CategoryIdealScore idealScore = idealScoreRepository.findBySkinTypeAndRoutineColId(
+                        req.getSkinType(), targetRoutineColId
+                );
+                if (idealScore != null) {
+                    finalTargetM = Math.max(0.0, idealScore.getIdealM().doubleValue() + routineContext.getCurrentDeficitM());
+                    finalTargetO = Math.max(0.0, idealScore.getIdealO().doubleValue() + routineContext.getCurrentDeficitO());
+                }
+            }
+
+            // 모든 관련 카테고리 후보를 한꺼번에 조회 (limit 50)
+            List<Product> candidates;
+            if (isInitial) {
+                candidates = productRepository.findInitialRecommendations(
+                        processedCategoryIds, req.getSkinType(), req.getGender(), req.getConcernId(),
+                        dislikedProductIds, avoidIngredientIds
+                );
+            } else {
+                candidates = productRepository.findRoutineCandidates(
+                        processedCategoryIds, req.getSkinType(), req.getGender(), req.getConcernId(),
+                        finalTargetM, finalTargetO, routineContext.getCurrentRoutineIds(),
+                        dislikedProductIds, avoidIngredientIds
+                );
+            }
+
+            // [남성 5번 특화] category_id가 19인 제품이 있다면 최상단으로 정렬 유도
+            if (isMaleStep5) {
+                candidates.sort((p1, p2) -> {
+                    boolean p1IsAllInOne = p1.getCategory().getCategoryId() == 19L;
+                    boolean p2IsAllInOne = p2.getCategory().getCategoryId() == 19L;
+                    if (p1IsAllInOne && !p2IsAllInOne) return -1;
+                    if (!p1IsAllInOne && p2IsAllInOne) return 1;
+                    return 0; // 기존 순서(점수 순) 유지
+                });
+            }
+
+            // 성분 충돌 필터 후 가장 점수 높은 1개만 선택
+            candidates.stream()
+                    .filter(product -> conflictChecker.calculateConflictPenalty(routineContext, product) == 0.0)
+                    .findFirst()
+                    .ifPresent(finalRecommendations::add);
+        }
+
+        return finalRecommendations;
     }
 }
