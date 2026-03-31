@@ -307,6 +307,15 @@ export default function RoutineAddModal({
 
   return (
     <>
+      {/* 별 반짝임 애니메이션 — 피뷰 추천 버튼 활성화 시 적용 */}
+      <style>{`
+        @keyframes star-twinkle {
+          0%, 100% { transform: rotate(0deg); opacity: 1; }
+          25% { transform: rotate(-15deg); opacity: 0.8; }
+          50% { transform: rotate(10deg); opacity: 1; }
+          75% { transform: rotate(-8deg); opacity: 0.85; }
+        }
+      `}</style>
       {/* 비교 모달 — RoutineAddModal 위로 (z-[80]) */}
       {showCompare && canCompare && (
         <CompareModal
@@ -338,16 +347,25 @@ export default function RoutineAddModal({
                   onClick={handleRecommendationToggle}
                   disabled={recommendationMutation.isPending}
                   className={[
-                    "flex items-center gap-1 h-8 px-2 rounded-full cursor-pointer text-[clamp(10px,3vw,14px)] font-semibold transition-all duration-200 disabled:cursor-not-allowed active:scale-[0.96] active:shadow-none whitespace-nowrap",
+                    "flex items-center gap-1 h-8 px-2 rounded-full cursor-pointer text-[clamp(12px,3vw,14px)] font-bold transition-all duration-200 disabled:cursor-not-allowed active:scale-[0.96] active:shadow-none whitespace-nowrap",
                     isRecommendMode
                       ? "bg-[#f5a9cb] text-[#ffffff] shadow-[0_2px_5px_rgba(166,157,146,0.55),inset_0_1px_0_rgba(255,255,255,0.18)]"
-                      : "bg-[#eec4d8] text-[#fdfdfb] shadow-[0_2px_4px_rgba(200,160,180,0.4),inset_0_1px_0_rgba(255,255,255,0.8)] hover:shadow-[0_3px_6px_rgba(200,160,180,0.55)] hover:bg-[#f5a9cb]",
+                      : "bg-[#eec4d8] text-[#ffffff] shadow-[0_2px_4px_rgba(200,160,180,0.4),inset_0_1px_0_rgba(255,255,255,0.8)] hover:shadow-[0_3px_6px_rgba(200,160,180,0.55)] hover:bg-[#f5a9cb]",
                   ].join(" ")}
                 >
                   {recommendationMutation.isPending ? (
                     <Loader2 size={13} className="animate-spin" />
                   ) : (
-                    <span className="text-[15px]">⭐</span>
+                    <span
+                      className="text-[15px] inline-block"
+                      style={
+                        isRecommendMode
+                          ? { animation: "star-twinkle 1.2s ease-in-out infinite" }
+                          : undefined
+                      }
+                    >
+                      ⭐
+                    </span>
                   )}
                   피뷰 추천
                 </button>
