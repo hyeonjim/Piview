@@ -88,9 +88,9 @@ function PickBadge() {
 }
 
 // ── 브랜드 라벨 — 작고 연한 스타일
-function BrandLabel({ brand }: { brand: string }) {
+function BrandLabel({ brand, truncate = false }: { brand: string; truncate?: boolean }) {
   return (
-    <span className="text-[12px] font-semibold text-[#604e36]">{brand}</span>
+    <span className={`text-[12px] font-semibold text-[#604e36]${truncate ? " truncate" : ""}`}>{brand}</span>
   );
 }
 
@@ -410,8 +410,8 @@ export default function ProductCard({
           <div className="px-3 pt-3 pb-2.5 flex-1">
             {categoryInline ? (
               /* 브랜드 + 카테고리 한 줄 (likes 페이지 등) */
-              <div className="flex items-center gap-1.5">
-                <BrandLabel brand={brand} />
+              <div className="flex items-center gap-1.5 min-w-0">
+                <BrandLabel brand={brand} truncate />
                 {showCategory && category && (
                   <CategoryChip category={category} />
                 )}
@@ -424,8 +424,8 @@ export default function ProductCard({
                     <CategoryChip category={category} />
                   </div>
                 )}
-                <div>
-                  <BrandLabel brand={brand} />
+                <div className="overflow-hidden">
+                  <BrandLabel brand={brand} truncate />
                 </div>
               </>
             )}
@@ -552,8 +552,11 @@ export default function ProductCard({
           style={{ height: "148px" }}
         >
           <div className="flex items-start gap-2 h-full">
-            {/* 이미지 */}
-            <div className="relative w-20 h-20 shrink-0">
+            {/* 이미지 — 좁은 모바일에서 clamp로 자동 축소 (최소 56px, 최대 80px) */}
+            <div
+              className="relative shrink-0"
+              style={{ width: "clamp(56px, 20vw, 80px)", height: "clamp(56px, 20vw, 80px)" }}
+            >
               <div
                 className={`w-full h-full flex items-center rounded-xl bg-[#faf9f7] overflow-hidden${imageContainerClassName ? ` ${imageContainerClassName}` : " justify-center"}`}
               >

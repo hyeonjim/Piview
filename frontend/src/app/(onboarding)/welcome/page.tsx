@@ -203,7 +203,7 @@ export default function WelcomePage() {
 
       {/* Login bottom sheet */}
       <div
-        className="absolute bottom-0 left-0 right-0 z-30 rounded-t-[28px] bg-[#F5F0E8] px-25 pt-20 pb-30"
+        className="absolute bottom-0 left-0 right-0 z-30 rounded-t-[28px] bg-[#F5F0E8] pt-20 pb-30"
         style={{
           transform: isLoginOpen ? "translateY(0)" : "translateY(100%)",
           transition: "transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)",
@@ -220,7 +220,7 @@ export default function WelcomePage() {
         <div className="flex justify-center">
           <button
             onClick={handleKakaoLogin}
-            className="w-150 h-[54px] bg-[#FEE500] text-black/85 text-[18px] font-bold flex items-center justify-center gap-3 cursor-pointer border-none rounded-2xl"
+            className="w-full mx-10 max-w-[320px] h-13.5 bg-[#FEE500] text-black/85 text-[18px] font-bold flex items-center justify-center gap-3 cursor-pointer border-none rounded-2xl"
           >
             <svg
               width="20"
@@ -234,7 +234,7 @@ export default function WelcomePage() {
           </button>
         </div>
 
-        <p className="text-xs text-[#9E9585] text-center mt-5 leading-[1.6]">
+        <p className="text-xs mx-10 text-[#9E9585] text-center mt-5 leading-[1.6]">
           로그인 시{" "}
           <span className="underline underline-offset-[2px]">
             서비스 이용약관

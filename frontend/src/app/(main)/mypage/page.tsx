@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Settings, Mars, Venus } from "lucide-react";
 import { toast } from "sonner";
@@ -134,10 +135,11 @@ export default function MyPage() {
             }
           >
             {profileImageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={profileImageUrl}
                 alt="프로필 이미지"
+                width={72}
+                height={72}
                 className="w-full h-full object-cover"
               />
             ) : (

@@ -741,7 +741,8 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                 <div className="flex items-center gap-1 bg-[#f2efe9] rounded-full px-2 py-1">
                   <span className="text-[13px] font-semibold text-[#746f68]">{stepIndex + 1}단계</span>
                 </div>
-                <span className="text-[15px] font-semibold text-[#4e4e4d]">
+                {/* 좁은 화면에서 긴 라벨(예: 스킨/토너/패드/미스트)을 줄임표로 처리 */}
+                <span className="text-[15px] font-semibold text-[#4e4e4d] truncate max-w-[42vw]">
                   {step.label}
                 </span>
               </div>
