@@ -10,6 +10,7 @@ import type { ProductViewModel } from "@/types/product/myCos";
 import { useCompare, useDynamicRecommendations } from "@/hooks";
 import { useAddMyCos, useRemoveMyCos, useMyCosQuery } from "@/hooks";
 import { useRecommendStore } from "@/stores/useRecommendStore";
+import { useUserStore, selectUserName } from "@/stores";
 import { toSkinTypeParam } from "@/utils/enumConvert";
 import { PRICE_MAX } from "@/types/common";
 import type { SkinType } from "@/types/user";
@@ -26,6 +27,8 @@ export default function RecommendPage() {
     setSelectedCategoryId,
     setPage,
   } = useRecommendStore();
+
+  const userName = useUserStore(selectUserName);
 
   // ── 동적 추천 API ─────────────────────────────────────────────
   const {
@@ -123,7 +126,9 @@ export default function RecommendPage() {
           <h1 className="mt-0.75 mb-2 text-[20px] font-semibold text-[#635446] tracking-[-0.3px] leading-[1.2]">
             Recommend
           </h1>
-          <p className="font-semibold text-[#635446] text-[14px]">사용자 맞춤형 제품을 추천 해드립니다</p>
+          <p className="font-semibold text-[#635446] text-[14px]">
+            {userName}님의 최근 관심 제품을 바탕으로 추천해요
+          </p>
         </div>
       </div>
 
@@ -232,7 +237,6 @@ export default function RecommendPage() {
         totalPages={totalPages}
         onChange={handlePageChange}
       />
-
     </div>
   );
 }
