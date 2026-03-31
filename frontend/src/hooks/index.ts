@@ -45,6 +45,7 @@ export {
   useRoutineDetailQuery,
   useRoutineAnalysisMutation,
   useAddDraftItemMutation,
+  useAddMultipleDraftItemsMutation,
   useSyncDraftMutation,
   useClearDraftMutation,
   useRemoveProductFromDraftMutation,

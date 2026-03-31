@@ -122,6 +122,31 @@ export function useAddDraftItemMutation() {
 }
 
 /**
+ * 임시 루틴(Draft) 복수 제품 일괄 추가
+ * POST /api/v1/routines/draft × N — 병렬 요청 후 invalidate 1회
+ * 맞춤형 추천 결과를 여러 단계에 한번에 추가할 때 사용 (race condition 방지)
+ */
+export function useAddMultipleDraftItemsMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (items: { columnId: number; productId: number }[]) => {
+      // 순차 실행 — 병렬 시 Redis read-modify-write race condition으로 일부 제품이 덮어써짐
+      const results = [];
+      for (const item of items) {
+        results.push(await routineService.addDraft(item.columnId, item.productId));
+      }
+      return results;
+    },
+
+    onSuccess: () => {
+      // 모든 요청 완료 후 단 한 번만 invalidate — 중간 refetch로 인한 race condition 방지
+      queryClient.invalidateQueries({ queryKey: queryKeys.routineDraft });
+    },
+  });
+}
+
+/**
  * 임시 루틴(Draft) 전체 동기화 (덮어쓰기)
  * PUT /api/v1/routines/draft
  * 드래그 순서 변경 후 전체 배열을 서버에 저장할 때 사용

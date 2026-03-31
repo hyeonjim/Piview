@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Search, Package, Loader2, MessageCircleMore } from "lucide-react";
 import ProductCard from "@/components/common/ProductCard";
 import CompareModal from "@/components/common/CompareModal";
@@ -40,6 +40,9 @@ interface RoutineAddModalProps {
   onAdd: (productId: number) => void;
 }
 
+// sessionStorage 키 상수 — page.tsx의 step/columnId 복원 키와 분리
+const MODAL_RECOMMEND_KEY = "routineModalRecommend";
+
 export default function RoutineAddModal({
   openStep,
   draftProductIds,
@@ -56,16 +59,43 @@ export default function RoutineAddModal({
   const [maxKnownPage, setMaxKnownPage] = useState(1);
   const PAGE_SIZE = 7;
 
-  // 피뷰추천 활성화 여부
-  const [isRecommendMode, setIsRecommendMode] = useState(false);
+  // 피뷰추천 상태 — 마운트 시 sessionStorage에서 복원 (제품 상세 → 뒤로가기 케이스)
+  const [isRecommendMode, setIsRecommendMode] = useState<boolean>(() => {
+    try {
+      const saved = sessionStorage.getItem(MODAL_RECOMMEND_KEY);
+      if (!saved) return false;
+      const parsed = JSON.parse(saved) as { isRecommendMode: boolean; recommendedData: Record<string, RecommendResponseDto[]> };
+      return parsed.isRecommendMode ?? false;
+    } catch { return false; }
+  });
   // 추천 API 전체 응답 — 카테고리명 키 기반 (예: { "클렌징폼": [...], "클렌징밤": [...] })
   const [recommendedData, setRecommendedData] = useState<
     Record<string, RecommendResponseDto[]>
-  >({});
+  >(() => {
+    try {
+      const saved = sessionStorage.getItem(MODAL_RECOMMEND_KEY);
+      if (!saved) return {};
+      const parsed = JSON.parse(saved) as { isRecommendMode: boolean; recommendedData: Record<string, RecommendResponseDto[]> };
+      return parsed.recommendedData ?? {};
+    } catch { return {}; }
+  });
   // 추천 제품 ID 집합 — PICK 배지 표시 O(1) 조회용
   const [recommendedProductIdSet, setRecommendedProductIdSet] = useState<
     Set<number>
-  >(new Set());
+  >(() => {
+    try {
+      const saved = sessionStorage.getItem(MODAL_RECOMMEND_KEY);
+      if (!saved) return new Set();
+      const parsed = JSON.parse(saved) as { isRecommendMode: boolean; recommendedData: Record<string, RecommendResponseDto[]> };
+      const allProducts = Object.values(parsed.recommendedData ?? {}).flat();
+      return new Set(allProducts.map((p) => p.productId));
+    } catch { return new Set(); }
+  });
+
+  // sessionStorage 복원 후 즉시 제거 — 재마운트 시 중복 복원 방지
+  useEffect(() => {
+    sessionStorage.removeItem(MODAL_RECOMMEND_KEY);
+  }, []);
 
   // 좋아요 API 연동 — toggleLike만 사용 (likeList는 ProductCard 내부에서 처리)
   const { toggleLike } = useLike();
@@ -487,6 +517,17 @@ export default function RoutineAddModal({
                         showCategory={false}
                         imageContainerClassName="mt-6"
                         isRecommended={recommendedProductIdSet.has(product.id)}
+                        onBeforeNavigate={() => {
+                          // 제품 상세 이동 전 step/columnId + 추천 상태 모두 저장 — 뒤로가기 시 복원용
+                          sessionStorage.setItem(
+                            "routineModalStep",
+                            JSON.stringify({ step: openStep, columnId }),
+                          );
+                          sessionStorage.setItem(
+                            MODAL_RECOMMEND_KEY,
+                            JSON.stringify({ isRecommendMode, recommendedData }),
+                          );
+                        }}
                         inRoutine={draftProductIds.includes(product.id)}
                         onAddRoutine={
                           dislikedProductIdSet.has(product.id)

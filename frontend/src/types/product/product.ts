@@ -83,6 +83,14 @@ export interface RecommendRequestDto {
   targetRoutineColId?: number; // int64 — 루틴 컬럼 ID
 }
 
+/** 다중 루틴 단계 추천 요청 DTO — POST /recommendations/products/multi */
+export interface RecommendMultiRequestDto {
+  skinType?: string; // "dry" | "oily" | "combination" | "subuji"
+  gender?: string; // "MEN" | "WOMEN"
+  concernId?: number; // int64 — 피부 고민 ID
+  targetRoutineColIds?: number[]; // 루틴 컬럼 ID 배열
+}
+
 /** 추천 응답 DTO */
 export interface RecommendResponseDto {
   productId: number;

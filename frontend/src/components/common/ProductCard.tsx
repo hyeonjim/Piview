@@ -56,6 +56,8 @@ interface ProductCardProps {
   priority?: boolean;
   /** modal variant 이미지 컨테이너 추가 클래스 — 페이지별 이미지 정렬 override용 */
   imageContainerClassName?: string;
+  /** 상세 페이지 이동 전 호출 — 모달 상태 저장 등 뒤로가기 복원용 */
+  onBeforeNavigate?: () => void;
 }
 
 // ── 피부타입 태그 — 미니멀 스타일
@@ -319,6 +321,7 @@ export default function ProductCard({
   priority = false,
   onToggleLike,
   imageContainerClassName,
+  onBeforeNavigate,
 }: ProductCardProps) {
   const { likeList, toggleLike } = useLike();
   const isLiked = !!likeList[String(id)];
@@ -359,6 +362,7 @@ export default function ProductCard({
         <Link
           href={productHref}
           className="no-underline flex flex-col flex-1 min-h-0"
+          onClick={onBeforeNavigate}
         >
           {/* 이미지 영역 — 밝은 배경 */}
           <div className="relative w-full aspect-[5/3] overflow-hidden">
@@ -457,7 +461,7 @@ export default function ProductCard({
   // ── 2. HORIZONTAL ─────────────────────────────────────────────────
   if (layout === "horizontal") {
     return (
-      <Link href={productHref}>
+      <Link href={productHref} onClick={onBeforeNavigate}>
         <div className="flex items-center overflow-hidden h-28 bg-white rounded-[10px] border border-[var(--color-border)] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
           <div className="relative shrink-0 w-22 h-full overflow-hidden">
             <ProductImage
@@ -529,7 +533,7 @@ export default function ProductCard({
     return (
       <div
         className={[
-          "relative rounded-2xl p-3 mx-2 bg-white transition-shadow duration-200 flex flex-col h-[212px]",
+          "relative rounded-2xl p-3 mx-2 bg-white transition-shadow duration-200 flex flex-col h-[180px]",
           inRoutine ? "ring-1 ring-(--color-brand-light)" : "",
         ].join(" ")}
         style={{
@@ -550,6 +554,7 @@ export default function ProductCard({
           href={productHref}
           className="no-underline overflow-hidden"
           style={{ height: "148px" }}
+          onClick={onBeforeNavigate}
         >
           <div className="flex items-start gap-2 h-full">
             {/* 이미지 — 좁은 모바일에서 clamp로 자동 축소 (최소 56px, 최대 80px) */}
@@ -640,7 +645,7 @@ export default function ProductCard({
 
         {/* 루틴추가 버튼 — 항상 하단 고정 */}
         {onAddRoutine && (
-          <div className="flex justify-center mt-2 shrink-0">
+          <div className="flex justify-center shrink-0">
             <button
               onClick={(event) => handleAction(event, onAddRoutine)}
               disabled={inRoutine}
@@ -688,7 +693,7 @@ export default function ProductCard({
         )}
 
         {/* 제품 정보 행 — 클릭 시 상세 페이지 이동 */}
-        <Link href={productHref} className="no-underline">
+        <Link href={productHref} className="no-underline" onClick={onBeforeNavigate}>
           <div className="flex items-center gap-2">
             {/* 이미지 */}
             <div className="relative w-20 h-20 shrink-0">
@@ -814,7 +819,7 @@ export default function ProductCard({
         boxShadow: "0 2px 8px rgba(0,0,0,0.10), 0 8px 28px rgba(0,0,0,0.16)",
       }}
     >
-      <Link href={productHref} className="no-underline">
+      <Link href={productHref} className="no-underline" onClick={onBeforeNavigate}>
         <div className="relative h-27 overflow-hidden">
           <ProductImage
             imageUrl={imageUrl}

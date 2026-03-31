@@ -1,8 +1,9 @@
 "use client";
 
 import { toast } from "sonner";
-import { useMemo, useRef, useState, useEffect } from "react";
-import { Plus, X, Scan, SquarePen, Save, ChessQueen, CircleAlert, AlignLeft, MessageSquareText, Star } from "lucide-react";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { Plus, X, Scan, SquarePen, Save, ChessQueen, CircleAlert, AlignLeft, MessageSquareText, Star, Loader2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -12,7 +13,7 @@ import Image from "next/image";
 import Link from "next/link";
 import OcrModal from "@/components/features/mypage/OcrModal";
 import { getRoutineSteps } from "@/constants/routineSteps";
-import { useUserStore, selectGender, useRoutineStore } from "@/stores";
+import { useUserStore, selectGender, selectSkinType, useRoutineStore } from "@/stores";
 import {
   useDraftQuery,
   useRoutineListQuery,
@@ -26,14 +27,18 @@ import {
   useLoadRoutineToDraftMutation,
   useUpdateRoutineMutation,
   useRoutineAnalysisMutation,
+  useAddMultipleDraftItemsMutation,
+  useProductFilters,
 } from "@/hooks";
 import type {
   DraftItemDto,
   RoutineListResponse,
 } from "@/types/routine";
 import type { ProductSummaryResponse } from "@/types/product/product";
-import { fromSkinTypeEnum } from "@/utils/enumConvert";
+import { fromSkinTypeEnum, toSkinTypeEnum, concernLabelToDb } from "@/utils/enumConvert";
 import { filterEffectsByCategory } from "@/utils/productMapper";
+import { productService } from "@/services/product";
+import type { SkinType } from "@/types/user";
 
 
 // 드래그 상태 타입 — 스텝 간 이동 지원
@@ -113,6 +118,9 @@ function buildDraftItems(
 export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   // 성별에 따른 루틴 스텝 가져오기
   const currentGender = useUserStore(selectGender);
+  // 맞춤형 추천 요청에 필요한 피부 타입 및 피부 고민
+  const currentSkinType = useUserStore(selectSkinType);
+  const userConcerns = useUserStore((state) => state.concerns);
   // 성분 충돌 상태 — Zustand store (페이지 이동에도 유지)
   const conflictMessage = useRoutineStore((s) => s.conflictMessage);
   const conflictProductIds = useRoutineStore((s) => s.conflictProductIds);
@@ -145,6 +153,107 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
     mutate: analyzeRoutine,
   } = useRoutineAnalysisMutation();
 
+  // ── 맞춤형 추천 (multi) 상태 ──────────────────────────────────────
+  // 단계 선택 드롭다운 표시 여부
+  const [showMultiDropdown, setShowMultiDropdown] = useState(false);
+  // 선택된 루틴 단계 코드 집합
+  const [selectedMultiStepCodes, setSelectedMultiStepCodes] = useState<Set<string>>(new Set());
+  // 맞춤형 추천 버튼 드롭다운 ref — 외부 클릭 시 닫기용
+  const multiDropdownRef = useRef<HTMLDivElement>(null);
+
+  // 맞춤형 추천 — 피부 고민 concernId 조회용 필터 메타
+  const { data: filterMeta } = useProductFilters();
+  // 맞춤형 추천 — draft 일괄 추가 (race condition 방지: 모두 완료 후 invalidate 1회)
+  const { mutate: addMultipleDraftItems } = useAddMultipleDraftItemsMutation();
+
+  // 맞춤형 추천 API 뮤테이션 — POST /recommendations/products/multi
+  const {
+    mutate: getMultiRecommend,
+    isPending: isMultiRecommendPending,
+  } = useMutation({
+    // stepCodes: 추천 요청할 단계 코드 Set — 선택 추천/전체 추천 모두 재사용
+    mutationFn: (stepCodes: Set<string>) => {
+      const concernId = userConcerns
+        .map(
+          (concern) =>
+            filterMeta?.tags?.find(
+              (tag) => tag.tag === concernLabelToDb(concern),
+            )?.tagId,
+        )
+        .find((id) => id !== undefined);
+      // 호출 시점의 gender로 스텝을 재계산 — 클로저 stale 방지
+      const freshSteps = getRoutineSteps(currentGender);
+      const targetRoutineColIds = [...stepCodes]
+        .map((code) => freshSteps.find((s) => s.code === code)?.columnId)
+        .filter((id): id is number => id !== undefined);
+      return productService.getMultiRecommendations({
+        skinType: currentSkinType
+          ? toSkinTypeEnum(currentSkinType as SkinType)
+          : undefined,
+        gender: currentGender ?? undefined,
+        ...(concernId !== undefined && { concernId }),
+        targetRoutineColIds,
+      });
+    },
+    // variables(stepCodes)를 onSuccess 2번째 인자로 받아 stale closure 방지
+    onSuccess: (data, stepCodes) => {
+      setShowMultiDropdown(false);
+      setSelectedMultiStepCodes(new Set());
+      // 호출 시점 gender로 재계산한 스텝 기준 — WOMEN은 SH(columnId:2) 제외
+      const freshSteps = getRoutineSteps(currentGender);
+      // 추가할 제품 목록 수집 — 일괄 요청으로 race condition 방지
+      const itemsToAdd: { columnId: number; productId: number }[] = [];
+      for (const step of freshSteps) {
+        if (!stepCodes.has(step.code)) continue;
+        const stepProducts = step.categories.flatMap(
+          (cat) => data[cat.name] ?? [],
+        );
+        if (stepProducts.length > 0) {
+          itemsToAdd.push({ columnId: step.columnId, productId: stepProducts[0].productId });
+        }
+      }
+      if (itemsToAdd.length > 0) {
+        addMultipleDraftItems(itemsToAdd, {
+          onSuccess: () => itemsToAdd.forEach((item) => markAsRecommended(item.productId)),
+        });
+      }
+    },
+    onError: () => {
+      notify("맞춤형 추천에 실패했습니다. 다시 시도해주세요.");
+    },
+  });
+
+  // 맞춤형 추천 단계 토글 핸들러
+  const handleMultiStepToggle = useCallback((code: string) => {
+    setSelectedMultiStepCodes((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
+  }, []);
+
+  // 맞춤형 추천 버튼 클릭 — 드롭다운 토글
+  const handleMultiRecommendToggle = () => {
+    setShowMultiDropdown((prev) => !prev);
+  };
+
+  // 맞춤형 추천 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (
+        multiDropdownRef.current &&
+        !multiDropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowMultiDropdown(false);
+      }
+    };
+    if (showMultiDropdown) {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [showMultiDropdown]);
+
   // draft에서 충돌 제품이 없어지면 자동 초기화
   // conflictProductIds는 deps에서 제외: 제품 추가 직후 stale draftItems로 잘못 초기화되는 race condition 방지
   // draftItems가 갱신될 때만 체크하면 충분 (제품 삭제 시 새 draft에 해당 ID가 없어서 정상 초기화됨)
@@ -159,6 +268,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
   // ── PICK 배지 추적 (localStorage 기반) ────────────────────────────────
   const isProductRecommended = useRoutineStore((state) => state.isRecommended);
   const removeRecommended = useRoutineStore((state) => state.removeRecommended);
+  const markAsRecommended = useRoutineStore((state) => state.markAsRecommended);
 
   // ── 로컬 드래그용 상태 (서버 데이터 기반으로 초기화) ──────────────────
   // 드래그 중 UI 반영을 위해 서버 상태를 로컬 React 상태로 미러링
@@ -627,8 +737,9 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
       {/* ── 헤더 ── */}
       <div className="flex flex-col gap-1 mb-1">
         {/* 루틴 이름 & 메인 루틴 설정 버튼 & 액션 버튼 */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 min-w-0">
+        <div className="flex items-start justify-between">
+          <div className="flex flex-col min-w-0 pt-1">
+            <div className="flex items-center gap-1">
             {/* ★ 클릭 시 현재 선택된(펼쳐진) 루틴을 바로 메인으로 설정 */}
             <button
               onClick={() => {
@@ -658,56 +769,145 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                   ? editingRoutineTitle
                   : "새루틴"}
             </h2>
+            </div>
+            <p className="text-[13px] mt-1 font-semibold text-[#6e6e6d]">
+              클릭시 메인루틴으로 변경
+              <br />Edit Mode에서 루틴변경가능
+            </p>
           </div>
 
           {/* 액션 버튼 */}
-          <div className="flex gap-1.5 text-[12px] shrink-0">
-            {/* OCR 버튼 — 아이콘 + Tooltip */}
-            <Tooltip>
-              <TooltipTrigger asChild>
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            {/* 상단 버튼 행 — OCR / Edit Mode / Save */}
+            <div className="flex gap-1.5 text-[12px]">
+              {/* OCR 버튼 — 아이콘 + Tooltip */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setShowOcrModal(true)}
+                    className="flex items-center justify-center px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] text-[#636260]"
+                    aria-label="OCR로 제품 추가"
+                  >
+                    <Scan size={13} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>OCR로 제품 추가</TooltipContent>
+              </Tooltip>
+              {/* Edit Mode / Editing... 버튼 — 편집 모드 여부에 따라 표시 전환 */}
+              {editingRoutineId !== null ? (
+                // 편집 모드: 상태 표시용 비활성 버튼 (저장은 Save 버튼으로)
                 <button
-                  onClick={() => setShowOcrModal(true)}
-                  className="flex items-center justify-center px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] text-[#636260]"
-                  aria-label="OCR로 제품 추가"
+                  disabled
+                  className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border bg-[#dde1e2] text-[#3f3e3d] opacity-70 cursor-default"
                 >
-                  <Scan size={13} />
+                  <SquarePen size={12} />Editing...
                 </button>
-              </TooltipTrigger>
-              <TooltipContent>OCR로 제품 추가</TooltipContent>
-            </Tooltip>
-            {/* Edit Mode / Editing... 버튼 — 편집 모드 여부에 따라 표시 전환 */}
-            {editingRoutineId !== null ? (
-              // 편집 모드: 상태 표시용 비활성 버튼 (저장은 Save 버튼으로)
+              ) : (
+                // 일반 모드: 클릭 시 선택된 루틴을 draft로 불러옴
+                <button
+                  onClick={handleEditRoutine}
+                  disabled={selectedRoutineId === null || isLoadingToEdit}
+                  className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] disabled:opacity-50 text-[#787775]"
+                >
+                  {isLoadingToEdit ? "불러오는 중..." : <><SquarePen size={12} />Edit Mode</>}
+                </button>
+              )}
               <button
-                disabled
-                className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border bg-[#dde1e2] text-[#3f3e3d] opacity-70 cursor-default"
-              >
-                <SquarePen size={12} />Editing...
-              </button>
-            ) : (
-              // 일반 모드: 클릭 시 선택된 루틴을 draft로 불러옴
-              <button
-                onClick={handleEditRoutine}
-                disabled={selectedRoutineId === null || isLoadingToEdit}
+                onClick={handleOpenSaveModal}
+                disabled={isCreating || isUpdating || filledCount === 0}
                 className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] disabled:opacity-50 text-[#787775]"
               >
-                {isLoadingToEdit ? "불러오는 중..." : <><SquarePen size={12} />Edit Mode</>}
+                {isCreating || isUpdating ? "저장 중..." : <><Save size={12} />Save</>}
               </button>
-            )}
-            <button
-              onClick={handleOpenSaveModal}
-              disabled={isCreating || isUpdating || filledCount === 0}
-              className="flex items-center gap-1 text-[13px] font-semibold px-2.5 py-1 rounded-full border border-border cursor-pointer bg-[#fff] disabled:opacity-50 text-[#787775]"
-            >
-              {isCreating || isUpdating ? "저장 중..." : <><Save size={12} />Save</>}
-            </button>
+            </div>
+
+            {/* 맞춤형 추천 버튼 + 모두 추천 버튼 — 편집/새루틴 모드에서만 표시 */}
+            {!isViewingSavedRoutine && <div className="flex items-center gap-1.5">
+              {/* 모두 추천 — 모든 단계 자동 추천 */}
+              <button
+                onClick={() => {
+                  // 현재 제품이 없는 스텝만 추천 대상으로 선택
+                  const emptyStepCodes = new Set(
+                    routineSteps
+                      .filter((s) => (localDraftByStep[s.code] ?? []).length === 0)
+                      .map((s) => s.code),
+                  );
+                  if (emptyStepCodes.size === 0) {
+                    notify("모든 카테고리에 이미 제품이 있습니다.");
+                    return;
+                  }
+                  getMultiRecommend(emptyStepCodes);
+                }}
+                disabled={isMultiRecommendPending}
+                className="flex items-center gap-1 h-8 px-2 mt-1 rounded-full cursor-pointer text-[clamp(14px,3vw,15px)] font-bold transition-all duration-200 disabled:cursor-not-allowed active:scale-[0.96] active:shadow-none whitespace-nowrap bg-[#a9c5f5] text-white shadow-[0_2px_4px_rgba(160,180,220,0.4),inset_0_1px_0_rgba(255,255,255,0.8)]"
+              >
+                {isMultiRecommendPending ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <span className="text-[15px]">⭐</span>
+                )}
+                모두 추천
+              </button>
+              <div className="relative" ref={multiDropdownRef}>
+              <button
+                onClick={handleMultiRecommendToggle}
+                disabled={isMultiRecommendPending}
+                className={[
+                  "flex items-center gap-1 h-8 px-2 mt-1 rounded-full cursor-pointer text-[clamp(14px,3vw,15px)] font-bold transition-all duration-200 disabled:cursor-not-allowed active:scale-[0.96] active:shadow-none whitespace-nowrap",
+                  "bg-[#f5a9cb] text-white shadow-[0_2px_4px_rgba(200,160,180,0.4),inset_0_1px_0_rgba(255,255,255,0.8)]",
+                ].join(" ")}
+              >
+                {isMultiRecommendPending ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <span className="text-[15px]">⭐</span>
+                )}
+                맞춤형 추천
+              </button>
+
+              {/* 단계 선택 드롭다운 — 버튼 클릭 시 표시 */}
+              {showMultiDropdown && (
+                <div className="absolute top-full right-0 mt-1.5 z-50 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.14)] border border-[#f0ece6] p-3 w-55">
+                  <p className="text-[14px] font-bold text-[#7a6f5c] mb-2 px-1">
+                    카테고리 선택
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    {routineSteps.map((step) => (
+                      <label
+                        key={step.code}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-xl cursor-pointer hover:bg-[#faf6f2] transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedMultiStepCodes.has(step.code)}
+                          onChange={() => handleMultiStepToggle(step.code)}
+                          className="accent-[#f5a9cb] w-3.5 h-3.5"
+                        />
+                        <span className="text-[14px] font-semibold text-[#4e4e4d] truncate">
+                          {step.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => getMultiRecommend(selectedMultiStepCodes)}
+                    disabled={selectedMultiStepCodes.size === 0 || isMultiRecommendPending}
+                    className="mt-2.5 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[16px] font-bold bg-[#eec4d8] text-white hover:bg-[#f5a9cb] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isMultiRecommendPending ? (
+                      <><Loader2 size={13} className="animate-spin" />추천 중...</>
+                    ) : (
+                      <>추천받기</>
+                    )}
+                  </button>
+                </div>
+              )}
+
+            </div>
+            </div>}
           </div>
         </div>
 
-        <p className="text-[13px] font-semibold text-[#6e6e6d]">
-          클릭시 메인루틴으로 변경 
-          <br />Edit Mode에서 루틴변경가능
-        </p>
       </div>
 
       {/* ── 성분 충돌 경고 배너 — 1단계 클렌저 위에 표시, [제품명] 빨간색 강조 ── */}
@@ -732,6 +932,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
         const isDropTarget =
           !isViewingSavedRoutine &&
           dragState?.toStepCode === step.code;
+
 
         return (
           <div key={step.code} className="mt-3 mx-3">
@@ -826,6 +1027,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
                     />
                   );
                 })}
+
               </div>
             )}
           </div>
