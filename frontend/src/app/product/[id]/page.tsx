@@ -533,7 +533,7 @@ function ProductDetailInner() {
                   setShowRoutineCompare(true);
                 }
               }}
-              className="flex items-center gap-1 px-3 h-7 rounded-lg cursor-pointer transition-all active:scale-[0.96] text-[14px] font-normal shrink-0 bg-[#eff6fa] text-[#686a6c]"
+              className="flex items-center gap-1 px-3 h-7 rounded-lg cursor-pointer transition-all active:scale-[0.96] text-[14px] font-normal shrink-0 bg-[#dcebf5] text-[#686a6c]"
             >
               <CompareIcon size={13} color="#5c5852" />
               내루틴과 비교하기
@@ -626,7 +626,7 @@ function ProductDetailInner() {
           variants={cardVariants}
           initial="hidden"
           animate="visible"
-          className="mx-4 rounded-2xl p-5 my-5 border border-2 border-[#dde6ef] bg-[#f8fafb]"
+          className="mx-4 rounded-2xl p-5 my-5 border border-2 border-[#dde6ef] bg-[#ecf4f7]"
           style={{
             boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(115, 142, 174, 0.14), 0 1px 4px rgba(115, 142, 174, 0.08)",
           }}
@@ -660,7 +660,7 @@ function ProductDetailInner() {
                 className="flex flex-col gap-2.5"
               >
                 {aiSummary.line1AiSummary && (
-                  <motion.p variants={itemVariants} className="text-[15px] text-[#454c52] leading-[1.7]">
+                  <motion.p variants={itemVariants} className="text-[15px] text-[#4b5258] font-semibold">
                     {aiSummary.line1AiSummary}
                     <br />{aiSummary.line2PersonalizedMsg}
                   </motion.p>
