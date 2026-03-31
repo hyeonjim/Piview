@@ -71,8 +71,9 @@ export default function HomePage() {
       <div className="py-3 px-5">
         <div className="bg-category-pill-default-bg rounded-xl overflow-hidden">
           {/* 루틴 헤더 */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between mb-2 gap-2 min-w-0">
+            {/* 좌측 — 타이틀 + 단계 뱃지 */}
+            <div className="flex items-center gap-2 shrink-0">
               <span className="flex items-center gap-1.5 text-[16px] font-bold text-[#52514d] uppercase [font-family:var(--font-english),serif]">
                 <ChessQueen size={16} className="text-[#52514d] mb-1" />
                 Main routine
@@ -83,15 +84,16 @@ export default function HomePage() {
                 </span>
               )}
             </div>
+            {/* 우측 — 루틴명 + 화살표, min-w-0으로 truncate 활성화 */}
             {hasRoutine ? (
-              <Link href="/mypage">
-                <span className="flex mr-5 items-center gap-1 text-[14px] text-[#A69D92]">
+              <Link href="/mypage" className="min-w-0">
+                <span className="flex mr-5 items-center gap-1 text-[14px] text-[#A69D92] min-w-0">
                   {mainRoutineData?.title && (
-                    <span className="text-[14px] font-semibold text-[#6e6861] truncate max-w-28 mr-0.5">
+                    <span className="text-[14px] font-semibold text-[#6e6861] truncate mr-0.5">
                       {mainRoutineData.title}
                     </span>
                   )}
-                  <ChevronRight size={14} />
+                  <ChevronRight size={14} className="shrink-0" />
                 </span>
               </Link>
             ) : (
@@ -105,7 +107,7 @@ export default function HomePage() {
 
           {/* 루틴 리스트 */}
           {hasRoutine ? (
-            <div className="px-1 py-2 flex flex-col gap-0">
+            <div className="py-2 flex flex-col gap-0">
               {mainRoutineItems.map(({ step, product }, index) => (
                 <div
                   key={`${step.code}-${product.name}`}

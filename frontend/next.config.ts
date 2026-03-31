@@ -25,6 +25,15 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      // 카카오 프로필 이미지
+      {
+        protocol: "http",
+        hostname: "k.kakaocdn.net",
+      },
+      {
+        protocol: "https",
+        hostname: "k.kakaocdn.net",
+      },
     ],
   },
 };
