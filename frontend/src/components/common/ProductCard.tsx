@@ -90,9 +90,19 @@ function PickBadge() {
 }
 
 // ── 브랜드 라벨 — 작고 연한 스타일
-function BrandLabel({ brand, truncate = false }: { brand: string; truncate?: boolean }) {
+function BrandLabel({
+  brand,
+  truncate = false,
+}: {
+  brand: string;
+  truncate?: boolean;
+}) {
   return (
-    <span className={`text-[12px] font-semibold text-[#604e36]${truncate ? " truncate" : ""}`}>{brand}</span>
+    <span
+      className={`text-[12px] font-semibold text-[#604e36]${truncate ? " truncate" : ""}`}
+    >
+      {brand}
+    </span>
   );
 }
 
@@ -533,7 +543,7 @@ export default function ProductCard({
     return (
       <div
         className={[
-          "relative rounded-2xl p-3 mx-2 bg-white transition-shadow duration-200 flex flex-col h-[180px]",
+          "relative rounded-2xl p-3 mx-2 bg-white transition-shadow duration-200 flex flex-col h-[210px]",
           inRoutine ? "ring-1 ring-(--color-brand-light)" : "",
         ].join(" ")}
         style={{
@@ -560,7 +570,10 @@ export default function ProductCard({
             {/* 이미지 — 좁은 모바일에서 clamp로 자동 축소 (최소 56px, 최대 80px) */}
             <div
               className="relative shrink-0"
-              style={{ width: "clamp(56px, 20vw, 80px)", height: "clamp(56px, 20vw, 80px)" }}
+              style={{
+                width: "clamp(56px, 20vw, 80px)",
+                height: "clamp(56px, 20vw, 80px)",
+              }}
             >
               <div
                 className={`w-full h-full flex items-center rounded-xl bg-[#faf9f7] overflow-hidden${imageContainerClassName ? ` ${imageContainerClassName}` : " justify-center"}`}
@@ -693,7 +706,11 @@ export default function ProductCard({
         )}
 
         {/* 제품 정보 행 — 클릭 시 상세 페이지 이동 */}
-        <Link href={productHref} className="no-underline" onClick={onBeforeNavigate}>
+        <Link
+          href={productHref}
+          className="no-underline"
+          onClick={onBeforeNavigate}
+        >
           <div className="flex items-center gap-2">
             {/* 이미지 */}
             <div className="relative w-20 h-20 shrink-0">
@@ -819,7 +836,11 @@ export default function ProductCard({
         boxShadow: "0 2px 8px rgba(0,0,0,0.10), 0 8px 28px rgba(0,0,0,0.16)",
       }}
     >
-      <Link href={productHref} className="no-underline" onClick={onBeforeNavigate}>
+      <Link
+        href={productHref}
+        className="no-underline"
+        onClick={onBeforeNavigate}
+      >
         <div className="relative h-27 overflow-hidden">
           <ProductImage
             imageUrl={imageUrl}
