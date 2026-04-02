@@ -1,7 +1,6 @@
 package com.piview.backend.domain.routine.analysis.service;
 
 import com.piview.backend.domain.product.catalog.repository.ProductConcernCacheRepository;
-import com.piview.backend.domain.product.catalog.repository.ProductIngredientRepository;
 import com.piview.backend.domain.product.catalog.repository.ProductRepository;
 import com.piview.backend.domain.product.catalog.repository.SkinConcernsRepository;
 import com.piview.backend.domain.product.entity.CategoryIdealScore;
@@ -39,7 +38,6 @@ public class RoutineAnalysisFacadeService {
     private final UserRepository userRepository;
     private final MySkinRepository mySkinRepository;
     private final CategoryIdealScoreRepository categoryIdealScoreRepository;
-    private final ProductIngredientRepository productIngredientRepository;
     private final ProductRepository productRepository;
     private final MyDislikeProductRepository myDislikeProductRepository;
     private final MyAvoidContriRepository myAvoidContriRepository;
@@ -79,14 +77,7 @@ public class RoutineAnalysisFacadeService {
         // 3. 제품 일괄 조회
         List<Product> products = productRepository.findByProductIdIn(productIds);
 
-        // 4. 성분 일괄 조회
-        Map<Long, String> ingredientMap = productIngredientRepository.findByProductIds(productIds)
-                .stream()
-                .collect(Collectors.toMap(
-                        pi -> pi.getProduct().getProductId(),
-                        pi -> pi.getProductIngredientsKo() != null
-                                ? pi.getProductIngredientsKo() : "성분 정보 없음"
-                ));
+        // 성분 텍스트는 AI에 전달하지 않으므로 조회 불필요 (충돌은 detectConflicts가 has_* 플래그로 처리)
 
         // 5. 이상치 일괄 조회 (클렌저·쉐이빙 제외 스텝)
         List<Long> routineColIds = products.stream()
@@ -217,28 +208,30 @@ public class RoutineAnalysisFacadeService {
         // 10. 제품별 분석 섹션 — 이상치 per-product ⚠️ 제거, 피부타입 적합도 + 성분만 유지
         StringBuilder routineSection = new StringBuilder("[루틴 구성 및 분석 데이터]\n");
         boolean hasSkinTypeMismatch = false;
+        List<String> mismatchedSteps = new ArrayList<>();
 
         for (Product product : products) {
             String categoryName = product.getCategory() != null
                     ? product.getCategory().getCategoryName() : "카테고리 없음";
             String brandName    = product.getBrand() != null ? product.getBrand().getBrandName() : "";
-            String ingredients  = ingredientMap.getOrDefault(product.getProductId(), "성분 정보 없음");
 
-            String skinScoreInfo = buildSkinScoreInfo(product, skinTypeEnum);
-            if (skinScoreInfo.contains("❌")) hasSkinTypeMismatch = true;
+            // 피부타입 적합도는 Java에서 계산 — AI한테 per-product으로 주면 AI가 자기 판단으로 덮어씀
+            if (!isSuitableForSkinType(product, skinTypeEnum)) {
+                hasSkinTypeMismatch = true;
+                mismatchedSteps.add(categoryName);
+            }
 
-            String ingredientInfo = ingredients.equals("성분 정보 없음")
-                    ? "성분 정보 없음 (성분 관련 언급 금지)"
-                    : ingredients;
-
-            // 충돌주의성분은 per-product에서 제거 — detectConflicts()가 감지한 실제 충돌만 conflictSection으로 전달
-            // (AI가 단일 제품의 성분 플래그를 보고 없는 충돌을 만들어내는 문제 방지)
             routineSection.append(String.format(
-                    "- %s %s (%s)\n  피부타입 적합도: %s\n  성분: %s\n",
-                    brandName, product.getName(), categoryName,
-                    skinScoreInfo, ingredientInfo
+                    "- %s %s (%s)\n",
+                    brandName, product.getName(), categoryName
             ));
         }
+
+        // 피부타입 부적합 결과를 별도 섹션으로 구성 (❌인 단계만, 없으면 빈 문자열)
+        String skinMismatchSection = mismatchedSteps.isEmpty() ? ""
+                : "[피부타입 부적합 단계 — 반드시 경고할 것]\n"
+                  + mismatchedSteps.stream().map(s -> "- " + s + " ❌").collect(Collectors.joining("\n"))
+                  + "\n";
 
         // 전체 유수분 밸런스 요약을 루틴 섹션 마지막에 추가
         routineSection.append("\n").append(balanceSummary).append("\n");
@@ -321,20 +314,21 @@ public class RoutineAnalysisFacadeService {
                 %s
                 %s
                 %s
+                %s
                 [지시사항 — 반드시 준수할 것]
                 1. 위에 제공된 데이터만 사용할 것. 제공되지 않은 정보는 절대 추측하거나 지어내지 말 것.
-                2. "성분 정보 없음 (성분 관련 언급 금지)"이면 해당 제품의 성분에 대해 절대 언급하지 말 것.
-                3. 피부타입 적합도가 "❌"인 제품은 반드시 경고할 것.
-                4. [루틴 전체 유수분 밸런스]를 기준으로 수분/유분을 평가할 것. 제품 개별로 수분/유분을 평가하지 말 것.
-                5. 충돌주의성분이 "없음"이 아닌 제품이 루틴에 2개 이상 있을 때만 성분 충돌을 경고할 것.
-                6. [피부타입 루틴 가이드]를 바탕으로 첫 문장은 이 피부타입 루틴 전체의 방향을 1줄로 총평할 것.
-                7. [추가 고민 케어 제안]이 있으면 "~도 추가해보면 더 좋을 것 같아요" 형식으로 마지막에 부드럽게 언급할 것. "부족하다"는 표현은 쓰지 말 것.
-                8. 보완 추천 후보가 있으면 실제 제품명(브랜드 포함)을 직접 언급하며 추천할 것.
-                9. %s
+                2. [피부타입 부적합 단계] 섹션에 명시된 단계만 경고할 것. 섹션이 없으면 피부타입 관련 경고 절대 금지.
+                3. [루틴 전체 유수분 밸런스]를 기준으로 수분/유분을 평가할 것. 제품 개별로 수분/유분을 평가하지 말 것.
+                4. [성분 충돌 감지] 섹션이 없으면 성분 충돌 언급 절대 금지.
+                5. [피부타입 루틴 가이드]를 바탕으로 첫 문장은 이 피부타입 루틴 전체의 방향을 1줄로 총평할 것.
+                6. [추가 고민 케어 제안]이 있으면 "~도 추가해보면 더 좋을 것 같아요" 형식으로 마지막에 부드럽게 언급할 것.
+                7. 보완 추천 후보가 있으면 실제 제품명(브랜드 포함)을 직접 언급하며 추천할 것.
+                8. %s
                 """,
                 userSkinType, userConcerns,
                 skinTypeGuide,
                 routineSection,
+                skinMismatchSection,
                 conflictSection.length() > 0 ? conflictSection.toString() : "",
                 addOnSection.length() > 0 ? addOnSection.toString() : "",
                 recommendSection.length() > 0 ? recommendSection.toString() : "",
@@ -384,14 +378,22 @@ public class RoutineAnalysisFacadeService {
         };
     }
 
-    // ── 피부타입 적합도 — topSkinType / top2SkinType 일치 여부 (기존 유지)
-    private String buildSkinScoreInfo(Product product, SkinTypeEnum skinTypeEnum) {
-        if (skinTypeEnum == null) return "피부타입 정보 없음";
-        boolean isSuitable = skinTypeEnum.equals(product.getTopSkinType())
-                || skinTypeEnum.equals(product.getTop2SkinType());
-        return isSuitable
-                ? skinTypeEnum.getKorean() + " 피부에 잘 맞는 제품 ✅"
-                : skinTypeEnum.getKorean() + " 피부에 맞지 않는 제품 ❌ (이 제품은 회원님 피부타입에 적합하지 않습니다)";
+    // 피부타입 적합도 — findRoutineCandidates 쿼리의 컷오프와 동일한 score 기반 판단
+    private boolean isSuitableForSkinType(Product product, SkinTypeEnum skinTypeEnum) {
+        if (skinTypeEnum == null) return true;
+        java.math.BigDecimal score = switch (skinTypeEnum) {
+            case dry         -> product.getScoreDry();
+            case oily        -> product.getScoreOily();
+            case combination -> product.getScoreCombination();
+            case subuji      -> product.getScoreSubuji();
+        };
+        if (score == null) return false;
+        return switch (skinTypeEnum) {
+            case dry         -> score.compareTo(java.math.BigDecimal.valueOf(66)) >= 0;
+            case oily        -> score.compareTo(java.math.BigDecimal.valueOf(70)) >= 0;
+            case combination -> score.compareTo(java.math.BigDecimal.valueOf(39)) >= 0;
+            case subuji      -> score.compareTo(java.math.BigDecimal.valueOf(36)) >= 0;
+        };
     }
 
     // ── my_skin 태그 → concern_id 역매핑 헬퍼
