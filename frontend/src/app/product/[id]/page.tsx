@@ -533,7 +533,7 @@ function ProductDetailInner() {
                   setShowRoutineCompare(true);
                 }
               }}
-              className="flex items-center gap-1 px-3 h-7 rounded-lg cursor-pointer transition-all active:scale-[0.96] text-[14px] font-normal shrink-0 bg-[#dcebf5] text-[#686a6c]"
+              className="flex items-center gap-1 px-2 h-7 rounded-lg cursor-pointer transition-all active:scale-[0.96] text-[14px] font-semibold shrink-0 bg-[#dcebf5] text-[#686a6c]"
             >
               <CompareIcon size={13} color="#5c5852" />
               내루틴과 비교하기

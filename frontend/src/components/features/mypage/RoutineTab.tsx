@@ -772,7 +772,7 @@ export default function RoutineTab({ onOpenModal }: RoutineTabProps) {
             </div>
             <p className="text-[13px] mt-1 font-semibold text-[#6e6e6d]">
               클릭시 메인루틴으로 변경
-              <br />Edit Mode에서 루틴변경가능
+              <br />Edit Mode에서 루틴변경
             </p>
           </div>
 
@@ -1207,17 +1207,17 @@ function RoutineProductCard({
       {isEditMode && (
         <button
           onClick={() => onRemove(product.productId)}
-          className="absolute top-2 right-1 z-10 w-8 h-5 flex items-center justify-center cursor-pointer bg-transparent border-none"
+          className="absolute top-3 right-2 z-10 w-8 h-5 flex items-center justify-center cursor-pointer bg-transparent border-none"
           aria-label="제품 삭제"
         >
-          <X size={17} className="text-[#979490]" />
+          <X size={24} className="text-[#979490]" />
         </button>
       )}
 
       <div className="flex items-center h-full">
         {/* 이미지 영역 — edit mode일 때만 드래그 핸들 활성화 */}
         <div
-          className="relative shrink-0 w-22 h-full select-none"
+          className="relative shrink-0 w-22 h-22 select-none"
           style={{
             touchAction: isEditMode ? "none" : "auto",
             cursor: isEditMode ? "grab" : "default",
@@ -1230,9 +1230,9 @@ function RoutineProductCard({
         >
           {/* 왼쪽 상단 배지 영역 — PICK 배지 + 충돌 아이콘 */}
           {(isRecommended || hasConflict) && (
-            <div className="absolute top-2 left-1.5 z-10 flex flex-col gap-1 items-start">
+            <div className="absolute left-1.5 z-8 flex flex-col gap-1 items-start">
               {isRecommended && (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-[10px] tracking-[0.06em] bg-[#f0dfe7] text-[#707173]">
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-[10px] tracking-[0.07em] bg-[#f0dfe7] text-[#707173]">
                   PICK
                 </span>
               )}
@@ -1243,14 +1243,14 @@ function RoutineProductCard({
           )}
 
           {/* 이미지 — py-5 패딩을 주기 위해 relative 래퍼로 감쌈 (fill은 positioned 조상 기준) */}
-          <div className="absolute inset-0 pl-4 ">
+          <div className="absolute inset-0 pl-4 pt-2 ">
             <div className="relative w-full h-full">
               {product.imageUrl && !imgError ? (
                 <Image
                   src={product.imageUrl}
                   alt={product.name ?? ""}
                   fill
-                  sizes="80px"
+                  sizes="70px"
                   priority={priority}
                   className="object-contain"
                   onError={() => setImgError(true)}
