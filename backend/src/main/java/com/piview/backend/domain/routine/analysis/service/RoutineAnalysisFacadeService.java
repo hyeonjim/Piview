@@ -3,10 +3,8 @@ package com.piview.backend.domain.routine.analysis.service;
 import com.piview.backend.domain.product.catalog.repository.ProductConcernCacheRepository;
 import com.piview.backend.domain.product.catalog.repository.ProductRepository;
 import com.piview.backend.domain.product.catalog.repository.SkinConcernsRepository;
-import com.piview.backend.domain.product.entity.CategoryIdealScore;
 import com.piview.backend.domain.product.entity.Product;
 import com.piview.backend.domain.product.entity.SkinConcerns;
-import com.piview.backend.domain.product.recommend.repository.CategoryIdealScoreRepository;
 import com.piview.backend.domain.routine.analysis.dto.response.RoutineAnalysisResponse;
 import com.piview.backend.domain.skin.common.SkinTypeEnum;
 import com.piview.backend.domain.skin.survey.entity.MySkin;
@@ -37,7 +35,6 @@ public class RoutineAnalysisFacadeService {
 
     private final UserRepository userRepository;
     private final MySkinRepository mySkinRepository;
-    private final CategoryIdealScoreRepository categoryIdealScoreRepository;
     private final ProductRepository productRepository;
     private final MyDislikeProductRepository myDislikeProductRepository;
     private final MyAvoidContriRepository myAvoidContriRepository;
@@ -78,20 +75,6 @@ public class RoutineAnalysisFacadeService {
         List<Product> products = productRepository.findByProductIdIn(productIds);
 
         // 성분 텍스트는 AI에 전달하지 않으므로 조회 불필요 (충돌은 detectConflicts가 has_* 플래그로 처리)
-
-        // 5. 이상치 일괄 조회 (클렌저·쉐이빙 제외 스텝)
-        List<Long> routineColIds = products.stream()
-                .map(this::getCategoryToColumnId)
-                .filter(id -> id > 2L)  // 클렌저(1), 쉐이빙(2) 제외
-                .distinct()
-                .collect(Collectors.toList());
-
-        Map<Long, CategoryIdealScore> idealScoreMap = (skinTypeEnum != null && !routineColIds.isEmpty())
-                ? categoryIdealScoreRepository
-                        .findBySkinTypeAndRoutineColIdIn(skinTypeEnum, routineColIds)
-                        .stream()
-                        .collect(Collectors.toMap(CategoryIdealScore::getRoutineColId, s -> s))
-                : Map.of();
 
         // 6. 추천 필터용 유저 데이터
         List<Long> dislikedProductIds = myDislikeProductRepository.findProductIdsByUserId(userId);
@@ -161,49 +144,12 @@ public class RoutineAnalysisFacadeService {
             }
         }
 
-        // 9. ★ 핵심 변경 — 제품별 이상치 비교 → 루틴 전체 유수분 밸런스 합산
-        //    추천 시스템(RoutineSessionService)과 동일한 deficit 방식으로 통일
-        double totalDeficitM = 0.0;
-        double totalDeficitO = 0.0;
-        double totalIdealM = 0.0;
-        double totalIdealO = 0.0;
-
-        for (Product product : products) {
-            Long routineColId = getCategoryToColumnId(product);
-            if (routineColId <= 2L || routineColId == -1L) continue;  // 클렌저·쉐이빙 제외
-            CategoryIdealScore ideal = idealScoreMap.get(routineColId);
-            if (ideal == null) continue;
-
-            double pM = product.getMScore() != null ? product.getMScore().doubleValue() : 0.0;
-            double pO = product.getOScore() != null ? product.getOScore().doubleValue() : 0.0;
-            totalDeficitM += (ideal.getIdealM().doubleValue() - pM);
-            totalDeficitO += (ideal.getIdealO().doubleValue() - pO);
-            totalIdealM   += ideal.getIdealM().doubleValue();
-            totalIdealO   += ideal.getIdealO().doubleValue();
-        }
-
-        // 달성률 계산 (0~1.0, 초과 달성도 1.0으로 캡)
-        double mRatio = totalIdealM > 0 ? Math.min(1.0, Math.max(0, 1.0 - totalDeficitM / totalIdealM)) : 1.0;
-        double oRatio = totalIdealO > 0 ? Math.min(1.0, Math.max(0, 1.0 - totalDeficitO / totalIdealO)) : 1.0;
-
-        // 70% 이상은 충족으로 처리 (추천 제품이 이상치를 100% 채우기 어려운 구조 반영)
-        // 40% 미만일 때만 실제 ⚠️ — 그 사이 구간은 약한 팁 수준으로만 전달
-        String mStatus = mRatio >= 0.7 ? "수분 충족 ✅" : mRatio >= 0.4 ? "수분 약간 부족 (팁 수준 💡)" : "수분 부족 ⚠️";
-        String oStatus = oRatio >= 0.7 ? "유분 충족 ✅" : oRatio >= 0.4 ? "유분 약간 부족 (팁 수준 💡)" : "유분 부족 ⚠️";
-
-        // 40% 미달일 때만 실제 개선 필요 — 팁 수준(💡)은 문제로 간주하지 않음
-        boolean hasBalanceIssue = mRatio < 0.4 || oRatio < 0.4;
-
-        // hasBalanceIssue가 false(💡 구간 포함)이면 AI에게 긍정 신호로 전달
-        // "약간 부족"이라는 텍스트가 AI에 들어가면 결국 언급하게 됨 — 근본 차단
-        String balanceSummary;
-        if (!hasBalanceIssue) {
-            String mPositive = mRatio >= 0.7 ? "수분 충족 ✅" : "수분 양호 ✅";
-            String oPositive = oRatio >= 0.7 ? "유분 충족 ✅" : "유분 양호 ✅";
-            balanceSummary = String.format("[루틴 전체 유수분 밸런스] %s / %s", mPositive, oPositive);
-        } else {
-            balanceSummary = String.format("[루틴 전체 유수분 밸런스] %s / %s", mStatus, oStatus);
-        }
+        // 9. 유수분 밸런스 체크 제거
+        // idealM 기준값이 실제 제품 mScore보다 높게 설정되어 있어
+        // 추천 제품으로 루틴을 가득 채워도 항상 부족으로 나오는 구조 문제 확인됨
+        // 추천 시스템이 이미 유수분 균형을 맞춰 제품을 선정하므로 이중 평가 불필요
+        boolean hasBalanceIssue = false;
+        String balanceSummary = "";  // AI에 전달하지 않음
 
         // 10. 제품별 분석 섹션 — 이상치 per-product ⚠️ 제거, 피부타입 적합도 + 성분만 유지
         StringBuilder routineSection = new StringBuilder("[루틴 구성 및 분석 데이터]\n");
@@ -233,70 +179,11 @@ public class RoutineAnalysisFacadeService {
                   + mismatchedSteps.stream().map(s -> "- " + s + " ❌").collect(Collectors.joining("\n"))
                   + "\n";
 
-        // 전체 유수분 밸런스 요약을 루틴 섹션 마지막에 추가
-        routineSection.append("\n").append(balanceSummary).append("\n");
-
-        // 11. 유수분 보완 추천 — 전체 밸런스 문제가 있을 때만, 가장 deficit이 큰 스텝 기준
+        // 11. recommendSection 제거 (유수분 밸런스 체크 제거에 따라 함께 제거)
         StringBuilder recommendSection = new StringBuilder();
-        if (hasBalanceIssue) {
-            // 스텝별 deficit을 계산해 가장 부족한 스텝에서만 추천
-            double worstDeficit = 0.0;
-            Long worstColId = null;
-            String worstStepName = "";
 
-            for (Map.Entry<Long, CategoryIdealScore> entry : idealScoreMap.entrySet()) {
-                Long colId = entry.getKey();
-                CategoryIdealScore ideal = entry.getValue();
-
-                List<Product> stepProducts = products.stream()
-                        .filter(p -> getCategoryToColumnId(p).equals(colId))
-                        .collect(Collectors.toList());
-                if (stepProducts.isEmpty()) continue;
-
-                double stepM = stepProducts.stream()
-                        .mapToDouble(p -> p.getMScore() != null ? p.getMScore().doubleValue() : 0.0)
-                        .sum();
-                double stepO = stepProducts.stream()
-                        .mapToDouble(p -> p.getOScore() != null ? p.getOScore().doubleValue() : 0.0)
-                        .sum();
-
-                double stepDeficit = (ideal.getIdealM().doubleValue() - stepM)
-                                   + (ideal.getIdealO().doubleValue() - stepO);
-
-                if (stepDeficit > worstDeficit) {
-                    worstDeficit = stepDeficit;
-                    worstColId   = colId;
-                    worstStepName = stepProducts.get(0).getCategory() != null
-                            ? stepProducts.get(0).getCategory().getCategoryName() : "해당 단계";
-                }
-            }
-
-            if (worstColId != null) {
-                List<Long> categoryIds = COLUMN_TO_CATEGORY_IDS.getOrDefault(worstColId, List.of());
-                CategoryIdealScore ideal = idealScoreMap.get(worstColId);
-                if (!categoryIds.isEmpty() && ideal != null) {
-                    List<Product> candidates = productRepository.findRoutineCandidates(
-                            categoryIds, skinType, gender,
-                            primaryConcernId,
-                            ideal.getIdealM().doubleValue(),
-                            ideal.getIdealO().doubleValue(),
-                            safeExcludeIds, safeDislikedIds, safeAvoidIngredientIds
-                    );
-                    if (!candidates.isEmpty()) {
-                        recommendSection.append(String.format("\n[%s 단계 보완 추천 후보]\n", worstStepName));
-                        candidates.stream().limit(2).forEach(c -> {
-                            String cBrand = c.getBrand() != null ? c.getBrand().getBrandName() : "";
-                            String tags   = getTopConcernTags(c.getProductId());
-                            recommendSection.append(String.format("- %s %s (%s)\n", cBrand, c.getName(), tags));
-                        });
-                    }
-                }
-            }
-        }
-
-        // 12. ★ hasImprovements — 실제 문제(피부타입 불일치·유수분 심각 부족·충돌)가 있을 때만 true
-        //     addOnSection(고민 커버)은 부정적 신호가 아니므로 제외
-        boolean hasImprovements = hasSkinTypeMismatch || hasBalanceIssue || conflictSection.length() > 0;
+        // 12. hasImprovements — 피부타입 불일치·성분 충돌이 있을 때만 true
+        boolean hasImprovements = hasSkinTypeMismatch || conflictSection.length() > 0;
 
         // 13. 피부타입별 루틴 가이드 (AI 컨텍스트 첫머리에 추가)
         String skinTypeGuide = buildSkinTypeRoutineGuide(skinTypeEnum);
@@ -348,7 +235,7 @@ public class RoutineAnalysisFacadeService {
             case dry -> """
                     [건성 피부 루틴 가이드]
                     클렌저는 크림·밤 타입이 피부 장벽을 덜 손상시킵니다.
-                    토너는 글리세린·히알루론산 계열로 수분층을 충분히 쌓는 것이 핵심입니다.
+                    토너는 보습 성분이 풍부한 제품으로 수분층을 충분히 쌓는 것이 핵심입니다.
                     세럼·에센스는 보습 집중 케어 단계로, 루틴에서 가장 중요한 포인트입니다.
                     크림은 유분감 있는 리치한 제형으로 수분을 잠가줘야 합니다.
                     선크림은 수분감 있는 크림 타입이 추가 건조를 방지합니다.
@@ -378,22 +265,11 @@ public class RoutineAnalysisFacadeService {
         };
     }
 
-    // 피부타입 적합도 — findRoutineCandidates 쿼리의 컷오프와 동일한 score 기반 판단
+    // 피부타입 적합도 — topSkinType/top2SkinType 기준 (UI 태그와 동일한 DB 데이터 사용)
     private boolean isSuitableForSkinType(Product product, SkinTypeEnum skinTypeEnum) {
         if (skinTypeEnum == null) return true;
-        java.math.BigDecimal score = switch (skinTypeEnum) {
-            case dry         -> product.getScoreDry();
-            case oily        -> product.getScoreOily();
-            case combination -> product.getScoreCombination();
-            case subuji      -> product.getScoreSubuji();
-        };
-        if (score == null) return false;
-        return switch (skinTypeEnum) {
-            case dry         -> score.compareTo(java.math.BigDecimal.valueOf(66)) >= 0;
-            case oily        -> score.compareTo(java.math.BigDecimal.valueOf(70)) >= 0;
-            case combination -> score.compareTo(java.math.BigDecimal.valueOf(39)) >= 0;
-            case subuji      -> score.compareTo(java.math.BigDecimal.valueOf(36)) >= 0;
-        };
+        return skinTypeEnum.equals(product.getTopSkinType())
+                || skinTypeEnum.equals(product.getTop2SkinType());
     }
 
     // ── my_skin 태그 → concern_id 역매핑 헬퍼
