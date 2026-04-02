@@ -195,11 +195,13 @@ public class RoutineAnalysisFacadeService {
         double mRatio = totalIdealM > 0 ? Math.min(1.0, Math.max(0, 1.0 - totalDeficitM / totalIdealM)) : 1.0;
         double oRatio = totalIdealO > 0 ? Math.min(1.0, Math.max(0, 1.0 - totalDeficitO / totalIdealO)) : 1.0;
 
-        String mStatus = mRatio >= 0.8 ? "수분 충족 ✅"      : mRatio >= 0.5 ? "수분 약간 부족 🔶" : "수분 부족 ⚠️";
-        String oStatus = oRatio >= 0.8 ? "유분 충족 ✅"      : oRatio >= 0.5 ? "유분 약간 부족 🔶" : "유분 부족 ⚠️";
+        // 70% 이상은 충족으로 처리 (추천 제품이 이상치를 100% 채우기 어려운 구조 반영)
+        // 40% 미만일 때만 실제 ⚠️ — 그 사이 구간은 약한 팁 수준으로만 전달
+        String mStatus = mRatio >= 0.7 ? "수분 충족 ✅" : mRatio >= 0.4 ? "수분 약간 부족 (팁 수준 💡)" : "수분 부족 ⚠️";
+        String oStatus = oRatio >= 0.7 ? "유분 충족 ✅" : oRatio >= 0.4 ? "유분 약간 부족 (팁 수준 💡)" : "유분 부족 ⚠️";
 
-        // 50% 미달일 때만 실제 개선 필요로 간주
-        boolean hasBalanceIssue = mRatio < 0.5 || oRatio < 0.5;
+        // 40% 미달일 때만 실제 개선 필요 — 팁 수준(💡)은 문제로 간주하지 않음
+        boolean hasBalanceIssue = mRatio < 0.4 || oRatio < 0.4;
 
         String balanceSummary = String.format(
                 "[루틴 전체 유수분 밸런스] %s / %s", mStatus, oStatus
@@ -218,22 +220,16 @@ public class RoutineAnalysisFacadeService {
             String skinScoreInfo = buildSkinScoreInfo(product, skinTypeEnum);
             if (skinScoreInfo.contains("❌")) hasSkinTypeMismatch = true;
 
-            List<String> conflictFlags = new ArrayList<>();
-            if (Boolean.TRUE.equals(product.getHasRetinol()))   conflictFlags.add("레티놀");
-            if (Boolean.TRUE.equals(product.getHasAcid()))      conflictFlags.add("AHA/BHA");
-            if (Boolean.TRUE.equals(product.getHasPureVitC())) conflictFlags.add("순수비타민C");
-            if (Boolean.TRUE.equals(product.getHasCopperPep())) conflictFlags.add("구리펩타이드");
-            if (Boolean.TRUE.equals(product.getHasBenzoyl()))   conflictFlags.add("벤조일퍼옥사이드");
-            String conflictFlagInfo = conflictFlags.isEmpty() ? "없음" : String.join(", ", conflictFlags);
-
             String ingredientInfo = ingredients.equals("성분 정보 없음")
                     ? "성분 정보 없음 (성분 관련 언급 금지)"
                     : ingredients;
 
+            // 충돌주의성분은 per-product에서 제거 — detectConflicts()가 감지한 실제 충돌만 conflictSection으로 전달
+            // (AI가 단일 제품의 성분 플래그를 보고 없는 충돌을 만들어내는 문제 방지)
             routineSection.append(String.format(
-                    "- %s %s (%s)\n  피부타입 적합도: %s\n  충돌주의성분: %s\n  성분: %s\n",
+                    "- %s %s (%s)\n  피부타입 적합도: %s\n  성분: %s\n",
                     brandName, product.getName(), categoryName,
-                    skinScoreInfo, conflictFlagInfo, ingredientInfo
+                    skinScoreInfo, ingredientInfo
             ));
         }
 
