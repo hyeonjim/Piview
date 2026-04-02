@@ -203,9 +203,16 @@ public class RoutineAnalysisFacadeService {
         // 40% 미달일 때만 실제 개선 필요 — 팁 수준(💡)은 문제로 간주하지 않음
         boolean hasBalanceIssue = mRatio < 0.4 || oRatio < 0.4;
 
-        String balanceSummary = String.format(
-                "[루틴 전체 유수분 밸런스] %s / %s", mStatus, oStatus
-        );
+        // hasBalanceIssue가 false(💡 구간 포함)이면 AI에게 긍정 신호로 전달
+        // "약간 부족"이라는 텍스트가 AI에 들어가면 결국 언급하게 됨 — 근본 차단
+        String balanceSummary;
+        if (!hasBalanceIssue) {
+            String mPositive = mRatio >= 0.7 ? "수분 충족 ✅" : "수분 양호 ✅";
+            String oPositive = oRatio >= 0.7 ? "유분 충족 ✅" : "유분 양호 ✅";
+            balanceSummary = String.format("[루틴 전체 유수분 밸런스] %s / %s", mPositive, oPositive);
+        } else {
+            balanceSummary = String.format("[루틴 전체 유수분 밸런스] %s / %s", mStatus, oStatus);
+        }
 
         // 10. 제품별 분석 섹션 — 이상치 per-product ⚠️ 제거, 피부타입 적합도 + 성분만 유지
         StringBuilder routineSection = new StringBuilder("[루틴 구성 및 분석 데이터]\n");
