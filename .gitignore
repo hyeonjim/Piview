@@ -67,7 +67,6 @@ pnpm-debug.log*
 **/.env
 **/.pytest_cache/
 **/target/
-**/models/
 
 # claude
 *.claude
@@ -76,4 +75,3 @@ public/sw.js
 public/workbox-*.js
 public/sw.js.map
 public/workbox-*.js.map
-
