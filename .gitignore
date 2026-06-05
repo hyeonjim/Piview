@@ -71,6 +71,15 @@ pnpm-debug.log*
 # claude
 *.claude
 
+# AI model weights & generated artifacts
+ai/models/
+backend/.apt_generated/
+
+# DB dumps & local vector store (large / not for public repo)
+**/*.sql
+!init.sql
+exec/3_DB_덤프/chromaDB/
+
 public/sw.js
 public/workbox-*.js
 public/sw.js.map
