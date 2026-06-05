@@ -43,8 +43,8 @@
   <a href="#core-pipeline"><b>⚙️ 코어 파이프라인</b></a> &nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="#tech-stack"><b>🛠 기술 스택</b></a> &nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="#docs"><b>📄 개발 상세 문서</b></a> &nbsp;&nbsp;|&nbsp;&nbsp;
-  <a href="#data-modeling"><b>🗃 Data Modeling</b></a> <br><br>
-  <a href="#architecture"><b>🏗 System Architecture</b></a> &nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#data-modeling"><b>ERD</b></a> <br><br>
+  <a href="#architecture"><b>System Architecture</b></a> &nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="#demo"><b>🎬 Demo Video</b></a>
 </p>
 
@@ -73,15 +73,15 @@
 <table align="center">
     <tr>
         <td width="33%" align="center">
-            <img src="docs/Image/킹왕짱뿌슝빠슝가민박사.png" width="160" height="213" />
+            <img src="docs/Image/킹왕짱뿌슝빠슝가민박사.png" width="160" />
             <br/> <b>김가민</b> <br/><sub>Team Lead / Infra / BE</sub>
         </td>
         <td width="33%" align="center">
-            <img src="docs/Image/상지박사.png" width="160" height="213" />
+            <img src="docs/Image/상지박사.png" width="160" />
             <br/> <b>김상지</b> <br/><sub>AI / BE</sub>
         </td>
         <td width="33%" align="center">
-            <img src="docs/Image/현지학사.png" width="160" height="213" />
+            <img src="docs/Image/현지학사.png" width="160" />
             <br/> <b>문현지</b> <br/><sub>FE / Design</sub>
         </td>
     </tr>
@@ -121,15 +121,15 @@
     </tr>
     <tr>
         <td width="33%" align="center">
-            <img src="docs/Image/박승찬.png" width="160" height="213" />
+            <img src="docs/Image/박승찬.png" width="160" />
             <br/> <b>박승찬</b> <br/><sub>BE</sub>
         </td>
         <td width="33%" align="center">
-            <img src="docs/Image/희수박사.png" width="160" height="213" />
+            <img src="docs/Image/희수박사.png" width="160" />
             <br/> <b>전희수</b> <br/><sub>AI / BE</sub>
         </td>
         <td width="33%" align="center">
-            <img src="docs/Image/현웅박사.png" width="160" height="213" />
+            <img src="docs/Image/현웅박사.png" width="160" />
             <br/> <b>최현웅</b> <br/><sub>AI / FE</sub>
         </td>
     </tr>
@@ -450,7 +450,7 @@ ai/
 </div>
 
 
-### 📈 AI Integration
+### 📈 AI
 <p align="center">
   <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
   <img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white" />
@@ -472,7 +472,6 @@ ai/
 | Search Engine | MySQL Keyword Search, Exact Search, Fuzzy Search |
 | Session & Cache | Redis / In-memory Chat Session, Redis 기반 피부 분석 상태 캐싱 |
 | Algorithm | Bounding Box Height Sorting, OCR Confidence Filtering, Levenshtein Distance (DP), Dynamic Weighted Matching, Hybrid Retrieval (Vector + Keyword + Exact/Fuzzy), Structured Query Parsing & Reranking |
-| Features | 인메모리 이미지 디코딩, 얼굴 ROI 추출 및 부위별 피부 타입 분석, 양볼 평균 수분 추정, LLM 기반 OCR 텍스트 정제 및 공식 명칭 변환, 동적 가중치 및 오타 보정 기반 DB 매칭, 사전 기반 상품 검색 질의 해석, 사용자 문맥 기반 개인화 챗봇, 상품 AI 요약/비교, 루틴 AI 분석 |
 
 
 
@@ -512,7 +511,7 @@ ai/
 <br>
 
 
-### 👥 Collaboration Tools
+### Collaboration Tools
 
 
 <p align="center">
@@ -583,7 +582,7 @@ ai/
 
 <br/><br/>
 
-## 🗃 Data Modeling <a id="data-modeling"></a>
+## ERD<a id="data-modeling"></a>
 
 <p align="center">
   <img src="docs/Image/erd.png" width="95%"/>
@@ -591,7 +590,7 @@ ai/
 
 <br/>
 
-## 🏗 System Architecture <a id="architecture"></a>
+## System Architecture <a id="architecture"></a>
 
 <p align="center">
   <img src="docs/Image/Architecture.png" width="95%"/>
@@ -604,7 +603,7 @@ ai/
 <p align="center">
   <a href="https://youtu.be/IUG-SGhTQUk">
     <img src="docs/Image/image.png"/>
+    <br/>
     <b>▶️ 영상 포트폴리오 보러가기 (YouTube)</b>
   </a>
 </p>
-
