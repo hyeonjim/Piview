@@ -36,7 +36,7 @@
 
 <p align="center">
   <a href="#project-info"><b>🚀 프로젝트 정보</b></a> &nbsp;&nbsp;|&nbsp;&nbsp;
-  <a href="#team"><b>🔥 Team</b></a> &nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#team"><b>👥 Team</b></a> &nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="#why-piview"><b>💬 왜 PiView인가</b></a> &nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="#features"><b>✨ 주요 기능</b></a> &nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="#structure"><b>📂 프로젝트 구조</b></a> <br><br>
@@ -57,7 +57,7 @@
 | 항목 | 상세 내용 |
 |:---:|:---|
 | 🗓️ **진행 기간** | 2026.02.23 ~ 2026.03.30 (약 5주) |
-| 💻 **플랫폼** | Web |
+| 💻 **플랫폼** | Web App (PWA) |
 | 👥 **개발 인원** | 6명 |
 | 🏢 **기 관** | 삼성 청년 SW·AI 아카데미 SSAFY 14기 |
 
@@ -326,7 +326,7 @@ ai/
 ## ⚙️ 코어 파이프라인 <a id="core-pipeline"></a>
 
 
-| 피뷰(Piview)는 정확한 진단, 정교한 추천, 그리고 스마트한 탐색을 위해 3가지 핵심 AI 파이프라인을 운영합니다.
+피뷰(Piview)는 정확한 진단, 정교한 추천, 그리고 스마트한 탐색을 위해 3가지 핵심 AI 파이프라인을 운영합니다.
 
 <br/>
 
@@ -409,7 +409,7 @@ ai/
 | Framework | Next.js 16, React 19 |
 | Libraries | TanStack Query 5.90, Axios 1.13, Zustand 5, Framer Motion 12 |
 | UI | Radix UI, shadcn/ui, Lucide React |
-| Styling | Tailwind CSS 4|
+| Styling | Tailwind CSS 4 |
 | PWA | @ducanh2912/next-pwa 10.2.9 |
 | Build Tool | Next.js (Turbopack / Webpack) |
 | IDE | VS Code |
@@ -459,8 +459,6 @@ ai/
   <img src="https://img.shields.io/badge/pandas-150458?style=for-the-badge&logo=pandas&logoColor=white" />
   <img src="https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white" />
   <img src="https://img.shields.io/badge/AI_Hub-0052FF?style=for-the-badge" />
-
-
 </p>
 
 <br/>
@@ -496,15 +494,15 @@ ai/
 
 | **Category** | **Spec** |
 | --- | --- |
-| **Instance** | SSAFY Cloud Instance (Ubuntu) |
+| **Instance** | AWS EC2 (Ubuntu 20.04) |
 | **Container** | Docker, Docker Compose |
 | **CI/CD** | GitLab, Jenkins (Publish over SSH) |
-| **Frontend** | React, Next.js |
-| **Backend** | Java 21 (Eclipse Temurin), Spring Boot 3 |
-| **Database (Main)** |MySQL |
+| **Frontend** | Next.js 16, React 19 |
+| **Backend** | Java 21 (Eclipse Temurin), Spring Boot 3.5.11 |
+| **Database (Main)** | MySQL |
 | **Database (Vector)** | ChromaDB |
 | **Database (Batch)** | DuckDB (Embedded) |
-| **AI / External API** | Google Gemini Pro API |
+| **AI / External API** | Google Gemini (`gemini-2.5-flash`, `gemini-2.5-flash-lite`) |
 | **Security** | JWT (JSON Web Token) |
 | **Version Control** | Git, GitLab (Monorepo Architecture) |
 
