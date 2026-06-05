@@ -191,10 +191,9 @@ PiView는 이 문제를 해결하기 위해 피부 분석, 설문 기반 보정,
 
 <table width="100%">
   <tr>
-    <td width="25%" align="center"><b>AI 피부 진단</b></td>
-    <td width="25%" align="center"><b>OCR 보유 제품 등록</b></td>
-    <td width="25%" align="center"><b>제품 상세보기 및 AI 분석</b></td>
-    <td width="25%" align="center"><b>제품 비교 및 AI 분석</b></td>
+    <td width="33%" align="center"><b>AI 피부 진단</b></td>
+    <td width="33%" align="center"><b>OCR 보유 제품 등록</b></td>
+    <td width="33%" align="center"><b>제품 상세보기 및 AI 분석</b></td>
   </tr>
   <tr>
     <td align="center">
@@ -206,29 +205,39 @@ PiView는 이 문제를 해결하기 위해 피부 분석, 설문 기반 보정,
     <td align="center">
       <img src="docs/gif/제품 AI분석.gif" width="100%" alt="제품 비교 화면"/>
     </td>
-    <td align="center">
-      <img src="docs/gif/제품비교_ai.gif" width="100%" alt="개인 추천"/>
-    </td>
   </tr>
 
   <tr>
-    <td width="25%" align="center"><b>루틴 AI 분석</b></td>
-    <td width="25%" align="center"><b>제품 충돌 알람</b></td>
-    <td width="25%" align="center"><b>ai추천제품 추가</b></td>
-    <td width="25%" align="center"><b>챗봇</b></td>
+    <td width="33%" align="center"><b>제품 비교 및 AI 분석</b></td>
+    <td width="33%" align="center"><b>AI루틴 분석</b></td>
+    <td width="33%" align="center"><b>제품 충돌 알림</b></td>
   </tr>
   <tr>
+    <td align="center">
+      <img src="docs/gif/제품비교_ai.gif" width="100%" alt="개인 추천"/>
+    </td>
     <td align="center">
       <img src="docs/gif/루틴 AI분석.gif" width="100%" alt="내 루틴 화면"/>
     </td>
     <td align="center">
       <img src="docs/gif/제품충돌.gif" width="100%" alt="제품충돌"/>
     </td>
+  </tr>
+
+  <tr>
+    <td width="33%" align="center"><b>AI 추천제품</b></td>
+    <td width="33%" align="center"><b>챗봇</b></td>
+    <td width="33%" align="center"><b>메인 루틴</b></td>
+  </tr>
+  <tr>
     <td align="center">
       <img src="docs/gif/추천제품 추가 확대.gif" width="100%" alt="AI 제품 분석"/>
     </td>
-     <td align="center">
+    <td align="center">
       <img src="docs/gif/챗봇.gif" width="100%" alt="챗봇 화면"/>
+    </td>
+    <td align="center">
+      <img src="docs/Image/메인루틴.jpg" width="100%" alt="메인 루틴 화면"/>
     </td>
   </tr>
 </table>
