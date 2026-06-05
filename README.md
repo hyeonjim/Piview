@@ -4,7 +4,6 @@
 <span style="color:#F69D8D;">PiView</span>
 </h1>
 
----
 
 <p align="center">
   <b>🏆 SSAFY 특화 프로젝트 최우수상 수상</b>
@@ -26,26 +25,14 @@
 
 <br/>
 
-<p align="center">
-  <img src="https://img.shields.io/badge/AI_DYNAMIC-RECOMMENDATION-FF4B4B?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/SMART_OCR-ANALYSIS-4A90E2?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/VECTOR_DB-RECOMMENDATION-FF8C00?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/AI-COSMETIC_SUGGESTION-F51563?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/RAG-SMART_CHATBOT-6152B9?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/SPRING_BATCH-ROUTINE_ANALYSIS-6DB33F?style=for-the-badge"/>
-</p>
-
-<br/>
 
 <p align="center">
-  <img src="docs/Image/piview_logo.png" width="800"/>
+  <img src="docs/Image/메인.png" width="800"/>
 </p>
 
 <br/>
 
 ## 📑 목차
-
----
 
 <p align="center">
   <a href="#project-info"><b>🚀 프로젝트 정보</b></a> &nbsp;&nbsp;|&nbsp;&nbsp;
@@ -66,8 +53,6 @@
 
 ## 🚀 프로젝트 정보 <a id="project-info"></a>
 
----
-<br/>
 
 | 항목 | 상세 내용 |
 |:---:|:---|
@@ -80,24 +65,117 @@
 
 
 
-## 🔥 Team <a id="team"></a>
+## 👥 Team <a id="team"></a>
 
----
 
-|                                               Profile                                               | Responsibilities                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-|:---------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| <img src="docs/Image/킹왕짱뿌슝빠슝가민박사.png" height="130"><br>**김가민**<br><sub>Team Lead / Infra / BE</sub> | - 프로젝트 총괄<br>- Docker Compose·Nginx 기반 Dev/Prod 환경 및 HTTPS·Swagger 라우팅 설정<br>- Redis·MySQL·DuckDB·Chroma 기반 서비스 환경 및 컨테이너 설정 구현<br>- 화장품 추천 API 및 루틴 단계별/멀티 추천 로직 구현<br>- 비적합 제품·문제 성분 반영 추천 로직 및 피부 타입·카테고리 기반 추천 구조 구현<br>- DuckDB 기반 이벤트 로그 배치 및 추천 점수·연관 상품 동기화 구현<br>- OAuth2·Security 설정 및 인증/리다이렉트 경로 설정 반영                                                                                                                                   |
-|            <img src="docs/Image/상지박사.png" height="130"><br>**김상지**<br><sub>AI / BE</sub>            | - JWT 기반 인증 필터 및 토큰 재발급·로그아웃 API 구현<br>- OAuth2(Kakao) 로그인, 쿠키 릴레이, 하이브리드 인증 구조 구현<br>- SecurityConfig·WebMvc·Swagger 인증 경로 및 개발용 토큰 설정 반영<br>- Redis 기반 임시 루틴 저장 및 루틴 추가·조회·수정 로직 구현<br>- 메인 루틴 조회·관리 및 루틴 응답 구조 개선<br>- 제품 좋아요 API 및 화장품 통합 검색 API 구현<br>- 외부 AI 연동 기반 제품 요약·비교 분석 API 및 비동기 처리 구현<br>- FastAPI, EasyOCR, GMS 연동 기반 화장품 OCR 인식 및 AI 텍스트 정제 파이프라인 구축**                                                                              |
-|              <img src="docs/Image/현지학사.png" height="130"><br>**문현지**<br><sub>FE</sub>               | - 마이페이지·홈·추천·검색·상품 상세 화면 Figma로 UI 구현<br>- ProductCard·RoutineTab·OwnedTab·RoutineAddModal 등 재사용 가능한 공통 컴포넌트 설계·구현 및 TypeScript 기반 props 타입 정의를 통한 타입 안전성 확보, shadcn/ui + Radix UI 활용 접근성 개선<br>- 보유제품·기피제품·피부타입·피부고민 조회/수정 API 연동, 임시 루틴 이동 및 루틴 기반 제품 추천 기능 개발<br>- 성분 비교 모달·AI 챗봇 UI·제품 태그·하단 네비게이션 디자인 개선 및 Zustand를 활용한 전역 상태 기반 UI 인터랙션 구현<br>- 모바일 퍼스트 반응형 레이아웃 구현, CSS transition 기반 버튼 애니메이션 적용, Next.js App Router 라우팅 관련 뒤로가기 오류 디버깅 및 수정 |
-|               <img src="docs/Image/박승찬.png" height="130"><br>**박승찬**<br><sub>BE</sub>               | - 제품 엔티티·리포지토리 및 상품 조회 API 구조 구현<br>- 대카테고리·카테고리·브랜드·피부고민 태그 메타데이터 API 구현<br>- 상품 목록 조회·필터링·통합 검색 쿼리 및 ProductCatalogService 로직 구현<br>- ProductRepositoryImpl 기반 조회 쿼리 최적화 및 native SQL 적용<br>- 상품 피부고민 태그 매핑 및 ProductConcernCache 기반 응답 구조 반영<br>- 상품 비교 API 및 성분·EWG·알레르기 비교 로직 구현                                                                                                                                                                |
-|            <img src="docs/Image/희수박사.png" height="130"><br>**전희수**<br><sub>AI / BE</sub>            | - 피부 설문/피부 분석 기능 및 백엔드-AI 연동 개발<br>- 챗봇 기능 개발 및 RAG 검색 구조 구현<br>- 상품 검색 파이프라인 및 검색어 해석 로직 구현<br>- Chroma·Redis 기반 검색/세션 환경 연동 구현<br>- 사용자 프로필 조회·수정 API 구현<br>- 안 맞는 제품 등록·조회·삭제 및 문제 성분 관리 API 구현<br>- README, AGENTS, Swagger 문서 정리                                                                                                                                                                                                                |
-|            <img src="docs/Image/현웅박사.png" height="130"><br>**최현웅**<br><sub>AI / FE</sub>            | - React/Next 기반 퍼블리싱 및 주요 화면 UI 구현<br>- 검색·추천·상품 상세·좋아요·마이페이지 화면 개발<br>- ProductCard·CompareModal·CategoryFilter 등 공통 UI 컴포넌트 구현 및 개선<br>- 피부 설문 플로우 및 상세·검색 API 연동 화면 처리<br>- 루틴 추가 모달·OCR 뷰파인더·챗봇 제품 카드 등 사용자 인터랙션 기능 수정<br>- 카테고리 필터·페이징·이미지 최적화·PWA 등 프론트 기능 개선<br>- 스킨케어 성분 DB · 제품 데이터 크롤링 및 성분 기반 피부타입 분류 알고리즘 설계<br>- AI 루틴 분석 설계 및 구현 — 피부 데이터 구조화 및 Gemini 프롬프트 엔지니어링                                                                      |
+<div align="center">
+
+<table align="center">
+    <tr>
+        <td width="33%" align="center">
+            <img src="docs/Image/킹왕짱뿌슝빠슝가민박사.png" width="160" height="213" />
+            <br/> <b>김가민</b> <br/><sub>Team Lead / Infra / BE</sub>
+        </td>
+        <td width="33%" align="center">
+            <img src="docs/Image/상지박사.png" width="160" height="213" />
+            <br/> <b>김상지</b> <br/><sub>AI / BE</sub>
+        </td>
+        <td width="33%" align="center">
+            <img src="docs/Image/현지학사.png" width="160" height="213" />
+            <br/> <b>문현지</b> <br/><sub>FE / Design</sub>
+        </td>
+    </tr>
+    <tr>
+        <td width="33%" valign="top">
+            <sub>
+                - 프로젝트 총괄<br/>
+                - Docker Compose·Nginx 기반 Dev/Prod 환경 및 HTTPS·Swagger 라우팅 설정<br/>
+                - Redis·MySQL·DuckDB·Chroma 기반 서비스 환경 및 컨테이너 설정 구현<br/>
+                - 화장품 추천 API 및 루틴 단계별/멀티 추천 로직 구현<br/>
+                - 비적합 제품·문제 성분 반영 추천 로직 및 피부 타입·카테고리 기반 추천 구조 구현<br/>
+                - DuckDB 기반 이벤트 로그 배치 및 추천 점수·연관 상품 동기화 구현<br/>
+                - OAuth2·Security 설정 및 인증/리다이렉트 경로 설정 반영
+            </sub>
+        </td>
+        <td width="33%" valign="top">
+            <sub>
+                - JWT 기반 인증 필터 및 토큰 재발급·로그아웃 API 구현<br/>
+                - OAuth2(Kakao) 로그인, 쿠키 릴레이, 하이브리드 인증 구조 구현<br/>
+                - SecurityConfig·WebMvc·Swagger 인증 경로 및 개발용 토큰 설정 반영<br/>
+                - Redis 기반 임시 루틴 저장 및 루틴 추가·조회·수정 로직 구현<br/>
+                - 메인 루틴 조회·관리 및 루틴 응답 구조 개선<br/>
+                - 제품 좋아요 API 및 화장품 통합 검색 API 구현<br/>
+                - 외부 AI 연동 기반 제품 요약·비교 분석 API 및 비동기 처리 구현<br/>
+                - FastAPI, EasyOCR, GMS 연동 기반 화장품 OCR 인식 및 AI 텍스트 정제 파이프라인 구축
+            </sub>
+        </td>
+        <td width="33%" valign="top">
+            <sub>
+                - 마이페이지·홈·추천·검색·상품 상세 화면 Figma로 UI 구현<br/>
+                - ProductCard·RoutineTab·OwnedTab·RoutineAddModal 등 재사용 가능한 공통 컴포넌트 설계·구현 및 TypeScript 기반 props 타입 정의를 통한 타입 안전성 확보, shadcn/ui + Radix UI 활용 접근성 개선<br/>
+                - 보유제품·기피제품·피부타입·피부고민 조회/수정 API 연동, 임시 루틴 이동 및 루틴 기반 제품 추천 기능 개발<br/>
+                - 성분 비교 모달·AI 챗봇 UI·제품 태그·하단 네비게이션 디자인 개선 및 Zustand를 활용한 전역 상태 기반 UI 인터랙션 구현<br/>
+                - 모바일 퍼스트 반응형 레이아웃 구현, CSS transition 기반 버튼 애니메이션 적용, Next.js App Router 라우팅 관련 뒤로가기 오류 디버깅 및 수정
+            </sub>
+        </td>
+    </tr>
+    <tr>
+        <td width="33%" align="center">
+            <img src="docs/Image/박승찬.png" width="160" height="213" />
+            <br/> <b>박승찬</b> <br/><sub>BE</sub>
+        </td>
+        <td width="33%" align="center">
+            <img src="docs/Image/희수박사.png" width="160" height="213" />
+            <br/> <b>전희수</b> <br/><sub>AI / BE</sub>
+        </td>
+        <td width="33%" align="center">
+            <img src="docs/Image/현웅박사.png" width="160" height="213" />
+            <br/> <b>최현웅</b> <br/><sub>AI / FE</sub>
+        </td>
+    </tr>
+    <tr>
+        <td width="33%" valign="top">
+            <sub>
+                - 제품 엔티티·리포지토리 및 상품 조회 API 구조 구현<br/>
+                - 대카테고리·카테고리·브랜드·피부고민 태그 메타데이터 API 구현<br/>
+                - 상품 목록 조회·필터링·통합 검색 쿼리 및 ProductCatalogService 로직 구현<br/>
+                - ProductRepositoryImpl 기반 조회 쿼리 최적화 및 native SQL 적용<br/>
+                - 상품 피부고민 태그 매핑 및 ProductConcernCache 기반 응답 구조 반영<br/>
+                - 상품 비교 API 및 성분·EWG·알레르기 비교 로직 구현
+            </sub>
+        </td>
+        <td width="33%" valign="top">
+            <sub>
+                - 피부 설문/피부 분석 기능 및 백엔드-AI 연동 개발<br/>
+                - 챗봇 기능 개발 및 RAG 검색 구조 구현<br/>
+                - 상품 검색 파이프라인 및 검색어 해석 로직 구현<br/>
+                - Chroma·Redis 기반 검색/세션 환경 연동 구현<br/>
+                - 사용자 프로필 조회·수정 API 구현<br/>
+                - 안 맞는 제품 등록·조회·삭제 및 문제 성분 관리 API 구현<br/>
+                - README, AGENTS, Swagger 문서 정리
+            </sub>
+        </td>
+        <td width="33%" valign="top">
+            <sub>
+                - React/Next 기반 퍼블리싱 및 주요 화면 UI 구현<br/>
+                - 검색·추천·상품 상세·좋아요·마이페이지 화면 개발<br/>
+                - ProductCard·CompareModal·CategoryFilter 등 공통 UI 컴포넌트 구현 및 개선<br/>
+                - 피부 설문 플로우 및 상세·검색 API 연동 화면 처리<br/>
+                - 루틴 추가 모달·OCR 뷰파인더·챗봇 제품 카드 등 사용자 인터랙션 기능 수정<br/>
+                - 카테고리 필터·페이징·이미지 최적화·PWA 등 프론트 기능 개선<br/>
+                - 스킨케어 성분 DB · 제품 데이터 크롤링 및 성분 기반 피부타입 분류 알고리즘 설계<br/>
+                - AI 루틴 분석 설계 및 구현 — 피부 데이터 구조화 및 Gemini 프롬프트 엔지니어링
+            </sub>
+        </td>
+    </tr>
+</table>
+
+</div>
 
 <br>
 
 ## 💬 왜 PiView인가 <a id="why-piview"></a>
 
----
 화장품을 고르는 일은 생각보다 단순하지 않습니다. 같은 수분크림이라도 피부 타입이 어떤지, 민감도는 어떤지, 피하고 싶은 성분이 있는지, 이미 쓰고 있는 제품과 충돌하지는 않는지에 따라 잘 맞는 제품이 달라집니다.
 
 기존 탐색 방식은 대체로 리뷰 중심이거나 단일 제품 중심입니다.
@@ -111,44 +189,43 @@ PiView는 이 문제를 해결하기 위해 피부 분석, 설문 기반 보정,
 
 ## ✨ 주요 기능 <a id="features"></a>
 
----
 <table width="100%">
   <tr>
     <td width="25%" align="center"><b>AI 피부 진단</b></td>
-    <td width="25%" align="center"><b>OCR 기반 보유 제품 등록</b></td>
+    <td width="25%" align="center"><b>OCR 보유 제품 등록</b></td>
     <td width="25%" align="center"><b>제품 상세보기 및 AI 분석</b></td>
-    <td width="25%" align="center"><b>제품 비교 및 AI 요약</b></td>
+    <td width="25%" align="center"><b>제품 비교 및 AI 분석</b></td>
   </tr>
   <tr>
     <td align="center">
-      <img src="docs/gif/ai 사진분석 최최최종.gif" width="100%" alt="AI 피부 진단 화면"/>
+      <img src="docs/gif/ai 사진분석.gif" width="100%" alt="AI 피부 진단 화면"/>
     </td>
     <td align="center">
       <img src="docs/gif/OCR.gif" width="100%" alt="OCR 제품 인식 화면"/>
     </td>
     <td align="center">
-      <img src="docs/gif/추천제품.gif" width="100%" alt="제품 비교 화면"/>
+      <img src="docs/gif/제품 AI분석.gif" width="100%" alt="제품 비교 화면"/>
     </td>
     <td align="center">
-      <img src="docs/gif/tmp.gif" width="100%" alt="개인 추천"/>
+      <img src="docs/gif/제품비교_ai.gif" width="100%" alt="개인 추천"/>
     </td>
   </tr>
 
   <tr>
-    <td width="25%" align="center"><b>추천 제품 추가 후 루틴 AI 분석</b></td>
+    <td width="25%" align="center"><b>루틴 AI 분석</b></td>
     <td width="25%" align="center"><b>제품 충돌 알람</b></td>
-    <td width="25%" align="center"><b>추천 탭 조회 및 루틴 추가</b></td>
-    <td width="25%" align="center"><b>Gamini 챗봇</b></td>
+    <td width="25%" align="center"><b>ai추천제품 추가</b></td>
+    <td width="25%" align="center"><b>챗봇</b></td>
   </tr>
   <tr>
     <td align="center">
-      <img src="docs/gif/루틴 AI분.gif" width="100%" alt="내 루틴 화면"/>
+      <img src="docs/gif/루틴 AI분석.gif" width="100%" alt="내 루틴 화면"/>
     </td>
     <td align="center">
-      <img src="assets/gifs/복습게임.gif" width="100%" alt="복습게임"/>
+      <img src="docs/gif/제품충돌.gif" width="100%" alt="제품충돌"/>
     </td>
     <td align="center">
-      <img src="docs/gif/제품 AI분.gif" width="100%" alt="AI 제품 분석"/>
+      <img src="docs/gif/추천제품 추가 확대.gif" width="100%" alt="AI 제품 분석"/>
     </td>
      <td align="center">
       <img src="docs/gif/챗봇.gif" width="100%" alt="챗봇 화면"/>
@@ -159,24 +236,95 @@ PiView는 이 문제를 해결하기 위해 피부 분석, 설문 기반 보정,
 
 ## 📂 프로젝트 구조 <a id="structure"></a>
 
----
 
 ```text
-.
-├─ frontend/               # 사용자 화면, 온보딩, 탐색, 추천, 마이페이지, 상태 관리
-├─ backend/                # 인증, 도메인 로직, 제품/루틴 API, 추천 오케스트레이션, 데이터 관리
-├─ ai/                     # 피부 분석, OCR, 자연어 질의 해석, 검색 보조, 챗봇 보조
-├─ nginx/                  # 리버스 프록시 및 라우팅 설정
-├─ docs/
-│  └─ architecture/        # 시스템 개요와 계층별 상세 설계 문서
-├─ docker-compose.yml      # 프론트엔드, 백엔드, AI, 인프라 컨테이너 구성
-└─ init.sql                # MySQL 초기 데이터베이스 생성 스크립트
+S14P21E101/
+├── frontend/            # Next.js 16 웹 (온보딩 · 추천 · 검색 · 마이페이지)
+├── backend/             # Spring Boot API 서버 (Java 21)
+├── ai/                  # FastAPI AI 서버 (피부 분석 · OCR · 챗봇 · 검색)
+├── nginx/               # 리버스 프록시 및 라우팅 설정
+├── docs/                # 아키텍처 문서 · 이미지 · 데모 GIF
+├── docker-compose.yml   # 프론트엔드·백엔드·AI·인프라 컨테이너 구성
+└── init.sql             # MySQL 초기 데이터베이스 생성 스크립트
 ```
+
+<details>
+<summary><b>Frontend</b></summary>
+
+```
+frontend/src/
+├── app/                     # Next.js App Router
+│   ├── (main)/              # home · recommend · search · likes · mypage
+│   ├── (onboarding)/        # splash · welcome · skin-test
+│   ├── product/[id]/        # 상품 상세
+│   └── oauth2/              # OAuth2 리다이렉트 처리
+├── components/
+│   ├── common/              # 공통 컴포넌트
+│   ├── features/            # home · search · product · mypage · onboarding
+│   ├── layout/              # 레이아웃 · 네비게이션
+│   └── ui/                  # shadcn/ui + Radix UI 기반 UI
+├── hooks/                   # 커스텀 훅
+├── services/               # API 호출 모듈
+├── stores/                 # Zustand 전역 상태
+├── types/ · constants/      # 타입 정의 · 상수
+├── lib/ · utils/            # 유틸 · 설정
+└── public/                  # 정적 자원 · PWA 매니페스트
+```
+
+</details>
+
+<details>
+<summary><b>Backend</b></summary>
+
+```
+backend/src/main/java/com/piview/backend/
+├── domain/                  # 도메인별 패키지
+│   ├── user/                # 사용자 · 프로필 · 피부 정보
+│   ├── skin/                # 피부 설문 · 피부 분석
+│   ├── product/             # 제품 조회 · 검색 · 비교
+│   ├── routine/             # 스킨케어 루틴 관리
+│   ├── chatbot/             # 챗봇 질의 연동
+│   └── ocr/                 # OCR 제품 인식 연동
+├── global/                  # 공통 모듈
+│   ├── config/              # 설정 (Web · Swagger 등)
+│   ├── security/            # JWT · OAuth2 · Security
+│   ├── redis/               # Redis 세션·캐시
+│   ├── exception/           # 전역 예외 처리
+│   └── util/                # 공통 유틸
+└── BackendApplication.java  # Spring Boot 엔트리포인트
+```
+
+</details>
+
+<details>
+<summary><b>AI</b></summary>
+
+```
+ai/
+├── main.py                  # FastAPI 엔트리포인트
+├── api/routers/             # API 엔드포인트
+│   ├── skin_type.py         # 피부 타입 분석
+│   ├── ocr.py               # 화장품 OCR 인식
+│   ├── chatbot.py           # 챗봇 응답
+│   └── product_search.py    # 상품 검색
+├── services/                # 핵심 비즈니스 로직
+│   ├── skin/                # 피부 분석 파이프라인
+│   ├── chatbot/             # intent · retrieval · generation · session 등 RAG 구성
+│   └── product_search/      # 상품 검색 파이프라인
+├── inference/               # 모델 추론 (전체 얼굴 · 국소 부위 · 수분)
+├── preprocessing/           # MediaPipe 기반 얼굴 ROI 추출
+├── decision/                # 피부 타입 판정 로직
+├── prompts/                 # LLM 프롬프트
+├── schemas/ · core/         # 스키마 · 설정
+├── models/                  # 학습된 모델 가중치 (Git 제외)
+└── tests/ · scripts/        # 테스트 · 유틸 스크립트
+```
+
+</details>
 
 
 ## ⚙️ 코어 파이프라인 <a id="core-pipeline"></a>
 
----
 
 | 피뷰(Piview)는 정확한 진단, 정교한 추천, 그리고 스마트한 탐색을 위해 3가지 핵심 AI 파이프라인을 운영합니다.
 
@@ -237,7 +385,6 @@ PiView는 이 문제를 해결하기 위해 피부 분석, 설문 기반 보정,
 
 ## 🛠 기술 스택 <a id="tech-stack"></a>
 
----
 
 ### 🎨 Frontend
 <p align="center">
@@ -386,7 +533,6 @@ PiView는 이 문제를 해결하기 위해 피부 분석, 설문 기반 보정,
 
 ## 📄 개발 상세 문서 <a id="docs"></a>
 
----
 
 루트 README에서는 PiView의 전체 흐름을 먼저 볼 수 있고, 더 자세한 구조와 설계는 `docs/architecture/` 아래 문서에서 이어서 확인할 수 있습니다.
 실제 공개 경로, 외부 설정 파일, 서비스 연결 방식은 환경과 배포 설정에 따라 달라질 수 있습니다.
@@ -441,20 +587,14 @@ PiView는 이 문제를 해결하기 위해 피부 분석, 설문 기반 보정,
 
 ## 🗃 Data Modeling <a id="data-modeling"></a>
 
----
 <p align="center">
   <img src="docs/Image/erd.png" width="95%"/>
 </p>
 
-<p align="center">
-  <sub>Database ERD Cloud – 관계형 데이터 모델링 구조</sub>
-</p>
-
-<br/><br/>
+<br/>
 
 ## 🏗 System Architecture <a id="architecture"></a>
 
----
 <p align="center">
   <img src="docs/Image/Architecture.png" width="95%"/>
 </p>
@@ -463,10 +603,10 @@ PiView는 이 문제를 해결하기 위해 피부 분석, 설문 기반 보정,
 
 ## 🎬 Demo Video <a id="demo"></a>
 
----
 <p align="center">
-  <a href="https://drive.google.com/file/d/1AWm-eg2P3NLxpML8V7mXxHdFLywBuY-s/view?usp=sharing">
-    <img src="https://img.shields.io/badge/UCC%20Video-보기-FF6B6B?style=for-the-badge"/>
+  <a href="https://youtu.be/IUG-SGhTQUk">
+    <img src="docs/Image/image.png"/>
+    <b>▶️ 영상 포트폴리오 보러가기 (YouTube)</b>
   </a>
 </p>
 
